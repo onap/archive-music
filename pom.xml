@@ -36,10 +36,14 @@
 		<jaxrs.version>2.0.1</jaxrs.version>
 		<cassandra.version>3.0.0</cassandra.version>
 		<zookeeper.version>3.4.6</zookeeper.version>
-
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+                <nexusproxy>https://nexus.onap.org</nexusproxy>
+                <snapshotNexusPath>/content/repositories/snapshots/</snapshotNexusPath>
+                <releaseNexusPath>/content/repositories/releases/</releaseNexusPath>
+                <stagingNexusPath>/content/repositories/staging/</stagingNexusPath>
+                <sitePath>/content/sites/site/org/openecomp/music/${project.version}</sitePath>
 	</properties>
-
 	<repositories>
 		<repository>
 			<id>maven2-repository.java.net</id>
@@ -47,7 +51,34 @@
 			<url>http://download.java.net/maven/2/</url>
 			<layout>default</layout>
 		</repository>
+                <repository>
+                        <id>ecomp-snapshots</id>
+                        <name>Snapshot Repository</name>
+                        <url>${nexusproxy}/${snapshotNexusPath}</url>
+                </repository>
+                <repository>
+                        <id>ecomp-staging</id>
+                        <name>Staging Repository</name>
+                        <url>${nexusproxy}/${stagingNexusPath}</url>
+                </repository>
 	</repositories>
+        <distributionManagement>
+                <repository>
+                        <id>ecomp-releases</id>
+                        <name>Release Repository</name>
+                        <url>${nexusproxy}/${releaseNexusPath}</url>
+                </repository>
+                <snapshotRepository>
+                        <id>ecomp-snapshots</id>
+                        <name>Snapshot Repository</name>
+                        <url>${nexusproxy}/${snapshotNexusPath}</url>
+                </snapshotRepository>
+                        <!-- added for javadoc -->
+                        <site>
+                            <id>ecomp-site</id>
+                            <url>dav:${nexusproxy}${sitePath}</url>
+                        </site>
+        </distributionManagement>
 	<build>
 		<finalName>MUSIC</finalName>
 		<sourceDirectory>src/main/java</sourceDirectory>
@@ -62,6 +93,29 @@
 			</resource>
 		</resources>
 		<plugins>
+                        <plugin>
+                                <groupId>org.sonatype.plugins</groupId>
+                                <artifactId>nexus-staging-maven-plugin</artifactId>
+                                <version>1.6.7</version>
+                                <extensions>true</extensions>
+                                <configuration>
+                                        <nexusUrl>${nexusproxy}</nexusUrl>
+                                        <stagingProfileId>176c31dfe190a</stagingProfileId>
+                                        <serverId>ecomp-staging</serverId>
+                                </configuration>
+                        </plugin>
+                        <plugin>
+                                <groupId>org.apache.maven.plugins</groupId>
+                                <artifactId>maven-site-plugin</artifactId>
+                                <version>3.6</version>
+                                <dependencies>
+                                        <dependency>
+                                                <groupId>org.apache.maven.wagon</groupId>
+                                                <artifactId>wagon-webdav-jackrabbit</artifactId>
+                                                <version>2.10</version>
+                                        </dependency>
+                                </dependencies>
+                        </plugin>
 			<plugin>
 				<artifactId>maven-eclipse-plugin</artifactId>
 				<version>2.9</version>
@@ -76,7 +130,6 @@
 					<downloadJavadocs>true</downloadJavadocs>
 				</configuration>
 			</plugin>
-
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
