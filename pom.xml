@@ -22,13 +22,21 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.onap.oparent</groupId>
+		<artifactId>oparent</artifactId>
+		<version>0.1.1</version>
+		<relativePath />
+	</parent>
+
 	<groupId>org.onap.music</groupId>
 	<artifactId>MUSIC</artifactId>
 	<packaging>war</packaging>
 	<version>2.4.4</version>
 	<description>
           	This is the MUSIC REST interface, packaged as a war file.
-          </description>
+        </description>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<jersey1.version>1.9</jersey1.version>
@@ -39,15 +47,9 @@
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
-
-	<repositories>
-		<repository>
-			<id>maven2-repository.java.net</id>
-			<name>Java.net Repository for Maven</name>
-			<url>http://download.java.net/maven/2/</url>
-			<layout>default</layout>
-		</repository>
-	</repositories>
+	<!-- <repositories> <repository> <id>maven2-repository.java.net</id> <name>Java.net 
+		Repository for Maven</name> <url>http://download.java.net/maven/2/</url> 
+		<layout>default</layout> </repository> </repositories> -->
 	<build>
 		<finalName>MUSIC</finalName>
 		<sourceDirectory>src/main/java</sourceDirectory>
@@ -135,17 +137,31 @@
 					</execution>
 				</executions>
 			</plugin>
-                        <!-- Sonar Plugin for Sonar Scans -->
-                        <plugin>
-                            <groupId>org.codehaus.mojo</groupId>
-                            <artifactId>sonar-maven-plugin</artifactId>
-                            <version>3.2</version>
-                        </plugin>
+			<!-- Sonar Plugin for Sonar Scans -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<version>3.2</version>
+			</plugin>
+			<!-- Build Plugin -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<!-- version managed by oparent <version>2.8</version> -->
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>2.5.3</version>
+			</plugin>
 		</plugins>
 	</build>
 
 	<dependencies>
-		  
+
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-core</artifactId>
@@ -176,11 +192,11 @@
 			<artifactId>cassandra-driver-core</artifactId>
 			<version>${cassandra.version}</version>
 		</dependency>
-		 <dependency> 
-		        <groupId>org.cassandraunit</groupId> 
-		        <artifactId>cassandra-unit</artifactId> 
-			    <version>3.3.0.1</version> 
-		</dependency> 
+		<dependency>
+			<groupId>org.cassandraunit</groupId>
+			<artifactId>cassandra-unit</artifactId>
+			<version>3.3.0.1</version>
+		</dependency>
 		<dependency>
 			<groupId>org.apache.zookeeper</groupId>
 			<artifactId>zookeeper</artifactId>
@@ -219,15 +235,15 @@
 		</dependency>
 
 		<dependency>
-		    <groupId>javax.servlet</groupId>
-		    <artifactId>javax.servlet-api</artifactId>
-		    <version>3.0.1</version>
-		    <scope>provided</scope>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<version>3.0.1</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
-		    <groupId>commons-codec</groupId>
-		    <artifactId>commons-codec</artifactId>
-		    <version>1.11</version>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+			<version>1.11</version>
 		</dependency>
 
 
@@ -250,17 +266,17 @@
 			<artifactId>swagger-jersey-jaxrs</artifactId>
 			<version>1.5.0</version>
 		</dependency>
-    <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>19.0</version>
-        </dependency>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>19.0</version>
+		</dependency>
 
-    <dependency>
-    	<groupId>com.att.eelf</groupId>
-    	<artifactId>eelf-core</artifactId>
-    	<version>1.0.0</version>
-    </dependency>
+		<dependency>
+			<groupId>com.att.eelf</groupId>
+			<artifactId>eelf-core</artifactId>
+			<version>1.0.0</version>
+		</dependency>
 	</dependencies>
 
 	<reporting>
@@ -282,5 +298,24 @@
 			</plugin>
 		</plugins>
 	</reporting>
-
+	<distributionManagement>
+		<!-- Override the OParent sections which use id "ecomp-releases" etc. The 
+			IDs MUST match Jenkins template values. -->
+		<repository>
+			<id>releases</id>
+			<name>MUSIC - Release Repository</name>
+			<url>${nexusproxy}/${releaseNexusPath}</url>
+		</repository>
+		<!-- no support for a "stagingRepository" -->
+		<snapshotRepository>
+			<id>snapshots</id>
+			<name>MUSIC - Snapshot Repository</name>
+			<url>${nexusproxy}/${snapshotNexusPath}</url>
+		</snapshotRepository>
+		<!-- Javadocs -->
+		<site>
+			<id>ecomp-site</id>
+			<url>dav:${nexusproxy}/content/sites/site/${project.groupId}/${project.artifactId}/${project.version}</url>
+		</site>
+	</distributionManagement>
 </project>
