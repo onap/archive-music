@@ -38,11 +38,20 @@
 		<zookeeper.version>3.4.6</zookeeper.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
                 <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+                <!-- ONAP Nexus -->
                 <nexusproxy>https://nexus.onap.org</nexusproxy>
                 <snapshotNexusPath>/content/repositories/snapshots/</snapshotNexusPath>
                 <releaseNexusPath>/content/repositories/releases/</releaseNexusPath>
                 <stagingNexusPath>/content/repositories/staging/</stagingNexusPath>
                 <sitePath>/content/sites/site/org/openecomp/music/${project.version}</sitePath>
+                <!-- SONAR -->
+                <sonar.language>java</sonar.language>
+                <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+                <sonar.surefire.reportsPath>${project.build.directory}/surefire-reports</sonar.surefire.reportsPath>
+                <sonar.jacoco.reportPath>${project.build.directory}/code-coverage/jacoco-ut.exec</sonar.jacoco.reportPath>
+                <sonar.jacoco.reportMissing.force.zero>true</sonar.jacoco.reportMissing.force.zero>
+                <sonar.projectVersion>${project.version}</sonar.projectVersion>
+
 	</properties>
 	<repositories>
 		<repository>
@@ -194,7 +203,35 @@
                             <artifactId>sonar-maven-plugin</artifactId>
                             <version>3.2</version>
                         </plugin>
-		</plugins>
+                <plugin>
+			<groupId>org.jacoco</groupId>
+			<artifactId>jacoco-maven-plugin</artifactId>
+			<version>0.7.7.201606060606</version>
+			<configuration>
+				<dumpOnExit>true</dumpOnExit>
+				<includes>
+					<include>org.openecomp.*</include>
+				</includes>
+			</configuration>
+			<executions>
+				<execution>
+					<id>jacoco-initialize-unit-tests</id>
+					<goals>
+						<goal>prepare-agent</goal>
+					</goals>
+					<configuration>
+						<destFile>${project.build.directory}/coverage-reports/jacoco.exec</destFile>
+						<!-- <append>true</append> -->
+					</configuration>
+				</execution>
+			</executions>
+	         </plugin>
+                 <!-- Maven surefire plugin for testing -->
+                 <plugin>
+                     <artifactId>maven-surefire-plugin</artifactId>
+                     <version>2.17</version>
+                 </plugin>
+	    </plugins>
 	</build>
 
 	<dependencies>
