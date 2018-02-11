@@ -38,11 +38,20 @@
 		<zookeeper.version>3.4.6</zookeeper.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
                 <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+                <!-- ONAP Nexus -->
                 <nexusproxy>https://nexus.onap.org</nexusproxy>
                 <snapshotNexusPath>/content/repositories/snapshots/</snapshotNexusPath>
                 <releaseNexusPath>/content/repositories/releases/</releaseNexusPath>
                 <stagingNexusPath>/content/repositories/staging/</stagingNexusPath>
                 <sitePath>/content/sites/site/org/openecomp/music/${project.version}</sitePath>
+                <!-- SONAR -->
+                <sonar.language>java</sonar.language>
+                <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
+                <sonar.surefire.reportsPath>${project.build.directory}/surefire-reports</sonar.surefire.reportsPath>
+                <sonar.jacoco.reportPath>${project.build.directory}/code-coverage/jacoco-ut.exec</sonar.jacoco.reportPath>
+                <sonar.jacoco.reportMissing.force.zero>true</sonar.jacoco.reportMissing.force.zero>
+                <sonar.projectVersion>${project.version}</sonar.projectVersion>
+
 	</properties>
 	<repositories>
 		<repository>

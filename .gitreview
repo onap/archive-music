@@ -1,4 +1,4 @@
 [gerrit]
-host=gerrit.acumos.org
+host=gerrit.onap.org
 port=29418
 project=music.git
