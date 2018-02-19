@@ -139,62 +139,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <plugin>
-                <groupId>io.fabric8</groupId>
-                <artifactId>docker-maven-plugin</artifactId>
-                <version>0.15.1</version>
-                <configuration>
-                    <images>
-                        <!-- MUSIC War -->
-                        <image>
-                            <name>music</name>
-                            <alias>docker_music</alias>
-                            <build>
-                                <cleanup>true</cleanup>
-                                <tags>
-                                    <tag>${docker.tag}</tag>
-                                    <tag>${docker.latest.tag}</tag>
-                                </tags>
-                                <dockerFileDir>${project.basedir}</dockerFileDir>
-                                <assembly>
-                                    <descriptorRef>artifact</descriptorRef>
-                                </assembly>
-                            </build>
-                        </image>
-                    </images>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>clean-images</id>
-                        <phase>pre-clean</phase>
-                        <goals>
-                            <goal>remove</goal>
-                        </goals>
-                        <configuration>
-                            <removeAll>true</removeAll>
-                            <image>music</image>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>generate-images</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>build</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>push-images</id>
-                        <phase>deploy</phase>
-                        <goals>
-                            <goal>push</goal>
-                        </goals>
-                        <configuration>
-                            <image>music</image>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
         </plugins>
     </build>
 
@@ -337,5 +281,74 @@
             </plugin>
         </plugins>
     </reporting>
+
+	<profiles>
+		<profile>
+			<id>docker</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>io.fabric8</groupId>
+						<artifactId>docker-maven-plugin</artifactId>
+						<version>0.19.1</version>
+						<configuration>
+							<verbose>true</verbose>
+							<apiVersion>1.23</apiVersion>
+							<registry>nexus3.onap.org:10003</registry>
+							<images>
+								<!-- MUSIC War -->
+								<image>
+									<name>music</name>
+									<alias>docker_music</alias>
+									<build>
+										<cleanup>true</cleanup>
+										<tags>
+											<tag>${docker.tag}</tag>
+											<tag>${docker.latest.tag}</tag>
+										</tags>
+										<dockerFileDir>${project.basedir}</dockerFileDir>
+										<assembly>
+											<descriptorRef>artifact</descriptorRef>
+										</assembly>
+									</build>
+								</image>
+							</images>
+						</configuration>
+						<executions>
+							<execution>
+								<id>clean-images</id>
+								<phase>pre-clean</phase>
+								<goals>
+									<goal>remove</goal>
+								</goals>
+								<configuration>
+									<removeAll>true</removeAll>
+									<image>music</image>
+								</configuration>
+							</execution>
+							<execution>
+								<id>generate-images</id>
+								<phase>package</phase>
+								<goals>
+									<goal>build</goal>
+								</goals>
+							</execution>
+							<execution>
+								<id>push-images</id>
+								<phase>deploy</phase>
+								<goals>
+									<goal>push</goal>
+								</goals>
+								<configuration>
+									<image>music</image>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
 
 </project>
