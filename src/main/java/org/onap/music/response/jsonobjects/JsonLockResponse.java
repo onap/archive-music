@@ -23,70 +23,39 @@ package org.onap.music.response.jsonobjects;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import org.onap.music.lockingservice.MusicLockState.LockStatus;
+import org.onap.music.main.ResultType;
+import org.powermock.core.spi.testresult.Result;
+
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 @ApiModel(value = "JsonResponse", description = "General Response JSON")
 public class JsonLockResponse {
 
-    private String status = "";
-    private String error = "";
-    private String message = "";
-    private String lock = "";
-    private String lockStatus = "";
-    private String lockHolder = "";
-    private String lockLease = "";
+    private ResultType status;
+    private String error;
+    private String message;
+    private String lock;
+    private LockStatus lockStatus;
+    private String lockHolder;
+    private String lockLease;
+
 
     /**
-     * 
+     * Create a JSONLock Response
+     * Use setters to provide more information as in
+     * JsonLockResponse(ResultType.SUCCESS).setMessage("We did it").setLock(mylockname)
      * @param status
-     * @param error
-     * @param lock
      */
-    public JsonLockResponse(String status, String error, String lock) {
-        this.status = fixStatus(status);
-        this.error = error;
-        this.lock = lock;
+    public JsonLockResponse(ResultType status) {
+        this.status = status;
     }
-
-    /**
-     * 
-     * @param status
-     * @param error
-     * @param lock
-     * @param lockStatus
-     * @param lockHolder
-     */
-    public JsonLockResponse(String status, String error, String lock, String lockStatus,
-                    String lockHolder) {
-        this.status = fixStatus(status);
-        this.error = error;
-        this.lock = lock;
-        this.lockStatus = lockStatus;
-        this.lockHolder = lockHolder;
-    }
-
-    /**
-     * 
-     * @param status
-     * @param error
-     * @param lock
-     * @param lockStatus
-     * @param lockHolder
-     * @param lockLease
-     */
-    public JsonLockResponse(String status, String error, String lock, String lockStatus,
-                    String lockHolder, String lockLease) {
-        this.status = fixStatus(status);
-        this.error = error;
-        this.lock = lock;
-        this.lockStatus = lockStatus;
-        this.lockHolder = lockHolder;
-    }
+    
 
 
-    /**
-     * Lock
+	/**
      * 
      * @return
      */
@@ -98,28 +67,9 @@ public class JsonLockResponse {
      * 
      * @param lock
      */
-    public void setLock(String lock) {
+    public JsonLockResponse setLock(String lock) {
         this.lock = lock;
-    }
-
-    /**
-     * 
-     */
-    public JsonLockResponse() {
-        this.status = "";
-        this.error = "";
-    }
-
-    /**
-     * 
-     * @param statusIn
-     * @return
-     */
-    private String fixStatus(String statusIn) {
-        if (statusIn.equalsIgnoreCase("false")) {
-            return "FAILURE";
-        }
-        return "SUCCESS";
+        return this;
     }
 
     /**
@@ -128,7 +78,7 @@ public class JsonLockResponse {
      */
     @ApiModelProperty(value = "Overall status of the response.",
                     allowableValues = "Success,Failure")
-    public String getStatus() {
+    public ResultType getStatus() {
         return status;
     }
 
@@ -136,8 +86,9 @@ public class JsonLockResponse {
      * 
      * @param status
      */
-    public void setStatus(String status) {
-        this.status = fixStatus(status);
+    public JsonLockResponse setStatus(ResultType status) {
+        this.status = status;
+        return this;
     }
 
     /**
@@ -153,8 +104,9 @@ public class JsonLockResponse {
      * 
      * @param error
      */
-    public void setError(String error) {
+    public JsonLockResponse setError(String error) {
         this.error = error;
+        return this;
     }
 
     /**
@@ -170,17 +122,17 @@ public class JsonLockResponse {
      * 
      * @param message
      */
-    public void setMessage(String message) {
+    public JsonLockResponse setMessage(String message) {
         this.message = message;
+        return this;
     }
 
     /**
      * 
      * @return the lockStatus
      */
-    @ApiModelProperty(value = "Status of the lock",
-                    allowableValues = "UNLOCKED,BEING_LOCKED,LOCKED")
-    public String getLockStatus() {
+    @ApiModelProperty(value = "Status of the lock")
+    public LockStatus getLockStatus() {
         return lockStatus;
     }
 
@@ -188,8 +140,9 @@ public class JsonLockResponse {
      * 
      * @param lockStatus
      */
-    public void setLockStatus(String lockStatus) {
+    public JsonLockResponse setLockStatus(LockStatus lockStatus) {
         this.lockStatus = lockStatus;
+        return this;
     }
 
     /**
@@ -206,8 +159,9 @@ public class JsonLockResponse {
      * 
      * @param lockHolder
      */
-    public void setLockHolder(String lockHolder) {
+    public JsonLockResponse setLockHolder(String lockHolder) {
         this.lockHolder = lockHolder;
+        return this;
     }
 
 
@@ -222,8 +176,9 @@ public class JsonLockResponse {
     /**
      * @param lockLease the lockLease to set
      */
-    public void setLockLease(String lockLease) {
+    public JsonLockResponse setLockLease(String lockLease) {
         this.lockLease = lockLease;
+        return this;
     }
 
     /**
@@ -232,17 +187,18 @@ public class JsonLockResponse {
      * @return
      */
     public Map<String, Object> toMap() {
-        Map<String, Object> newMap = new HashMap<>();
+        Map<String, Object> fullMap = new HashMap<>();
         Map<String, Object> lockMap = new HashMap<>();
-        lockMap.put("lock-status", lockStatus);
-        lockMap.put("lock", lock);
-        lockMap.put("message", message);
-        lockMap.put("lock-holder", lockHolder);
-        lockMap.put("lock-lease", lockLease);
-        newMap.put("status", status);
-        newMap.put("error", error);
-        newMap.put("lock", lockMap);
-        return newMap;
+        if (lockStatus!=null) {lockMap.put("lock-status", lockStatus); }
+        if (lock!=null) {lockMap.put("lock", lock);}
+        if (message!=null) {lockMap.put("message", message);}
+        if (lockHolder!=null) {lockMap.put("lock-holder", lockHolder);}
+        if (lockLease!=null) {lockMap.put("lock-lease", lockLease);}
+        
+        fullMap.put("status", status);
+        fullMap.put("lock", lockMap);
+        if (error!=null) {fullMap.put("error", error);}
+        return fullMap;
     }
 
     /**

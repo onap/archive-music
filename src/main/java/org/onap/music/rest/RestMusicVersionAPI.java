@@ -31,6 +31,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
 import org.onap.music.response.jsonobjects.JsonResponse;
+import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.main.MusicUtil;
 
 import com.att.eelf.configuration.EELFLogger;
@@ -44,7 +45,8 @@ import io.swagger.annotations.ApiOperation;
 @Api(value="Version Api")
 public class RestMusicVersionAPI {
 
-	private static EELFLogger logger = EELFManager.getInstance().getLogger(RestMusicVersionAPI.class);
+	private EELFLoggerDelegate logger =EELFLoggerDelegate.getLogger(RestMusicVersionAPI.class);
+
 	/**
 	 * Get the version of MUSIC
 	 * @return

@@ -1,20 +1,16 @@
 /*
- * ============LICENSE_START==========================================
- * org.onap.music
- * ===================================================================
- *  Copyright (c) 2017 AT&T Intellectual Property
- * ===================================================================
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * ============LICENSE_START========================================== org.onap.music
+ * =================================================================== Copyright (c) 2017 AT&T
+ * Intellectual Property ===================================================================
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  * 
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  * 
  * ============LICENSE_END=============================================
  * ====================================================================
@@ -26,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-// import java.util.logging.Level;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -47,15 +42,17 @@ import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
 import org.onap.music.datastore.jsonobjects.JsonKeySpace;
-import org.onap.music.response.jsonobjects.JsonResponse;
 import org.onap.music.datastore.jsonobjects.JsonTable;
 import org.onap.music.datastore.jsonobjects.JsonUpdate;
+import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.CachingUtil;
 import org.onap.music.main.MusicCore;
+import org.onap.music.main.MusicCore.Condition;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
-import org.onap.music.main.MusicCore.Condition;
+import org.onap.music.response.jsonobjects.JsonResponse;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -90,8 +87,7 @@ public class RestMusicDataAPI {
      *
      */
 
-
-    private static EELFLogger logger = EELFManager.getInstance().getLogger(RestMusicDataAPI.class);
+    private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(RestMusicDataAPI.class);
     private static String xLatestVersion = "X-latestVersion";
 
     private class RowIdentifier {
@@ -165,8 +161,9 @@ public class RestMusicDataAPI {
                 return resultMap;
         }
 
-        String consistency = MusicUtil.EVENTUAL;// for now this needs only eventual
-                                        // consistency
+        String consistency = MusicUtil.EVENTUAL;// for now this needs only
+                                                // eventual
+        // consistency
 
         PreparedQueryObject queryObject = new PreparedQueryObject();
         boolean result = false;
@@ -182,13 +179,14 @@ public class RestMusicDataAPI {
 
         queryObject.appendQueryString(";");
         long end = System.currentTimeMillis();
-        logger.info("Time taken for setting up query in create keyspace:" + (end - start));
+        logger.info(EELFLoggerDelegate.applicationLogger,
+                        "Time taken for setting up query in create keyspace:" + (end - start));
 
         try {
             result = MusicCore.nonKeyRelatedPut(queryObject, consistency);
-            logger.debug("resulta = " + result);
+            logger.error(EELFLoggerDelegate.errorLogger, "resulta = " + result);
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
 
         }
         logger.debug("result = " + result);
@@ -237,7 +235,7 @@ public class RestMusicDataAPI {
                 return resultMap;
             }
         } catch (Exception e) {
-            logger.error(e.getMessage());
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
         }
         resultMap.remove("uuid");
         if (CachingUtil.isAAFApplication(ns))
@@ -286,8 +284,9 @@ public class RestMusicDataAPI {
             return resultMap;
         }
 
-        String consistency = MusicUtil.EVENTUAL;// for now this needs only eventual
-                                        // consistency
+        String consistency = MusicUtil.EVENTUAL;// for now this needs only
+                                                // eventual
+        // consistency
         String appName = CachingUtil.getAppName(keyspaceName);
         String uuid = CachingUtil.getUuidFromMusicCache(keyspaceName);
         PreparedQueryObject pQuery = new PreparedQueryObject();
@@ -303,10 +302,9 @@ public class RestMusicDataAPI {
         } else if (count == 1) {
             pQuery = new PreparedQueryObject();
             pQuery.appendQueryString(
-                            "UPDATE admin.keyspace_master SET keyspace_name=?,password=?,is_api=null where uuid = ?;");
+                    "UPDATE admin.keyspace_master SET keyspace_name=? where uuid = ?;");
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(),
-                            MusicUtil.DEFAULTKEYSPACENAME));
-            pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), null));
+                    MusicUtil.DEFAULTKEYSPACENAME));
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), uuid));
             MusicCore.nonKeyRelatedPut(pQuery, consistency);
         } else {
@@ -407,14 +405,18 @@ public class RestMusicDataAPI {
             }
         }
 
-        queryObject.appendQueryString("CREATE TABLE IF NOT EXISTS " + keyspace + "." + tablename
-                        + " " + fieldsString);
+        queryObject.appendQueryString(
+                        "CREATE TABLE " + keyspace + "." + tablename + " " + fieldsString);
 
         if (propertiesMap != null)
             queryObject.appendQueryString(" WITH " + propertiesString);
 
         queryObject.appendQueryString(";");
-        result = MusicCore.nonKeyRelatedPut(queryObject, consistency);
+        try {
+            result = MusicCore.nonKeyRelatedPut(queryObject, consistency);
+        } catch (MusicServiceException ex) {
+            return new JsonResponse(false, ex.getMessage(), "").toMap();
+        }
 
         return new JsonResponse(result, "", "").toMap();
     }
@@ -555,20 +557,20 @@ public class RestMusicDataAPI {
         String timestamp = insObj.getTimestamp();
 
         if ((ttl != null) && (timestamp != null)) {
-            logger.info("both there");
+            logger.info(EELFLoggerDelegate.applicationLogger, "both there");
             queryObject.appendQueryString(" USING TTL ? AND TIMESTAMP ?");
             queryObject.addValue(Integer.parseInt(ttl));
             queryObject.addValue(Long.parseLong(timestamp));
         }
 
         if ((ttl != null) && (timestamp == null)) {
-            logger.info("ONLY TTL there");
+            logger.info(EELFLoggerDelegate.applicationLogger, "ONLY TTL there");
             queryObject.appendQueryString(" USING TTL ?");
             queryObject.addValue(Integer.parseInt(ttl));
         }
 
         if ((ttl == null) && (timestamp != null)) {
-            logger.info("ONLY timestamp there");
+            logger.info(EELFLoggerDelegate.applicationLogger, "ONLY timestamp there");
             queryObject.appendQueryString(" USING TIMESTAMP ?");
             queryObject.addValue(Long.parseLong(timestamp));
         }
@@ -591,7 +593,7 @@ public class RestMusicDataAPI {
                             : new ReturnType(ResultType.FAILURE,
                                             "Null result - Please Contact admin").toMap();
         } catch (Exception ex) {
-            logger.error(ex.getMessage());
+            logger.info(EELFLoggerDelegate.applicationLogger, ex.getMessage());
             return new ReturnType(ResultType.FAILURE, ex.getMessage()).toMap();
         }
     }
@@ -642,14 +644,19 @@ public class RestMusicDataAPI {
         String operationId = UUID.randomUUID().toString();// just for infoging
                                                           // purposes.
         String consistency = updateObj.getConsistencyInfo().get("type");
-        logger.info("--------------Music " + consistency + " update-" + operationId
-                        + "-------------------------");
+        logger.info(EELFLoggerDelegate.applicationLogger, "--------------Music " + consistency
+                        + " update-" + operationId + "-------------------------");
         // obtain the field value pairs of the update
 
         PreparedQueryObject queryObject = new PreparedQueryObject();
         Map<String, Object> valuesMap = updateObj.getValues();
 
         TableMetadata tableInfo = MusicCore.returnColumnMetadata(keyspace, tablename);
+        if (tableInfo == null) {
+            return new ReturnType(ResultType.FAILURE,
+                            "Table information not found. Please check input for table name= "
+                                            + keyspace + "." + tablename).toMap();
+        }
         String vectorTs =
                         String.valueOf(Thread.currentThread().getId() + System.currentTimeMillis());
         StringBuilder fieldValueString = new StringBuilder("vector_ts=?,");
@@ -689,8 +696,12 @@ public class RestMusicDataAPI {
             queryObject.addValue(Long.parseLong(timestamp));
         }
         // get the row specifier
-        RowIdentifier rowId = getRowIdentifier(keyspace, tablename, info.getQueryParameters(),
-                        queryObject);
+        RowIdentifier rowId = null;
+        try {
+            rowId = getRowIdentifier(keyspace, tablename, info.getQueryParameters(), queryObject);
+        } catch (MusicServiceException ex) {
+            return new ReturnType(ResultType.FAILURE, ex.getMessage()).toMap();
+        }
 
         queryObject.appendQueryString(
                         " SET " + fieldValueString + " WHERE " + rowId.rowIdString + ";");
@@ -701,8 +712,10 @@ public class RestMusicDataAPI {
             conditionInfo = null;
         else {// to avoid parsing repeatedly, just send the select query to
               // obtain row
-            String selectQuery = "SELECT *  FROM " + keyspace + "." + tablename + " WHERE "
-                            + rowId.rowIdString + ";";
+            PreparedQueryObject selectQuery = new PreparedQueryObject();
+            selectQuery.appendQueryString("SELECT *  FROM " + keyspace + "." + tablename + " WHERE "
+                            + rowId.rowIdString + ";");
+            selectQuery.addValue(rowId.primarKeyValue);
             conditionInfo = new MusicCore.Condition(updateObj.getConditions(), selectQuery);
         }
 
@@ -715,8 +728,7 @@ public class RestMusicDataAPI {
             String lockId = updateObj.getConsistencyInfo().get("lockId");
             operationResult = MusicCore.criticalPut(keyspace, tablename, rowId.primarKeyValue,
                             queryObject, lockId, conditionInfo);
-        }
-        else if (consistency.equalsIgnoreCase("atomic_delete_lock")) {
+        } else if (consistency.equalsIgnoreCase("atomic_delete_lock")) {
             // this function is mainly for the benchmarks
             operationResult = MusicCore.atomicPutWithDeleteLock(keyspace, tablename,
                             rowId.primarKeyValue, queryObject, conditionInfo);
@@ -737,7 +749,7 @@ public class RestMusicDataAPI {
             String lockManagementTime = operationResult.getTimingInfo();
             timingString = timingString + lockManagementTime;
         }
-        logger.info(timingString);
+        logger.info(EELFLoggerDelegate.applicationLogger, timingString);
         return (operationResult != null) ? operationResult.toMap()
                         : new ReturnType(ResultType.FAILURE, "Null result - Please Contact admin")
                                         .toMap();
@@ -800,8 +812,12 @@ public class RestMusicDataAPI {
         }
 
         // get the row specifier
-        RowIdentifier rowId = getRowIdentifier(keyspace, tablename, info.getQueryParameters(),
-                        queryObject);
+        RowIdentifier rowId = null;
+        try {
+            rowId = getRowIdentifier(keyspace, tablename, info.getQueryParameters(), queryObject);
+        } catch (MusicServiceException ex) {
+            return new ReturnType(ResultType.FAILURE, ex.getMessage()).toMap();
+        }
         String rowSpec = rowId.rowIdString.toString();
 
         if ((columnList != null) && (!rowSpec.isEmpty())) {
@@ -825,8 +841,10 @@ public class RestMusicDataAPI {
             conditionInfo = null;
         else {// to avoid parsing repeatedly, just send the select query to
               // obtain row
-            String selectQuery = "SELECT *  FROM " + keyspace + "." + tablename + " WHERE "
-                            + rowId.rowIdString + ";";
+            PreparedQueryObject selectQuery = new PreparedQueryObject();
+            selectQuery.appendQueryString("SELECT *  FROM " + keyspace + "." + tablename + " WHERE "
+                            + rowId.rowIdString + ";");
+            selectQuery.addValue(rowId.primarKeyValue);
             conditionInfo = new MusicCore.Condition(delObj.getConditions(), selectQuery);
         }
 
@@ -861,7 +879,8 @@ public class RestMusicDataAPI {
     @DELETE
     @Path("/{keyspace}/tables/{tablename}")
     @ApiOperation(value = "Drop Table", response = String.class)
-
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     public Map<String, Object> dropTable(
                     @ApiParam(value = "Major Version",
                                     required = true) @PathParam("version") String version,
@@ -893,8 +912,13 @@ public class RestMusicDataAPI {
         String consistency = "eventual";// for now this needs only eventual
                                         // consistency
         PreparedQueryObject query = new PreparedQueryObject();
-        query.appendQueryString("DROP TABLE IF EXISTS " + keyspace + "." + tablename + ";");
-        return new JsonResponse(MusicCore.nonKeyRelatedPut(query, consistency), "", "").toMap();
+        query.appendQueryString("DROP TABLE  " + keyspace + "." + tablename + ";");
+        try {
+            return new JsonResponse(MusicCore.nonKeyRelatedPut(query, consistency), "", "").toMap();
+        } catch (MusicServiceException ex) {
+            return new JsonResponse(false, ex.getMessage(), "").toMap();
+        }
+
     }
 
     /**
@@ -948,9 +972,12 @@ public class RestMusicDataAPI {
         PreparedQueryObject queryObject = new PreparedQueryObject();
         StringBuilder rowSpec = new StringBuilder();
 
-        RowIdentifier rowId = getRowIdentifier(keyspace, tablename, info.getQueryParameters(),
-                        queryObject);
-
+        RowIdentifier rowId = null;
+        try {
+            rowId = getRowIdentifier(keyspace, tablename, info.getQueryParameters(), queryObject);
+        } catch (MusicServiceException ex) {
+            return MusicUtil.setErrorResponse(ex);
+        }
         queryObject.appendQueryString(
                         "SELECT *  FROM " + keyspace + "." + tablename + " WHERE " + rowSpec + ";");
 
@@ -1018,11 +1045,21 @@ public class RestMusicDataAPI {
             queryObject.appendQueryString("SELECT *  FROM " + keyspace + "." + tablename + ";");
         else {
             int limit = -1; // do not limit the number of results
-            queryObject = selectSpecificQuery(version, minorVersion, patchVersion, aid, ns, userId,
-                            password, keyspace, tablename, info, limit);
+            try {
+                queryObject = selectSpecificQuery(version, minorVersion, patchVersion, aid, ns,
+                                userId, password, keyspace, tablename, info, limit);
+            } catch (MusicServiceException ex) {
+                return MusicUtil.setErrorResponse(ex);
+            }
         }
-        ResultSet results = MusicCore.get(queryObject);
-        return MusicCore.marshallResults(results);
+
+        try {
+            ResultSet results = MusicCore.get(queryObject);
+            return MusicCore.marshallResults(results);
+        } catch (MusicServiceException ex) {
+            return MusicUtil.setErrorResponse(ex);
+        }
+
     }
 
     /**
@@ -1032,11 +1069,13 @@ public class RestMusicDataAPI {
      * @param info
      * @param limit
      * @return
+     * @throws MusicServiceException
      * @throws Exception
      */
     public PreparedQueryObject selectSpecificQuery(String version, String minorVersion,
                     String patchVersion, String aid, String ns, String userId, String password,
-                    String keyspace, String tablename, UriInfo info, int limit) {
+                    String keyspace, String tablename, UriInfo info, int limit)
+                    throws MusicServiceException {
 
         PreparedQueryObject queryObject = new PreparedQueryObject();
         StringBuilder rowIdString = getRowIdentifier(keyspace, tablename, info.getQueryParameters(),
@@ -1061,13 +1100,23 @@ public class RestMusicDataAPI {
      * @param rowParams
      * @param queryObject
      * @return
+     * @throws MusicServiceException
      * @throws Exception
      */
     private RowIdentifier getRowIdentifier(String keyspace, String tablename,
-                    MultivaluedMap<String, String> rowParams, PreparedQueryObject queryObject) {
+                    MultivaluedMap<String, String> rowParams, PreparedQueryObject queryObject)
+                    throws MusicServiceException {
         StringBuilder rowSpec = new StringBuilder();
         int counter = 0;
         TableMetadata tableInfo = MusicCore.returnColumnMetadata(keyspace, tablename);
+        if (tableInfo == null) {
+            logger.error(EELFLoggerDelegate.errorLogger,
+                            "Table information not found. Please check input for table name= "
+                                            + keyspace + "." + tablename);
+            throw new MusicServiceException(
+                            "Table information not found. Please check input for table name= "
+                                            + keyspace + "." + tablename);
+        }
         StringBuilder primaryKey = new StringBuilder();
         for (MultivaluedMap.Entry<String, List<String>> entry : rowParams.entrySet()) {
             String keyName = entry.getKey();
@@ -1084,5 +1133,4 @@ public class RestMusicDataAPI {
         }
         return new RowIdentifier(primaryKey.toString(), rowSpec, queryObject);
     }
-
 }

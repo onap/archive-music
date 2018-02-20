@@ -35,6 +35,7 @@ import org.apache.log4j.Logger;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
 import org.onap.music.datastore.jsonobjects.JsonOnboard;
 import org.onap.music.datastore.jsonobjects.JsonUpdate;
+import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.main.CachingUtil;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
@@ -58,7 +59,8 @@ import io.swagger.annotations.ApiParam;
 @Path("/v{version: [0-9]+}/benchmarks/")
 @Api(value = "Benchmark API", hidden = true)
 public class RestMusicBmAPI {
-    private static EELFLogger logger = EELFManager.getInstance().getLogger(RestMusicBmAPI.class);
+
+    private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(RestMusicBmAPI.class);
 
     // pure zk calls...
 
@@ -86,11 +88,11 @@ public class RestMusicBmAPI {
     @Consumes(MediaType.APPLICATION_JSON)
     public void pureZkUpdate(JsonInsert insObj, @PathParam("name") String nodeName)
                     throws Exception {
-        logger.info("--------------Zk normal update-------------------------");
+        logger.info(EELFLoggerDelegate.applicationLogger,"--------------Zk normal update-------------------------");
         long start = System.currentTimeMillis();
         MusicCore.pureZkWrite(nodeName, insObj.serialize());
         long end = System.currentTimeMillis();
-        logger.info("Total time taken for Zk normal update:" + (end - start) + " ms");
+        logger.info(EELFLoggerDelegate.applicationLogger,"Total time taken for Zk normal update:" + (end - start) + " ms");
     }
 
     /**
@@ -122,7 +124,7 @@ public class RestMusicBmAPI {
         String operationId = UUID.randomUUID().toString();// just for debugging purposes.
         String consistency = updateObj.getConsistencyInfo().get("type");
 
-        logger.info("--------------Zookeeper " + consistency + " update-" + operationId
+        logger.info(EELFLoggerDelegate.applicationLogger,"--------------Zookeeper " + consistency + " update-" + operationId
                         + "-------------------------");
 
         byte[] data = updateObj.serialize();
@@ -138,7 +140,7 @@ public class RestMusicBmAPI {
         long zkPutTime = 0, lockReleaseTime = 0;
 
         if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
-            logger.info("acquired lock with id " + lockId);
+            logger.info(EELFLoggerDelegate.applicationLogger,"acquired lock with id " + lockId);
             MusicCore.pureZkWrite(lockname, data);
             zkPutTime = System.currentTimeMillis();
             boolean voluntaryRelease = true;
@@ -171,7 +173,7 @@ public class RestMusicBmAPI {
                         + "|update time:" + (actualUpdateCompletionTime - jsonParseCompletionTime)
                         + lockingInfo;
 
-        logger.info(timingString);
+        logger.info(EELFLoggerDelegate.applicationLogger,timingString);
     }
 
     /**
@@ -201,7 +203,7 @@ public class RestMusicBmAPI {
         }
 
         long end = System.currentTimeMillis();
-        logger.info("Total time taken for Zk atomic read:" + (end - start) + " ms");
+        logger.info(EELFLoggerDelegate.applicationLogger,"Total time taken for Zk atomic read:" + (end - start) + " ms");
     }
 
     /**
@@ -225,7 +227,7 @@ public class RestMusicBmAPI {
         long startTime = System.currentTimeMillis();
         String operationId = UUID.randomUUID().toString();// just for debugging purposes.
         String consistency = insObj.getConsistencyInfo().get("type");
-        logger.info("--------------Cassandra " + consistency + " update-" + operationId
+        logger.info(EELFLoggerDelegate.applicationLogger,"--------------Cassandra " + consistency + " update-" + operationId
                         + "-------------------------");
         PreparedQueryObject queryObject = new PreparedQueryObject();
         Map<String, Object> valuesMap = insObj.getValues();
@@ -272,20 +274,20 @@ public class RestMusicBmAPI {
 
         if ((ttl != null) && (timestamp != null)) {
 
-            logger.info("both there");
+            logger.info(EELFLoggerDelegate.applicationLogger,"both there");
             queryObject.appendQueryString(" USING TTL ? AND TIMESTAMP ?");
             queryObject.addValue(Integer.parseInt(ttl));
             queryObject.addValue(Long.parseLong(timestamp));
         }
 
         if ((ttl != null) && (timestamp == null)) {
-            logger.info("ONLY TTL there");
+            logger.info(EELFLoggerDelegate.applicationLogger,"ONLY TTL there");
             queryObject.appendQueryString(" USING TTL ?");
             queryObject.addValue(Integer.parseInt(ttl));
         }
 
         if ((ttl == null) && (timestamp != null)) {
-            logger.info("ONLY timestamp there");
+            logger.info(EELFLoggerDelegate.applicationLogger,"ONLY timestamp there");
             queryObject.appendQueryString(" USING TIMESTAMP ?");
             queryObject.addValue(Long.parseLong(timestamp));
         }
@@ -305,9 +307,8 @@ public class RestMusicBmAPI {
                         + "|json parsing time:" + (jsonParseCompletionTime - startTime)
                         + "|update time:" + (actualUpdateCompletionTime - jsonParseCompletionTime)
                         + "|";
-        logger.info(timingString);
+        logger.info(EELFLoggerDelegate.applicationLogger,timingString);
 
         return operationResult;
     }
-
 }

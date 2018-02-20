@@ -29,6 +29,7 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
+import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.lockingservice.ZooKeeperOperation;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -40,7 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  */
 class ProtocolSupport {
-    private static final Logger LOG = LoggerFactory.getLogger(ProtocolSupport.class);
+    private EELFLoggerDelegate LOG = EELFLoggerDelegate.getLogger(ProtocolSupport.class);
 
     protected ZooKeeper zookeeper;
     private AtomicBoolean closed = new AtomicBoolean(false);
@@ -128,7 +129,7 @@ class ProtocolSupport {
             try {
                 return operation.execute();
             } catch (KeeperException.SessionExpiredException e) {
-                LOG.warn("Session expired for: " + zookeeper + " so reconnecting due to: " + e, e);
+                LOG.debug("Session expired for: " + zookeeper + " so reconnecting due to: " + e, e);
                 throw e;
             } catch (KeeperException.ConnectionLossException e) {
                 if (exception == null) {
@@ -173,9 +174,9 @@ class ProtocolSupport {
                 }
             });
         } catch (KeeperException e) {
-            LOG.warn("Caught: " + e, e);
+            LOG.error(EELFLoggerDelegate.errorLogger,"Caught: " + e, e);
         } catch (InterruptedException e) {
-            LOG.warn("Caught: " + e, e);
+            LOG.error(EELFLoggerDelegate.errorLogger,"Caught: " + e, e);
         }
     }
 
@@ -198,7 +199,7 @@ class ProtocolSupport {
             try {
                 Thread.sleep(attemptCount * retryDelay);
             } catch (InterruptedException e) {
-                LOG.debug("Failed to sleep: " + e, e);
+                LOG.error(EELFLoggerDelegate.errorLogger,"Failed to sleep: " + e, e);
             }
         }
     }

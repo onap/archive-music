@@ -31,6 +31,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
+import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.main.MusicUtil;
 
 import com.att.eelf.configuration.EELFLogger;
@@ -43,7 +44,8 @@ import io.swagger.annotations.ApiOperation;
 @Path("/v{version: [0-9]+}/test")
 @Api(value="Test Api")
 public class RestMusicTestAPI {
-	private static EELFLogger logger = EELFManager.getInstance().getLogger(RestMusicTestAPI.class);
+	
+	private EELFLoggerDelegate logger =EELFLoggerDelegate.getLogger(RestMusicTestAPI.class);
 
 	/**
 	 * Returns a test JSON. This will confirm that REST is working.

@@ -108,8 +108,8 @@ public class CassandraCQL {
         preparedInsertValues2.add(emp_id);
         preparedInsertValues2.add(emp_name);
         preparedInsertValues2.add(emp_salary);
-        address.put("Street", "1 att way");
-        address.put("City", "Bedmister");
+        address.put("Street", "1 some way");
+        address.put("City", "Some town");
         preparedInsertValues2.add(address);
         return preparedInsertValues2;
     }
