@@ -38,6 +38,9 @@
         <zookeeper.version>3.4.6</zookeeper.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!--nexus-->
+        <sitePath>/content/sites/site/org/onap/music/${project.artifactId}/${project.version}</sitePath>
         <!--maven-->
         <timestamp>${maven.build.timestamp}</timestamp>
         <maven.build.timestamp.format>yyyy.MM.dd.HH.mm</maven.build.timestamp.format>
@@ -346,9 +349,15 @@
 						</executions>
 					</plugin>
 				</plugins>
+				
 			</build>
 		</profile>
 	</profiles>
-
+	<distributionManagement>
+		<site>
+			<id>ecomp-site</id>
+			<url>dav:${onap.nexus.url}${sitePath}</url>
+		</site>
+	</distributionManagement>
 
 </project>
