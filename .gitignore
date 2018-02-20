@@ -1,19 +1,27 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
 # ignore all bin directories
 # matches "bin" in any subfolder
 bin/
+
 # ignore all target directories
 target/
 src/main/webapp
 # ignore all files ending with ~
 *~ 
+
 .DS_Store
+
 ._*
+
 .metadata
 # Eclipse stuff
-/.settings/
+.settings/
 .classpath
 .project
 # Idea
 .idea
 debug-logs/
-/logs/
+.README.md.html
