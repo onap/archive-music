@@ -21,8 +21,7 @@
  */
 package org.onap.music.lockingservice;
 
-import com.att.eelf.configuration.EELFLogger;
-import com.att.eelf.configuration.EELFManager;
+import org.onap.music.eelf.logging.EELFLoggerDelegate;
 
 /**
  * Represents an ephemeral znode name which has an ordered sequence number and can be sorted in
@@ -33,8 +32,8 @@ class ZNodeName implements Comparable<ZNodeName> {
     private final String name;
     private String prefix;
     private int sequence = -1;
-    private static EELFLogger LOG = EELFManager.getInstance().getLogger(ZNodeName.class);
-
+    private EELFLoggerDelegate LOG = EELFLoggerDelegate.getLogger(ZNodeName.class);
+    
     public ZNodeName(String name) {
         if (name == null) {
             throw new NullPointerException("id cannot be null");
@@ -49,9 +48,9 @@ class ZNodeName implements Comparable<ZNodeName> {
                 // If an exception occurred we misdetected a sequence suffix,
                 // so return -1.
             } catch (NumberFormatException e) {
-                LOG.info("Number format exception for " + idx, e);
+                LOG.error(EELFLoggerDelegate.errorLogger,"Number format exception for " + idx, e);
             } catch (ArrayIndexOutOfBoundsException e) {
-                LOG.info("Array out of bounds for " + idx, e);
+               LOG.error(EELFLoggerDelegate.errorLogger,"Array out of bounds for " + idx, e);
             }
         }
     }

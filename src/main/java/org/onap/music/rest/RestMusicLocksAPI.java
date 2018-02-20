@@ -35,10 +35,15 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
 import org.onap.music.datastore.jsonobjects.JsonLeasedLock;
+import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.lockingservice.MusicLockState;
+import org.onap.music.lockingservice.MusicLockState.LockStatus;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
+import org.onap.music.main.ResultType;
+import org.onap.music.main.ReturnType;
 import org.onap.music.response.jsonobjects.JsonLockResponse;
+import org.powermock.core.spi.testresult.Result;
 
 import com.att.eelf.configuration.EELFLogger;
 import com.att.eelf.configuration.EELFManager;
@@ -52,8 +57,9 @@ import io.swagger.annotations.ApiParam;
 @Api(value="Lock Api")
 public class RestMusicLocksAPI {
 
-	private static EELFLogger logger = EELFManager.getInstance().getLogger(RestMusicLocksAPI.class);
+	private EELFLoggerDelegate logger =EELFLoggerDelegate.getLogger(RestMusicLocksAPI.class);
 	private static String xLatestVersion = "X-latestVersion";
+
 	/**
 	 * Puts the requesting process in the q for this lock. The corresponding
 	 * node will be created in zookeeper if it did not already exist
@@ -74,10 +80,10 @@ public class RestMusicLocksAPI {
 			@ApiParam(value="Lock Name",required=true) @PathParam("lockname") String lockName,
 			@Context HttpServletResponse response){
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());		
-		Boolean status = true;
+		ResultType status = ResultType.SUCCESS;
 		String lockId = MusicCore.createLockReference(lockName);
-		if ( lockId == null ) { status = false; }
-		return new JsonLockResponse(status.toString(),"",lockId).toMap();
+		if (lockId == null) { status = ResultType.FAILURE; }
+		return new JsonLockResponse(status).setLock(lockId).toMap();
 	}
 
 	/**
@@ -98,8 +104,9 @@ public class RestMusicLocksAPI {
 			@Context HttpServletResponse response){
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());
 		String lockName = lockId.substring(lockId.indexOf('$')+1, lockId.lastIndexOf('$'));
-		Boolean lockStatus = MusicCore.acquireLock(lockName,lockId);
-		return new JsonLockResponse(lockStatus.toString(),"",lockId,lockStatus.toString(),"").toMap();
+		ReturnType lockStatus = MusicCore.acquireLock(lockName,lockId);
+		return new JsonLockResponse(lockStatus.getResult()).setLock(lockId)
+									.setMessage(lockStatus.getMessage()).toMap();
 	}
 	
 
@@ -115,8 +122,10 @@ public class RestMusicLocksAPI {
 			@Context HttpServletResponse response){
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());
 		String lockName = lockId.substring(lockId.indexOf('$')+1, lockId.lastIndexOf('$'));
-		String lockLeaseStatus = MusicCore.acquireLockWithLease(lockName, lockId, lockObj.getLeasePeriod()).toString();
-		return new JsonLockResponse(lockLeaseStatus,"",lockName,lockLeaseStatus,"",String.valueOf(lockObj.getLeasePeriod())).toMap(); 
+		ReturnType lockLeaseStatus = MusicCore.acquireLockWithLease(lockName, lockId, lockObj.getLeasePeriod());
+		return new JsonLockResponse(lockLeaseStatus.getResult()).setLock(lockName)
+									.setMessage(lockLeaseStatus.getMessage())
+									.setLockLease(String.valueOf(lockObj.getLeasePeriod())).toMap();
 	} 
 	
 
@@ -131,13 +140,14 @@ public class RestMusicLocksAPI {
 			@Context HttpServletResponse response){
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());
 		String who = MusicCore.whoseTurnIsIt(lockName);
-		String status = "true";
+		ResultType status = ResultType.SUCCESS;
 		String error = "";
 		if ( who == null ) { 
-			status = "false"; 
+			status = ResultType.FAILURE; 
 			error = "There was a problem getting the lock holder";
 		}
-		return new JsonLockResponse(status,error,lockName,"",who).toMap();
+		return new JsonLockResponse(status).setError(error)
+						.setLock(lockName).setLockHolder(who).toMap();
 	}
 
 	@GET
@@ -152,13 +162,13 @@ public class RestMusicLocksAPI {
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());
 		MusicLockState mls = MusicCore.getMusicLockState(lockName);
 		Map<String,Object> returnMap = null;
-		JsonLockResponse jsonResponse = new JsonLockResponse("false","",lockName);
+		JsonLockResponse jsonResponse = new JsonLockResponse(ResultType.FAILURE).setLock(lockName);
 		if(mls == null) {
 			jsonResponse.setError("");
 			jsonResponse.setMessage("No lock object created yet..");
 		} else { 
-			jsonResponse.setStatus("true");
-			jsonResponse.setLockStatus(mls.getLockStatus().toString());
+			jsonResponse.setStatus(ResultType.SUCCESS);
+			jsonResponse.setLockStatus(mls.getLockStatus());
 			jsonResponse.setLockHolder(mls.getLockHolder());
 		} 
 		return returnMap;
@@ -182,11 +192,13 @@ public class RestMusicLocksAPI {
 		boolean voluntaryRelease = true; 
 		MusicLockState mls = MusicCore.releaseLock(lockId,voluntaryRelease);
 		Map<String,Object> returnMap = null;
-		if ( mls.getLockStatus() == MusicLockState.LockStatus.UNLOCKED ) {
-			returnMap = new JsonLockResponse("Unlocked","","").toMap();
+		if (mls.getLockStatus() == MusicLockState.LockStatus.UNLOCKED) {
+			returnMap = new JsonLockResponse(ResultType.SUCCESS).setLock(lockId)
+								.setLockStatus(mls.getLockStatus()).toMap();
 		}
-		if ( mls.getLockStatus() == MusicLockState.LockStatus.LOCKED) {
-			returnMap = new JsonLockResponse("Locked","","").toMap();
+		if (mls.getLockStatus() == MusicLockState.LockStatus.LOCKED) {
+			returnMap = new JsonLockResponse(ResultType.FAILURE).setLock(lockId)
+								.setLockStatus(mls.getLockStatus()).toMap();
 		}
 		return returnMap;
 	}
@@ -203,7 +215,7 @@ public class RestMusicLocksAPI {
 			@Context HttpServletResponse response){
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());
 		MusicCore.deleteLock(lockName);
-		return new JsonLockResponse("true","","").toMap();
+		return new JsonLockResponse(ResultType.SUCCESS).toMap();
 	}
 
 }

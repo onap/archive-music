@@ -166,7 +166,7 @@ public class EELFLoggerDelegate extends SLF4jWrapper implements EELFLogger {
      * @param msg
      */
     public void info(EELFLogger logger, String msg) {
-        logger.info(msg);
+        logger.info(className + " - "+msg);
     }
 
     /**
@@ -230,7 +230,7 @@ public class EELFLoggerDelegate extends SLF4jWrapper implements EELFLogger {
      * @param msg
      */
     public void error(EELFLogger logger, String msg) {
-        logger.error(msg);
+        logger.error(className+ " - " + msg);
     }
 
     /**

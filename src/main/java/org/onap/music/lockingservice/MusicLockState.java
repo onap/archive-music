@@ -29,9 +29,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import org.onap.music.main.MusicCore;
-import com.att.eelf.configuration.EELFLogger;
-import com.att.eelf.configuration.EELFManager;
+import org.onap.music.eelf.logging.EELFLoggerDelegate;
 
 // the state variable that will be stored in zookeeper, capturing the transitions of
 public class MusicLockState implements Serializable {
@@ -39,7 +37,7 @@ public class MusicLockState implements Serializable {
         UNLOCKED, BEING_LOCKED, LOCKED
     };// captures the state of the lock
 
-    private static EELFLogger logger = EELFManager.getInstance().getLogger(MusicLockState.class);
+    private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicLockState.class);
     LockStatus lockStatus;
     boolean needToSyncQuorum = false;
     String lockHolder;
@@ -106,7 +104,7 @@ public class MusicLockState implements Serializable {
             out = new ObjectOutputStream(bos);
             out.writeObject(this);
         } catch (IOException e) {
-            logger.error(e.getMessage());
+           logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
         }
         return bos.toByteArray();
     }
@@ -119,7 +117,7 @@ public class MusicLockState implements Serializable {
             in = new ObjectInputStream(bis);
             o = in.readObject();
         } catch (ClassNotFoundException | IOException e) {
-            logger.error(e.getMessage());
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
         }
         return (MusicLockState) o;
     }

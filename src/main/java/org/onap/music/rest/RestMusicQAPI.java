@@ -44,6 +44,7 @@ import org.onap.music.datastore.jsonobjects.JsonDelete;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
 import org.onap.music.datastore.jsonobjects.JsonTable;
 import org.onap.music.datastore.jsonobjects.JsonUpdate;
+import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.main.MusicCore;
 
 import com.att.eelf.configuration.EELFLogger;
@@ -60,7 +61,7 @@ import io.swagger.annotations.ApiParam;
 @Api(value="Q Api")
 public class RestMusicQAPI {
 	
-	private static EELFLogger logger = EELFManager.getInstance().getLogger(RestMusicQAPI.class);
+	private EELFLoggerDelegate logger =EELFLoggerDelegate.getLogger(RestMusicDataAPI.class);
 
 
 	/**

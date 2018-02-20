@@ -38,10 +38,11 @@
   <property name="metricsLogName" value="metrics" />
   <property name="auditLogName" value="audit" />
   <property name="debugLogName" value="debug" />
-  <property name="defaultPattern" value="%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n	" />
+  <property name="defaultPattern" value="%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n" />
+  <property name="applicationLoggerPattern" value="%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %msg%n" />
   <property name="auditLoggerPattern" value="%X{BeginTimestamp}|%X{EndTimestamp}|%X{RequestId}|%X{ServiceInstanceId}|%thread|%X{VirtualServerName}|%X{ServiceName}|%X{PartnerName}|%X{StatusCode}|%X{ResponseCode}|%X{ResponseDescription}|%X{InstanceUUID}|%.-5level|%X{AlertSeverity}|%X{ServerIPAddress}|%X{ElapsedTime}|%X{ServerFQDN}|%X{RemoteHost}|%X{ClassName}|%X{Unused}|%X{ProcessKey}|%X{CustomField1}|%X{CustomField2}|%X{CustomField3}|%X{CustomField4}| %msg%n" />
   <property name="metricsLoggerPattern" value="%X{BeginTimestamp}|%X{EndTimestamp}|%X{RequestId}|%X{ServiceInstanceId}|%thread|%X{VirtualServerName}|%X{ServiceName}|%X{PartnerName}|%X{TargetEntity}|%X{TargetServiceName}|%X{StatusCode}|%X{ResponseCode}|%X{ResponseDescription}|%X{InstanceUUID}|%.-5level|%X{AlertSeverity}|%X{ServerIPAddress}|%X{ElapsedTime}|%X{ServerFQDN}|%X{RemoteHost}|%X{ClassName}|%X{Unused}|%X{ProcessKey}|%X{TargetVirtualEntity}|%X{CustomField1}|%X{CustomField2}|%X{CustomField3}|%X{CustomField4}| %msg%n" />
-  <property name="errorLoggerPattern" value="%date{ISO8601,UTC}|%X{RequestId}|%thread|%X{ServiceName}|%X{PartnerName}|%X{TargetEntity}|%X{TargetServiceName}|%.-5level|%X{ErrorCode}|%X{ErrorDescription}| %msg%n" />
+  <property name="errorLoggerPattern" value= "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %msg%n	" />
   <property name="debugLoggerPattern" value="%date{ISO8601,UTC}|%X{RequestId}| %msg%n" ></property>
   <property name="logDirectory" value="${logDir}/${componentName}" />
   <property name="debugLogDirectory" value="${debugDir}/${componentName}" />
@@ -75,7 +76,7 @@
       <maxFileSize>5MB</maxFileSize>
     </triggeringPolicy>
     <encoder>
-      <pattern>${defaultPattern}</pattern>
+      <pattern>${applicationLoggerPattern}</pattern>
     </encoder>
   </appender>
   
@@ -189,7 +190,7 @@
       <maxFileSize>5MB</maxFileSize>
     </triggeringPolicy>
     <encoder>
-      <pattern>${defaultPattern}</pattern>
+      <pattern>${errorLoggerPattern}</pattern>
     </encoder>
   </appender>
   
@@ -213,7 +214,7 @@
       <maxFileSize>5MB</maxFileSize>
     </triggeringPolicy>
     <encoder>
-      <pattern>${defaultPattern}</pattern>
+      <pattern>${debugLoggerPattern}</pattern>
     </encoder>
   </appender>
   

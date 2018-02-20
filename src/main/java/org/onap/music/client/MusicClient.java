@@ -32,6 +32,7 @@ import java.util.Set;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
 import org.onap.music.datastore.jsonobjects.JsonKeySpace;
 import org.onap.music.datastore.jsonobjects.JsonTable;
+import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.lockingservice.MusicLockingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +60,7 @@ import com.datastax.driver.core.querybuilder.Select;
  * @author Robert Eby
  */
 public class MusicClient {
-    private static final Logger LOG = LoggerFactory.getLogger(MusicClient.class);
+    private EELFLoggerDelegate LOG = EELFLoggerDelegate.getLogger(MusicClient.class);
 
     private final String[] music_hosts; // array of hosts in the music cluster
     private Cluster cluster; // MUSIC Cassandra cluster
@@ -229,7 +230,7 @@ public class MusicClient {
         String query = String.format(
                         "CREATE KEYSPACE IF NOT EXISTS %s WITH replication = { %s } %s;",
                         keyspaceName, jsonMaptoSqlString(replicationInfo, ","), durability);
-        LOG.debug(query);
+        LOG.info(EELFLoggerDelegate.applicationLogger,query);
         executeCreateQuery(query, consistency);
         return true;
     }
@@ -237,7 +238,7 @@ public class MusicClient {
     public boolean dropKeyspace(String keyspaceName, JsonKeySpace kspObject) throws Exception {
         String consistency = extractConsistencyInfo(keyspaceName, kspObject.getConsistencyInfo());
         String query = String.format("DROP KEYSPACE %s;", keyspaceName);
-        LOG.debug(query);
+        LOG.info(EELFLoggerDelegate.applicationLogger,query);
         executeCreateQuery(query, consistency);
         return false;
     }
@@ -263,33 +264,9 @@ public class MusicClient {
             prefix = ", ";
         }
 
-        // information about the name-value style properties
-        // Map<String,Object> propertiesMap = tableObj.getProperties();
-        // String propertiesString="";
-        // if(propertiesMap != null){
-        // counter =0;
-        // for (Map.Entry<String, Object> entry : propertiesMap.entrySet())
-        // {
-        // Object ot = entry.getValue();
-        // String value = ot+"";
-        // if(ot instanceof String){
-        // value = "'"+value+"'";
-        // }else if(ot instanceof Map){
-        // Map<String,Object> otMap = (Map<String,Object>)ot;
-        // value = "{"+jsonMaptoSqlString(otMap, ",")+"}";
-        // }
-        // propertiesString = propertiesString+entry.getKey()+"="+ value+"";
-        // if(counter!=propertiesMap.size()-1)
-        // propertiesString = propertiesString+" AND ";
-        // counter = counter +1;
-        // }
-        // }
-
         String query = String.format("CREATE TABLE IF NOT EXISTS %s (%s);", tablename,
                         fields.toString());
-        // if (propertiesMap != null)
-        // query = query + " WITH "+ propertiesString;
-
+        
         LOG.debug(query);
         String consistency = extractConsistencyInfo(tablename, tableObj.getConsistencyInfo());
         executeCreateQuery(query, consistency);
@@ -327,7 +304,7 @@ public class MusicClient {
         String suffix = getTTLSuffix(insObj);
         String query = String.format("INSERT INTO %s (%s) VALUES (%s)%s;", tablename,
                         fields.toString(), values.toString(), suffix);
-        LOG.debug(query);
+        LOG.info(EELFLoggerDelegate.applicationLogger,query);
 
         String consistency = extractConsistencyInfo(tablename, consistencyInfo);
         executeCreateQuery(query, consistency);

@@ -1,20 +1,16 @@
 /*
- * ============LICENSE_START==========================================
- * org.onap.music
- * ===================================================================
- *  Copyright (c) 2017 AT&T Intellectual Property
- * ===================================================================
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * ============LICENSE_START========================================== org.onap.music
+ * =================================================================== Copyright (c) 2017 AT&T
+ * Intellectual Property ===================================================================
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License. You may obtain a copy of the License at
  * 
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
  * 
  * ============LICENSE_END=============================================
  * ====================================================================
@@ -25,28 +21,26 @@ package org.onap.music.lockingservice;
 import java.io.IOException;
 import java.util.StringTokenizer;
 import java.util.concurrent.CountDownLatch;
+
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
-import org.onap.music.exceptions.MusicServiceException;
-import org.onap.music.main.MusicCore;
-import org.onap.music.main.MusicUtil;
 import org.apache.zookeeper.ZooKeeper;
-import com.att.eelf.configuration.EELFLogger;
-import com.att.eelf.configuration.EELFManager;
-import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.exceptions.MusicLockingException;
+import org.onap.music.exceptions.MusicServiceException;
+import org.onap.music.main.MusicUtil;
+
 
 public class MusicLockingService implements Watcher {
+
 
     private static final int SESSION_TIMEOUT = 180000;
     ZkStatelessLockService zkLockHandle = null;
     private CountDownLatch connectedSignal = new CountDownLatch(1);
-    private static EELFLogger logger =
-                    EELFManager.getInstance().getLogger(MusicLockingService.class);
-    // private static EELFLoggerDelegate logger =
-    // EELFLoggerDelegate.getLogger(MusicLockingService.class);
+    private static EELFLoggerDelegate logger =
+                    EELFLoggerDelegate.getLogger(MusicLockingService.class);
 
     public MusicLockingService() throws MusicServiceException {
         try {
@@ -54,10 +48,10 @@ public class MusicLockingService implements Watcher {
             connectedSignal.await();
             zkLockHandle = new ZkStatelessLockService(zk);
         } catch (IOException e) {
-            logger.error(e.getMessage());
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
             throw new MusicServiceException("IO Error has occured" + e.getMessage());
         } catch (InterruptedException e) {
-            logger.error(e.getMessage());
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
             throw new MusicServiceException("Exception Occured " + e.getMessage());
         }
     }
@@ -72,7 +66,7 @@ public class MusicLockingService implements Watcher {
             connectedSignal.await();
             zkLockHandle = new ZkStatelessLockService(zk);
         } catch (IOException | InterruptedException e) {
-            logger.error(e.getMessage());
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
         }
     }
 
@@ -90,10 +84,18 @@ public class MusicLockingService implements Watcher {
         zkLockHandle.setNodeData(lockName, data);
     }
 
-    public MusicLockState getLockState(String lockName) {
+    public MusicLockState getLockState(String lockName) throws MusicLockingException {
 
-        byte[] data = zkLockHandle.getNodeData(lockName);
+    	byte[] data = null;
+        try{
+        	data = zkLockHandle.getNodeData(lockName);
+        }catch (Exception ex){
+        	logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage());
+        }
+        if(data !=null)
         return MusicLockState.deSerialize(data);
+        else
+        throw new  MusicLockingException("Invalid lock or acquire failed");	
     }
 
     public String createLockId(String lockName) {
@@ -108,7 +110,7 @@ public class MusicLockingService implements Watcher {
         try {
             return zkLockHandle.lock(lockName, lockId);
         } catch (KeeperException | InterruptedException e) {
-            logger.error(e.getMessage());
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
         }
         return false;
     }
@@ -138,5 +140,10 @@ public class MusicLockingService implements Watcher {
     public void close() {
         zkLockHandle.close();
     }
+
+	public boolean lockIdExists(String lockIdWithDollar) {
+		String lockId = lockIdWithDollar.replace('$', '/');
+		return zkLockHandle.checkIfLockExists(lockId);
+	}
 
 }

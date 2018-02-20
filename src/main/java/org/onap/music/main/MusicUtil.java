@@ -21,445 +21,458 @@
  */
 package org.onap.music.main;
 
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.UUID;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.exceptions.MusicServiceException;
+
 import com.datastax.driver.core.DataType;
 
 /**
  * @author nelson24
  * 
- *         Properties This will take Properties and load them into MusicUtil. This is a hack for
- *         now. Eventually it would bebest to do this in another way.
+ *         Properties This will take Properties and load them into MusicUtil.
+ *         This is a hack for now. Eventually it would bebest to do this in
+ *         another way.
  * 
  */
 public class MusicUtil {
-    private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicUtil.class);
+	private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicUtil.class);
 
-    private static int myId = 0;
-    private static ArrayList<String> allIds = new ArrayList<String>();
-    private static String publicIp = "";
-    private static ArrayList<String> allPublicIps = new ArrayList<String>();
-    private static String myZkHost = "localhost";
-    private static String myCassaHost = "localhost";
-    private static String defaultMusicIp = "localhost";
-    private static boolean debug = true;
-    private static String version = "2.3.0";
-    public static String musicRestIp = "localhost";
-    private static String musicPropertiesFilePath = "/opt/app/music/etc/music.properties";
-    private static long defaultLockLeasePeriod = 6000;
-    private static final String[] propKeys = new String[] {"zookeeper.host", "cassandra.host",
-                    "music.ip", "debug", "version", "music.rest.ip", "music.properties",
-                    "lock.lease.period", "id", "all.ids", "public.ip", "all.pubic.ips",
-                    "cassandra.user", "cassandra.password", "aaf.endpoint.url"};
+	private static int myId = 0;
+	private static ArrayList<String> allIds = new ArrayList<String>();
+	private static String publicIp = "";
+	private static ArrayList<String> allPublicIps = new ArrayList<String>();
+	private static String myZkHost = "localhost";
+	private static String myCassaHost = "localhost";
+	private static String defaultMusicIp = "localhost";
+	private static boolean debug = true;
+	private static String version = "2.3.0";
+	public static String musicRestIp = "localhost";
+	private static String musicPropertiesFilePath = "/opt/app/music/etc/music.properties";
+	private static long defaultLockLeasePeriod = 6000;
+	private static final String[] propKeys = new String[] { "zookeeper.host", "cassandra.host", "music.ip", "debug",
+			"version", "music.rest.ip", "music.properties", "lock.lease.period", "id", "all.ids", "public.ip",
+			"all.pubic.ips", "cassandra.user", "cassandra.password", "aaf.endpoint.url" };
 
-    public static final String ATOMIC = "atomic";
-    public static final String EVENTUAL = "eventual";
-    public static final String CRITICAL = "critical";
-    public static final String DEFAULTKEYSPACENAME = "TBD";
-    private static String cassName = "cassandra";
-    private static String cassPwd = "cassandra";
-    private static String aafEndpointUrl = null;
+	public static final String ATOMIC = "atomic";
+	public static final String EVENTUAL = "eventual";
+	public static final String CRITICAL = "critical";
+	public static final String DEFAULTKEYSPACENAME = "TBD";
+	private static String cassName = "cassandra";
+	private static String cassPwd = "cassandra";
+	private static String aafEndpointUrl = null;
 
-    /**
-     * @return the cassName
-     */
-    public static String getCassName() {
-        return cassName;
-    }
+	/**
+	 * @return the cassName
+	 */
+	public static String getCassName() {
+		return cassName;
+	}
 
-    /**
-     * @return the cassPwd
-     */
-    public static String getCassPwd() {
-        return cassPwd;
-    }
+	/**
+	 * @return the cassPwd
+	 */
+	public static String getCassPwd() {
+		return cassPwd;
+	}
 
-    /**
-     * @return the aafEndpointUrl
-     */
-    public static String getAafEndpointUrl() {
-        return aafEndpointUrl;
-    }
+	/**
+	 * @return the aafEndpointUrl
+	 */
+	public static String getAafEndpointUrl() {
+		return aafEndpointUrl;
+	}
 
-    /**
-     * 
-     * @param aafEndpointUrl
-     */
-    public static void setAafEndpointUrl(String aafEndpointUrl) {
-        MusicUtil.aafEndpointUrl = aafEndpointUrl;
-    }
+	/**
+	 * 
+	 * @param aafEndpointUrl
+	 */
+	public static void setAafEndpointUrl(String aafEndpointUrl) {
+		MusicUtil.aafEndpointUrl = aafEndpointUrl;
+	}
 
-    /**
-     * 
-     * @return
-     */
-    public static int getMyId() {
-        return myId;
-    }
+	/**
+	 * 
+	 * @return
+	 */
+	public static int getMyId() {
+		return myId;
+	}
 
-    /**
-     * 
-     * @param myId
-     */
-    public static void setMyId(int myId) {
-        MusicUtil.myId = myId;
-    }
+	/**
+	 * 
+	 * @param myId
+	 */
+	public static void setMyId(int myId) {
+		MusicUtil.myId = myId;
+	}
 
+	/**
+	 * 
+	 * @return
+	 */
+	public static ArrayList<String> getAllIds() {
+		return allIds;
+	}
 
-    /**
-     * 
-     * @return
-     */
-    public static ArrayList<String> getAllIds() {
-        return allIds;
-    }
+	/**
+	 * 
+	 * @param allIds
+	 */
+	public static void setAllIds(List<String> allIds) {
+		MusicUtil.allIds = (ArrayList<String>) allIds;
+	}
 
-    /**
-     * 
-     * @param allIds
-     */
-    public static void setAllIds(List<String> allIds) {
-        MusicUtil.allIds = (ArrayList<String>) allIds;
-    }
+	/**
+	 * 
+	 * @return
+	 */
+	public static String getPublicIp() {
+		return publicIp;
+	}
 
-    /**
-     * 
-     * @return
-     */
-    public static String getPublicIp() {
-        return publicIp;
-    }
+	/**
+	 * 
+	 * @param publicIp
+	 */
+	public static void setPublicIp(String publicIp) {
+		MusicUtil.publicIp = publicIp;
+	}
 
-    /**
-     * 
-     * @param publicIp
-     */
-    public static void setPublicIp(String publicIp) {
-        MusicUtil.publicIp = publicIp;
-    }
+	/**
+	 * 
+	 * @return
+	 */
+	public static ArrayList<String> getAllPublicIps() {
+		return allPublicIps;
+	}
 
-    /**
-     * 
-     * @return
-     */
-    public static ArrayList<String> getAllPublicIps() {
-        return allPublicIps;
-    }
+	/**
+	 * 
+	 * @param allPublicIps
+	 */
+	public static void setAllPublicIps(List<String> allPublicIps) {
+		MusicUtil.allPublicIps = (ArrayList<String>) allPublicIps;
+	}
 
-    /**
-     * 
-     * @param allPublicIps
-     */
-    public static void setAllPublicIps(List<String> allPublicIps) {
-        MusicUtil.allPublicIps = (ArrayList<String>) allPublicIps;
-    }
+	/**
+	 * Returns An array of property names that should be in the Properties
+	 * files.
+	 * 
+	 * @return
+	 */
+	public static String[] getPropkeys() {
+		return propKeys;
+	}
 
-    /**
-     * Returns An array of property names that should be in the Properties files.
-     * 
-     * @return
-     */
-    public static String[] getPropkeys() {
-        return propKeys;
-    }
+	/**
+	 * Get MusicRestIp - default = localhost property file value - music.rest.ip
+	 * 
+	 * @return
+	 */
+	public static String getMusicRestIp() {
+		return musicRestIp;
+	}
 
-    /**
-     * Get MusicRestIp - default = localhost property file value - music.rest.ip
-     * 
-     * @return
-     */
-    public static String getMusicRestIp() {
-        return musicRestIp;
-    }
+	/**
+	 * Set MusicRestIp
+	 * 
+	 * @param musicRestIp
+	 */
+	public static void setMusicRestIp(String musicRestIp) {
+		MusicUtil.musicRestIp = musicRestIp;
+	}
 
-    /**
-     * Set MusicRestIp
-     * 
-     * @param musicRestIp
-     */
-    public static void setMusicRestIp(String musicRestIp) {
-        MusicUtil.musicRestIp = musicRestIp;
-    }
+	/**
+	 * Get MusicPropertiesFilePath - Default = /opt/music/music.properties
+	 * property file value - music.properties
+	 * 
+	 * @return
+	 */
+	public static String getMusicPropertiesFilePath() {
+		return musicPropertiesFilePath;
+	}
 
-    /**
-     * Get MusicPropertiesFilePath - Default = /opt/music/music.properties property file value -
-     * music.properties
-     * 
-     * @return
-     */
-    public static String getMusicPropertiesFilePath() {
-        return musicPropertiesFilePath;
-    }
+	/**
+	 * Set MusicPropertiesFilePath
+	 * 
+	 * @param musicPropertiesFilePath
+	 */
+	public static void setMusicPropertiesFilePath(String musicPropertiesFilePath) {
+		MusicUtil.musicPropertiesFilePath = musicPropertiesFilePath;
+	}
 
-    /**
-     * Set MusicPropertiesFilePath
-     * 
-     * @param musicPropertiesFilePath
-     */
-    public static void setMusicPropertiesFilePath(String musicPropertiesFilePath) {
-        MusicUtil.musicPropertiesFilePath = musicPropertiesFilePath;
-    }
+	/**
+	 * Get DefaultLockLeasePeriod - Default = 6000 property file value -
+	 * lock.lease.period
+	 * 
+	 * @return
+	 */
+	public static long getDefaultLockLeasePeriod() {
+		return defaultLockLeasePeriod;
+	}
 
-    /**
-     * Get DefaultLockLeasePeriod - Default = 6000 property file value - lock.lease.period
-     * 
-     * @return
-     */
-    public static long getDefaultLockLeasePeriod() {
-        return defaultLockLeasePeriod;
-    }
+	/**
+	 * Set DefaultLockLeasePeriod
+	 * 
+	 * @param defaultLockLeasePeriod
+	 */
+	public static void setDefaultLockLeasePeriod(long defaultLockLeasePeriod) {
+		MusicUtil.defaultLockLeasePeriod = defaultLockLeasePeriod;
+	}
 
-    /**
-     * Set DefaultLockLeasePeriod
-     * 
-     * @param defaultLockLeasePeriod
-     */
-    public static void setDefaultLockLeasePeriod(long defaultLockLeasePeriod) {
-        MusicUtil.defaultLockLeasePeriod = defaultLockLeasePeriod;
-    }
+	/**
+	 * Set Debug
+	 * 
+	 * @param debug
+	 */
+	public static void setDebug(boolean debug) {
+		MusicUtil.debug = debug;
+	}
 
-    /**
-     * Set Debug
-     * 
-     * @param debug
-     */
-    public static void setDebug(boolean debug) {
-        MusicUtil.debug = debug;
-    }
+	/**
+	 * Is Debug - Default = true property file value - debug
+	 * 
+	 * @return
+	 */
+	public static boolean isDebug() {
+		return debug;
+	}
 
-    /**
-     * Is Debug - Default = true property file value - debug
-     * 
-     * @return
-     */
-    public static boolean isDebug() {
-        return debug;
-    }
+	/**
+	 * Set Version
+	 * 
+	 * @param version
+	 */
+	public static void setVersion(String version) {
+		MusicUtil.version = version;
+	}
 
-    /**
-     * Set Version
-     * 
-     * @param version
-     */
-    public static void setVersion(String version) {
-        MusicUtil.version = version;
-    }
+	/**
+	 * Return the version property file value - version
+	 * 
+	 * @return
+	 */
+	public static String getVersion() {
+		return version;
+	}
 
-    /**
-     * Return the version property file value - version
-     * 
-     * @return
-     */
-    public static String getVersion() {
-        return version;
-    }
+	/**
+	 * Get MyZkHost - Zookeeper Hostname - Default = localhost property file
+	 * value - zookeeper.host
+	 * 
+	 * @return
+	 */
+	public static String getMyZkHost() {
+		return myZkHost;
+	}
 
-    /**
-     * Get MyZkHost - Zookeeper Hostname - Default = localhost property file value - zookeeper.host
-     * 
-     * @return
-     */
-    public static String getMyZkHost() {
-        return myZkHost;
-    }
+	/**
+	 * Set MyZkHost - Zookeeper Hostname
+	 * 
+	 * @param myZkHost
+	 */
+	public static void setMyZkHost(String myZkHost) {
+		MusicUtil.myZkHost = myZkHost;
+	}
 
-    /**
-     * Set MyZkHost - Zookeeper Hostname
-     * 
-     * @param myZkHost
-     */
-    public static void setMyZkHost(String myZkHost) {
-        MusicUtil.myZkHost = myZkHost;
-    }
+	/**
+	 * Get MyCassHost - Cassandra Hostname - Default = localhost property file
+	 * value - cassandra.host
+	 * 
+	 * @return
+	 */
+	public static String getMyCassaHost() {
+		return myCassaHost;
+	}
 
-    /**
-     * Get MyCassHost - Cassandra Hostname - Default = localhost property file value -
-     * cassandra.host
-     * 
-     * @return
-     */
-    public static String getMyCassaHost() {
-        return myCassaHost;
-    }
+	/**
+	 * Set MyCassHost - Cassandra Hostname
+	 * 
+	 * @param myCassaHost
+	 */
+	public static void setMyCassaHost(String myCassaHost) {
+		MusicUtil.myCassaHost = myCassaHost;
+	}
 
-    /**
-     * Set MyCassHost - Cassandra Hostname
-     * 
-     * @param myCassaHost
-     */
-    public static void setMyCassaHost(String myCassaHost) {
-        MusicUtil.myCassaHost = myCassaHost;
-    }
+	/**
+	 * Get DefaultMusicIp - Default = localhost property file value - music.ip
+	 * 
+	 * @return
+	 */
+	public static String getDefaultMusicIp() {
+		return defaultMusicIp;
+	}
 
-    /**
-     * Get DefaultMusicIp - Default = localhost property file value - music.ip
-     * 
-     * @return
-     */
-    public static String getDefaultMusicIp() {
-        return defaultMusicIp;
-    }
+	/**
+	 * Set DefaultMusicIp
+	 * 
+	 * @param defaultMusicIp
+	 */
+	public static void setDefaultMusicIp(String defaultMusicIp) {
+		MusicUtil.defaultMusicIp = defaultMusicIp;
+	}
 
-    /**
-     * Set DefaultMusicIp
-     * 
-     * @param defaultMusicIp
-     */
-    public static void setDefaultMusicIp(String defaultMusicIp) {
-        MusicUtil.defaultMusicIp = defaultMusicIp;
-    }
+	/**
+	 * 
+	 * @return
+	 */
+	public static String getTestType() {
+		String testType = "";
+		try {
+			Scanner fileScanner = new Scanner(new File(""));
+			testType = fileScanner.next();// ignore the my id line
+			String batchSize = fileScanner.next();// ignore the my public ip
+													// line
+			fileScanner.close();
+		} catch (FileNotFoundException e) {
+			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
+		}
+		return testType;
 
-    /**
-     * 
-     * @return
-     */
-    public static String getTestType() {
-        String testType = "";
-        try {
-            Scanner fileScanner = new Scanner(new File(""));
-            testType = fileScanner.next();// ignore the my id line
-            String batchSize = fileScanner.next();// ignore the my public ip line
-            fileScanner.close();
-        } catch (FileNotFoundException e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
-        }
-        return testType;
+	}
 
-    }
+	/**
+	 * 
+	 * @param time
+	 */
+	public static void sleep(long time) {
+		try {
+			Thread.sleep(time);
+		} catch (InterruptedException e) {
+			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
+		}
+	}
 
-    /**
-     * 
-     * @param time
-     */
-    public static void sleep(long time) {
-        try {
-            Thread.sleep(time);
-        } catch (InterruptedException e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
-        }
-    }
+	/**
+	 * Utility function to check if the query object is valid.
+	 * 
+	 * @param withparams
+	 * @param queryObject
+	 * @return
+	 */
+	public static boolean isValidQueryObject(boolean withparams, PreparedQueryObject queryObject) {
+		if (withparams) {
+			int noOfValues = queryObject.getValues().size();
+			int noOfParams = 0;
+			char[] temp = queryObject.getQuery().toCharArray();
+			for (int i = 0; i < temp.length; i++) {
+				if (temp[i] == '?')
+					noOfParams++;
+			}
+			return (noOfValues == noOfParams);
+		} else {
+			return !queryObject.getQuery().isEmpty();
+		}
 
-    /**
-     * Utility function to check if the query object is valid.
-     * 
-     * @param withparams
-     * @param queryObject
-     * @return
-     */
-    public static boolean isValidQueryObject(boolean withparams, PreparedQueryObject queryObject) {
-        if (withparams) {
-            int noOfValues = queryObject.getValues().size();
-            int noOfParams = 0;
-            char[] temp = queryObject.getQuery().toCharArray();
-            for (int i = 0; i < temp.length; i++) {
-                if (temp[i] == '?')
-                    noOfParams++;
-            }
-            return (noOfValues == noOfParams);
-        } else {
-            return !queryObject.getQuery().isEmpty();
-        }
+	}
 
-    }
+	public static void setCassName(String cassName) {
+		MusicUtil.cassName = cassName;
+	}
 
-    public static void setCassName(String cassName) {
-        MusicUtil.cassName = cassName;
-    }
+	public static void setCassPwd(String cassPwd) {
+		MusicUtil.cassPwd = cassPwd;
+	}
 
-    public static void setCassPwd(String cassPwd) {
-        MusicUtil.cassPwd = cassPwd;
-    }
+	public static String convertToCQLDataType(DataType type, Object valueObj) {
 
-    public static String convertToCQLDataType(DataType type, Object valueObj) {
+		String value = "";
+		switch (type.getName()) {
+		case UUID:
+			value = valueObj + "";
+			break;
+		case TEXT:
+		case VARCHAR:
+			String valueString = valueObj + "";
+			valueString = valueString.replace("'", "''");
+			value = "'" + valueString + "'";
+			break;
+		case MAP: {
+			Map<String, Object> otMap = (Map<String, Object>) valueObj;
+			value = "{" + jsonMaptoSqlString(otMap, ",") + "}";
+			break;
+		}
+		default:
+			value = valueObj + "";
+			break;
+		}
+		return value;
+	}
 
-        String value = "";
-        switch (type.getName()) {
-            case UUID:
-                value = valueObj + "";
-                break;
-            case TEXT:
-            case VARCHAR:
-                String valueString = valueObj + "";
-                valueString = valueString.replace("'", "''");
-                value = "'" + valueString + "'";
-                break;
-            case MAP: {
-                Map<String, Object> otMap = (Map<String, Object>) valueObj;
-                value = "{" + jsonMaptoSqlString(otMap, ",") + "}";
-                break;
-            }
-            default:
-                value = valueObj + "";
-                break;
-        }
-        return value;
-    }
+	/**
+	 * 
+	 * @param colType
+	 * @param valueObj
+	 * @return
+	 * @throws Exception
+	 */
+	public static Object convertToActualDataType(DataType colType, Object valueObj) {
+		String valueObjString = valueObj + "";
+		switch (colType.getName()) {
+		case UUID:
+			return UUID.fromString(valueObjString);
+		case VARINT:
+			return BigInteger.valueOf(Long.parseLong(valueObjString));
+		case BIGINT:
+			return Long.parseLong(valueObjString);
+		case INT:
+			return Integer.parseInt(valueObjString);
+		case FLOAT:
+			return Float.parseFloat(valueObjString);
+		case DOUBLE:
+			return Double.parseDouble(valueObjString);
+		case BOOLEAN:
+			return Boolean.parseBoolean(valueObjString);
+		case MAP:
+			return (Map<String, Object>) valueObj;
+		default:
+			return valueObjString;
+		}
+	}
 
+	/**
+	 *
+	 * Utility function to parse json map into sql like string
+	 * 
+	 * @param jMap
+	 * @param lineDelimiter
+	 * @return
+	 */
 
-    /**
-     * 
-     * @param colType
-     * @param valueObj
-     * @return
-     * @throws Exception
-     */
-    public static Object convertToActualDataType(DataType colType, Object valueObj) {
-        String valueObjString = valueObj + "";
-        switch (colType.getName()) {
-            case UUID:
-                return UUID.fromString(valueObjString);
-            case VARINT:
-                return BigInteger.valueOf(Long.parseLong(valueObjString));
-            case BIGINT:
-                return Long.parseLong(valueObjString);
-            case INT:
-                return Integer.parseInt(valueObjString);
-            case FLOAT:
-                return Float.parseFloat(valueObjString);
-            case DOUBLE:
-                return Double.parseDouble(valueObjString);
-            case BOOLEAN:
-                return Boolean.parseBoolean(valueObjString);
-            case MAP:
-                return (Map<String, Object>) valueObj;
-            default:
-                return valueObjString;
-        }
-    }
+	public static String jsonMaptoSqlString(Map<String, Object> jMap, String lineDelimiter) {
+		StringBuilder sqlString = new StringBuilder();
+		int counter = 0;
+		for (Map.Entry<String, Object> entry : jMap.entrySet()) {
+			Object ot = entry.getValue();
+			String value = ot + "";
+			if (ot instanceof String) {
+				value = "'" + value.replace("'", "''") + "'";
+			}
+			sqlString.append("'" + entry.getKey() + "':" + value);
+			if (counter != jMap.size() - 1)
+				sqlString.append(lineDelimiter);
+			counter = counter + 1;
+		}
+		return sqlString.toString();
+	}
 
-
-    /**
-     *
-     * Utility function to parse json map into sql like string
-     * 
-     * @param jMap
-     * @param lineDelimiter
-     * @return
-     */
-
-    public static String jsonMaptoSqlString(Map<String, Object> jMap, String lineDelimiter) {
-        StringBuilder sqlString = new StringBuilder();
-        int counter = 0;
-        for (Map.Entry<String, Object> entry : jMap.entrySet()) {
-            Object ot = entry.getValue();
-            String value = ot + "";
-            if (ot instanceof String) {
-                value = "'" + value.replace("'", "''") + "'";
-            }
-            sqlString.append("'" + entry.getKey() + "':" + value);
-            if (counter != jMap.size() - 1)
-                sqlString.append(lineDelimiter);
-            counter = counter + 1;
-        }
-        return sqlString.toString();
-    }
+	public static Map<String, HashMap<String, Object>> setErrorResponse(MusicServiceException ex) {
+		Map<String, HashMap<String, Object>> results = new HashMap<>();
+		HashMap<String, Object> tempMap = new HashMap<>();
+		Map<String, Object> result = new HashMap<>();
+		result.put("Error Description", ex.getMessage());
+		tempMap.put("Error", result);
+		results.put("Result", tempMap);
+		return results;
+	}
 }

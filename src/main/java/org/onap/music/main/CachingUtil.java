@@ -32,12 +32,13 @@ import javax.ws.rs.core.MediaType;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.jcs.JCS;
 import org.apache.commons.jcs.access.CacheAccess;
-import org.apache.log4j.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.onap.music.datastore.jsonobjects.AAFResponse;
-import com.att.eelf.configuration.EELFLogger;
-import com.att.eelf.configuration.EELFManager;
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.datastore.jsonobjects.AAFResponse;
+import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.exceptions.MusicServiceException;
+
+import com.att.eelf.configuration.EELFLogger;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -53,7 +54,7 @@ import com.sun.jersey.api.client.WebResource;
  */
 public class CachingUtil implements Runnable {
 
-    private static EELFLogger logger = EELFManager.getInstance().getLogger(CachingUtil.class);
+    private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(CachingUtil.class);
 
     private static CacheAccess<String, String> musicCache = JCS.getInstance("musicCache");
     private static CacheAccess<String, Map<String, String>> aafCache = JCS.getInstance("aafCache");
@@ -68,16 +69,13 @@ public class CachingUtil implements Runnable {
     }
 
     public void initializeMusicCache() {
-        logger.info("Initializing Music Cache...");
+        logger.info(EELFLoggerDelegate.applicationLogger,"Initializing Music Cache...");
         musicCache.put("isInitialized", "true");
     }
 
-    public void initializeAafCache() {
-        logger.info("Resetting and initializing AAF Cache...");
+    public void initializeAafCache() throws MusicServiceException {
+        logger.info(EELFLoggerDelegate.applicationLogger,"Resetting and initializing AAF Cache...");
 
-        // aafCache.clear();
-        // loop through aafCache ns .. only the authenticated ns will be re cached. and non
-        // authenticated will wait for user to retry.
         String query = "SELECT application_name, keyspace_name, username, password FROM admin.keyspace_master WHERE is_api = ? allow filtering";
         PreparedQueryObject pQuery = new PreparedQueryObject();
         pQuery.appendQueryString(query);
@@ -85,7 +83,7 @@ public class CachingUtil implements Runnable {
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), false));
         } catch (Exception e1) {
             e1.printStackTrace();
-            logger.error("Exception is " + e1.getMessage() + "during initalizeAafCache");
+            logger.error(EELFLoggerDelegate.errorLogger,"Exception is "+ e1.getMessage() + "during initalizeAafCache");
         }
         ResultSet rs = MusicCore.get(pQuery);
         Iterator<Row> it = rs.iterator();
@@ -121,7 +119,11 @@ public class CachingUtil implements Runnable {
     @Override
     public void run() {
         logger.debug("Scheduled task invoked. Refreshing Cache...");
-        initializeAafCache();
+        try {
+			initializeAafCache();
+		} catch (MusicServiceException e) {
+			logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
+		}
     }
 
     public static boolean authenticateAAFUser(String nameSpace, String userId, String password,
@@ -140,22 +142,20 @@ public class CachingUtil implements Runnable {
                 if (userAttempts.get(nameSpace) == null)
                     userAttempts.put(nameSpace, 0);
                 if ((Integer) userAttempts.get(nameSpace) >= 3) {
-                    logger.info("Reached max attempts. Checking if time out..");
-                    logger.info("Failed time: " + lastFailedTime.get(nameSpace).getTime());
+                    logger.info(EELFLoggerDelegate.applicationLogger,"Reached max attempts. Checking if time out..");
+                    logger.info(EELFLoggerDelegate.applicationLogger,"Failed time: "+lastFailedTime.get(nameSpace).getTime());
                     Calendar calendar = Calendar.getInstance();
-                    long delayTime = (calendar.getTimeInMillis()
-                                    - lastFailedTime.get(nameSpace).getTimeInMillis());
-                    logger.info("Delayed time: " + delayTime);
-                    if (delayTime > 120000) {
-                        logger.info("Resetting failed attempt.");
+                    long delayTime = (calendar.getTimeInMillis()-lastFailedTime.get(nameSpace).getTimeInMillis());
+                    logger.info(EELFLoggerDelegate.applicationLogger,"Delayed time: "+delayTime);
+                    if( delayTime > 120000) {
+                        logger.info(EELFLoggerDelegate.applicationLogger,"Resetting failed attempt.");
                         userAttempts.put(nameSpace, 0);
                     } else {
-                        throw new Exception(
-                                        "No more attempts allowed. Please wait for atleast 2 min.");
+                        throw new Exception("No more attempts allowed. Please wait for atleast 2 min.");
                     }
                 }
-                logger.error("Cache not authenticated..");
-                logger.info("Check AAF again...");
+                logger.error(EELFLoggerDelegate.errorLogger,"Cache not authenticated..");
+                logger.info(EELFLoggerDelegate.applicationLogger,"Check AAF again...");
             }
         }
 
@@ -165,7 +165,7 @@ public class CachingUtil implements Runnable {
                 return true;
 
         }
-        logger.info("Invalid user. Cache not updated");
+        logger.info(EELFLoggerDelegate.applicationLogger,"Invalid user. Cache not updated");
         return false;
     }
 
@@ -260,7 +260,7 @@ public class CachingUtil implements Runnable {
         appNameCache.put(namespace, isAAF);
     }
 
-    public static Boolean isAAFApplication(String namespace) {
+    public static Boolean isAAFApplication(String namespace) throws MusicServiceException {
 
         String isAAF = appNameCache.get(namespace);
         if (isAAF == null) {
@@ -277,10 +277,12 @@ public class CachingUtil implements Runnable {
                 e.printStackTrace();
             }
         }
+
+        
         return Boolean.valueOf(isAAF);
     }
 
-    public static String getUuidFromMusicCache(String keyspace) {
+    public static String getUuidFromMusicCache(String keyspace) throws MusicServiceException {
         String uuid = musicCache.get(keyspace);
         if (uuid == null) {
             PreparedQueryObject pQuery = new PreparedQueryObject();
@@ -292,14 +294,14 @@ public class CachingUtil implements Runnable {
                 uuid = rs.getUUID("uuid").toString();
                 musicCache.put(keyspace, uuid);
             } catch (Exception e) {
-                logger.error("Exception occured during uuid retrieval from DB." + e.getMessage());
+                logger.error(EELFLoggerDelegate.errorLogger,"Exception occured during uuid retrieval from DB."+e.getMessage());
                 e.printStackTrace();
             }
         }
         return uuid;
     }
 
-    public static String getAppName(String keyspace) {
+    public static String getAppName(String keyspace) throws MusicServiceException {
         String appName = null;
         PreparedQueryObject pQuery = new PreparedQueryObject();
         pQuery.appendQueryString(
@@ -309,7 +311,7 @@ public class CachingUtil implements Runnable {
         try {
             appName = rs.getString("application_name");
         } catch (Exception e) {
-            logger.error("Exception occured during uuid retrieval from DB." + e.getMessage());
+            logger.error(EELFLoggerDelegate.errorLogger,"Exception occured during uuid retrieval from DB."+e.getMessage());
             e.printStackTrace();
         }
         return appName;
@@ -317,7 +319,7 @@ public class CachingUtil implements Runnable {
 
     public static String generateUUID() {
         String uuid = UUID.randomUUID().toString();
-        logger.info("New AID generated: " + uuid);
+        logger.info(EELFLoggerDelegate.applicationLogger,"New AID generated: "+uuid);
         return uuid;
     }
 
@@ -337,8 +339,7 @@ public class CachingUtil implements Runnable {
                     throws Exception {
         Map<String, Object> resultMap = new HashMap<>();
         if (ns == null || userId == null || password == null) {
-            logger.error("One or more required headers is missing. userId: " + userId
-                            + " :: password: " + password);
+            logger.error(EELFLoggerDelegate.errorLogger,"One or more required headers is missing. userId: "+userId+" :: password: "+password);
             resultMap.put("Exception",
                             "One or more required headers appName(ns), userId, password is missing. Please check.");
             return resultMap;
@@ -350,16 +351,15 @@ public class CachingUtil implements Runnable {
         queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
         Row rs = MusicCore.get(queryObject).one();
         if (rs == null) {
-            logger.error("Namespace and UserId doesn't match. namespace: " + ns + " and userId: "
-                            + userId);
-            resultMap.put("Exception", "Application " + ns
-                            + " doesn't seem to be Onboarded. Please onboard your application with MUSIC. If already onboarded contact Admin");
+            logger.error(EELFLoggerDelegate.errorLogger,"Namespace and UserId doesn't match. namespace: "+ns+" and userId: "+userId);
+
+            resultMap.put("Exception", "Namespace and UserId doesn't match. namespace: "+ns+" and userId: "+userId);
         } else {
             boolean is_aaf = rs.getBool("is_aaf");
             String keyspace = rs.getString("keyspace_name");
             if (!is_aaf) {
                 if (!keyspace.equals(MusicUtil.DEFAULTKEYSPACENAME)) {
-                    logger.error("Non AAF applications are allowed to have only one keyspace per application.");
+                    logger.error(EELFLoggerDelegate.errorLogger,"Non AAF applications are allowed to have only one keyspace per application.");
                     resultMap.put("Exception",
                                     "Non AAF applications are allowed to have only one keyspace per application.");
                 }

@@ -122,8 +122,8 @@ public class CassandraCQL {
         Map<String, String> address = new HashMap<>();
         preparedUpdateValues.add(vectorTs);
         String emp_name = "Mr Test one";
-        address.put("Street", "101 Some Way");
-        address.put("City", "New York");
+        address.put("Street", "101 Att Way");
+        address.put("City", "Bedmister");
         preparedUpdateValues.add(address);
         preparedUpdateValues.add(emp_name);
         return preparedUpdateValues;
