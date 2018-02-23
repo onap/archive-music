@@ -36,8 +36,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
-import com.att.eelf.configuration.EELFLogger;
-import com.att.eelf.configuration.EELFManager;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
@@ -93,6 +91,7 @@ public class RestMusicDataAPI {
     private class RowIdentifier {
         public String primarKeyValue;
         public StringBuilder rowIdString;
+        @SuppressWarnings("unused")
         public PreparedQueryObject queryObject;// the string with all the row
                                                // identifiers separated by AND
 
@@ -104,6 +103,7 @@ public class RestMusicDataAPI {
         }
     }
 
+    @SuppressWarnings("unused")
     private String buildVersion(String major, String minor, String patch) {
         if (minor != null) {
             major += "." + minor;
@@ -187,12 +187,14 @@ public class RestMusicDataAPI {
             logger.error(EELFLoggerDelegate.errorLogger, "resulta = " + result);
         } catch (Exception e) {
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
+            resultMap.put("Exception", "Couldn't create keyspace. Please make sure all the information is correct.");
 
         }
         logger.debug("result = " + result);
         if (!result) {
             resultMap.put("Status", String.valueOf(result));
-            resultMap.put("Exception", "Keyspace already exists. Please contact admin.");
+            if(!resultMap.containsKey("Exception"))
+            	resultMap.put("Exception", "Keyspace already exists. Please contact admin.");
             if (resultMap.get("uuid").equals("new")) {
                 queryObject = new PreparedQueryObject();
                 queryObject.appendQueryString(
@@ -206,10 +208,9 @@ public class RestMusicDataAPI {
             } else {
                 queryObject = new PreparedQueryObject();
                 queryObject.appendQueryString(
-                                "UPDATE admin.keyspace_master SET keyspace_name=?,password=?,is_api=null where uuid = ?;");
+                                "UPDATE admin.keyspace_master SET keyspace_name=? where uuid = ?;");
                 queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(),
                                 MusicUtil.DEFAULTKEYSPACENAME));
-                queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), null));
                 queryObject.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), newAid));
                 result = MusicCore.nonKeyRelatedPut(queryObject, consistency);
                 resultMap.remove("aid");
@@ -223,17 +224,11 @@ public class RestMusicDataAPI {
             queryObject.appendQueryString("CREATE ROLE IF NOT EXISTS '" + userId
                             + "' WITH PASSWORD = '" + password + "' AND LOGIN = true;");
             result = MusicCore.nonKeyRelatedPut(queryObject, consistency);
-            if (result) {
-                queryObject = new PreparedQueryObject();
-                queryObject.appendQueryString("GRANT ALL PERMISSIONS on KEYSPACE " + keyspaceName
-                                + " to " + userId);
-                queryObject.appendQueryString(";");
-                result = MusicCore.nonKeyRelatedPut(queryObject, consistency);
-            } else {
-                resultMap.remove("uuid");
-                resultMap.put("Exception", "Exception while creating user.");
-                return resultMap;
-            }
+            queryObject = new PreparedQueryObject();
+            queryObject.appendQueryString("GRANT ALL PERMISSIONS on KEYSPACE " + keyspaceName
+                                + " to '" + userId + "'");
+            queryObject.appendQueryString(";");
+            result = MusicCore.nonKeyRelatedPut(queryObject, consistency);
         } catch (Exception e) {
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
         }
@@ -393,6 +388,7 @@ public class RestMusicDataAPI {
                 if (ot instanceof String) {
                     value = "'" + value + "'";
                 } else if (ot instanceof Map) {
+                    @SuppressWarnings("unchecked")
                     Map<String, Object> otMap = (Map<String, Object>) ot;
                     value = "{" + MusicUtil.jsonMaptoSqlString(otMap, ",") + "}";
                 }
@@ -587,6 +583,10 @@ public class RestMusicDataAPI {
                                 null);
             } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
                 result = MusicCore.atomicPut(keyspace, tablename, primaryKey, queryObject, null);
+
+            }
+            else if (consistency.equalsIgnoreCase(MusicUtil.ATOMICDELETELOCK)) {
+                result = MusicCore.atomicPutWithDeleteLock(keyspace, tablename, primaryKey, queryObject, null);
 
             }
             return (result != null) ? result.toMap()
@@ -862,6 +862,10 @@ public class RestMusicDataAPI {
             operationResult = MusicCore.atomicPut(keyspace, tablename, rowId.primarKeyValue,
                             queryObject, conditionInfo);
         }
+        else if (consistency.equalsIgnoreCase(MusicUtil.ATOMICDELETELOCK)) {
+            operationResult = MusicCore.atomicPutWithDeleteLock(keyspace, tablename, rowId.primarKeyValue,
+                            queryObject, conditionInfo);
+        }
         try {
             return operationResult.toMap();
         } catch (NullPointerException e) {
@@ -970,7 +974,6 @@ public class RestMusicDataAPI {
         String lockId = selObj.getConsistencyInfo().get("lockId");
 
         PreparedQueryObject queryObject = new PreparedQueryObject();
-        StringBuilder rowSpec = new StringBuilder();
 
         RowIdentifier rowId = null;
         try {
@@ -979,17 +982,21 @@ public class RestMusicDataAPI {
             return MusicUtil.setErrorResponse(ex);
         }
         queryObject.appendQueryString(
-                        "SELECT *  FROM " + keyspace + "." + tablename + " WHERE " + rowSpec + ";");
+                        "SELECT *  FROM " + keyspace + "." + tablename + " WHERE " + rowId.rowIdString + ";");
 
         ResultSet results = null;
 
         String consistency = selObj.getConsistencyInfo().get("type");
 
-        if (consistency.equalsIgnoreCase("critical")) {
+        if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
             results = MusicCore.criticalGet(keyspace, tablename, rowId.primarKeyValue, queryObject,
                             lockId);
-        } else if (consistency.equalsIgnoreCase("atomic")) {
+        } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
             results = MusicCore.atomicGet(keyspace, tablename, rowId.primarKeyValue, queryObject);
+        }
+        
+        else if (consistency.equalsIgnoreCase(MusicUtil.ATOMICDELETELOCK)) {
+            results = MusicCore.atomicGetWithDeleteLock(keyspace, tablename, rowId.primarKeyValue, queryObject);
         }
 
         return MusicCore.marshallResults(results);

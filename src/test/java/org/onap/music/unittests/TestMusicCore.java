@@ -139,7 +139,7 @@ public class TestMusicCore {
     
     @Test
     public void testAcquireLockifLockRefDoesntExist() {
-    	Mockito.when(mLockHandle.lockIdExists("bs1")).thenReturn(false);
+        Mockito.when(mLockHandle.lockIdExists("bs1")).thenReturn(false);
         ReturnType lock = MusicCore.acquireLock("ks1.ts1", "bs1");
         assertEquals(lock.getResult(), ResultType.FAILURE);
         assertEquals(lock.getMessage(), "Lockid doesn't exist");
@@ -351,19 +351,12 @@ public class TestMusicCore {
         mDstoreHandle = Mockito.mock(MusicDataStore.class);
         preparedQueryObject = Mockito.mock(PreparedQueryObject.class);
         Mockito.when(mLockHandle.createLockId("/" + "ks1.tn1.pk1")).thenReturn("id1");
-        MusicLockState musicLockState = new MusicLockState(LockStatus.LOCKED, "id1");
         ReturnType expectedResult = new ReturnType(ResultType.FAILURE, "Failure");
-        Mockito.when(mLockHandle.getLockState("ks1.tn1.pk1")).thenReturn(musicLockState);
         Mockito.when(mLockHandle.isMyTurn("id1")).thenReturn(false);
-        Mockito.when(mLockHandle.getLockState("ks1" + "." + "tn1" + "." + "pk1"))
-                        .thenReturn(musicLockState);
         ReturnType returnType =
                         MusicCore.atomicPut("ks1", "tn1", "pk1", preparedQueryObject, condition);
         assertEquals(expectedResult.getResult(), returnType.getResult());
-        Mockito.verify(mLockHandle, Mockito.atLeastOnce()).getLockState("ks1.tn1.pk1");
         Mockito.verify(mLockHandle).isMyTurn("id1");
-        Mockito.verify(mLockHandle, Mockito.atLeastOnce())
-                        .getLockState("ks1" + "." + "tn1" + "." + "pk1");
         Mockito.verify(mLockHandle).createLockId("/" + "ks1.tn1.pk1");
     }
 
@@ -396,19 +389,11 @@ public class TestMusicCore {
         preparedQueryObject = Mockito.mock(PreparedQueryObject.class);
         rs = Mockito.mock(ResultSet.class);
         Mockito.when(mLockHandle.createLockId("/" + "ks1.tn1.pk1")).thenReturn("id1");
-        MusicLockState musicLockState = new MusicLockState(LockStatus.LOCKED, "id1");
-        Mockito.when(mLockHandle.getLockState("ks1.tn1.pk1")).thenReturn(musicLockState);
         Mockito.when(mLockHandle.isMyTurn("id1")).thenReturn(false);
-        Mockito.when(mLockHandle.getLockState("ks1" + "." + "tn1" + "." + "pk1"))
-                        .thenReturn(musicLockState);
         ResultSet rs1 = MusicCore.atomicGet("ks1", "tn1", "pk1", preparedQueryObject);
         assertNull(rs1);
         Mockito.verify(mLockHandle).createLockId("/" + "ks1.tn1.pk1");
-        Mockito.verify(mLockHandle, Mockito.atLeastOnce()).getLockState("ks1.tn1.pk1");
         Mockito.verify(mLockHandle).isMyTurn("id1");
-        Mockito.verify(mLockHandle, Mockito.atLeastOnce())
-                        .getLockState("ks1" + "." + "tn1" + "." + "pk1");
-
     }
 
     @Test

@@ -66,6 +66,8 @@ public class MusicUtil {
 	public static final String ATOMIC = "atomic";
 	public static final String EVENTUAL = "eventual";
 	public static final String CRITICAL = "critical";
+	public static final String ATOMICDELETELOCK = "atomic_delete_lock";
+	
 	public static final String DEFAULTKEYSPACENAME = "TBD";
 	private static String cassName = "cassandra";
 	private static String cassPwd = "cassandra";

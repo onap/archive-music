@@ -19,7 +19,9 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.unittests;
+
 /**
  * @author srupane
  * 
@@ -37,42 +39,43 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.thrift.transport.TTransportException;
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
 import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.PreparedQueryObject;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 public class CassandraCQL {
 
     public static final String createKeySpace =
-                    "CREATE KEYSPACE IF NOT EXISTS testCassa WITH replication = {'class':'SimpleStrategy','replication_factor':1} AND durable_writes = true;";
+                    "CREATE KEYSPACE IF NOT EXISTS testCassa WITH replication = "
+                    +"{'class':'SimpleStrategy','replication_factor':1} AND durable_writes = true;";
 
     public static final String dropKeyspace = "DROP KEYSPACE IF EXISTS testCassa";
 
     public static final String createTableEmployees =
                     "CREATE TABLE IF NOT EXISTS testCassa.employees "
-                                    + "(vector_ts text,emp_id uuid,emp_name text,emp_salary varint,address Map<text,text>,PRIMARY KEY (emp_name)) "
-                                    + "WITH comment='Financial Info of employees' "
-                                    + "AND compression={'sstable_compression':'DeflateCompressor','chunk_length_kb':64} "
-                                    + "AND compaction={'class':'SizeTieredCompactionStrategy','min_threshold':6};";
+                    + "(vector_ts text,empId uuid,empName text,empSalary varint,address Map<text,text>,PRIMARY KEY (empName)) "
+                    + "WITH comment='Financial Info of employees' "
+                    + "AND compression={'sstable_compression':'DeflateCompressor','chunk_length_kb':64} "
+                    + "AND compaction={'class':'SizeTieredCompactionStrategy','min_threshold':6};";
 
     public static final String insertIntoTablePrepared1 =
-                    "INSERT INTO testCassa.employees (vector_ts,emp_id,emp_name,emp_salary) VALUES (?,?,?,?); ";
+                    "INSERT INTO testCassa.employees (vector_ts,empId,empName,empSalary) VALUES (?,?,?,?); ";
 
     public static final String insertIntoTablePrepared2 =
-                    "INSERT INTO testCassa.employees (vector_ts,emp_id,emp_name,emp_salary,address) VALUES (?,?,?,?,?);";
+                    "INSERT INTO testCassa.employees (vector_ts,empId,empName,empSalary,address) VALUES (?,?,?,?,?);";
 
     public static final String selectALL = "SELECT *  FROM testCassa.employees;";
 
     public static final String selectSpecific =
-                    "SELECT *  FROM testCassa.employees WHERE emp_name= ?;";
+                    "SELECT *  FROM testCassa.employees WHERE empName= ?;";
 
     public static final String updatePreparedQuery =
-                    "UPDATE testCassa.employees  SET vector_ts=?,address= ? WHERE emp_name= ?;";
+                    "UPDATE testCassa.employees  SET vector_ts=?,address= ? WHERE empName= ?;";
 
     public static final String deleteFromTable = " ";
 
@@ -85,13 +88,13 @@ public class CassandraCQL {
         List<Object> preppreparedInsertValues1 = new ArrayList<>();
         String vectorTs =
                         String.valueOf(Thread.currentThread().getId() + System.currentTimeMillis());
-        UUID emp_id = UUID.fromString("abc66ccc-d857-4e90-b1e5-df98a3d40cd6");
-        BigInteger emp_salary = BigInteger.valueOf(23443);
-        String emp_name = "Mr Test one";
+        UUID empId = UUID.fromString("abc66ccc-d857-4e90-b1e5-df98a3d40cd6");
+        BigInteger empSalary = BigInteger.valueOf(23443);
+        String empName = "Mr Test one";
         preppreparedInsertValues1.add(vectorTs);
-        preppreparedInsertValues1.add(emp_id);
-        preppreparedInsertValues1.add(emp_name);
-        preppreparedInsertValues1.add(emp_salary);
+        preppreparedInsertValues1.add(empId);
+        preppreparedInsertValues1.add(empName);
+        preppreparedInsertValues1.add(empSalary);
         return preppreparedInsertValues1;
     }
 
@@ -100,14 +103,14 @@ public class CassandraCQL {
         List<Object> preparedInsertValues2 = new ArrayList<>();
         String vectorTs =
                         String.valueOf(Thread.currentThread().getId() + System.currentTimeMillis());
-        UUID emp_id = UUID.fromString("abc434cc-d657-4e90-b4e5-df4223d40cd6");
-        BigInteger emp_salary = BigInteger.valueOf(45655);
-        String emp_name = "Mr Test two";
+        UUID empId = UUID.fromString("abc434cc-d657-4e90-b4e5-df4223d40cd6");
+        BigInteger empSalary = BigInteger.valueOf(45655);
+        String empName = "Mr Test two";
         Map<String, String> address = new HashMap<>();
         preparedInsertValues2.add(vectorTs);
-        preparedInsertValues2.add(emp_id);
-        preparedInsertValues2.add(emp_name);
-        preparedInsertValues2.add(emp_salary);
+        preparedInsertValues2.add(empId);
+        preparedInsertValues2.add(empName);
+        preparedInsertValues2.add(empSalary);
         address.put("Street", "1 some way");
         address.put("City", "Some town");
         preparedInsertValues2.add(address);
@@ -121,33 +124,33 @@ public class CassandraCQL {
                         String.valueOf(Thread.currentThread().getId() + System.currentTimeMillis());
         Map<String, String> address = new HashMap<>();
         preparedUpdateValues.add(vectorTs);
-        String emp_name = "Mr Test one";
+        String empName = "Mr Test one";
         address.put("Street", "101 Some Way");
         address.put("City", "New York");
         preparedUpdateValues.add(address);
-        preparedUpdateValues.add(emp_name);
+        preparedUpdateValues.add(empName);
         return preparedUpdateValues;
     }
 
     // Generate Different Prepared Query Objects
     /**
-     * Query Object for Get
+     * Query Object for Get.
      * 
      * @return
      */
     public static PreparedQueryObject setPreparedGetQuery() {
 
         PreparedQueryObject queryObject = new PreparedQueryObject();
-        String emp_name1 = "Mr Test one";
+        String empName1 = "Mr Test one";
         queryObject.appendQueryString(selectSpecific);
-        queryObject.addValue(emp_name1);
+        queryObject.addValue(empName1);
         return queryObject;
     }
 
     /**
-     * Query Object 1 for Insert
+     * Query Object 1 for Insert.
      * 
-     * @return
+     * @return {@link PreparedQueryObject}
      */
     public static PreparedQueryObject setPreparedInsertQueryObject1() {
 
@@ -164,9 +167,9 @@ public class CassandraCQL {
     }
 
     /**
-     * Query Object 2 for Insert
+     * Query Object 2 for Insert.
      * 
-     * @return
+     * @return {@link PreparedQueryObject}
      */
     public static PreparedQueryObject setPreparedInsertQueryObject2() {
 
@@ -183,9 +186,9 @@ public class CassandraCQL {
     }
 
     /**
-     * Query Object for Update
+     * Query Object for Update.
      * 
-     * @return
+     * @return {@link PreparedQueryObject}
      */
     public static PreparedQueryObject setPreparedUpdateQueryObject() {
 

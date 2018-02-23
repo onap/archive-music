@@ -385,44 +385,7 @@ public class MusicCore {
     }
 
 
-    /**
-     * this function is mainly for the benchmarks to see the effect of lock deletion.
-     * 
-     * @param keyspaceName
-     * @param tableName
-     * @param primaryKey
-     * @param queryObject
-     * @param conditionInfo
-     * @return
-     */
-    public static ReturnType atomicPutWithDeleteLock(String keyspaceName, String tableName,
-                    String primaryKey, PreparedQueryObject queryObject, Condition conditionInfo) {
-        long start = System.currentTimeMillis();
-        String key = keyspaceName + "." + tableName + "." + primaryKey;
-        String lockId = createLockReference(key);
-        long lockCreationTime = System.currentTimeMillis();
-        long leasePeriod = MusicUtil.getDefaultLockLeasePeriod();
-        ReturnType lockAcqResult = acquireLockWithLease(key, lockId, leasePeriod);
-        long lockAcqTime = System.currentTimeMillis();
-        if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
-            logger.info(EELFLoggerDelegate.applicationLogger,"acquired lock with id " + lockId);
-            ReturnType criticalPutResult = criticalPut(keyspaceName, tableName, primaryKey,
-                            queryObject, lockId, conditionInfo);
-            long criticalPutTime = System.currentTimeMillis();
-            deleteLock(key);
-            long lockDeleteTime = System.currentTimeMillis();
-            String timingInfo = "|lock creation time:" + (lockCreationTime - start)
-                            + "|lock accquire time:" + (lockAcqTime - lockCreationTime)
-                            + "|critical put time:" + (criticalPutTime - lockAcqTime)
-                            + "|lock delete time:" + (lockDeleteTime - criticalPutTime) + "|";
-            criticalPutResult.setTimingInfo(timingInfo);
-            return criticalPutResult;
-        } else {
-            logger.info(EELFLoggerDelegate.applicationLogger,"unable to acquire lock, id " + lockId);
-            deleteLock(key);
-            return lockAcqResult;
-        }
-    }
+
 
     /**
      * 
@@ -515,6 +478,10 @@ public class MusicCore {
         logger.info(EELFLoggerDelegate.applicationLogger,"Time taken to release lock:" + (end - start) + " ms");
         return mls;
     }
+    
+    public static  void  voluntaryReleaseLock(String lockId) throws MusicLockingException{
+		getLockingServiceHandle().unlockAndDeleteId(lockId);
+	}
 
     /**
      * 
@@ -734,23 +701,23 @@ public class MusicCore {
      * @param primaryKey primary key value
      * @param queryObject query object containing prepared query and values
      * @return ReturnType
+     * @throws MusicLockingException 
      */
     public static ReturnType atomicPut(String keyspaceName, String tableName, String primaryKey,
-                    PreparedQueryObject queryObject, Condition conditionInfo) {
+                    PreparedQueryObject queryObject, Condition conditionInfo) throws MusicLockingException {
+
         long start = System.currentTimeMillis();
         String key = keyspaceName + "." + tableName + "." + primaryKey;
         String lockId = createLockReference(key);
         long lockCreationTime = System.currentTimeMillis();
-        long leasePeriod = MusicUtil.getDefaultLockLeasePeriod();
-        ReturnType lockAcqResult = acquireLockWithLease(key, lockId, leasePeriod);
+        ReturnType lockAcqResult = acquireLock(key, lockId);
         long lockAcqTime = System.currentTimeMillis();
         if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
             logger.info(EELFLoggerDelegate.applicationLogger,"acquired lock with id " + lockId);
             ReturnType criticalPutResult = criticalPut(keyspaceName, tableName, primaryKey,
                             queryObject, lockId, conditionInfo);
             long criticalPutTime = System.currentTimeMillis();
-            boolean voluntaryRelease = true;
-            deleteLock(key);
+            voluntaryReleaseLock(lockId);
             long lockDeleteTime = System.currentTimeMillis();
             String timingInfo = "|lock creation time:" + (lockCreationTime - start)
                             + "|lock accquire time:" + (lockAcqTime - lockCreationTime)
@@ -764,6 +731,49 @@ public class MusicCore {
             return lockAcqResult;
         }
     }
+    
+    /**
+     * this function is mainly for the benchmarks to see the effect of lock deletion.
+     * 
+     * @param keyspaceName
+     * @param tableName
+     * @param primaryKey
+     * @param queryObject
+     * @param conditionInfo
+     * @return
+     * @throws MusicLockingException 
+     */
+    public static ReturnType atomicPutWithDeleteLock(String keyspaceName, String tableName,
+                    String primaryKey, PreparedQueryObject queryObject, Condition conditionInfo) throws MusicLockingException {
+
+        long start = System.currentTimeMillis();
+        String key = keyspaceName + "." + tableName + "." + primaryKey;
+        String lockId = createLockReference(key);
+        long lockCreationTime = System.currentTimeMillis();
+        long leasePeriod = MusicUtil.getDefaultLockLeasePeriod();
+        ReturnType lockAcqResult = acquireLock(key, lockId);
+        long lockAcqTime = System.currentTimeMillis();
+        if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
+            logger.info(EELFLoggerDelegate.applicationLogger,"acquired lock with id " + lockId);
+            ReturnType criticalPutResult = criticalPut(keyspaceName, tableName, primaryKey,
+                            queryObject, lockId, conditionInfo);
+            long criticalPutTime = System.currentTimeMillis();
+            deleteLock(key);
+            long lockDeleteTime = System.currentTimeMillis();
+            String timingInfo = "|lock creation time:" + (lockCreationTime - start)
+                            + "|lock accquire time:" + (lockAcqTime - lockCreationTime)
+                            + "|critical put time:" + (criticalPutTime - lockAcqTime)
+                            + "|lock delete time:" + (lockDeleteTime - criticalPutTime) + "|";
+            criticalPutResult.setTimingInfo(timingInfo);
+            return criticalPutResult;
+        } else {
+            logger.info(EELFLoggerDelegate.applicationLogger,"unable to acquire lock, id " + lockId);
+            deleteLock(key);
+            return lockAcqResult;
+        }
+    }
+    
+
 
 
     /**
@@ -775,25 +785,48 @@ public class MusicCore {
      * @param queryObject query object containing prepared query and values
      * @return ResultSet
      * @throws MusicServiceException
+     * @throws MusicLockingException 
      */
     public static ResultSet atomicGet(String keyspaceName, String tableName, String primaryKey,
-                    PreparedQueryObject queryObject) throws MusicServiceException {
+                    PreparedQueryObject queryObject) throws MusicServiceException, MusicLockingException {
         String key = keyspaceName + "." + tableName + "." + primaryKey;
         String lockId = createLockReference(key);
         long leasePeriod = MusicUtil.getDefaultLockLeasePeriod();
-        ReturnType lockAcqResult = acquireLockWithLease(key, lockId, leasePeriod);
+        ReturnType lockAcqResult = acquireLock(key, lockId);
         if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
             logger.info(EELFLoggerDelegate.applicationLogger,"acquired lock with id " + lockId);
             ResultSet result =
                             criticalGet(keyspaceName, tableName, primaryKey, queryObject, lockId);
-            boolean voluntaryRelease = true;
-            releaseLock(lockId, voluntaryRelease);
+            voluntaryReleaseLock(lockId);
             return result;
         } else {
+        	destroyLockRef(lockId);
             logger.info(EELFLoggerDelegate.applicationLogger,"unable to acquire lock, id " + lockId);
             return null;
         }
     }
+    
+	public static ResultSet atomicGetWithDeleteLock(String keyspaceName, String tableName, String primaryKey,
+			PreparedQueryObject queryObject) throws MusicServiceException, MusicLockingException {
+		String key = keyspaceName + "." + tableName + "." + primaryKey;
+		String lockId = createLockReference(key);
+		long leasePeriod = MusicUtil.getDefaultLockLeasePeriod();
+
+		ReturnType lockAcqResult = acquireLock(key, lockId);
+
+		if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
+			logger.info(EELFLoggerDelegate.applicationLogger, "acquired lock with id " + lockId);
+			ResultSet result = criticalGet(keyspaceName, tableName, primaryKey, queryObject, lockId);
+			deleteLock(key);
+			return result;
+		} else {
+			deleteLock(key);
+			logger.info(EELFLoggerDelegate.applicationLogger, "unable to acquire lock, id " + lockId);
+			return null;
+		}
+	}
+    
+    
 
     /**
      * authenticate user logic
@@ -822,7 +855,13 @@ public class MusicCore {
         		resultMap.put("Exception", "Aid is mandatory for nonAAF applications ");
         		return resultMap;
         	}
-            resultMap = CachingUtil.authenticateAIDUser(aid, keyspace);
+        	if(operation.contains("Lock")) {
+        		resultMap = CachingUtil.authenticateAIDUserLock(aid, nameSpace);
+        	}
+        	else {
+        		resultMap = CachingUtil.authenticateAIDUser(aid, keyspace);
+        	}
+            
             if (!resultMap.isEmpty())
                 return resultMap;
         }
@@ -837,7 +876,7 @@ public class MusicCore {
         if (isAAF && nameSpace != null && userId != null && password != null) {
             boolean isValid = true;
             try {
-                isValid = CachingUtil.authenticateAAFUser(nameSpace, userId, password, keyspace);
+            	 isValid = CachingUtil.authenticateAAFUser(nameSpace, userId, password, keyspace);
             } catch (Exception e) {
                 logger.error(EELFLoggerDelegate.errorLogger,"Got exception while AAF authentication for namespace " + nameSpace);
                 resultMap.put("Exception", e.getMessage());

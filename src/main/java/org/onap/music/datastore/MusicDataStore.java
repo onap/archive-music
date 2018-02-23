@@ -45,6 +45,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.TableMetadata;
+import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 /**
@@ -322,7 +323,12 @@ public class MusicDataStore {
             ResultSet rs = session.execute(preparedInsert.bind(queryObject.getValues().toArray()));
             result = rs.wasApplied();
 
-        } catch (Exception e) {
+        }
+        catch (AlreadyExistsException ae) {
+        	logger.error(EELFLoggerDelegate.errorLogger, "Executing Session Failure for Request = "
+                    + "[" + queryObject.getQuery() + "]" + " Reason = " + ae.getMessage());
+        }
+        catch (Exception e) {
             logger.error(EELFLoggerDelegate.errorLogger, "Executing Session Failure for Request = "
                             + "[" + queryObject.getQuery() + "]" + " Reason = " + e.getMessage());
             throw new MusicServiceException("Executing Session Failure for Request = " + "["

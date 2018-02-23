@@ -27,6 +27,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -37,16 +38,11 @@ import javax.ws.rs.core.MediaType;
 import org.onap.music.datastore.jsonobjects.JsonLeasedLock;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.lockingservice.MusicLockState;
-import org.onap.music.lockingservice.MusicLockState.LockStatus;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
 import org.onap.music.response.jsonobjects.JsonLockResponse;
-import org.powermock.core.spi.testresult.Result;
-
-import com.att.eelf.configuration.EELFLogger;
-import com.att.eelf.configuration.EELFManager;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -57,7 +53,8 @@ import io.swagger.annotations.ApiParam;
 @Api(value="Lock Api")
 public class RestMusicLocksAPI {
 
-	private EELFLoggerDelegate logger =EELFLoggerDelegate.getLogger(RestMusicLocksAPI.class);
+	@SuppressWarnings("unused")
+    private EELFLoggerDelegate logger =EELFLoggerDelegate.getLogger(RestMusicLocksAPI.class);
 	private static String xLatestVersion = "X-latestVersion";
 
 	/**
@@ -66,6 +63,7 @@ public class RestMusicLocksAPI {
 	 * 
 	 * @param lockName
 	 * @return
+	 * @throws Exception 
 	 */
 
 	@POST
@@ -78,8 +76,20 @@ public class RestMusicLocksAPI {
 	@Produces(MediaType.APPLICATION_JSON)	
 	public Map<String,Object> createLockReference(
 			@ApiParam(value="Lock Name",required=true) @PathParam("lockname") String lockName,
-			@Context HttpServletResponse response){
-		response.addHeader(xLatestVersion,MusicUtil.getVersion());		
+			@ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+            @ApiParam(value = "Application namespace",
+                            required = true) @HeaderParam("ns") String ns,
+            @ApiParam(value = "userId",
+                            required = true) @HeaderParam("userId") String userId,
+            @ApiParam(value = "Password",
+                            required = true) @HeaderParam("password") String password,
+			@Context HttpServletResponse response) throws Exception{
+		response.addHeader(xLatestVersion,MusicUtil.getVersion());	
+		Map<String, Object> resultMap = MusicCore.autheticateUser(ns, userId, password, null, aid,
+                "createLockReference");
+		if (!resultMap.isEmpty()) {
+                return resultMap;
+        }
 		ResultType status = ResultType.SUCCESS;
 		String lockId = MusicCore.createLockReference(lockName);
 		if (lockId == null) { status = ResultType.FAILURE; }
@@ -92,6 +102,7 @@ public class RestMusicLocksAPI {
 	 * 
 	 * @param lockId
 	 * @return
+	 * @throws Exception 
 	 */
 	@GET
 	@Path("/acquire/{lockreference}")
@@ -101,8 +112,20 @@ public class RestMusicLocksAPI {
 	@Produces(MediaType.APPLICATION_JSON)	
 	public Map<String,Object> accquireLock(
 			@ApiParam(value="Lock Reference",required=true) @PathParam("lockreference") String lockId,
-			@Context HttpServletResponse response){
+			@ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+            @ApiParam(value = "Application namespace",
+                            required = true) @HeaderParam("ns") String ns,
+            @ApiParam(value = "userId",
+                            required = true) @HeaderParam("userId") String userId,
+            @ApiParam(value = "Password",
+                            required = true) @HeaderParam("password") String password,
+			@Context HttpServletResponse response) throws Exception{
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());
+		Map<String, Object> resultMap = MusicCore.autheticateUser(ns, userId, password, null, aid,
+                "accquireLock");
+		if (!resultMap.isEmpty()) {
+                return resultMap;
+        }
 		String lockName = lockId.substring(lockId.indexOf('$')+1, lockId.lastIndexOf('$'));
 		ReturnType lockStatus = MusicCore.acquireLock(lockName,lockId);
 		return new JsonLockResponse(lockStatus.getResult()).setLock(lockId)
@@ -119,8 +142,20 @@ public class RestMusicLocksAPI {
 	@Produces(MediaType.APPLICATION_JSON)	
 	public Map<String,Object> accquireLockWithLease(JsonLeasedLock lockObj, 
 			@ApiParam(value="Lock Reference",required=true) @PathParam("lockreference") String lockId,
-			@Context HttpServletResponse response){
+			@ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+            @ApiParam(value = "Application namespace",
+                            required = true) @HeaderParam("ns") String ns,
+            @ApiParam(value = "userId",
+                            required = true) @HeaderParam("userId") String userId,
+            @ApiParam(value = "Password",
+                            required = true) @HeaderParam("password") String password,
+			@Context HttpServletResponse response) throws Exception{
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());
+		Map<String, Object> resultMap = MusicCore.autheticateUser(ns, userId, password, null, aid,
+                "accquireLockWithLease");
+		if (!resultMap.isEmpty()) {
+                return resultMap;
+        }
 		String lockName = lockId.substring(lockId.indexOf('$')+1, lockId.lastIndexOf('$'));
 		ReturnType lockLeaseStatus = MusicCore.acquireLockWithLease(lockName, lockId, lockObj.getLeasePeriod());
 		return new JsonLockResponse(lockLeaseStatus.getResult()).setLock(lockName)
@@ -137,8 +172,20 @@ public class RestMusicLocksAPI {
 	@Produces(MediaType.APPLICATION_JSON)	
 	public Map<String,Object> currentLockHolder(
 			@ApiParam(value="Lock Name",required=true) @PathParam("lockname") String lockName,
-			@Context HttpServletResponse response){
+			@ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+            @ApiParam(value = "Application namespace",
+                            required = true) @HeaderParam("ns") String ns,
+            @ApiParam(value = "userId",
+                            required = true) @HeaderParam("userId") String userId,
+            @ApiParam(value = "Password",
+                            required = true) @HeaderParam("password") String password,
+			@Context HttpServletResponse response) throws Exception{
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());
+		Map<String, Object> resultMap = MusicCore.autheticateUser(ns, userId, password, null, aid,
+                "currentLockHolder");
+		if (!resultMap.isEmpty()) {
+                return resultMap;
+        }
 		String who = MusicCore.whoseTurnIsIt(lockName);
 		ResultType status = ResultType.SUCCESS;
 		String error = "";
@@ -158,8 +205,20 @@ public class RestMusicLocksAPI {
 	@Produces(MediaType.APPLICATION_JSON)	
 	public Map<String,Object> currentLockState(
 			@ApiParam(value="Lock Name",required=true) @PathParam("lockname") String lockName,
-			@Context HttpServletResponse response){
+			@ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+            @ApiParam(value = "Application namespace",
+                            required = true) @HeaderParam("ns") String ns,
+            @ApiParam(value = "userId",
+                            required = true) @HeaderParam("userId") String userId,
+            @ApiParam(value = "Password",
+                            required = true) @HeaderParam("password") String password,
+			@Context HttpServletResponse response) throws Exception{
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());
+		Map<String, Object> resultMap = MusicCore.autheticateUser(ns, userId, password, null, aid,
+                "currentLockState");
+		if (!resultMap.isEmpty()) {
+                return resultMap;
+        }
 		MusicLockState mls = MusicCore.getMusicLockState(lockName);
 		Map<String,Object> returnMap = null;
 		JsonLockResponse jsonResponse = new JsonLockResponse(ResultType.FAILURE).setLock(lockName);
@@ -179,6 +238,7 @@ public class RestMusicLocksAPI {
 	 * deletes the process from the zk queue
 	 * 
 	 * @param lockId
+	 * @throws Exception 
 	 */
 	@DELETE
 	@Path("/release/{lockreference}")
@@ -187,8 +247,20 @@ public class RestMusicLocksAPI {
 		response = Map.class)
 	@Produces(MediaType.APPLICATION_JSON)	
 	public Map<String,Object> unLock(@PathParam("lockreference") String lockId,
-			@Context HttpServletResponse response){
+			@ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+            @ApiParam(value = "Application namespace",
+                            required = true) @HeaderParam("ns") String ns,
+            @ApiParam(value = "userId",
+                            required = true) @HeaderParam("userId") String userId,
+            @ApiParam(value = "Password",
+                            required = true) @HeaderParam("password") String password,
+			@Context HttpServletResponse response) throws Exception{
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());
+		Map<String, Object> resultMap = MusicCore.autheticateUser(ns, userId, password, null, aid,
+                "unLock");
+		if (!resultMap.isEmpty()) {
+                return resultMap;
+        }
 		boolean voluntaryRelease = true; 
 		MusicLockState mls = MusicCore.releaseLock(lockId,voluntaryRelease);
 		Map<String,Object> returnMap = null;
@@ -206,14 +278,27 @@ public class RestMusicLocksAPI {
 	/**
 	 * 
 	 * @param lockName
+	 * @throws Exception 
 	 */
 	@DELETE
 	@Path("/delete/{lockname}")
 	@ApiOperation(value = "Delete Lock", response = Map.class)
 	@Produces(MediaType.APPLICATION_JSON)	
 	public Map<String,Object> deleteLock(@PathParam("lockname") String lockName,
-			@Context HttpServletResponse response){
+			@ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+            @ApiParam(value = "Application namespace",
+                            required = true) @HeaderParam("ns") String ns,
+            @ApiParam(value = "userId",
+                            required = true) @HeaderParam("userId") String userId,
+            @ApiParam(value = "Password",
+                            required = true) @HeaderParam("password") String password,
+			@Context HttpServletResponse response) throws Exception{
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());
+		Map<String, Object> resultMap = MusicCore.autheticateUser(ns, userId, password, null, aid,
+                "deleteLock");
+		if (!resultMap.isEmpty()) {
+                return resultMap;
+        }
 		MusicCore.deleteLock(lockName);
 		return new JsonLockResponse(ResultType.SUCCESS).toMap();
 	}

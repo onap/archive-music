@@ -31,25 +31,18 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
-import org.apache.log4j.Logger;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
-import org.onap.music.datastore.jsonobjects.JsonOnboard;
-import org.onap.music.datastore.jsonobjects.JsonUpdate;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
-import org.onap.music.main.CachingUtil;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
-import com.att.eelf.configuration.EELFLogger;
-import com.att.eelf.configuration.EELFManager;
 import org.onap.music.datastore.PreparedQueryObject;
 import com.datastax.driver.core.DataType;
-import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.TableMetadata;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+//import io.swagger.annotations.ApiOperation;
+//import io.swagger.annotations.ApiParam;
 
 /*
  * These are functions created purely for benchmarking purposes. Commented out Swagger - This should

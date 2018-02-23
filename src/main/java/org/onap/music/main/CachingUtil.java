@@ -57,6 +57,7 @@ public class CachingUtil implements Runnable {
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(CachingUtil.class);
 
     private static CacheAccess<String, String> musicCache = JCS.getInstance("musicCache");
+    private static CacheAccess<String, String> musicLockCache = JCS.getInstance("musicLockCache");
     private static CacheAccess<String, Map<String, String>> aafCache = JCS.getInstance("aafCache");
     private static CacheAccess<String, String> appNameCache = JCS.getInstance("appNameCache");
     private static Map<String, Number> userAttempts = new HashMap<>();
@@ -76,7 +77,7 @@ public class CachingUtil implements Runnable {
     public void initializeAafCache() throws MusicServiceException {
         logger.info(EELFLoggerDelegate.applicationLogger,"Resetting and initializing AAF Cache...");
 
-        String query = "SELECT application_name, keyspace_name, username, password FROM admin.keyspace_master WHERE is_api = ? allow filtering";
+        String query = "SELECT uuid, application_name, keyspace_name, username, password FROM admin.keyspace_master WHERE is_api = ? allow filtering";
         PreparedQueryObject pQuery = new PreparedQueryObject();
         pQuery.appendQueryString(query);
         try {
@@ -94,6 +95,7 @@ public class CachingUtil implements Runnable {
             String userId = row.getString("username");
             String password = row.getString("password");
             String keySpace = row.getString("application_name");
+            String uuid = row.getUUID("uuid").toString();
             try {
                 userAttempts.put(nameSpace, 0);
                 AAFResponse responseObj = triggerAAF(nameSpace, userId, password);
@@ -102,6 +104,7 @@ public class CachingUtil implements Runnable {
                     map.put(userId, password);
                     aafCache.put(nameSpace, map);
                     musicCache.put(nameSpace, keySpace);
+                    musicLockCache.put(nameSpace, uuid);
                     logger.debug("Cronjob: Cache Updated with AAF response for namespace "
                                     + nameSpace);
                 }
@@ -130,7 +133,7 @@ public class CachingUtil implements Runnable {
                     String keySpace) throws Exception {
 
         if (aafCache.get(nameSpace) != null) {
-            if (!musicCache.get(nameSpace).equals(keySpace)) {
+            if (keySpace != null && !musicCache.get(nameSpace).equals(keySpace)) {
                 logger.debug("Create new application for the same namespace.");
             } else if (aafCache.get(nameSpace).get(userId).equals(password)) {
                 logger.debug("Authenticated with cache value..");
@@ -161,9 +164,12 @@ public class CachingUtil implements Runnable {
 
         AAFResponse responseObj = triggerAAF(nameSpace, userId, password);
         if (responseObj.getNs().size() > 0) {
-            if (responseObj.getNs().get(0).getAdmin().contains(userId))
-                return true;
-
+            if (responseObj.getNs().get(0).getAdmin().contains(userId)) {
+            	//Map<String, String> map = new HashMap<>();
+                //map.put(userId, password);
+                //aafCache.put(nameSpace, map);
+            	return true;
+            }
         }
         logger.info(EELFLoggerDelegate.applicationLogger,"Invalid user. Cache not updated");
         return false;
@@ -250,6 +256,43 @@ public class CachingUtil implements Runnable {
         resultMap.put("aid", uuid);
         return resultMap;
     }
+    
+    
+    public static Map<String, Object> authenticateAIDUserLock(String aid, String nameSpace)
+            throws Exception {
+		Map<String, Object> resultMap = new HashMap<>();
+		String uuid = null;
+		
+		if (musicLockCache.get(nameSpace) == null) {
+		    PreparedQueryObject pQuery = new PreparedQueryObject();
+		    pQuery.appendQueryString(
+		                    "SELECT uuid from admin.keyspace_master where application_name = '"
+		                                    + nameSpace + "' allow filtering");
+		    Row rs = MusicCore.get(pQuery).one();
+		    try {
+		        uuid = rs.getUUID("uuid").toString();
+		        musicLockCache.put(nameSpace, uuid);
+		    } catch (Exception e) {
+		        logger.error("Exception occured during uuid retrieval from DB." + e.getMessage());
+		        resultMap.put("Exception", "Unauthorized operation. Check AID and Namespace. ");
+		        return resultMap;
+		    }
+		    if (!musicLockCache.get(nameSpace).toString().equals(aid)) {
+		        resultMap.put("Exception Message",
+		                        "Unauthorized operation. Invalid AID for the Namespace");
+		        return resultMap;
+		    }
+		} else if (musicLockCache.get(nameSpace) != null
+		                && !musicLockCache.get(nameSpace).toString().equals(aid)) {
+		    resultMap.put("Exception Message",
+		                    "Unauthorized operation. Invalid AID for the Namespace");
+		    return resultMap;
+		}
+		return resultMap;
+	}
+    
+    
+    
 
     public static void updateMusicCache(String aid, String keyspace) {
         logger.info("Updating musicCache for keyspace " + keyspace + " with aid " + aid);
@@ -346,14 +389,15 @@ public class CachingUtil implements Runnable {
         }
         PreparedQueryObject queryObject = new PreparedQueryObject();
         queryObject.appendQueryString(
-                        "select * from admin.keyspace_master where application_name=? and username=? allow filtering");
+                        "select * from admin.keyspace_master where application_name = ? and username = ? and password = ? allow filtering");
         queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), ns));
         queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
+        queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), password));
         Row rs = MusicCore.get(queryObject).one();
         if (rs == null) {
-            logger.error(EELFLoggerDelegate.errorLogger,"Namespace and UserId doesn't match. namespace: "+ns+" and userId: "+userId);
+            logger.error(EELFLoggerDelegate.errorLogger,"Namespace, UserId and password doesn't match. namespace: "+ns+" and userId: "+userId);
 
-            resultMap.put("Exception", "Namespace and UserId doesn't match. namespace: "+ns+" and userId: "+userId);
+            resultMap.put("Exception", "Namespace, UserId and password doesn't match. namespace: "+ns+" and userId: "+userId);
         } else {
             boolean is_aaf = rs.getBool("is_aaf");
             String keyspace = rs.getString("keyspace_name");
