@@ -25,59 +25,59 @@
     <groupId>org.onap.music</groupId>
     <artifactId>MUSIC</artifactId>
     <packaging>war</packaging>
-    <version>2.4.11</version>
-	<description>
+    <version>2.4.12</version>
+    <description>
             This is the MUSIC REST interface, packaged as a war file.
           </description>
 
-	<parent>
-		<groupId>org.onap.oparent</groupId>
-		<artifactId>oparent</artifactId>
-		<version>0.1.1</version>
-		<relativePath />
-	</parent>
+    <parent>
+        <groupId>org.onap.oparent</groupId>
+        <artifactId>oparent</artifactId>
+        <version>0.1.1</version>
+        <relativePath />
+    </parent>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<jersey1.version>1.17</jersey1.version>
-		<jersey2.version>2.26</jersey2.version>
-		<jaxrs.version>2.0.1</jaxrs.version>
-		<cassandra.version>3.0.0</cassandra.version>
-		<zookeeper.version>3.4.6</zookeeper.version>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <jersey1.version>1.17</jersey1.version>
+        <jersey2.version>2.26</jersey2.version>
+        <jaxrs.version>2.0.1</jaxrs.version>
+        <cassandra.version>3.0.0</cassandra.version>
+        <zookeeper.version>3.4.6</zookeeper.version>
 
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!--nexus -->
-		<nexusproxy>https://nexus.onap.org</nexusproxy>
-		<snapshotNexusPath>/content/repositories/snapshots/</snapshotNexusPath>
-		<releaseNexusPath>/content/repositories/releases/</releaseNexusPath>
-		<stagingNexusPath>/content/repositories/staging/</stagingNexusPath>
-		<sitePath>/content/sites/site/org/onap/music/${project.version}</sitePath>
-		<!--maven -->
-		<timestamp>${maven.build.timestamp}</timestamp>
-		<maven.build.timestamp.format>yyyy.MM.dd.HH.mm</maven.build.timestamp.format>
-		<!--docker -->
-		<docker.tag>${project.version}-${timestamp}</docker.tag>
-		<docker.latest.tag>${project.version}-latest</docker.latest.tag>
-	</properties>
+        <nexusproxy>https://nexus.onap.org</nexusproxy>
+        <snapshotNexusPath>/content/repositories/snapshots/</snapshotNexusPath>
+        <releaseNexusPath>/content/repositories/releases/</releaseNexusPath>
+        <stagingNexusPath>/content/repositories/staging/</stagingNexusPath>
+        <sitePath>/content/sites/site/org/onap/music/${project.version}</sitePath>
+        <!--maven -->
+        <timestamp>${maven.build.timestamp}</timestamp>
+        <maven.build.timestamp.format>yyyy.MM.dd.HH.mm</maven.build.timestamp.format>
+        <!--docker -->
+        <docker.tag>${project.version}-${timestamp}</docker.tag>
+        <docker.latest.tag>${project.version}-latest</docker.latest.tag>
+    </properties>
 
-	<repositories>
-		<repository>
-			<id>ecomp-releases</id>
-			<name>ECOMP Release Repository</name>
-			<url>${onap.nexus.url}/${releaseNexusPath}</url>
-		</repository>
-		<repository>
-			<id>ecomp-snapshots</id>
-			<name>Snapshot Repository</name>
-			<url>${nexusproxy}/${snapshotNexusPath}</url>
-		</repository>
-		<repository>
-			<id>ecomp-staging</id>
-			<name>Staging Repository</name>
-			<url>${nexusproxy}/${stagingNexusPath}</url>
-		</repository>
-	</repositories>
+    <repositories>
+        <repository>
+            <id>ecomp-releases</id>
+            <name>ECOMP Release Repository</name>
+            <url>${onap.nexus.url}/${releaseNexusPath}</url>
+        </repository>
+        <repository>
+            <id>ecomp-snapshots</id>
+            <name>Snapshot Repository</name>
+            <url>${nexusproxy}/${snapshotNexusPath}</url>
+        </repository>
+        <repository>
+            <id>ecomp-staging</id>
+            <name>Staging Repository</name>
+            <url>${nexusproxy}/${stagingNexusPath}</url>
+        </repository>
+    </repositories>
 
     <build>
         <finalName>MUSIC</finalName>
@@ -209,10 +209,10 @@
             <artifactId>zookeeper</artifactId>
             <version>${zookeeper.version}</version>
             <exclusions>
-            	<exclusion>
-            		<groupId>org.slf4j</groupId>
-            		<artifactId>slf4j-log4j12</artifactId>
-            	</exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -246,7 +246,6 @@
             <artifactId>commons-jcs-core</artifactId>
             <version>2.2</version>
         </dependency>
-
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
@@ -258,8 +257,6 @@
             <artifactId>commons-codec</artifactId>
             <version>1.11</version>
         </dependency>
-
-
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -272,8 +269,6 @@
             <artifactId>mockito-all</artifactId>
             <version>1.9.0</version>
         </dependency>
-
-
         <dependency>
             <groupId>io.swagger</groupId>
             <artifactId>swagger-jersey-jaxrs</artifactId>
@@ -289,7 +284,7 @@
         <dependency>
             <groupId>com.att.eelf</groupId>
             <artifactId>eelf-core</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.1-oss</version>
         </dependency>
     </dependencies>
 
@@ -313,88 +308,88 @@
         </plugins>
     </reporting>
 
-	<profiles>
-		<profile>
-			<id>docker</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>io.fabric8</groupId>
-						<artifactId>docker-maven-plugin</artifactId>
-						<version>0.19.1</version>
-						<configuration>
-							<verbose>true</verbose>
-							<apiVersion>1.23</apiVersion>
-							<registry>nexus3.onap.org:10003</registry>
-							<images>
-								<!-- MUSIC War -->
-								<image>
-									<name>music</name>
-									<alias>docker_music</alias>
-									<build>
-										<cleanup>true</cleanup>
-										<tags>
-											<tag>${docker.tag}</tag>
-											<tag>${docker.latest.tag}</tag>
-										</tags>
-										<dockerFileDir>${project.basedir}</dockerFileDir>
-										<assembly>
-											<descriptorRef>artifact</descriptorRef>
-										</assembly>
-									</build>
-								</image>
-							</images>
-						</configuration>
-						<executions>
-							<execution>
-								<id>clean-images</id>
-								<phase>pre-clean</phase>
-								<goals>
-									<goal>remove</goal>
-								</goals>
-								<configuration>
-									<removeAll>true</removeAll>
-									<image>music</image>
-								</configuration>
-							</execution>
-							<execution>
-								<id>generate-images</id>
-								<phase>package</phase>
-								<goals>
-									<goal>build</goal>
-								</goals>
-							</execution>
-							<execution>
-								<id>push-images</id>
-								<phase>deploy</phase>
-								<goals>
-									<goal>push</goal>
-								</goals>
-								<configuration>
-									<image>music</image>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>	
-			</build>
-		</profile>
-	</profiles>
-	<distributionManagement>
-		<repository>
-			<id>ecomp-releases</id>
-			<name>Release Repository</name>
-			<url>${nexusproxy}/${releaseNexusPath}</url>
-		</repository>
-		<snapshotRepository>
-			<id>ecomp-snapshots</id>
-			<name>Snapshot Repository</name>
-			<url>${nexusproxy}/${snapshotNexusPath}</url>
-		</snapshotRepository>
-		<!-- added for javadoc -->
-		<site>
-			<id>ecomp-site</id>
-			<url>dav:${nexusproxy}${sitePath}</url>
-		</site>
-	</distributionManagement>
+    <profiles>
+        <profile>
+            <id>docker</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <version>0.19.1</version>
+                        <configuration>
+                            <verbose>true</verbose>
+                            <apiVersion>1.23</apiVersion>
+                            <registry>nexus3.onap.org:10003</registry>
+                            <images>
+                                <!-- MUSIC War -->
+                                <image>
+                                    <name>music</name>
+                                    <alias>docker_music</alias>
+                                    <build>
+                                        <cleanup>true</cleanup>
+                                        <tags>
+                                            <tag>${docker.tag}</tag>
+                                            <tag>${docker.latest.tag}</tag>
+                                        </tags>
+                                        <dockerFileDir>${project.basedir}</dockerFileDir>
+                                        <assembly>
+                                            <descriptorRef>artifact</descriptorRef>
+                                        </assembly>
+                                    </build>
+                                </image>
+                            </images>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>clean-images</id>
+                                <phase>pre-clean</phase>
+                                <goals>
+                                    <goal>remove</goal>
+                                </goals>
+                                <configuration>
+                                    <removeAll>true</removeAll>
+                                    <image>music</image>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>generate-images</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>build</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>push-images</id>
+                                <phase>deploy</phase>
+                                <goals>
+                                    <goal>push</goal>
+                                </goals>
+                                <configuration>
+                                    <image>music</image>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>    
+            </build>
+        </profile>
+    </profiles>
+    <distributionManagement>
+        <repository>
+            <id>ecomp-releases</id>
+            <name>Release Repository</name>
+            <url>${nexusproxy}/${releaseNexusPath}</url>
+        </repository>
+        <snapshotRepository>
+            <id>ecomp-snapshots</id>
+            <name>Snapshot Repository</name>
+            <url>${nexusproxy}/${snapshotNexusPath}</url>
+        </snapshotRepository>
+        <!-- added for javadoc -->
+        <site>
+            <id>ecomp-site</id>
+            <url>dav:${nexusproxy}${sitePath}</url>
+        </site>
+    </distributionManagement>
 </project>
