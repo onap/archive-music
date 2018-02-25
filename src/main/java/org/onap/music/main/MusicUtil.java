@@ -56,7 +56,7 @@ public class MusicUtil {
 	private static String defaultMusicIp = "localhost";
 	private static boolean debug = true;
 	private static String version = "2.3.0";
-	public static String musicRestIp = "localhost";
+	private static String musicRestIp = "localhost";
 	private static String musicPropertiesFilePath = "/opt/app/music/etc/music.properties";
 	private static long defaultLockLeasePeriod = 6000;
 	private static final String[] propKeys = new String[] { "zookeeper.host", "cassandra.host", "music.ip", "debug",
@@ -70,7 +70,7 @@ public class MusicUtil {
 	
 	public static final String DEFAULTKEYSPACENAME = "TBD";
 	private static String cassName = "cassandra";
-	private static String cassPwd = "cassandra";
+	private static String cassPwd;
 	private static String aafEndpointUrl = null;
 
 	/**
@@ -472,9 +472,9 @@ public class MusicUtil {
 		Map<String, HashMap<String, Object>> results = new HashMap<>();
 		HashMap<String, Object> tempMap = new HashMap<>();
 		Map<String, Object> result = new HashMap<>();
-		result.put("Error Description", ex.getMessage());
-		tempMap.put("Error", result);
-		results.put("Result", tempMap);
+		result.put("error-description", ex.getMessage());
+		tempMap.put("error", result);
+		results.put("result", tempMap);
 		return results;
 	}
 }
