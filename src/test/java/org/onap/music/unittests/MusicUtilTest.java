@@ -73,11 +73,11 @@ public class MusicUtilTest {
         assertEquals(MusicUtil.getAllIds().get(0),"1");
     }
 
-    @Test
-    public void testGetPublicIp() {
-        MusicUtil.setPublicIp("10.0.0.1");
-        assertEquals(MusicUtil.getPublicIp(),"10.0.0.1");
-    }
+//    @Test
+//    public void testGetPublicIp() {
+//        MusicUtil.setPublicIp("10.0.0.1");
+//        assertEquals(MusicUtil.getPublicIp(),"10.0.0.1");
+//    }
 
     @Test
     public void testGetAllPublicIps() {
@@ -124,11 +124,11 @@ public class MusicUtilTest {
         assertEquals(MusicUtil.getVersion(),"1.0.0");
     }
 
-    @Test
-    public void testGetMyZkHost() {
-        MusicUtil.setMyZkHost("10.0.0.2");
-        assertEquals(MusicUtil.getMyZkHost(),"10.0.0.2");
-    }
+//    @Test
+//    public void testGetMyZkHost() {
+//        MusicUtil.setMyZkHost("10.0.0.2");
+//        assertEquals(MusicUtil.getMyZkHost(),"10.0.0.2");
+//    }
 
     @Test
     public void testGetMyCassaHost() {
