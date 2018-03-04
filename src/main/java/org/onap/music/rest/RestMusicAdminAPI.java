@@ -195,7 +195,7 @@ public class RestMusicAdminAPI {
 	    			String ks = row.getString("keyspace_name");
 	    			if (!ks.equals(MusicUtil.DEFAULTKEYSPACENAME)) {
 	    				PreparedQueryObject queryObject = new PreparedQueryObject();
-	    				queryObject.appendQueryString("DROP KEYSPACE " + ks + ";");
+	    				queryObject.appendQueryString("DROP KEYSPACE IF EXISTS " + ks + ";");
 	    				MusicCore.nonKeyRelatedPut(queryObject, consistency);
 	    			}
         		}

@@ -232,13 +232,14 @@ public class CassandraCQL {
             try {
 
                 try {
-                    EmbeddedCassandraServerHelper.startEmbeddedCassandra(60000);
+                    EmbeddedCassandraServerHelper.startEmbeddedCassandra(80000);
                 } catch (ConfigurationException | TTransportException | IOException e) {
 
                     System.out.println(e.getMessage());
                 }
 
                 cluster = new Cluster.Builder().addContactPoint(address).withPort(9142).build();
+                cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(20000);
                 session = cluster.connect();
 
                 break;

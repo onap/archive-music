@@ -378,8 +378,7 @@ public class CachingUtil implements Runnable {
 
     }
 
-    public static Map<String, Object> verifyOnboarding(String ns, String userId, String password)
-                    throws Exception {
+    public static Map<String, Object> verifyOnboarding(String ns, String userId, String password) {
         Map<String, Object> resultMap = new HashMap<>();
         if (ns == null || userId == null || password == null) {
             logger.error(EELFLoggerDelegate.errorLogger,"One or more required headers is missing. userId: "+userId+" :: password: "+password);
@@ -390,10 +389,24 @@ public class CachingUtil implements Runnable {
         PreparedQueryObject queryObject = new PreparedQueryObject();
         queryObject.appendQueryString(
                         "select * from admin.keyspace_master where application_name = ? and username = ? and password = ? allow filtering");
-        queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), ns));
-        queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
-        queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), password));
-        Row rs = MusicCore.get(queryObject).one();
+        try {
+        	queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), ns));
+        	queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
+        	queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), password));
+        } catch(Exception e) {
+        	resultMap.put("Exception",
+                    "Unable to process input data. Invalid input data type. Please check ns, userId and password values. "+e.getMessage());
+        	return resultMap;
+        }
+        Row rs = null;
+		try {
+			rs = MusicCore.get(queryObject).one();
+		} catch (MusicServiceException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			resultMap.put("Exception", "Unable to process operation. Error is "+e.getMessage());
+			return resultMap;
+		}
         if (rs == null) {
             logger.error(EELFLoggerDelegate.errorLogger,"Namespace, UserId and password doesn't match. namespace: "+ns+" and userId: "+userId);
 

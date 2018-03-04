@@ -19,22 +19,23 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
-package org.onap.music.main;
+package org.onap.music.unittests.jsonobjects;
 
-public enum ResultType {
-    SUCCESS("Success"), FAILURE("Failure"),
-	SYNTAXERROR("SyntaxError"), EXCEPTION("Exception");
+import static org.junit.Assert.*;
+import java.util.HashMap;
+import java.util.Map;
+import org.junit.Test;
+import org.onap.music.datastore.jsonobjects.JsonSelect;
 
-    private String result;
+public class JsonSelectTest {
 
-    ResultType(String result) {
-        this.result = result;
-    }
-
-    public String getResult() {
-        return result;
+    @Test
+    public void testGetConsistencyInfo() {
+        JsonSelect js = new JsonSelect();
+        Map<String, String> mapSs = new HashMap<>();
+        mapSs.put("k1", "one");
+        js.setConsistencyInfo(mapSs);
+        assertEquals("one",js.getConsistencyInfo().get("k1"));
     }
 
 }
-
-

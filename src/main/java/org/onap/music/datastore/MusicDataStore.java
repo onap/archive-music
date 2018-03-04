@@ -33,6 +33,8 @@ import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.MusicUtil;
+import org.onap.music.main.ResultType;
+
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ColumnDefinitions;
 import com.datastax.driver.core.ColumnDefinitions.Definition;
@@ -46,6 +48,7 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 /**
@@ -64,6 +67,13 @@ public class MusicDataStore {
      */
     public void setSession(Session session) {
         this.session = session;
+    }
+    
+    /**
+     * @param session
+     */
+    public Session getSession() {
+        return session;
     }
 
     /**
@@ -245,7 +255,7 @@ public class MusicDataStore {
         }
     }
 
-    public boolean doesRowSatisfyCondition(Row row, Map<String, Object> condition) {
+    public boolean doesRowSatisfyCondition(Row row, Map<String, Object> condition) throws Exception {
         ColumnDefinitions colInfo = row.getColumnDefinitions();
 
         for (Map.Entry<String, Object> entry : condition.entrySet()) {
@@ -310,7 +320,14 @@ public class MusicDataStore {
                         "In preprared Execute Put: the actual insert query:"
                                         + queryObject.getQuery() + "; the values"
                                         + queryObject.getValues());
-        PreparedStatement preparedInsert = session.prepare(queryObject.getQuery());
+        PreparedStatement preparedInsert = null;
+        try {
+        	preparedInsert = session.prepare(queryObject.getQuery());
+        } catch(InvalidQueryException iqe) {
+        	logger.error(EELFLoggerDelegate.errorLogger, iqe.getMessage());
+        	throw new MusicQueryException(iqe.getMessage());
+        }
+        
         try {
             if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
                 logger.info(EELFLoggerDelegate.applicationLogger, "Executing critical put query");
@@ -327,6 +344,7 @@ public class MusicDataStore {
         catch (AlreadyExistsException ae) {
         	logger.error(EELFLoggerDelegate.errorLogger, "Executing Session Failure for Request = "
                     + "[" + queryObject.getQuery() + "]" + " Reason = " + ae.getMessage());
+        	throw new MusicServiceException(ae.getMessage());
         }
         catch (Exception e) {
             logger.error(EELFLoggerDelegate.errorLogger, "Executing Session Failure for Request = "

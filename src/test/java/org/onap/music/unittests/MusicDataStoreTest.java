@@ -22,6 +22,7 @@
 package org.onap.music.unittests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -34,8 +35,11 @@ import org.onap.music.exceptions.MusicServiceException;
 
 import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.PreparedQueryObject;
+
+import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
+import com.datastax.driver.core.TableMetadata;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class MusicDataStoreTest {
@@ -141,6 +145,18 @@ public class MusicDataStoreTest {
 		} catch (MusicQueryException | MusicServiceException e) {
 			System.out.println(e.getMessage());
 		}
-
+	}
+	
+	@Test
+	public void Test8_columnDataType() {
+		DataType data = dataStore.returnColumnDataType("testCassa", "employees", "empName");
+		String datatype = data.toString();
+		assertEquals("text",datatype);
+	}
+	
+	@Test
+	public void Test8_columnMetdaData() {
+		TableMetadata data = dataStore.returnColumnMetadata("testCassa", "employees");
+		assertNotNull(data);
 	}
 }

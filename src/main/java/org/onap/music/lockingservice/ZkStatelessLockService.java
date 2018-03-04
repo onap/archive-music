@@ -281,10 +281,8 @@ public class ZkStatelessLockService extends ProtocolSupport {
                 if (id != null) {
                     List<String> names = zookeeper.getChildren(dir, false);
                     if (names.isEmpty()) {
-                        LOG.info(EELFLoggerDelegate.applicationLogger, "No children in: " + dir
-                                        + " when we've just " + "created one! Lets recreate it...");
-                        // lets force the recreation of the id
-                        id = null;
+                        LOG.info(EELFLoggerDelegate.applicationLogger, "No children in: " + dir);
+                        return Boolean.FALSE;
                     } else {
                         // lets sort them explicitly (though they do seem to come back in order
                         // ususally :)

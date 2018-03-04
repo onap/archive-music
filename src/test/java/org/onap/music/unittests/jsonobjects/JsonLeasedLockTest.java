@@ -19,22 +19,35 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
-package org.onap.music.main;
+package org.onap.music.unittests.jsonobjects;
 
-public enum ResultType {
-    SUCCESS("Success"), FAILURE("Failure"),
-	SYNTAXERROR("SyntaxError"), EXCEPTION("Exception");
+import static org.junit.Assert.*;
+import org.junit.Before;
+import org.junit.Test;
+import org.onap.music.datastore.jsonobjects.JsonLeasedLock;
 
-    private String result;
+public class JsonLeasedLockTest {
 
-    ResultType(String result) {
-        this.result = result;
+    JsonLeasedLock jl = null;
+    
+    @Before
+    public void init() {
+        jl = new JsonLeasedLock();
+    }
+    
+    
+    @Test
+    public void testGetLeasePeriod() {
+        long lease = 20000;
+        jl.setLeasePeriod(lease);
+        assertEquals(lease,jl.getLeasePeriod());
     }
 
-    public String getResult() {
-        return result;
+    @Test
+    public void testGetNotifyUrl() {
+        String url = "http://somewhere.com";
+        jl.setNotifyUrl(url);
+        assertEquals(url,jl.getNotifyUrl());
     }
 
 }
-
-

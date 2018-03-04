@@ -73,11 +73,11 @@ public class MusicUtilTest {
         assertEquals(MusicUtil.getAllIds().get(0),"1");
     }
 
-//    @Test
-//    public void testGetPublicIp() {
-//        MusicUtil.setPublicIp("10.0.0.1");
-//        assertEquals(MusicUtil.getPublicIp(),"10.0.0.1");
-//    }
+    @Test
+    public void testGetPublicIp() {
+        MusicUtil.setPublicIp("10.0.0.1");
+        assertEquals(MusicUtil.getPublicIp(),"10.0.0.1");
+    }
 
     @Test
     public void testGetAllPublicIps() {
@@ -124,11 +124,11 @@ public class MusicUtilTest {
         assertEquals(MusicUtil.getVersion(),"1.0.0");
     }
 
-//    @Test
-//    public void testGetMyZkHost() {
-//        MusicUtil.setMyZkHost("10.0.0.2");
-//        assertEquals(MusicUtil.getMyZkHost(),"10.0.0.2");
-//    }
+    /*@Test
+    public void testGetMyZkHost() {
+        MusicUtil.setMyZkHost("10.0.0.2");
+        assertEquals(MusicUtil.getMyZkHost(),"10.0.0.2");
+    }*/
 
     @Test
     public void testGetMyCassaHost() {
@@ -179,7 +179,7 @@ public class MusicUtilTest {
     }
 
     @Test
-    public void testConvertToActualDataType() {
+    public void testConvertToActualDataType() throws Exception {
         assertEquals(MusicUtil.convertToActualDataType(DataType.varchar(),"Happy People"),"Happy People");
         assertEquals(MusicUtil.convertToActualDataType(DataType.uuid(),"29dc2afa-c2c0-47ae-afae-e72a645308ab"),UUID.fromString("29dc2afa-c2c0-47ae-afae-e72a645308ab"));
         assertEquals(MusicUtil.convertToActualDataType(DataType.varint(),"1234"),BigInteger.valueOf(Long.parseLong("1234")));

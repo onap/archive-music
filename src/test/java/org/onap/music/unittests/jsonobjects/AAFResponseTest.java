@@ -19,22 +19,36 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
-package org.onap.music.main;
 
-public enum ResultType {
-    SUCCESS("Success"), FAILURE("Failure"),
-	SYNTAXERROR("SyntaxError"), EXCEPTION("Exception");
+package org.onap.music.unittests.jsonobjects;
 
-    private String result;
+import static org.junit.Assert.*;
+import java.util.ArrayList;
+import org.junit.Test;
+import org.onap.music.datastore.jsonobjects.AAFResponse;
+import org.onap.music.datastore.jsonobjects.NameSpace;
 
-    ResultType(String result) {
-        this.result = result;
+public class AAFResponseTest {
+
+    @Test
+    public void testGetNs() {
+        NameSpace ns = new NameSpace();
+        AAFResponse ar = new AAFResponse();
+        ArrayList<NameSpace> nsArray = new ArrayList<>();
+        ns.setName("tom");
+        ArrayList<String> admin = new ArrayList<>();
+        admin.add("admin1");
+        ns.setAdmin(admin);
+        nsArray.add(ns);
+        ar.setNs(nsArray);
+        assertEquals("tom",ar.getNs().get(0).getName());
+        assertEquals("admin1",ar.getNs().get(0).getAdmin().get(0));
+        
     }
 
-    public String getResult() {
-        return result;
-    }
+//    @Test
+//    public void testSetNs() {
+//        fail("Not yet implemented");
+//    }
 
 }
-
-

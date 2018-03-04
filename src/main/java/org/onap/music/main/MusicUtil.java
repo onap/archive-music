@@ -418,7 +418,7 @@ public class MusicUtil {
 	 * @return
 	 * @throws Exception
 	 */
-	public static Object convertToActualDataType(DataType colType, Object valueObj) {
+	public static Object convertToActualDataType(DataType colType, Object valueObj)  throws Exception{
 		String valueObjString = valueObj + "";
 		switch (colType.getName()) {
 		case UUID:

@@ -66,7 +66,7 @@ public class MusicCore {
             this.selectQueryForTheRow = selectQueryForTheRow;
         }
 
-        public boolean testCondition() {
+        public boolean testCondition() throws Exception {
             // first generate the row
             ResultSet results = quorumGet(selectQueryForTheRow);
             Row row = results.one();
@@ -111,12 +111,19 @@ public class MusicCore {
     /**
      * 
      * @return
+     * @throws MusicServiceException 
      */
-    public static MusicDataStore getDSHandle() {
+    public static MusicDataStore getDSHandle() throws MusicServiceException {
         logger.info(EELFLoggerDelegate.applicationLogger,"Acquiring data store handle");
         long start = System.currentTimeMillis();
         if (mDstoreHandle == null) {
             mDstoreHandle = new MusicDataStore();
+        }
+        if(mDstoreHandle.getSession() == null) {
+        	String message = "Connection to Cassandra has not been enstablished."
+        			+ " Please check connection properites and reboot.";
+        	logger.info(EELFLoggerDelegate.applicationLogger, message);
+            throw new MusicServiceException(message);
         }
         long end = System.currentTimeMillis();
         logger.info(EELFLoggerDelegate.applicationLogger,"Time taken to acquire data store handle:" + (end - start) + " ms");
@@ -293,7 +300,11 @@ public class MusicCore {
         // do syncing if this was a forced lock release
         if (needToSyncQuorum) {
             logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: Since there was a forcible release, need to sync quorum!");
-            syncQuorum(key);
+            try {
+              syncQuorum(key);
+            } catch (Exception e) {
+              logger.error(EELFLoggerDelegate.errorLogger,"Failed to set Lock state " + e);
+            }
         }
 
         // change status to locked
@@ -325,7 +336,7 @@ public class MusicCore {
     }
 
 
-    private static void syncQuorum(String key) {
+    private static void syncQuorum(String key) throws Exception {
         logger.info(EELFLoggerDelegate.applicationLogger,"Performing sync operation---");
         String[] splitString = key.split("\\.");
         String keyspaceName = splitString[0];
@@ -407,8 +418,9 @@ public class MusicCore {
      * 
      * @param results
      * @return
+     * @throws MusicServiceException 
      */
-    public static Map<String, HashMap<String, Object>> marshallResults(ResultSet results) {
+    public static Map<String, HashMap<String, Object>> marshallResults(ResultSet results) throws MusicServiceException {
         return getDSHandle().marshalData(results);
     }
 
@@ -506,8 +518,9 @@ public class MusicCore {
      * @param keyspace
      * @param tablename
      * @return
+     * @throws MusicServiceException 
      */
-    public static TableMetadata returnColumnMetadata(String keyspace, String tablename) {
+    public static TableMetadata returnColumnMetadata(String keyspace, String tablename) throws MusicServiceException {
         return getDSHandle().returnColumnMetadata(keyspace, tablename);
     }
 
@@ -604,10 +617,16 @@ public class MusicCore {
             MusicLockState mls = getLockingServiceHandle()
                             .getLockState(keyspaceName + "." + tableName + "." + primaryKey);
             if (mls.getLockHolder().equals(lockId) == true) {
-                if (conditionInfo != null)// check if condition is true
+                if (conditionInfo != null)
+                  try {
                     if (conditionInfo.testCondition() == false)
                         return new ReturnType(ResultType.FAILURE,
                                         "Lock acquired but the condition is not true");
+                  } catch (Exception e) {
+                    return new ReturnType(ResultType.FAILURE,
+                            "Exception thrown while doing the critical put, check sanctity of the row/conditions:\n"
+                                            + e.getMessage());
+                  }
                 getDSHandle().executePut(queryObject, MusicUtil.CRITICAL);
                 long end = System.currentTimeMillis();
                 logger.info(EELFLoggerDelegate.applicationLogger,"Time taken for the critical put:" + (end - start) + " ms");
