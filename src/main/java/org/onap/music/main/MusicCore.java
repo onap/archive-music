@@ -31,7 +31,6 @@ import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonKeySpace;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
-// import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
@@ -209,6 +208,10 @@ public class MusicCore {
              */
             if (acquireLock(key, lockId).getResult() == ResultType.SUCCESS) {
                 mls = getMusicLockState(key);// get latest state
+                if ( mls == null ) {
+                    logger.info(EELFLoggerDelegate.applicationLogger,"Music Lock State is null");
+                    return new ReturnType(ResultType.FAILURE, "Could not acquire lock, Lock State is null");                    
+                }
                 if (mls.getLeaseStartTime() == -1) {// set it again only if it is not set already
                     mls.setLeaseStartTime(System.currentTimeMillis());
                     mls.setLeasePeriod(leasePeriod);
@@ -243,7 +246,7 @@ public class MusicCore {
         } catch (MusicLockingException e2) {
             logger.error(EELFLoggerDelegate.errorLogger,"Failed to aquireLock lockId " + lockId + " " + e2);
         }
-        if (result == false) {
+        if (!result) {
             logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: Not your turn, someone else has the lock");
             try {
 				if (!getLockingServiceHandle().lockIdExists(lockId)) {
@@ -260,7 +263,7 @@ public class MusicCore {
 
         // this is for backward compatibility where locks could also be acquired on just
         // keyspaces or tables.
-        if (isTableOrKeySpaceLock(key) == true) {
+        if (isTableOrKeySpaceLock(key)) {
             logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: A table or keyspace lock so no need to perform sync...so returning true");
             return new ReturnType(ResultType.SUCCESS, "A table or keyspace lock so no need to perform sync...so returning true");
         }
@@ -357,8 +360,6 @@ public class MusicCore {
         selectQuery.appendQueryString("SELECT *  FROM " + keyspaceName + "." + tableName + " WHERE "
                         + primaryKeyName + "= ?" + ";");
         selectQuery.addValue(cqlFormattedPrimaryKeyValue);
-        // String selectQuery = "SELECT * FROM "+keyspaceName+"."+tableName+ " WHERE
-        // "+primaryKeyName+"="+cqlFormattedPrimaryKeyValue+";";
         ResultSet results = null;
         try {
             results = getDSHandle().executeCriticalGet(selectQuery);
@@ -367,7 +368,6 @@ public class MusicCore {
             ColumnDefinitions colInfo = row.getColumnDefinitions();
             int totalColumns = colInfo.size();
             int counter = 1;
-            // String fieldValueString="";
             StringBuilder fieldValueString = new StringBuilder("");
             for (Definition definition : colInfo) {
                 String colName = definition.getName();
@@ -376,7 +376,6 @@ public class MusicCore {
                 DataType colType = definition.getType();
                 Object valueObj = getDSHandle().getColValue(row, colName, colType);
                 Object valueString = MusicUtil.convertToActualDataType(colType, valueObj);
-                // fieldValueString = fieldValueString+ colName+"="+valueString;
                 fieldValueString.append(colName + " = ?");
                 updateQuery.addValue(valueString);
                 if (counter != (totalColumns - 1))
@@ -386,8 +385,6 @@ public class MusicCore {
             updateQuery.appendQueryString("UPDATE " + keyspaceName + "." + tableName + " SET "
                             + fieldValueString + " WHERE " + primaryKeyName + "= ? " + ";");
             updateQuery.addValue(cqlFormattedPrimaryKeyValue);
-            // String updateQuery = "UPDATE "+keyspaceName+"."+tableName+" SET "+fieldValueString+"
-            // WHERE "+primaryKeyName+"="+cqlFormattedPrimaryKeyValue+";";
 
             getDSHandle().executePut(updateQuery, "critical");
         } catch (MusicServiceException | MusicQueryException e) {

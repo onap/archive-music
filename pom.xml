@@ -42,7 +42,7 @@
         <jersey1.version>1.17</jersey1.version>
         <jersey2.version>2.26</jersey2.version>
         <jaxrs.version>2.0.1</jaxrs.version>
-        <cassandra.version>3.0.0</cassandra.version>
+        <cassandra.version>3.2.0</cassandra.version>
         <zookeeper.version>3.4.6</zookeeper.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -236,11 +236,13 @@
             <version>2.4</version>
             <scope>provided</scope>
         </dependency>
+        <!-- 
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-model</artifactId>
             <version>3.3.9</version>
         </dependency>
+         -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-jcs-core</artifactId>
@@ -288,7 +290,7 @@
         <dependency>
             <groupId>io.swagger</groupId>
             <artifactId>swagger-jersey-jaxrs</artifactId>
-            <version>1.5.8</version>
+            <version>1.5.18</version>
         </dependency>
 
         <dependency>
@@ -302,6 +304,11 @@
             <artifactId>eelf-core</artifactId>
             <version>1.0.1-oss</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.3</version>
+        </dependency>        
     </dependencies>
 
     <reporting>

@@ -35,7 +35,7 @@ import org.onap.music.main.MusicUtil;
 
 public class MusicLockingService implements Watcher {
 
-
+    
     private static final int SESSION_TIMEOUT = 180000;
     ZkStatelessLockService zkLockHandle = null;
     private CountDownLatch connectedSignal = new CountDownLatch(1);
@@ -71,7 +71,7 @@ public class MusicLockingService implements Watcher {
     }
 
     public void createLockaIfItDoesNotExist(String lockName) {
-        if (zkLockHandle.checkIfLockExists(lockName) == false) {
+        if (!zkLockHandle.checkIfLockExists(lockName)) {
             String lockHolder = null;
             MusicLockState ml = new MusicLockState(MusicLockState.LockStatus.UNLOCKED, lockHolder);
             byte[] data = ml.serialize();

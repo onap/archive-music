@@ -21,8 +21,6 @@
  */
 package org.onap.music.lockingservice;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.ZooDefs;
@@ -48,10 +46,6 @@ class ProtocolSupport {
     private long retryDelay = 500L;
     private int retryCount = 10;
     private List<ACL> acl = ZooDefs.Ids.OPEN_ACL_UNSAFE;
-
-    // public ProtocolSupport(ZooKeeper zookeeper) {
-    // this.zookeeper = zookeeper;
-    // }
 
     /**
      * Closes this strategy and releases any ZooKeeper resources; but keeps the ZooKeeper instance
@@ -111,7 +105,9 @@ class ProtocolSupport {
     /**
      * Allow derived classes to perform some custom closing operations to release resources
      */
-    protected void doClose() {}
+    protected void doClose() {
+        throw new UnsupportedOperationException();
+    }
 
 
     /**
@@ -173,9 +169,7 @@ class ProtocolSupport {
                     return true;
                 }
             });
-        } catch (KeeperException e) {
-            LOG.error(EELFLoggerDelegate.errorLogger,"Caught: " + e, e);
-        } catch (InterruptedException e) {
+        } catch (InterruptedException|KeeperException e) {
             LOG.error(EELFLoggerDelegate.errorLogger,"Caught: " + e, e);
         }
     }
@@ -200,6 +194,7 @@ class ProtocolSupport {
                 Thread.sleep(attemptCount * retryDelay);
             } catch (InterruptedException e) {
                 LOG.error(EELFLoggerDelegate.errorLogger,"Failed to sleep: " + e, e);
+                Thread.currentThread().interrupt();
             }
         }
     }

@@ -35,7 +35,8 @@ public class JsonInsert implements Serializable {
     private String keyspaceName;
     private String tableName;
     private Map<String, Object> values;
-    String ttl, timestamp;
+    private String ttl;
+    private String timestamp;
     private Map<String, Object> row_specification;
     private Map<String, String> consistencyInfo;
 
@@ -109,7 +110,6 @@ public class JsonInsert implements Serializable {
             out = new ObjectOutputStream(bos);
             out.writeObject(this);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         return bos.toByteArray();
