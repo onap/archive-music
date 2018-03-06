@@ -1,24 +1,14 @@
-<!-- 
- ============LICENSE_START==========================================
- org.onap.music
- ===================================================================
-  Copyright (c) 2017 AT&T Intellectual Property
- ===================================================================
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
- 
-     http://www.apache.org/licenses/LICENSE-2.0
- 
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
- 
- ============LICENSE_END=============================================
- ====================================================================
--->
+<!-- ============LICENSE_START========================================== 
+    org.onap.music =================================================================== 
+    Copyright (c) 2017 AT&T Intellectual Property =================================================================== 
+    Licensed under the Apache License, Version 2.0 (the "License"); you may not 
+    use this file except in compliance with the License. You may obtain a copy 
+    of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required 
+    by applicable law or agreed to in writing, software distributed under the 
+    License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS 
+    OF ANY KIND, either express or implied. See the License for the specific 
+    language governing permissions and limitations under the License. ============LICENSE_END============================================= 
+    ==================================================================== -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
@@ -168,12 +158,11 @@
     </build>
 
     <dependencies>
-
+        <!-- Logging -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
             <version>1.2.3</version>
-
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
@@ -181,7 +170,6 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
@@ -193,17 +181,19 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <dependency>
+            <groupId>com.att.eelf</groupId>
+            <artifactId>eelf-core</artifactId>
+            <version>1.0.1-oss</version>
+        </dependency>
+        <!-- End Logging -->
 
         <dependency>
             <groupId>com.datastax.cassandra</groupId>
             <artifactId>cassandra-driver-core</artifactId>
             <version>${cassandra.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.cassandraunit</groupId>
-            <artifactId>cassandra-unit</artifactId>
-            <version>3.3.0.2</version>
-        </dependency>
+
         <dependency>
             <groupId>org.apache.zookeeper</groupId>
             <artifactId>zookeeper</artifactId>
@@ -215,6 +205,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
         <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-client</artifactId>
@@ -230,29 +221,23 @@
             <artifactId>jersey-json</artifactId>
             <version>${jersey1.version}</version>
         </dependency>
+
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
             <version>2.4</version>
             <scope>provided</scope>
         </dependency>
-        <!-- 
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-model</artifactId>
-            <version>3.3.9</version>
-        </dependency>
-         -->
+        <dependency> <groupId>javax.servlet</groupId> <artifactId>javax.servlet-api</artifactId> 
+            <version>3.0.1</version> <scope>provided</scope> </dependency>
+        <!-- <dependency> <groupId>javax.servlet</groupId> <artifactId>javax.servlet-api</artifactId> 
+            <version>3.0.1</version> <scope>provided</scope> </dependency> <dependency> 
+            <groupId>org.apache.maven</groupId> <artifactId>maven-model</artifactId> 
+            <version>3.3.9</version> </dependency> -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-jcs-core</artifactId>
             <version>2.2</version>
-        </dependency>
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>3.0.1</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>commons-codec</groupId>
@@ -260,12 +245,34 @@
             <version>1.11</version>
         </dependency>
         <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-jersey-jaxrs</artifactId>
+            <version>1.5.8</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>19.0</version>
+        </dependency>
+        <!-- Testing -->
+        <dependency>
+            <groupId>org.cassandraunit</groupId>
+            <artifactId>cassandra-unit</artifactId>
+            <version>3.3.0.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-all</artifactId>
+            <version>1.9.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>org.apache.curator</groupId>
             <artifactId>curator-test</artifactId>
@@ -282,33 +289,13 @@
             </exclusions>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>1.9.0</version>
-        </dependency>
-        <dependency>
-            <groupId>io.swagger</groupId>
-            <artifactId>swagger-jersey-jaxrs</artifactId>
-            <version>1.5.18</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>19.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.att.eelf</groupId>
-            <artifactId>eelf-core</artifactId>
-            <version>1.0.1-oss</version>
-        </dependency>
+        <!-- Added to force update dependency jars that are not secure Cassandra-Unit 
+            depends on older version that is not secure -->
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>4.5.3</version>
-        </dependency>        
+        </dependency>
     </dependencies>
 
     <reporting>
@@ -347,7 +334,7 @@
                             <images>
                                 <!-- MUSIC War -->
                                 <image>
-                                    <name>music</name>
+                                    <name>onap/music/music</name>
                                     <alias>docker_music</alias>
                                     <build>
                                         <cleanup>true</cleanup>
@@ -361,6 +348,49 @@
                                         </assembly>
                                     </build>
                                 </image>
+                                <!-- Cassandra -->
+                                <image>
+                                    <name>onap/music/cassandra_music</name>
+                                    <alias>docker_cassandra</alias>
+                                    <build>
+                                        <cleanup>true</cleanup>
+                                        <tags>
+                                            <tag>3.0-${timestamp}</tag>
+                                            <tag>3.0-latest</tag>
+                                        </tags>
+                                        <dockerFileDir>${project.basedir}/distribution/cassandra</dockerFileDir>
+                                    </build>
+                                </image>
+                                <!-- Zookeeper -->
+                                <!-- 
+                                <image>
+                                    <name>onap/music/zookeeper_music</name>
+                                    <alias>docker_zookeeper</alias>
+                                    <build>
+                                        <cleanup>true</cleanup>
+                                        <tags>
+                                            <tag>3.4-${timestamp}</tag>
+                                            <tag>3.4-latest</tag>
+                                        </tags>
+                                        <dockerFileDir>${project.basedir}/distribution/zookeeper</dockerFileDir>
+                                    </build>
+                                </image>
+                                -->
+                                <!-- tomcat 8.5 -->
+                                <!--
+                                <image>
+                                    <name>onap/music/tomcat_music</name>
+                                    <alias>docker_tomcat</alias>
+                                    <build>
+                                        <cleanup>true</cleanup>
+                                        <tags>
+                                            <tag>8.5-${timestamp}</tag>
+                                            <tag>8.5-latest</tag>
+                                        </tags>
+                                        <dockerFileDir>${project.basedir}/distribution/tomcat</dockerFileDir>
+                                    </build>
+                                </image>\
+                                -->
                             </images>
                         </configuration>
                         <executions>
@@ -389,12 +419,12 @@
                                     <goal>push</goal>
                                 </goals>
                                 <configuration>
-                                    <image>music</image>
+                                    <image>onap/music/music</image>
                                 </configuration>
                             </execution>
                         </executions>
                     </plugin>
-                </plugins>    
+                </plugins>
             </build>
         </profile>
     </profiles>

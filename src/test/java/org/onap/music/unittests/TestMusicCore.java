@@ -213,14 +213,14 @@ public class TestMusicCore {
 
     @Test
     public void testQuorumGet() throws MusicServiceException, MusicQueryException {
-    	preparedQueryObject = Mockito.mock(PreparedQueryObject.class);
-    	mDstoreHandle = Mockito.mock(MusicDataStore.class);
-    	rs = Mockito.mock(ResultSet.class);
-    	session = Mockito.mock(Session.class);
+        preparedQueryObject = Mockito.mock(PreparedQueryObject.class);
+        mDstoreHandle = Mockito.mock(MusicDataStore.class);
+        rs = Mockito.mock(ResultSet.class);
+        session = Mockito.mock(Session.class);
         Mockito.when(mDstoreHandle.getSession()).thenReturn(session);
-    	Mockito.when(mDstoreHandle.executeCriticalGet(preparedQueryObject)).thenReturn(rs);
-    	ResultSet rs1 = MusicCore.quorumGet(preparedQueryObject);
-    	assertNotNull(rs1);
+        Mockito.when(mDstoreHandle.executeCriticalGet(preparedQueryObject)).thenReturn(rs);
+        ResultSet rs1 = MusicCore.quorumGet(preparedQueryObject);
+        assertNotNull(rs1);
     }
 
     @Test
