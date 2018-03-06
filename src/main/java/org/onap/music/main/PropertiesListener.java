@@ -32,6 +32,9 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.eelf.logging.format.AppMessages;
+import org.onap.music.eelf.logging.format.ErrorSeverity;
+import org.onap.music.eelf.logging.format.ErrorTypes;
 
 @WebListener
 public class PropertiesListener implements ServletContextListener {
@@ -127,6 +130,7 @@ public class PropertiesListener implements ServletContextListener {
                 }
             }
         } catch (IOException e) {
+        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.IOERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.CONNECTIONERROR);
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
         }
 

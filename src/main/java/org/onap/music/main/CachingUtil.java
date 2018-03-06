@@ -36,6 +36,9 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.AAFResponse;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.eelf.logging.format.AppMessages;
+import org.onap.music.eelf.logging.format.ErrorSeverity;
+import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicServiceException;
 
 import com.att.eelf.configuration.EELFLogger;
@@ -83,8 +86,8 @@ public class CachingUtil implements Runnable {
         try {
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), false));
         } catch (Exception e1) {
+            logger.error(EELFLoggerDelegate.errorLogger, e1.getMessage(),AppMessages.CACHEERROR, ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
             e1.printStackTrace();
-            logger.error(EELFLoggerDelegate.errorLogger,"Exception is "+ e1.getMessage() + "during initalizeAafCache");
         }
         ResultSet rs = MusicCore.get(pQuery);
         Iterator<Row> it = rs.iterator();
@@ -109,11 +112,9 @@ public class CachingUtil implements Runnable {
                                     + nameSpace);
                 }
             } catch (Exception e) {
-                // TODO Auto-generated catch block
+                logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.INFO, ErrorTypes.GENERALSERVICEERROR);
+                logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),"Something at AAF was changed for ns: " + nameSpace+" So not updating Cache for the namespace. ");
                 e.printStackTrace();
-                logger.error("Something at AAF was changed for ns: " + nameSpace
-                                + ". So not updating Cache for the namespace. ");
-                logger.error("Exception is " + e.getMessage());
             }
         }
 
@@ -121,11 +122,11 @@ public class CachingUtil implements Runnable {
 
     @Override
     public void run() {
-        logger.debug("Scheduled task invoked. Refreshing Cache...");
+    	logger.info(EELFLoggerDelegate.applicationLogger,"Scheduled task invoked. Refreshing Cache...");
         try {
 			initializeAafCache();
 		} catch (MusicServiceException e) {
-			logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
+			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.INFO, ErrorTypes.GENERALSERVICEERROR);
 		}
     }
 
@@ -134,9 +135,9 @@ public class CachingUtil implements Runnable {
 
         if (aafCache.get(nameSpace) != null) {
             if (keySpace != null && !musicCache.get(nameSpace).equals(keySpace)) {
-                logger.debug("Create new application for the same namespace.");
+            	logger.info(EELFLoggerDelegate.applicationLogger,"Create new application for the same namespace.");
             } else if (aafCache.get(nameSpace).get(userId).equals(password)) {
-                logger.debug("Authenticated with cache value..");
+            	logger.info(EELFLoggerDelegate.applicationLogger,"Authenticated with cache value..");
                 // reset invalid attempts to 0
                 userAttempts.put(nameSpace, 0);
                 return true;
@@ -154,10 +155,11 @@ public class CachingUtil implements Runnable {
                         logger.info(EELFLoggerDelegate.applicationLogger,"Resetting failed attempt.");
                         userAttempts.put(nameSpace, 0);
                     } else {
+                    	logger.info(EELFLoggerDelegate.applicationLogger,"No more attempts allowed. Please wait for atleast 2 min.");
                         throw new Exception("No more attempts allowed. Please wait for atleast 2 min.");
                     }
                 }
-                logger.error(EELFLoggerDelegate.errorLogger,"Cache not authenticated..");
+                logger.error(EELFLoggerDelegate.errorLogger,"",AppMessages.CACHEAUTHENTICATION,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
                 logger.info(EELFLoggerDelegate.applicationLogger,"Check AAF again...");
             }
         }
@@ -178,6 +180,7 @@ public class CachingUtil implements Runnable {
     private static AAFResponse triggerAAF(String nameSpace, String userId, String password)
                     throws Exception {
         if (MusicUtil.getAafEndpointUrl() == null) {
+        	logger.error(EELFLoggerDelegate.errorLogger,"",AppMessages.UNKNOWNERROR,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
             throw new Exception("AAF endpoint is not set. Please specify in the properties file.");
         }
         Client client = Client.create();
@@ -213,6 +216,7 @@ public class CachingUtil implements Runnable {
         response.bufferEntity();
         String x = response.getEntity(String.class);
         AAFResponse responseObj = new ObjectMapper().readValue(x, AAFResponse.class);
+        
         return responseObj;
     }
 
@@ -235,7 +239,7 @@ public class CachingUtil implements Runnable {
                 musicCache.put(keyspace, uuid);
             } catch (Exception e) {
                 String msg = e.getMessage();
-                logger.error("Exception occured during uuid retrieval from DB." + e.getMessage());
+                logger.error(EELFLoggerDelegate.errorLogger,  e.getMessage(), AppMessages.QUERYERROR,ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
                 resultMap.put("Exception", "Unauthorized operation. Check AID and Keyspace. "
                                 + "Exception from MUSIC is: "
                                 + (msg == null ? "Keyspace is new so no AID should be passed in Header."
@@ -273,8 +277,8 @@ public class CachingUtil implements Runnable {
 		        uuid = rs.getUUID("uuid").toString();
 		        musicLockCache.put(nameSpace, uuid);
 		    } catch (Exception e) {
-		        logger.error("Exception occured during uuid retrieval from DB." + e.getMessage());
-		        resultMap.put("Exception", "Unauthorized operation. Check AID and Namespace. ");
+		    	logger.error(EELFLoggerDelegate.errorLogger,  e.getMessage(), AppMessages.QUERYERROR,ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
+		    	resultMap.put("Exception", "Unauthorized operation. Check AID and Namespace. ");
 		        return resultMap;
 		    }
 		    if (!musicLockCache.get(nameSpace).toString().equals(aid)) {
@@ -295,7 +299,7 @@ public class CachingUtil implements Runnable {
     
 
     public static void updateMusicCache(String aid, String keyspace) {
-        logger.info("Updating musicCache for keyspace " + keyspace + " with aid " + aid);
+    	logger.info(EELFLoggerDelegate.applicationLogger,"Updating musicCache for keyspace " + keyspace + " with aid " + aid);
         musicCache.put(keyspace, aid);
     }
 
@@ -316,12 +320,11 @@ public class CachingUtil implements Runnable {
                 isAAF = String.valueOf(rs.getBool("is_aaf"));
                 appNameCache.put(namespace, isAAF);
             } catch (Exception e) {
-                logger.error("Exception occured during uuid retrieval from DB." + e.getMessage());
-                e.printStackTrace();
+            	logger.error(EELFLoggerDelegate.errorLogger,  e.getMessage(), AppMessages.QUERYERROR,ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
+            	e.printStackTrace();
             }
         }
 
-        
         return Boolean.valueOf(isAAF);
     }
 
@@ -354,7 +357,7 @@ public class CachingUtil implements Runnable {
         try {
             appName = rs.getString("application_name");
         } catch (Exception e) {
-            logger.error(EELFLoggerDelegate.errorLogger,"Exception occured during uuid retrieval from DB."+e.getMessage());
+        	logger.error(EELFLoggerDelegate.errorLogger,  e.getMessage(), AppMessages.QUERYERROR, ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
             e.printStackTrace();
         }
         return appName;
@@ -381,7 +384,8 @@ public class CachingUtil implements Runnable {
     public static Map<String, Object> verifyOnboarding(String ns, String userId, String password) {
         Map<String, Object> resultMap = new HashMap<>();
         if (ns == null || userId == null || password == null) {
-            logger.error(EELFLoggerDelegate.errorLogger,"One or more required headers is missing. userId: "+userId+" :: password: "+password);
+        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
+        	logger.error(EELFLoggerDelegate.errorLogger,"One or more required headers is missing. userId: "+userId+" :: password: "+password);
             resultMap.put("Exception",
                             "One or more required headers appName(ns), userId, password is missing. Please check.");
             return resultMap;
@@ -408,6 +412,7 @@ public class CachingUtil implements Runnable {
 			return resultMap;
 		}
         if (rs == null) {
+        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
             logger.error(EELFLoggerDelegate.errorLogger,"Namespace, UserId and password doesn't match. namespace: "+ns+" and userId: "+userId);
 
             resultMap.put("Exception", "Namespace, UserId and password doesn't match. namespace: "+ns+" and userId: "+userId);
@@ -416,6 +421,7 @@ public class CachingUtil implements Runnable {
             String keyspace = rs.getString("keyspace_name");
             if (!is_aaf) {
                 if (!keyspace.equals(MusicUtil.DEFAULTKEYSPACENAME)) {
+                	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO ,ErrorSeverity.WARN, ErrorTypes.DATAERROR);
                     logger.error(EELFLoggerDelegate.errorLogger,"Non AAF applications are allowed to have only one keyspace per application.");
                     resultMap.put("Exception",
                                     "Non AAF applications are allowed to have only one keyspace per application.");

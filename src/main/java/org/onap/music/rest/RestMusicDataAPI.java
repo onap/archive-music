@@ -44,6 +44,9 @@ import org.onap.music.datastore.jsonobjects.JsonTable;
 import org.onap.music.datastore.jsonobjects.JsonUpdate;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.exceptions.MusicLockingException;
+import org.onap.music.eelf.logging.format.AppMessages;
+import org.onap.music.eelf.logging.format.ErrorSeverity;
+import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.CachingUtil;
 import org.onap.music.main.MusicCore;
@@ -257,7 +260,7 @@ public class RestMusicDataAPI {
             queryObject.appendQueryString(";");
             result = MusicCore.nonKeyRelatedPut(queryObject, consistency);
         } catch (Exception e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
+        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
         }
         resultMap.remove("uuid");
         try {
@@ -382,6 +385,7 @@ public class RestMusicDataAPI {
                     @ApiParam(value = "Table Name",
                                     required = true) @PathParam("tablename") String tablename,
                     @Context HttpServletResponse response) throws Exception {
+    	
         Map<String, Object> resultMap = MusicCore.autheticateUser(ns, userId, password, keyspace,
                         aid, "createTable");
         response.addHeader(xLatestVersion, MusicUtil.getVersion());
@@ -655,7 +659,7 @@ public class RestMusicDataAPI {
                             : new ReturnType(ResultType.FAILURE,
                                             "Null result - Please Contact admin").toMap();
         } catch (Exception ex) {
-            logger.error(EELFLoggerDelegate.applicationLogger, ex.getMessage());
+        	logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
             return new ReturnType(ResultType.FAILURE, ex.getMessage()).toMap();
         }
     }
@@ -1150,7 +1154,7 @@ public class RestMusicDataAPI {
         if (resultMap.containsKey("aid"))
             resultMap.remove("aid");
         if (!resultMap.isEmpty()) {
-            logger.error("Error while authentication... ");
+        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.AUTHENTICATIONERROR  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
             HashMap<String, Object> tempMap = new HashMap<>();
             tempMap.putAll(resultMap);
             Map<String, HashMap<String, Object>> results = new HashMap<>();
@@ -1175,6 +1179,7 @@ public class RestMusicDataAPI {
             ResultSet results = MusicCore.get(queryObject);
             return MusicCore.marshallResults(results);
         } catch (MusicServiceException ex) {
+        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.UNKNOWNERROR  ,ErrorSeverity.ERROR, ErrorTypes.MUSICSERVICEERROR);
             return MusicUtil.setErrorResponse(ex);
         }
 

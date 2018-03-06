@@ -30,11 +30,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.eelf.logging.format.AppMessages;
+import org.onap.music.eelf.logging.format.ErrorSeverity;
+import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.MusicUtil;
-import org.onap.music.main.ResultType;
-
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ColumnDefinitions;
 import com.datastax.driver.core.ColumnDefinitions.Definition;
@@ -134,7 +135,9 @@ public class MusicDataStore {
                 }
             }
         } catch (SocketException e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), AppMessages.CONNCECTIVITYERROR, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
+        }catch(Exception e) {
+        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), ErrorSeverity.ERROR, ErrorTypes.GENERALSERVICEERROR);
         }
         return allPossibleIps;
     }
@@ -162,7 +165,7 @@ public class MusicDataStore {
                 break;
             } catch (NoHostAvailableException e) {
                 address = it.next();
-                logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
+                logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.HOSTUNAVAILABLE, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
             }
         }
     }
@@ -189,7 +192,7 @@ public class MusicDataStore {
         try {
             session = cluster.connect();
         } catch (Exception ex) {
-            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage());
+            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.CASSANDRACONNECTIVITY, ErrorSeverity.ERROR, ErrorTypes.SERVICEUNAVAILABLE);
             throw new MusicServiceException(
                             "Error while connecting to Cassandra cluster.. " + ex.getMessage());
         }
@@ -311,8 +314,7 @@ public class MusicDataStore {
         boolean result = false;
 
         if (!MusicUtil.isValidQueryObject(!queryObject.getValues().isEmpty(), queryObject)) {
-            logger.error(EELFLoggerDelegate.errorLogger,
-                            "Error while processing prepared query object");
+        	logger.error(EELFLoggerDelegate.errorLogger, queryObject.getQuery(),AppMessages.QUERYERROR, ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
             throw new MusicQueryException("Ill formed queryObject for the request = " + "["
                             + queryObject.getQuery() + "]");
         }
@@ -342,14 +344,12 @@ public class MusicDataStore {
 
         }
         catch (AlreadyExistsException ae) {
-        	logger.error(EELFLoggerDelegate.errorLogger, "Executing Session Failure for Request = "
-                    + "[" + queryObject.getQuery() + "]" + " Reason = " + ae.getMessage());
+            logger.error(EELFLoggerDelegate.errorLogger, ae.getMessage(),AppMessages.SESSIONFAILED+ " [" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
         	throw new MusicServiceException(ae.getMessage());
         }
         catch (Exception e) {
-            logger.error(EELFLoggerDelegate.errorLogger, "Executing Session Failure for Request = "
-                            + "[" + queryObject.getQuery() + "]" + " Reason = " + e.getMessage());
-            throw new MusicServiceException("Executing Session Failure for Request = " + "["
+        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.SESSIONFAILED+ " [" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
+        	throw new MusicQueryException("Executing Session Failure for Request = " + "["
                             + queryObject.getQuery() + "]" + " Reason = " + e.getMessage());
         }
 
@@ -369,7 +369,8 @@ public class MusicDataStore {
                     throws MusicServiceException, MusicQueryException {
 
         if (!MusicUtil.isValidQueryObject(!queryObject.getValues().isEmpty(), queryObject)) {
-            throw new MusicQueryException("Ill formed queryObject for the request = " + "["
+        	logger.error(EELFLoggerDelegate.errorLogger, "",AppMessages.QUERYERROR+ " [" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
+        	throw new MusicQueryException("Ill formed queryObject for the request = " + "["
                             + queryObject.getQuery() + "]");
         }
         logger.info(EELFLoggerDelegate.applicationLogger,
@@ -381,8 +382,8 @@ public class MusicDataStore {
             results = session.execute(preparedEventualGet.bind(queryObject.getValues().toArray()));
 
         } catch (Exception ex) {
-            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage());
-            throw new MusicServiceException(ex.getMessage());
+        	logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.UNKNOWNERROR+ "[" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
+        	throw new MusicServiceException(ex.getMessage());
         }
         return results;
     }
@@ -399,8 +400,8 @@ public class MusicDataStore {
     public ResultSet executeCriticalGet(PreparedQueryObject queryObject)
                     throws MusicServiceException, MusicQueryException {
         if (!MusicUtil.isValidQueryObject(!queryObject.getValues().isEmpty(), queryObject)) {
-            logger.error(EELFLoggerDelegate.errorLogger, "Error processing Prepared Query Object");
-            throw new MusicQueryException("Ill formed queryObject for the request = " + "["
+        	logger.error(EELFLoggerDelegate.errorLogger, "",AppMessages.QUERYERROR+ " [" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
+            throw new MusicQueryException("Error processing Prepared Query Object for the request = " + "["
                             + queryObject.getQuery() + "]");
         }
         logger.info(EELFLoggerDelegate.applicationLogger,
@@ -411,8 +412,8 @@ public class MusicDataStore {
         try {
             results = session.execute(preparedEventualGet.bind(queryObject.getValues().toArray()));
         } catch (Exception ex) {
-            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage());
-            throw new MusicServiceException(ex.getMessage());
+        	logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.UNKNOWNERROR+ "[" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
+        	throw new MusicServiceException(ex.getMessage());
         }
         return results;
 

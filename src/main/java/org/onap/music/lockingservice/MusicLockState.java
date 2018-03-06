@@ -30,6 +30,9 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.eelf.logging.format.AppMessages;
+import org.onap.music.eelf.logging.format.ErrorSeverity;
+import org.onap.music.eelf.logging.format.ErrorTypes;
 
 // the state variable that will be stored in zookeeper, capturing the transitions of
 public class MusicLockState implements Serializable {
@@ -104,7 +107,7 @@ public class MusicLockState implements Serializable {
             out = new ObjectOutputStream(bos);
             out.writeObject(this);
         } catch (IOException e) {
-           logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
+        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.IOERROR, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
         }
         return bos.toByteArray();
     }
@@ -117,7 +120,7 @@ public class MusicLockState implements Serializable {
             in = new ObjectInputStream(bis);
             o = in.readObject();
         } catch (ClassNotFoundException | IOException e) {
-            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
+        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.UNKNOWN);
         }
         return (MusicLockState) o;
     }

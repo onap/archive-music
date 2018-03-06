@@ -28,6 +28,9 @@ import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.eelf.logging.format.AppMessages;
+import org.onap.music.eelf.logging.format.ErrorSeverity;
+import org.onap.music.eelf.logging.format.ErrorTypes;
 
 /**
  * A <a href="package.html">protocol to implement an exclusive write lock or to elect a leader</a>.
@@ -44,7 +47,7 @@ public class ZkStatelessLockService extends ProtocolSupport {
         zookeeper = zk;
     }
 
-    private static EELFLoggerDelegate LOG =
+    private static EELFLoggerDelegate logger =
                     EELFLoggerDelegate.getLogger(ZkStatelessLockService.class);
 
     protected void createLock(final String path, final byte[] data) {
@@ -56,18 +59,18 @@ public class ZkStatelessLockService extends ProtocolSupport {
                     return true;
                 }
             });
-        } catch (KeeperException e) {
-            LOG.error(EELFLoggerDelegate.errorLogger, "Caught: " + e, e);
-        } catch (InterruptedException e) {
-            LOG.error(EELFLoggerDelegate.errorLogger, "Caught: " + e, e);
+        }catch (InterruptedException e) {
+        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+        }catch (KeeperException e) {
+        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
     }
 
     public void close() {
         try {
             zookeeper.close();
-        } catch (InterruptedException e) {
-            LOG.error(EELFLoggerDelegate.errorLogger, e.getMessage());
+        }catch (InterruptedException e) {
+        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
     }
 
@@ -80,10 +83,10 @@ public class ZkStatelessLockService extends ProtocolSupport {
                     return true;
                 }
             });
-        } catch (KeeperException e) {
-            LOG.error(EELFLoggerDelegate.errorLogger, "Caught: " + e, e);
-        } catch (InterruptedException e) {
-            LOG.error(EELFLoggerDelegate.errorLogger, "Caught: " + e, e);
+        }catch (InterruptedException e) {
+        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+        }catch (KeeperException e) {
+        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
 
     }
@@ -95,8 +98,10 @@ public class ZkStatelessLockService extends ProtocolSupport {
             else
                 return null;
 
-        } catch (KeeperException | InterruptedException e) {
-            LOG.error(EELFLoggerDelegate.errorLogger, "Caught: " + e, e);
+        }catch (InterruptedException e) {
+        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+        }catch (KeeperException e) {
+        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
         return null;
     }
@@ -108,8 +113,10 @@ public class ZkStatelessLockService extends ProtocolSupport {
             if (stat != null) {
                 result = true;
             }
-        } catch (KeeperException | InterruptedException e) {
-            LOG.error(EELFLoggerDelegate.errorLogger, e.getMessage());
+        }catch (InterruptedException e) {
+        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+        }catch (KeeperException e) {
+        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
         return result;
     }
@@ -123,8 +130,10 @@ public class ZkStatelessLockService extends ProtocolSupport {
         LockZooKeeperOperation zop = new LockZooKeeperOperation(dir);
         try {
             retryOperation(zop);
-        } catch (KeeperException | InterruptedException e) {
-            LOG.error(EELFLoggerDelegate.errorLogger, e.getMessage());
+        }catch (InterruptedException e) {
+        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+        }catch (KeeperException e) {
+        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
         return zop.getId();
     }
@@ -161,13 +170,13 @@ public class ZkStatelessLockService extends ProtocolSupport {
                 };
                 zopdel.execute();
             } catch (InterruptedException e) {
-                LOG.error(EELFLoggerDelegate.errorLogger, "Caught: " + e, e);
+            	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
                 // set that we have been interrupted.
                 Thread.currentThread().interrupt();
             } catch (KeeperException.NoNodeException e) {
                 // do nothing
             } catch (KeeperException e) {
-                LOG.error(EELFLoggerDelegate.errorLogger, "Caught: " + e, e);
+            	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
                 throw (RuntimeException) new RuntimeException(e.getMessage()).initCause(e);
             }
         }
@@ -187,13 +196,13 @@ public class ZkStatelessLockService extends ProtocolSupport {
                 }
                 return sortedNames.first().getName();
             } catch (InterruptedException e) {
-                LOG.error(EELFLoggerDelegate.errorLogger, "Caught: " + e, e);
+            	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
                 // set that we have been interrupted.
                 Thread.currentThread().interrupt();
             } catch (KeeperException.NoNodeException e) {
                 // do nothing
             } catch (KeeperException e) {
-                LOG.error(EELFLoggerDelegate.errorLogger, "Caught: " + e, e);
+            	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
                 throw (RuntimeException) new RuntimeException(e.getMessage()).initCause(e);
             }
         }
@@ -216,13 +225,14 @@ public class ZkStatelessLockService extends ProtocolSupport {
                 };
                 zopdel.execute();
             } catch (InterruptedException e) {
-                LOG.error(EELFLoggerDelegate.errorLogger, "Caught: " + e, e);
+            	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
                 // set that we have been interrupted.
                 Thread.currentThread().interrupt();
             } catch (KeeperException.NoNodeException e) {
+            	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
                 // do nothing
             } catch (KeeperException e) {
-                LOG.error(EELFLoggerDelegate.errorLogger, "Caught: " + e, e);
+            	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
                 throw (RuntimeException) new RuntimeException(e.getMessage()).initCause(e);
             }
         }
@@ -272,8 +282,8 @@ public class ZkStatelessLockService extends ProtocolSupport {
                     id = zookeeper.create(dir + "/" + prefix, data, getAcl(),
                                     CreateMode.PERSISTENT_SEQUENTIAL);
 
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Created id: " + id);
+                    if (logger.isDebugEnabled()) {
+                    	logger.debug(EELFLoggerDelegate.debugLogger, "Created id: " + id);
                     }
                     if (id != null)
                         break;
@@ -281,8 +291,12 @@ public class ZkStatelessLockService extends ProtocolSupport {
                 if (id != null) {
                     List<String> names = zookeeper.getChildren(dir, false);
                     if (names.isEmpty()) {
-                        LOG.info(EELFLoggerDelegate.applicationLogger, "No children in: " + dir);
+                        logger.info(EELFLoggerDelegate.applicationLogger, "No children in: " + dir
+                                        + " when we've just " + "created one! Lets recreate it...");
+                        // lets force the recreation of the id
+                        id = null;
                         return Boolean.FALSE;
+
                     } else {
                         // lets sort them explicitly (though they do seem to come back in order
                         // ususally :)
@@ -298,14 +312,14 @@ public class ZkStatelessLockService extends ProtocolSupport {
                         if (!lessThanMe.isEmpty()) {
                             ZNodeName lastChildName = lessThanMe.last();
                             String lastChildId = lastChildName.getName();
-                            if (LOG.isDebugEnabled()) {
-                                LOG.debug("watching less than me node: " + lastChildId);
+                            if (logger.isDebugEnabled()) {
+                            	logger.debug(EELFLoggerDelegate.debugLogger, "watching less than me node: " + lastChildId);
                             }
                             Stat stat = zookeeper.exists(lastChildId, false);
                             if (stat != null) {
                                 return Boolean.FALSE;
                             } else {
-                                LOG.info(EELFLoggerDelegate.applicationLogger,
+                                logger.info(EELFLoggerDelegate.applicationLogger,
                                                 "Could not find the" + " stats for less than me: "
                                                                 + lastChildName.getName());
                             }

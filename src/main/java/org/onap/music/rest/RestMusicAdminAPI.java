@@ -39,6 +39,9 @@ import javax.ws.rs.core.MediaType;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonOnboard;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.eelf.logging.format.AppMessages;
+import org.onap.music.eelf.logging.format.ErrorSeverity;
+import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.main.CachingUtil;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
@@ -72,6 +75,7 @@ public class RestMusicAdminAPI {
         String password = jsonObj.getPassword();
         response.addHeader("X-latestVersion", MusicUtil.getVersion());
         if (appName == null || userId == null || isAAF == null || password == null) {
+        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
             resultMap.put("Exception",
                             "Please check the request parameters. Some of the required values appName(ns), userId, password, isAAF are missing.");
             return resultMap;

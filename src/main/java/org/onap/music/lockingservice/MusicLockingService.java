@@ -28,6 +28,9 @@ import org.apache.zookeeper.Watcher;
 import org.apache.zookeeper.Watcher.Event.KeeperState;
 import org.apache.zookeeper.ZooKeeper;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.eelf.logging.format.AppMessages;
+import org.onap.music.eelf.logging.format.ErrorSeverity;
+import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.MusicUtil;
@@ -48,10 +51,10 @@ public class MusicLockingService implements Watcher {
             connectedSignal.await();
             zkLockHandle = new ZkStatelessLockService(zk);
         } catch (IOException e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.IOERROR, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
             throw new MusicServiceException("IO Error has occured" + e.getMessage());
         } catch (InterruptedException e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
+        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
             throw new MusicServiceException("Exception Occured " + e.getMessage());
         }
     }
@@ -65,9 +68,13 @@ public class MusicLockingService implements Watcher {
             ZooKeeper zk = new ZooKeeper(lockServer, SESSION_TIMEOUT, this);
             connectedSignal.await();
             zkLockHandle = new ZkStatelessLockService(zk);
-        } catch (IOException | InterruptedException e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
-        }
+        } catch (IOException e) {
+        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.IOERROR, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
+        }catch( InterruptedException e) {
+        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+		}catch(Exception e) {
+			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+		}
     }
 
     public void createLockaIfItDoesNotExist(String lockName) {
@@ -90,12 +97,14 @@ public class MusicLockingService implements Watcher {
         try{
         	data = zkLockHandle.getNodeData(lockName);
         }catch (Exception ex){
-        	logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage());
+        	logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
         if(data !=null)
         return MusicLockState.deSerialize(data);
-        else
-        throw new  MusicLockingException("Invalid lock or acquire failed");	
+        else {
+        	logger.error(EELFLoggerDelegate.errorLogger,"",AppMessages.INVALIDLOCK, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+        	throw new  MusicLockingException("Invalid lock or acquire failed");
+        }
     }
 
     public String createLockId(String lockName) {
@@ -109,9 +118,13 @@ public class MusicLockingService implements Watcher {
         String lockName = "/" + st.nextToken("/");
         try {
             return zkLockHandle.lock(lockName, lockId);
-        } catch (KeeperException | InterruptedException e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
-        }
+        } catch (KeeperException e) {
+        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.LOCKINGERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+        }catch( InterruptedException e) {
+        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+		}catch(Exception e) {
+			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+		}
         return false;
     }
 
