@@ -167,8 +167,14 @@ public class RestMusicAdminAPI {
             Row row = (Row) it.next();
             resultMap.put( row.getUUID("uuid").toString(),row.getString("keyspace_name"));
         }
-        if (resultMap.isEmpty())
-            resultMap.put("ERROR", "Application is not onboarded. Please contact admin.");
+        if (resultMap.isEmpty()) {
+            if(uuid != null)
+                resultMap.put("Exception", "Please make sure Aid is correct and application is onboarded.");
+            else {
+                resultMap.put("Exception",
+                               "Application is not onboarded. Please make sure all the information is correct.");
+            }
+        }
         return resultMap;
     }
 
@@ -212,7 +218,7 @@ public class RestMusicAdminAPI {
     	            resultMap.put("Success", "Your application has been deleted successfully");
     	        } else {
     	            resultMap.put("Exception",
-    	                            "Oops. Spomething went wrong. Please make sure Aid is correct or Application is onboarded");
+    	                            "Oops. Something went wrong. Please make sure Aid is correct or Application is onboarded");
     	        }
                 return resultMap;    
         }
@@ -329,7 +335,7 @@ public class RestMusicAdminAPI {
 	            resultMap.put("Success", "Your application has been updated successfully");
 	        } else {
 	            resultMap.put("Exception",
-	                            "Oops. Spomething went wrong. Please make sure Aid is correct and application is onboarded");
+	                            "Oops. Something went wrong. Please make sure Aid is correct and application is onboarded");
 	        }
 	        
         return resultMap;

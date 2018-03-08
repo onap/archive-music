@@ -119,7 +119,12 @@ public class MusicCore {
         logger.info(EELFLoggerDelegate.applicationLogger,"Acquiring data store handle");
         long start = System.currentTimeMillis();
         if (mDstoreHandle == null) {
-            mDstoreHandle = new MusicDataStore();
+            // Quick Fix - Best to put this into every call to getDSHandle?
+            if (! MusicUtil.getMyCassaHost().equals("localhost") ) {
+                mDstoreHandle = new MusicDataStore(MusicUtil.getMyCassaHost());
+            } else {
+                mDstoreHandle = new MusicDataStore();
+            }
         }
         if(mDstoreHandle.getSession() == null) {
         	String message = "Connection to Cassandra has not been enstablished."

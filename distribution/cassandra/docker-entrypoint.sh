@@ -60,10 +60,25 @@ if [ "$1" = 'cassandra' ]; then
 		fi
 	done
 fi
+
+for f in /docker-entrypoint-initdb.d/*.cql; do
+    if [ "${CASSUSER}" ]; then
+        sed -ri 's/CASSUSER/'${CASSUSER}'/' "$f"
+    fi
+    if [ "${CASSPASS}" ]; then
+        sed -ri 's/CASSPASS/'${CASSPASS}'/' "$f"
+    fi
+done
+
+
+
+
 echo "################################ Let run Scripts ##############################"
 for f in /docker-entrypoint-initdb.d/*; do
+    
     case "$f" in
-        *.cql)    echo "$0: running $f" && until cqlsh -u cassandra -p cassandra -f "$f"; do >&2 echo "Cassandra is unavailable - sleeping"; sleep 2; done & ;;
+        *.cql)
+            echo "$0: running $f" && until cqlsh -u cassandra -p cassandra -f "$f"; do >&2 echo "Cassandra is unavailable - sleeping"; sleep 2; done & ;;
         *)        echo "$0: ignoring $f" ;;
     esac
     echo

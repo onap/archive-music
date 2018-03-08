@@ -392,11 +392,9 @@ public class CachingUtil implements Runnable {
         }
         PreparedQueryObject queryObject = new PreparedQueryObject();
         queryObject.appendQueryString(
-                        "select * from admin.keyspace_master where application_name = ? and username = ? and password = ? allow filtering");
+                        "select * from admin.keyspace_master where application_name = ? allow filtering");
         try {
         	queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), ns));
-        	queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
-        	queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), password));
         } catch(Exception e) {
         	resultMap.put("Exception",
                     "Unable to process input data. Invalid input data type. Please check ns, userId and password values. "+e.getMessage());
@@ -412,16 +410,20 @@ public class CachingUtil implements Runnable {
 			return resultMap;
 		}
         if (rs == null) {
-        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
-            logger.error(EELFLoggerDelegate.errorLogger,"Namespace, UserId and password doesn't match. namespace: "+ns+" and userId: "+userId);
-
-            resultMap.put("Exception", "Namespace, UserId and password doesn't match. namespace: "+ns+" and userId: "+userId);
+            logger.error(EELFLoggerDelegate.errorLogger,"Application is not onboarded. Please contact admin.");
+            resultMap.put("Exception", "Application is not onboarded. Please contact admin.");
         } else {
+            if(!(rs.getString("username").equals(userId)) && !(rs.getString("password").equals("password"))) {
+                logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
+                logger.error(EELFLoggerDelegate.errorLogger,"Namespace, UserId and password doesn't match. namespace: "+ns+" and userId: "+userId);
+                resultMap.put("Exception", "Namespace, UserId and password doesn't match. namespace: "+ns+" and userId: "+userId);
+                return resultMap;
+            }
             boolean is_aaf = rs.getBool("is_aaf");
             String keyspace = rs.getString("keyspace_name");
             if (!is_aaf) {
                 if (!keyspace.equals(MusicUtil.DEFAULTKEYSPACENAME)) {
-                	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO ,ErrorSeverity.WARN, ErrorTypes.DATAERROR);
+                    logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO ,ErrorSeverity.WARN, ErrorTypes.DATAERROR);
                     logger.error(EELFLoggerDelegate.errorLogger,"Non AAF applications are allowed to have only one keyspace per application.");
                     resultMap.put("Exception",
                                     "Non AAF applications are allowed to have only one keyspace per application.");

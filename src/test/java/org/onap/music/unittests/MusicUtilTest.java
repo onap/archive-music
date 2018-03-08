@@ -169,7 +169,7 @@ public class MusicUtilTest {
     }
 
     @Test
-    public void testConvertToCQLDataType() {
+    public void testConvertToCQLDataType() throws Exception {
         Map<String,Object> myMap = new HashMap<String,Object>();
         myMap.put("name","tom");
         assertEquals(MusicUtil.convertToCQLDataType(DataType.varchar(),"Happy People"),"'Happy People'");
@@ -195,7 +195,7 @@ public class MusicUtilTest {
     }
 
     @Test
-    public void testJsonMaptoSqlString() {
+    public void testJsonMaptoSqlString() throws Exception {
         Map<String,Object> myMap = new HashMap<>();
         myMap.put("name","tom");
         myMap.put("value",5);

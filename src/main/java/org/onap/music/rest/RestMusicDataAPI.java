@@ -181,7 +181,12 @@ public class RestMusicDataAPI {
         boolean result = false;
         long start = System.currentTimeMillis();
         Map<String, Object> replicationInfo = kspObject.getReplicationInfo();
-        String repString = "{" + MusicUtil.jsonMaptoSqlString(replicationInfo, ",") + "}";
+        String repString = null;
+        try {
+            repString = "{" + MusicUtil.jsonMaptoSqlString(replicationInfo, ",") + "}";
+        } catch (Exception e) {
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
+        }
         queryObject.appendQueryString(
                         "CREATE KEYSPACE " + keyspaceName + " WITH replication = " + repString);
         if (kspObject.getDurabilityOfWrites() != null) {

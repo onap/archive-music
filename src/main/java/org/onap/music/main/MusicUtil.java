@@ -394,7 +394,7 @@ public class MusicUtil {
         MusicUtil.cassPwd = cassPwd;
     }
 
-    public static String convertToCQLDataType(DataType type, Object valueObj) {
+    public static String convertToCQLDataType(DataType type, Object valueObj) throws Exception {
 
         String value = "";
         switch (type.getName()) {
@@ -459,7 +459,7 @@ public class MusicUtil {
      * @return
      */
 
-    public static String jsonMaptoSqlString(Map<String, Object> jMap, String lineDelimiter) {
+    public static String jsonMaptoSqlString(Map<String, Object> jMap, String lineDelimiter) throws Exception{
         StringBuilder sqlString = new StringBuilder();
         int counter = 0;
         for (Map.Entry<String, Object> entry : jMap.entrySet()) {
