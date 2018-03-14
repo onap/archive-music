@@ -24,6 +24,8 @@ package org.onap.music.unittests;
 import static org.junit.Assert.*;
 import static org.onap.music.main.MusicCore.mDstoreHandle;
 import static org.onap.music.main.MusicCore.mLockHandle;
+
+import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -97,7 +99,7 @@ public class TestMusicCore {
     }
 
     @Test
-    public void testAcquireLockifisMyTurnTrue() {
+    public void testAcquireLockifisMyTurnTrue() throws MusicLockingException {
         Mockito.when(mLockHandle.isMyTurn("id1")).thenReturn(true);
         ReturnType lock = MusicCore.acquireLock("ks1.tn1", "id1");
         assertEquals(lock.getResult(), ResultType.SUCCESS);
@@ -105,7 +107,7 @@ public class TestMusicCore {
     }
 
     @Test
-    public void testAcquireLockifisMyTurnFalse() {
+    public void testAcquireLockifisMyTurnFalse() throws MusicLockingException {
         Mockito.when(mLockHandle.isMyTurn("id1")).thenReturn(false);
         ReturnType lock = MusicCore.acquireLock("ks1.ts1", "id1");
         assertEquals(lock.getResult(), ResultType.FAILURE);
@@ -113,7 +115,7 @@ public class TestMusicCore {
     }
 
     @Test
-    public void testAcquireLockifisMyTurnTrueandIsTableOrKeySpaceLockTrue() {
+    public void testAcquireLockifisMyTurnTrueandIsTableOrKeySpaceLockTrue() throws MusicLockingException {
         Mockito.when(mLockHandle.isMyTurn("id1")).thenReturn(true);
         ReturnType lock = MusicCore.acquireLock("ks1.tn1", "id1");
         assertEquals(lock.getResult(), ResultType.SUCCESS);
@@ -143,7 +145,7 @@ public class TestMusicCore {
     }
     
     @Test
-    public void testAcquireLockifLockRefDoesntExist() {
+    public void testAcquireLockifLockRefDoesntExist() throws MusicLockingException {
         Mockito.when(mLockHandle.lockIdExists("bs1")).thenReturn(false);
         ReturnType lock = MusicCore.acquireLock("ks1.ts1", "bs1");
         assertEquals(lock.getResult(), ResultType.FAILURE);
@@ -230,14 +232,14 @@ public class TestMusicCore {
     }
 
     @Test
-    public void testDestroyLockRef() {
+    public void testDestroyLockRef() throws NoNodeException {
         Mockito.doNothing().when(mLockHandle).unlockAndDeleteId("id1");
         MusicCore.destroyLockRef("id1");
         Mockito.verify(mLockHandle, Mockito.atLeastOnce()).unlockAndDeleteId("id1");
     }
 
     @Test
-    public void testreleaseLockwithvoluntaryReleaseTrue() {
+    public void testreleaseLockwithvoluntaryReleaseTrue() throws NoNodeException {
         MusicLockState musicLockState = new MusicLockState(LockStatus.UNLOCKED, "id2");
         Mockito.doNothing().when(mLockHandle).unlockAndDeleteId("id1");
         MusicLockState musicLockState1 = MusicCore.releaseLock("id1", true);
@@ -246,7 +248,7 @@ public class TestMusicCore {
     }
 
     @Test
-    public void testreleaseLockwithvoluntaryReleaseFalse() {
+    public void testreleaseLockwithvoluntaryReleaseFalse() throws NoNodeException {
         MusicLockState musicLockState = new MusicLockState(LockStatus.UNLOCKED, "id2");
         Mockito.doNothing().when(mLockHandle).unlockAndDeleteId("id1");
         MusicLockState musicLockState1 = MusicCore.releaseLock("id1", false);
@@ -355,8 +357,8 @@ public class TestMusicCore {
         session = Mockito.mock(Session.class);
         Mockito.when(mDstoreHandle.getSession()).thenReturn(session);
         Mockito.when(mDstoreHandle.executePut(preparedQueryObject, "consistency")).thenReturn(true);
-        Boolean result = MusicCore.nonKeyRelatedPut(preparedQueryObject, "consistency");
-        assertTrue(result);
+        ResultType result = MusicCore.nonKeyRelatedPut(preparedQueryObject, "consistency");
+        assertEquals(ResultType.SUCCESS, result);
         Mockito.verify(mDstoreHandle).executePut(preparedQueryObject, "consistency");
     }
 

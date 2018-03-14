@@ -204,14 +204,4 @@ public class MusicUtilTest {
         assertTrue(result.contains("value"));
     }
 
-    @Test
-    public void testSetErrorResponse() {
-        Map<String,Object> myMap = new HashMap<>();
-        myMap.put("name","tom");
-        Map<String,HashMap<String,Object>> result = MusicUtil.setErrorResponse(new MusicServiceException("This is the error"));
-        Map<String,Object> testMap = (Map<String,Object>) result.get("result");
-        Map<String,Object> error = (Map<String,Object>) testMap.get("error");
-        assertTrue(error.containsKey("error-description"));
-    }
-
 }

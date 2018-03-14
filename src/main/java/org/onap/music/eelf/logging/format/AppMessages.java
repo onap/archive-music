@@ -45,7 +45,8 @@ public enum AppMessages {
 	 *  [ERR206E] Cache not authenticated
 	 * 
 	 * 
-	 * 300-399 Data Access/Integrity Related  
+	 * 300-399 Data Access/Integrity Related
+	 * [ERR300E] Incorrect data  
 	 * 
 	 * 400-499 - Cassandra Query Related
 	 * [ERR400E] Error while processing prepared query object
@@ -91,7 +92,7 @@ public enum AppMessages {
 	
 	
 	
-	MISSINGINFO("[ERR100E]", "Missing Information ","Details: NA", "Please check application credentials and headers"),
+	MISSINGINFO("[ERR100E]", "Missing Information ","Details: NA", "Please check application credentials and/or headers"),
 	AUTHENTICATIONERROR("[ERR101E]", "Authentication error occured ","Details: NA", "Please verify application credentials"),
 	CONNCECTIVITYERROR("[ERR200E]"," Connectivity error","Details: NA ","Please check connectivity to external resources"),
 	HOSTUNAVAILABLE("[ERR201E]","Host not available","Details: NA","Please verify the host details"),
@@ -100,6 +101,11 @@ public enum AppMessages {
 	EXECUTIONINTERRUPTED("[ERR204E]"," Execution Interrupted","",""),
 	SESSIONEXPIRED("[ERR205E]"," Session Expired","","Session has expired."),
 	CACHEAUTHENTICATION("[ERR206E]","Cache not authenticated",""," Cache not authenticated"),
+	
+	INCORRECTDATA("[ERR300E]"," Incorrect data",""," Please verify the request payload and try again"),
+	MULTIPLERECORDS("[ERR301E]"," Multiple records found",""," Please verify the request payload and try again"),
+	ALREADYEXIST("[ERR302E]"," Record already exist",""," Please verify the request payload and try again"),
+	MISSINGDATA("[ERR300E]"," Incorrect data",""," Please verify the request payload and try again"),
 	
 	QUERYERROR("[ERR400E]","Error while processing prepared query object",""," Please verify the query"),
 	SESSIONFAILED("[ERR401E]","Executing Session Failure for Request","","Please verify the session and request"),

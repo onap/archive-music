@@ -33,6 +33,7 @@ import javax.ws.rs.core.MediaType;
 import org.onap.music.response.jsonobjects.JsonResponse;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.main.MusicUtil;
+import org.onap.music.main.ResultType;
 
 import com.att.eelf.configuration.EELFLogger;
 import com.att.eelf.configuration.EELFManager;
@@ -56,8 +57,7 @@ public class RestMusicVersionAPI {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Map<String,Object> version(@Context HttpServletResponse response) {
 		logger.info("Replying to request for MUSIC version with MUSIC:" + MusicUtil.getVersion());
-		JsonResponse jResponse = new JsonResponse(true,"","MUSIC:" + MusicUtil.getVersion());
 		response.addHeader("X-latestVersion",MusicUtil.getVersion());
-		return jResponse.toMap();
+		return new JsonResponse(ResultType.SUCCESS).setMusicVersion("MUSIC:" + MusicUtil.getVersion()).toMap();
 	}
 }

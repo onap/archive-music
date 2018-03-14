@@ -37,12 +37,15 @@ import javax.ws.rs.core.MediaType;
 
 import org.onap.music.datastore.jsonobjects.JsonLeasedLock;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.eelf.logging.format.AppMessages;
+import org.onap.music.eelf.logging.format.ErrorSeverity;
+import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.lockingservice.MusicLockState;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
-import org.onap.music.response.jsonobjects.JsonLockResponse;
+import org.onap.music.response.jsonobjects.JsonResponse;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -85,15 +88,27 @@ public class RestMusicLocksAPI {
                             required = true) @HeaderParam("password") String password,
 			@Context HttpServletResponse response) throws Exception{
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());	
-		Map<String, Object> resultMap = MusicCore.autheticateUser(ns, userId, password, null, aid,
+        Map<String, Object> resultMap = MusicCore.validateLock(lockName);
+        if (resultMap.containsKey("Exception")) {
+            return resultMap;
+        }
+        String keyspaceName = (String) resultMap.get("keyspace");
+        resultMap.remove("keyspace");
+        resultMap = MusicCore.autheticateUser(ns, userId, password, keyspaceName, aid,
                 "createLockReference");
-		if (!resultMap.isEmpty()) {
+        if (resultMap.containsKey("aid"))
+            resultMap.remove("aid");
+        if (!resultMap.isEmpty()) {
                 return resultMap;
         }
 		ResultType status = ResultType.SUCCESS;
 		String lockId = MusicCore.createLockReference(lockName);
-		if (lockId == null) { status = ResultType.FAILURE; }
-		return new JsonLockResponse(status).setLock(lockId).toMap();
+		
+		if (lockId == null) { 
+			status = ResultType.FAILURE; 
+			response.setStatus(400);
+		}
+		return new JsonResponse(status).setLock(lockId).toMap();
 	}
 
 	/**
@@ -121,15 +136,30 @@ public class RestMusicLocksAPI {
                             required = true) @HeaderParam("password") String password,
 			@Context HttpServletResponse response) throws Exception{
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());
-		Map<String, Object> resultMap = MusicCore.autheticateUser(ns, userId, password, null, aid,
+        Map<String, Object> resultMap = MusicCore.validateLock(lockId);
+        if (resultMap.containsKey("Exception")) {
+            return resultMap;
+        }
+        String keyspaceName = (String) resultMap.get("keyspace");
+        resultMap.remove("keyspace");
+        resultMap = MusicCore.autheticateUser(ns, userId, password, keyspaceName, aid,
                 "accquireLock");
-		if (!resultMap.isEmpty()) {
+        if (resultMap.containsKey("aid"))
+            resultMap.remove("aid");
+        if (!resultMap.isEmpty()) {
                 return resultMap;
         }
-		String lockName = lockId.substring(lockId.indexOf('$')+1, lockId.lastIndexOf('$'));
-		ReturnType lockStatus = MusicCore.acquireLock(lockName,lockId);
-		return new JsonLockResponse(lockStatus.getResult()).setLock(lockId)
-									.setMessage(lockStatus.getMessage()).toMap();
+		try {
+			String lockName = lockId.substring(lockId.indexOf('$')+1, lockId.lastIndexOf('$'));
+			ReturnType lockStatus = MusicCore.acquireLock(lockName,lockId);
+			return new JsonResponse(lockStatus.getResult()).setLock(lockId)
+										.setMessage(lockStatus.getMessage()).toMap();
+		} catch (Exception e) {
+			logger.error(EELFLoggerDelegate.errorLogger,AppMessages.INVALIDLOCK + lockId, ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+			resultMap.put("Exception","Unable to aquire lock");
+			response.setStatus(400);
+			return new JsonResponse(ResultType.FAILURE).setError("Unable to aquire lock").toMap();
+		}
 	}
 	
 
@@ -151,14 +181,24 @@ public class RestMusicLocksAPI {
                             required = true) @HeaderParam("password") String password,
 			@Context HttpServletResponse response) throws Exception{
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());
-		Map<String, Object> resultMap = MusicCore.autheticateUser(ns, userId, password, null, aid,
+        Map<String, Object> resultMap = MusicCore.validateLock(lockId);
+        if (resultMap.containsKey("Exception")) {
+            return resultMap;
+        }
+        String keyspaceName = (String) resultMap.get("keyspace");
+        resultMap.remove("keyspace");
+        resultMap = MusicCore.autheticateUser(ns, userId, password, keyspaceName, aid,
                 "accquireLockWithLease");
-		if (!resultMap.isEmpty()) {
-                return resultMap;
+
+        if (resultMap.containsKey("aid"))
+            resultMap.remove("aid");
+        if (!resultMap.isEmpty()) {
+            response.setStatus(400);    
+        	return resultMap;
         }
 		String lockName = lockId.substring(lockId.indexOf('$')+1, lockId.lastIndexOf('$'));
 		ReturnType lockLeaseStatus = MusicCore.acquireLockWithLease(lockName, lockId, lockObj.getLeasePeriod());
-		return new JsonLockResponse(lockLeaseStatus.getResult()).setLock(lockName)
+		return new JsonResponse(lockLeaseStatus.getResult()).setLock(lockName)
 									.setMessage(lockLeaseStatus.getMessage())
 									.setLockLease(String.valueOf(lockObj.getLeasePeriod())).toMap();
 	} 
@@ -181,9 +221,17 @@ public class RestMusicLocksAPI {
                             required = true) @HeaderParam("password") String password,
 			@Context HttpServletResponse response) throws Exception{
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());
-		Map<String, Object> resultMap = MusicCore.autheticateUser(ns, userId, password, null, aid,
+        Map<String, Object> resultMap = MusicCore.validateLock(lockName);
+        if (resultMap.containsKey("Exception")) {
+            return resultMap;
+        }
+        String keyspaceName = (String) resultMap.get("keyspace");
+        resultMap.remove("keyspace");
+        resultMap = MusicCore.autheticateUser(ns, userId, password, keyspaceName, aid,
                 "currentLockHolder");
-		if (!resultMap.isEmpty()) {
+        if (resultMap.containsKey("aid"))
+            resultMap.remove("aid");
+        if (!resultMap.isEmpty()) {
                 return resultMap;
         }
 		String who = MusicCore.whoseTurnIsIt(lockName);
@@ -192,8 +240,9 @@ public class RestMusicLocksAPI {
 		if ( who == null ) { 
 			status = ResultType.FAILURE; 
 			error = "There was a problem getting the lock holder";
+			response.setStatus(400);
 		}
-		return new JsonLockResponse(status).setError(error)
+		return new JsonResponse(status).setError(error)
 						.setLock(lockName).setLockHolder(who).toMap();
 	}
 
@@ -214,14 +263,25 @@ public class RestMusicLocksAPI {
                             required = true) @HeaderParam("password") String password,
 			@Context HttpServletResponse response) throws Exception{
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());
-		Map<String, Object> resultMap = MusicCore.autheticateUser(ns, userId, password, null, aid,
+        Map<String, Object> resultMap = MusicCore.validateLock(lockName);
+        if (resultMap.containsKey("Exception")) {
+            return resultMap;
+        }
+        String keyspaceName = (String) resultMap.get("keyspace");
+        resultMap.remove("keyspace");
+        resultMap = MusicCore.autheticateUser(ns, userId, password, keyspaceName, aid,
                 "currentLockState");
-		if (!resultMap.isEmpty()) {
+        
+        if (resultMap.containsKey("aid"))
+            resultMap.remove("aid");
+        if (!resultMap.isEmpty()) {
+        	response.setStatus(400);
                 return resultMap;
         }
-		MusicLockState mls = MusicCore.getMusicLockState(lockName);
+		
+        MusicLockState mls = MusicCore.getMusicLockState(lockName);
 		Map<String,Object> returnMap = null;
-		JsonLockResponse jsonResponse = new JsonLockResponse(ResultType.FAILURE).setLock(lockName);
+		JsonResponse jsonResponse = new JsonResponse(ResultType.FAILURE).setLock(lockName);
 		if(mls == null) {
 			jsonResponse.setError("");
 			jsonResponse.setMessage("No lock object created yet..");
@@ -230,7 +290,7 @@ public class RestMusicLocksAPI {
 			jsonResponse.setLockStatus(mls.getLockStatus());
 			jsonResponse.setLockHolder(mls.getLockHolder());
 		} 
-		return returnMap;
+		return jsonResponse.toMap();
 	}
 
 	/**
@@ -256,20 +316,33 @@ public class RestMusicLocksAPI {
                             required = true) @HeaderParam("password") String password,
 			@Context HttpServletResponse response) throws Exception{
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());
-		Map<String, Object> resultMap = MusicCore.autheticateUser(ns, userId, password, null, aid,
+        Map<String, Object> resultMap = MusicCore.validateLock(lockId);
+        if (resultMap.containsKey("Exception")) {
+            return resultMap;
+        }
+        String keyspaceName = (String) resultMap.get("keyspace");
+        resultMap.remove("keyspace");
+        resultMap = MusicCore.autheticateUser(ns, userId, password, keyspaceName, aid,
                 "unLock");
-		if (!resultMap.isEmpty()) {
-                return resultMap;
+        if (resultMap.containsKey("aid"))
+            resultMap.remove("aid");
+        if (!resultMap.isEmpty()) {
+        	response.setStatus(400);
+            return resultMap;
         }
 		boolean voluntaryRelease = true; 
 		MusicLockState mls = MusicCore.releaseLock(lockId,voluntaryRelease);
+		if(mls.getErrorMessage() != null) {
+			resultMap.put(ResultType.EXCEPTION.getResult(), mls.getErrorMessage());
+			return resultMap;
+		}
 		Map<String,Object> returnMap = null;
 		if (mls.getLockStatus() == MusicLockState.LockStatus.UNLOCKED) {
-			returnMap = new JsonLockResponse(ResultType.SUCCESS).setLock(lockId)
+			returnMap = new JsonResponse(ResultType.SUCCESS).setLock(lockId)
 								.setLockStatus(mls.getLockStatus()).toMap();
 		}
 		if (mls.getLockStatus() == MusicLockState.LockStatus.LOCKED) {
-			returnMap = new JsonLockResponse(ResultType.FAILURE).setLock(lockId)
+			returnMap = new JsonResponse(ResultType.FAILURE).setLock(lockId)
 								.setLockStatus(mls.getLockStatus()).toMap();
 		}
 		return returnMap;
@@ -294,13 +367,22 @@ public class RestMusicLocksAPI {
                             required = true) @HeaderParam("password") String password,
 			@Context HttpServletResponse response) throws Exception{
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());
-		Map<String, Object> resultMap = MusicCore.autheticateUser(ns, userId, password, null, aid,
+        Map<String, Object> resultMap = MusicCore.validateLock(lockName);
+        if (resultMap.containsKey("Exception")) {
+            return resultMap;
+        }
+        String keyspaceName = (String) resultMap.get("keyspace");
+        resultMap.remove("keyspace");
+        resultMap = MusicCore.autheticateUser(ns, userId, password, keyspaceName, aid,
                 "deleteLock");
-		if (!resultMap.isEmpty()) {
-                return resultMap;
+        if (resultMap.containsKey("aid"))
+            resultMap.remove("aid");
+        if (!resultMap.isEmpty()) {
+        	response.setStatus(400);
+            return resultMap;
         }
 		MusicCore.deleteLock(lockName);
-		return new JsonLockResponse(ResultType.SUCCESS).toMap();
+		return new JsonResponse(ResultType.SUCCESS).toMap();
 	}
 
 }

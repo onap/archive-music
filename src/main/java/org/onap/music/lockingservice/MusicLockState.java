@@ -45,6 +45,12 @@ public class MusicLockState implements Serializable {
     boolean needToSyncQuorum = false;
     String lockHolder;
     long leasePeriod = Long.MAX_VALUE, leaseStartTime = -1;
+    
+    private String errorMessage = null;
+    
+    public MusicLockState(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
 
     public MusicLockState(LockStatus lockStatus, String lockHolder) {
         this.lockStatus = lockStatus;
@@ -100,6 +106,10 @@ public class MusicLockState implements Serializable {
         this.lockHolder = lockHolder;
     }
 
+    public String getErrorMessage() {
+		return errorMessage;
+	}
+    
     public byte[] serialize() {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         ObjectOutput out = null;

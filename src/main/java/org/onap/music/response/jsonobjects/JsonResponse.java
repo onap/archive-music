@@ -21,75 +21,245 @@
  */
 package org.onap.music.response.jsonobjects;
 
-
 import java.util.HashMap;
 import java.util.Map;
+
+import org.onap.music.lockingservice.MusicLockState.LockStatus;
+import org.onap.music.main.ResultType;
+import org.powermock.core.spi.testresult.Result;
+
+import com.datastax.driver.core.ColumnDefinitions;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.ColumnDefinitions.Definition;
+
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 @ApiModel(value = "JsonResponse", description = "General Response JSON")
 public class JsonResponse {
 
-    private Boolean status = false;
-    private String error = "";
-    private String version = "";
+	/* Status is required */
+    private ResultType status;
+    
+    /* Standard informational fields */
+    private String error;
+    private String message;
+    
+    /* versioning */
+    private String musicVersion;
+    
+    /* Data Fields */
+    private Map<String, HashMap<String, Object>> dataResult;
+    
+    /* Locking fields */
+    private String lock;
+    private LockStatus lockStatus;
+    private String lockHolder;
+    private String lockLease;
 
-    public JsonResponse(Boolean status, String error, String version) {
+
+    /**
+     * Create a JSONLock Response
+     * Use setters to provide more information as in
+     * JsonLockResponse(ResultType.SUCCESS).setMessage("We did it").setLock(mylockname)
+     * @param status
+     */
+    public JsonResponse(ResultType status) {
         this.status = status;
-        this.error = error;
-        this.version = version;
     }
 
-    public JsonResponse() {
-        this.status = false;
-        this.error = "";
-        this.version = "";
-    }
-
-    @ApiModelProperty(value = "Status value")
-    public Boolean getStatus() {
+ 	/**
+     * 
+     * @return
+     */
+    @ApiModelProperty(value = "Overall status of the response.",
+                    allowableValues = "Success,Failure")
+    public ResultType getStatus() {
         return status;
     }
 
     /**
      * 
-     * @param statusIn
-     * @return
+     * @param status
      */
-    private String fixStatus(String statusIn) {
-        if (statusIn.equalsIgnoreCase("false")) {
-            return "FAILURE";
-        }
-        return "SUCCESS";
-    }
-
-    public void setStatus(Boolean status) {
+    public JsonResponse setStatus(ResultType status) {
         this.status = status;
+        return this;
     }
 
+    /**
+     * 
+     * @return the error
+     */
     @ApiModelProperty(value = "Error value")
     public String getError() {
         return error;
     }
 
-    public void setError(String error) {
+    /**
+     * 
+     * @param error
+     */
+    public JsonResponse setError(String error) {
         this.error = error;
+        return this;
+    }
+    
+    /**
+     * 
+     * @return the message
+     */
+    @ApiModelProperty(value = "Message value")
+    public String getMessage() {
+        return message;
     }
 
-    @ApiModelProperty(value = "Version value")
-    public String getVersion() {
-        return version;
+    /**
+     * 
+     * @param message
+     */
+    public JsonResponse setMessage(String message) {
+        this.message = message;
+        return this;
+    }
+    
+    
+    /**
+     * 
+     * @return the music version
+     */
+    public String getMusicVersion() {
+    	return this.musicVersion;
+    }
+    
+    /**
+     * 
+     * @param version of music
+     * @return
+     */
+    public JsonResponse setMusicVersion(String version) {
+    	this.musicVersion = version;
+    	return this;
     }
 
-    public void setVersion(String version) {
-        this.version = version;
+    public Map<String, HashMap<String, Object>> getDataResult() {
+    	return this.dataResult;
+    }
+    
+    public JsonResponse setDataResult(Map<String, HashMap<String, Object>> map) {
+    	this.dataResult = map;
+    	return this;
     }
 
+	/**
+     * 
+     * @return
+     */
+    public String getLock() {
+        return lock;
+    }
+
+    /**
+     * 
+     * @param lock
+     */
+    public JsonResponse setLock(String lock) {
+        this.lock = lock;
+        return this;
+    }
+    
+    /**
+     * 
+     * @return the lockStatus
+     */
+    @ApiModelProperty(value = "Status of the lock")
+    public LockStatus getLockStatus() {
+        return lockStatus;
+    }
+
+    /**
+     * 
+     * @param lockStatus
+     */
+    public JsonResponse setLockStatus(LockStatus lockStatus) {
+        this.lockStatus = lockStatus;
+        return this;
+    }
+
+    /**
+     * 
+     * 
+     * @return the lockHolder
+     */
+    @ApiModelProperty(value = "Holder of the Lock")
+    public String getLockHolder() {
+        return lockHolder;
+    }
+
+    /**
+     * 
+     * @param lockHolder
+     */
+    public JsonResponse setLockHolder(String lockHolder) {
+        this.lockHolder = lockHolder;
+        return this;
+    }
+
+
+
+    /**
+     * @return the lockLease
+     */
+    public String getLockLease() {
+        return lockLease;
+    }
+
+    /**
+     * @param lockLease the lockLease to set
+     */
+    public JsonResponse setLockLease(String lockLease) {
+        this.lockLease = lockLease;
+        return this;
+    }
+
+    /**
+     * Convert to Map
+     * 
+     * @return
+     */
     public Map<String, Object> toMap() {
-        Map<String, Object> newMap = new HashMap<>();
-        newMap.put("status", fixStatus(String.valueOf(status)));
-        newMap.put("error", error);
-        newMap.put("version", version);
-        return newMap;
+        Map<String, Object> fullMap = new HashMap<>();
+        fullMap.put("status", status);
+        if (error!=null) {fullMap.put("error", error);}
+        if (message!=null) {fullMap.put("message", message);}
+        
+        if (musicVersion!=null) {fullMap.put("version", musicVersion);}
+        
+        if (dataResult!=null) {
+        	fullMap.put("result", dataResult);
+        }
+        
+        if (lock!=null) {
+	        Map<String, Object> lockMap = new HashMap<>();
+	        if (lock!=null) {lockMap.put("lock", lock);}
+	        if (lockStatus!=null) {lockMap.put("lock-status", lockStatus);}
+	        if (lockHolder!=null) {lockMap.put("lock-holder", lockHolder);}
+	        if (lockLease!=null) {lockMap.put("lock-lease", lockLease);}
+	        fullMap.put("lock", lockMap);
+        }
+
+        return fullMap;
     }
+
+    /**
+     * Convert to String
+     */
+    @Override
+    public String toString() {
+        return "JsonLockResponse [status=" + status + ", error=" + error + ", message=" + message
+                        + ", lock=" + lock + ", lockStatus=" + lockStatus + ", lockHolder="
+                        + lockHolder + "]";
+    }
+
 }

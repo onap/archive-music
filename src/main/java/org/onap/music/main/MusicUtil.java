@@ -475,14 +475,4 @@ public class MusicUtil {
         }
         return sqlString.toString();
     }
-
-    public static Map<String, HashMap<String, Object>> setErrorResponse(MusicServiceException ex) {
-        Map<String, HashMap<String, Object>> results = new HashMap<>();
-        HashMap<String, Object> tempMap = new HashMap<>();
-        Map<String, Object> result = new HashMap<>();
-        result.put("error-description", ex.getMessage());
-        tempMap.put("error", result);
-        results.put("result", tempMap);
-        return results;
-    }
 }

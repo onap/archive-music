@@ -49,6 +49,7 @@ import org.onap.music.lockingservice.MusicLockingService;
 import org.onap.music.main.CachingUtil;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
+import org.onap.music.main.ResultType;
 import org.onap.music.rest.RestMusicAdminAPI;
 import org.onap.music.rest.RestMusicDataAPI;
 import org.onap.music.rest.RestMusicLocksAPI;
@@ -181,7 +182,7 @@ public class TestRestMusicData {
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Map<String, Object> resultMap = data.createKeySpace("1", "1", "1", null, appName, userId,
                         password, jsonKeyspace, keyspaceName, http);
-        assertEquals(uuid.toString(), resultMap.get("aid"));
+        assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
 
     @Test
@@ -201,7 +202,7 @@ public class TestRestMusicData {
                         "TestUser1", password, jsonKeyspace, keyspaceName, http);
         System.out.println("#######status is " + resultMap.get("Exception"));
         assertEquals("Couldn't create keyspace. Please make sure all the information is correct.",
-                        resultMap.get("Exception"));
+                        resultMap.get("error"));
     }
 
     @Test
@@ -223,7 +224,7 @@ public class TestRestMusicData {
         Map<String, Object> resultMap = data.createTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, userId, password,
                         jsonTable, keyspaceName, tableName, http);
-        assertEquals("SUCCESS", resultMap.get("status"));
+        assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
 
     @Test
@@ -242,7 +243,7 @@ public class TestRestMusicData {
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Map<String, Object> resultMap = data.insertIntoTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
                 appName, userId, password, jsonInsert, keyspaceName, tableName, http);
-        assertEquals("Success", resultMap.get("result"));
+        assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
 
     @Test
@@ -262,7 +263,7 @@ public class TestRestMusicData {
         Map<String, Object> resultMap = data.insertIntoTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, userId, password,
                         jsonInsert, keyspaceName, tableName, http);
-        assertEquals("Success", resultMap.get("result"));
+        assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
 
     @Test
@@ -282,7 +283,7 @@ public class TestRestMusicData {
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Map<String, Object> resultMap = data.updateTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
                 userId, password, jsonUpdate, keyspaceName, tableName, info, http);
-        assertEquals("Success", resultMap.get("result"));
+        assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
 
     @Test
@@ -295,9 +296,9 @@ public class TestRestMusicData {
         jsonSelect.setConsistencyInfo(consistencyInfo);
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Mockito.when(info.getQueryParameters()).thenReturn(row);
-        Map<String, HashMap<String, Object>> resultMap = data.select("1", "1", "1",
+        Map<String, Object> resultMap = data.select("1", "1", "1",
                 "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, userId, password, keyspaceName, tableName, info, http);
-        assertEquals("2500", resultMap.get("row 0").get("emp_salary").toString());
+        assertEquals("2500", ((HashMap<String,HashMap<String,Object>>) resultMap.get("result")).get("row 0").get("emp_salary").toString());
     }
 
     @Test
@@ -310,10 +311,10 @@ public class TestRestMusicData {
         jsonInsert.setConsistencyInfo(consistencyInfo);
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Mockito.when(info.getQueryParameters()).thenReturn(row);
-        Map<String, HashMap<String, Object>> resultMap = data.selectCritical("1", "1", "1",
+        Map<String, Object> resultMap = data.selectCritical("1", "1", "1",
                 "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, userId, password, jsonInsert, keyspaceName, tableName,
                 info, http);
-        assertEquals("2500", resultMap.get("row 0").get("emp_salary").toString());
+        assertEquals("2500", ((HashMap<String,HashMap<String,Object>>) resultMap.get("result")).get("row 0").get("emp_salary").toString());
     }
 
     @Test
@@ -329,7 +330,7 @@ public class TestRestMusicData {
         Map<String, Object> resultMap = data.deleteFromTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, userId, password,
                         jsonDelete, keyspaceName, tableName, info, http);
-        assertEquals("Success", resultMap.get("result"));
+        assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
 
     @Test
@@ -342,7 +343,7 @@ public class TestRestMusicData {
         Map<String, Object> resultMap = data.dropTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, userId, password,
                         jsonTable, keyspaceName, tableName, http);
-        assertEquals("SUCCESS", resultMap.get("status"));
+        assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
 
     @Test
@@ -360,7 +361,7 @@ public class TestRestMusicData {
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Map<String, Object> resultMap = data.dropKeySpace("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
                 appName, userId, password, jsonKeyspace, keyspaceName, http);
-        assertEquals("SUCCESS", resultMap.get("status"));
+        assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
     
     @Test
@@ -417,34 +418,34 @@ public class TestRestMusicData {
         @SuppressWarnings("unchecked")
         Map<String, Object> resultMap1 = (Map<String, Object>) resultMap.get("lock");
         lockId = (String) resultMap1.get("lock");
-        assertEquals("SUCCESS", resultMap.get("status").toString());
+        assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
 
     @Test
     public void Test4_accquireLock() throws Exception {
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Map<String, Object> resultMap = lock.accquireLock(lockId, uuid.toString(), appName, null, null, http);
-        assertEquals("SUCCESS", resultMap.get("status").toString());
+        assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
 
     @Test
     public void Test5_currentLockHolder() throws Exception {
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Map<String, Object> resultMap = lock.currentLockHolder(lockName, uuid.toString(), appName, null, null, http);
-        assertEquals("SUCCESS", resultMap.get("status").toString());
+        assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
 
     @Test
     public void Test7_unLock() throws Exception {
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Map<String, Object> resultMap = lock.unLock(lockId, uuid.toString(), appName, null, null, http);
-        assertEquals("SUCCESS", resultMap.get("status").toString());
+        assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
 
     @Test
     public void Test8_delete() throws Exception {
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Map<String, Object> resultMap = lock.deleteLock(lockName, uuid.toString(), appName, null, null, http);
-        assertEquals("SUCCESS", resultMap.get("status").toString());
+        assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
 }
