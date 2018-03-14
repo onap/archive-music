@@ -78,14 +78,14 @@ public class TestMusicCoreIntegration {
     @Test
     public void Test1_SetUp() throws MusicServiceException, MusicQueryException {
         MusicCore.mLockHandle = new MusicLockingService();
-        boolean result = false;
+        ResultType result = ResultType.FAILURE;
         testObject = new PreparedQueryObject();
         testObject.appendQueryString(CassandraCQL.createKeySpace);
         MusicCore.eventualPut(testObject);
         testObject = new PreparedQueryObject();
         testObject.appendQueryString(CassandraCQL.createTableEmployees);
         result = MusicCore.nonKeyRelatedPut(testObject, MusicUtil.EVENTUAL);
-        assertTrue(result);
+        assertEquals(ResultType.SUCCESS, result);
     }
 
     @Test

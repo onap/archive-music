@@ -23,6 +23,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
@@ -157,8 +158,9 @@ public class ZkStatelessLockService extends ProtocolSupport {
      * your request in the queue for locking in case you do not already hold the lock.
      * 
      * @throws RuntimeException throws a runtime exception if it cannot connect to zookeeper.
+     * @throws NoNodeException 
      */
-    public synchronized void unlock(String lockId) throws RuntimeException {
+    public synchronized void unlock(String lockId) throws RuntimeException, KeeperException.NoNodeException {
         final String id = lockId;
         if (!isClosed() && id != null) {
             try {
@@ -175,6 +177,7 @@ public class ZkStatelessLockService extends ProtocolSupport {
                 Thread.currentThread().interrupt();
             } catch (KeeperException.NoNodeException e) {
                 // do nothing
+            	throw new KeeperException.NoNodeException("Lock doesn't exists. Release lock operation failed.");
             } catch (KeeperException e) {
             	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
                 throw (RuntimeException) new RuntimeException(e.getMessage()).initCause(e);

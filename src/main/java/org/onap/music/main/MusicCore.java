@@ -27,6 +27,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonKeySpace;
@@ -244,7 +246,7 @@ public class MusicCore {
         }
     }
 
-    public static ReturnType acquireLock(String key, String lockId) {
+    public static ReturnType acquireLock(String key, String lockId) throws MusicLockingException {
         /*
          * first check if I am on top. Since ids are not reusable there is no need to check
          * lockStatus If the status is unlocked, then the above call will automatically return
@@ -255,6 +257,7 @@ public class MusicCore {
             result = getLockingServiceHandle().isMyTurn(lockId);
         } catch (MusicLockingException e2) {
             logger.error(EELFLoggerDelegate.errorLogger,AppMessages.INVALIDLOCK + lockId + " " + e2);
+            throw new MusicLockingException();
         }
         if (!result) {
             logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: Not your turn, someone else has the lock");
@@ -265,6 +268,7 @@ public class MusicCore {
 				}
 			} catch (MusicLockingException e) {
 				logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.INVALIDLOCK+lockId,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+				 throw new MusicLockingException();
 			}
             logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: returning failure");
             return new ReturnType(ResultType.FAILURE, "Not your turn, someone else has the lock");
@@ -463,9 +467,9 @@ public class MusicCore {
         long start = System.currentTimeMillis();
         try {
             getLockingServiceHandle().unlockAndDeleteId(lockId);
-        } catch (MusicLockingException e) {
+        } catch (MusicLockingException | NoNodeException e) {
         	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.DESTROYLOCK+lockId  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
-        }
+        } 
         long end = System.currentTimeMillis();
         logger.info(EELFLoggerDelegate.applicationLogger,"Time taken to destroy lock reference:" + (end - start) + " ms");
     }
@@ -476,6 +480,10 @@ public class MusicCore {
             getLockingServiceHandle().unlockAndDeleteId(lockId);
         } catch (MusicLockingException e1) {
         	logger.error(EELFLoggerDelegate.errorLogger,e1.getMessage(), AppMessages.RELEASELOCK+lockId  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+        } catch (KeeperException.NoNodeException nne) {
+			logger.error(EELFLoggerDelegate.errorLogger,"Failed to release Lock " + lockId + " " + nne);
+			MusicLockState mls = new MusicLockState("Lock doesn't exists. Release lock operation failed.");
+			return mls;
         }
         String lockName = getLockNameFromId(lockId);
         MusicLockState mls;
@@ -500,7 +508,11 @@ public class MusicCore {
     }
     
     public static  void  voluntaryReleaseLock(String lockId) throws MusicLockingException{
-		getLockingServiceHandle().unlockAndDeleteId(lockId);
+		try {
+			getLockingServiceHandle().unlockAndDeleteId(lockId);
+		} catch (KeeperException.NoNodeException e) {
+			// ??? No way
+		}
 	}
 
     /**
@@ -601,6 +613,7 @@ public class MusicCore {
         } catch (MusicServiceException | MusicQueryException ex) {
         	logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), "[ERR512E] Failed to get ZK Lock Handle "  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
             logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage() + "  " + ex.getCause() + " " + ex);
+            return new ReturnType(ResultType.FAILURE, ex.getMessage());
         }
         if (result) {
             return new ReturnType(ResultType.SUCCESS, "Success");
@@ -663,7 +676,7 @@ public class MusicCore {
      * 
      * 
      */
-    public static boolean nonKeyRelatedPut(PreparedQueryObject queryObject, String consistency) throws MusicServiceException {
+    public static ResultType nonKeyRelatedPut(PreparedQueryObject queryObject, String consistency) throws MusicServiceException {
         // this is mainly for some functions like keyspace creation etc which does not
         // really need the bells and whistles of Music locking.
         boolean result = false;
@@ -673,7 +686,7 @@ public class MusicCore {
         	logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
             throw new MusicServiceException(ex.getMessage());
         }
-        return result;
+        return result?ResultType.SUCCESS:ResultType.FAILURE;
     }
 
     /**
@@ -883,18 +896,13 @@ public class MusicCore {
         		resultMap.put("Exception", "Aid is mandatory for nonAAF applications ");
         		return resultMap;
         	}
-        	if(operation.contains("Lock")) {
-        		resultMap = CachingUtil.authenticateAIDUserLock(aid, nameSpace);
-        	}
-        	else {
-        		resultMap = CachingUtil.authenticateAIDUser(aid, keyspace);
-        	}
+            resultMap = CachingUtil.authenticateAIDUser(aid, keyspace);
             
             if (!resultMap.isEmpty())
                 return resultMap;
         }
         if (aid == null && (userId == null || password == null)) {
-        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.DATAERROR);
+        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
             logger.error(EELFLoggerDelegate.errorLogger,"One or more required headers is missing. userId: " + userId
                             + " :: password: " + password);
             resultMap.put("Exception",
@@ -956,6 +964,24 @@ public class MusicCore {
             resultMap.put("aid", uuid);
         }
 
+        return resultMap;
+    }
+    
+    /**
+     * @param lockName
+     * @return
+     */
+    public static Map<String, Object> validateLock(String lockName) {
+        Map<String, Object> resultMap = new HashMap<>();
+        String[] locks = lockName.split("\\.");
+        if(locks.length < 3) {
+            resultMap.put("Exception", "Invalid lock. Please make sure lock is of the type keyspaceName.tableName.primaryKey");
+            return resultMap;
+        }
+        String keyspace= locks[0];
+        if(keyspace.startsWith("$"))
+            keyspace = keyspace.substring(1);
+        resultMap.put("keyspace",keyspace);
         return resultMap;
     }
 }

@@ -128,7 +128,7 @@ public class MusicLockingService implements Watcher {
         return false;
     }
 
-    public void unlockAndDeleteId(String lockIdWithDollar) {
+    public void unlockAndDeleteId(String lockIdWithDollar) throws KeeperException.NoNodeException {
         String lockId = lockIdWithDollar.replace('$', '/');
         zkLockHandle.unlock(lockId);
     }

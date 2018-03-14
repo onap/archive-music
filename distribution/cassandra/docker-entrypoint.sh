@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+for f in /docker-entrypoint-initdb.d/*.cql; do
+    chown cassandra.root "$f"
+done
+
+
 # first arg is `-f` or `--some-option`
 # or there are no args
 if [ "$#" -eq 0 ] || [ "${1#-}" != "$1" ]; then

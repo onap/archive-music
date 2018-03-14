@@ -25,6 +25,7 @@ package org.onap.music.unittests;
 import static org.junit.Assert.*;
 import java.util.Map;
 import org.junit.Test;
+import org.onap.music.main.ResultType;
 import org.onap.music.response.jsonobjects.JsonResponse;
 
 public class JsonResponseTest {
@@ -33,28 +34,22 @@ public class JsonResponseTest {
     
     @Test
     public void testJsonResponseBooleanStringString() {
-        result = new JsonResponse(true,"error","version");
+        result = new JsonResponse(ResultType.SUCCESS).setError("error").setMusicVersion("version");
         assertEquals("error",result.getError());
     }
 
     @Test
-    public void testJsonResponse() {
-        result = new JsonResponse();
-        assertFalse(result.getStatus());
-    }
-
-    @Test
     public void testStatus() {
-        result = new JsonResponse();
-        result.setStatus(true);
-        assertTrue(result.getStatus());
-        result = new JsonResponse(false,"error","version");
-        assertFalse(result.getStatus());
+        result = new JsonResponse(ResultType.SUCCESS);
+        result.setStatus(ResultType.SUCCESS);
+        assertEquals(ResultType.SUCCESS, result.getStatus());
+        result = new JsonResponse(ResultType.FAILURE).setError("error").setMusicVersion("version");
+        assertEquals(ResultType.FAILURE, result.getStatus());
     }
 
     @Test
     public void testError() {
-        result = new JsonResponse();
+        result = new JsonResponse(ResultType.FAILURE);
         result.setError("error");
         assertTrue(result.getError().equals("error"));
         result.setError("");
@@ -63,21 +58,26 @@ public class JsonResponseTest {
 
     @Test
     public void testVersion() {
-        result = new JsonResponse();
-        result.setVersion("version");
-        assertTrue(result.getVersion().equals("version"));
-        result.setVersion("");
-        assertFalse(result.getVersion().equals("version"));
+        result = new JsonResponse(ResultType.SUCCESS);
+        result.setMusicVersion("version");
+        assertTrue(result.getMusicVersion().equals("version"));
+        result.setMusicVersion("");
+        assertFalse(result.getMusicVersion().equals("version"));
     }
 
     @Test
     public void testToMap() {
-        result = new JsonResponse(true,"error","version");
+        result = new JsonResponse(ResultType.SUCCESS).setError("error").setMusicVersion("1.0");
         Map<String,Object> myMap = result.toMap();
         assertTrue(myMap.containsKey("status"));
-        result = new JsonResponse(false,"","");
+        assertEquals(ResultType.SUCCESS, myMap.get("status"));
+        assertEquals("error", myMap.get("error"));
+        assertEquals("1.0", myMap.get("version"));
+        
+        result = new JsonResponse(ResultType.FAILURE);
         myMap = result.toMap();
         assertTrue(myMap.containsKey("status"));
+        assertEquals(ResultType.FAILURE, myMap.get("status"));
     }
 
 }

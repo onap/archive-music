@@ -60,7 +60,6 @@ public class CachingUtil implements Runnable {
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(CachingUtil.class);
 
     private static CacheAccess<String, String> musicCache = JCS.getInstance("musicCache");
-    private static CacheAccess<String, String> musicLockCache = JCS.getInstance("musicLockCache");
     private static CacheAccess<String, Map<String, String>> aafCache = JCS.getInstance("aafCache");
     private static CacheAccess<String, String> appNameCache = JCS.getInstance("appNameCache");
     private static Map<String, Number> userAttempts = new HashMap<>();
@@ -98,7 +97,6 @@ public class CachingUtil implements Runnable {
             String userId = row.getString("username");
             String password = row.getString("password");
             String keySpace = row.getString("application_name");
-            String uuid = row.getUUID("uuid").toString();
             try {
                 userAttempts.put(nameSpace, 0);
                 AAFResponse responseObj = triggerAAF(nameSpace, userId, password);
@@ -107,7 +105,6 @@ public class CachingUtil implements Runnable {
                     map.put(userId, password);
                     aafCache.put(nameSpace, map);
                     musicCache.put(nameSpace, keySpace);
-                    musicLockCache.put(nameSpace, uuid);
                     logger.debug("Cronjob: Cache Updated with AAF response for namespace "
                                     + nameSpace);
                 }
@@ -260,43 +257,6 @@ public class CachingUtil implements Runnable {
         resultMap.put("aid", uuid);
         return resultMap;
     }
-    
-    
-    public static Map<String, Object> authenticateAIDUserLock(String aid, String nameSpace)
-            throws Exception {
-		Map<String, Object> resultMap = new HashMap<>();
-		String uuid = null;
-		
-		if (musicLockCache.get(nameSpace) == null) {
-		    PreparedQueryObject pQuery = new PreparedQueryObject();
-		    pQuery.appendQueryString(
-		                    "SELECT uuid from admin.keyspace_master where application_name = '"
-		                                    + nameSpace + "' allow filtering");
-		    Row rs = MusicCore.get(pQuery).one();
-		    try {
-		        uuid = rs.getUUID("uuid").toString();
-		        musicLockCache.put(nameSpace, uuid);
-		    } catch (Exception e) {
-		    	logger.error(EELFLoggerDelegate.errorLogger,  e.getMessage(), AppMessages.QUERYERROR,ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
-		    	resultMap.put("Exception", "Unauthorized operation. Check AID and Namespace. ");
-		        return resultMap;
-		    }
-		    if (!musicLockCache.get(nameSpace).toString().equals(aid)) {
-		        resultMap.put("Exception Message",
-		                        "Unauthorized operation. Invalid AID for the Namespace");
-		        return resultMap;
-		    }
-		} else if (musicLockCache.get(nameSpace) != null
-		                && !musicLockCache.get(nameSpace).toString().equals(aid)) {
-		    resultMap.put("Exception Message",
-		                    "Unauthorized operation. Invalid AID for the Namespace");
-		    return resultMap;
-		}
-		return resultMap;
-	}
-    
-    
-    
 
     public static void updateMusicCache(String aid, String keyspace) {
     	logger.info(EELFLoggerDelegate.applicationLogger,"Updating musicCache for keyspace " + keyspace + " with aid " + aid);

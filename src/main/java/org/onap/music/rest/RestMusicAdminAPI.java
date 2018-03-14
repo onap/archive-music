@@ -45,6 +45,8 @@ import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.main.CachingUtil;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
+import org.onap.music.main.ResultType;
+
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -75,9 +77,10 @@ public class RestMusicAdminAPI {
         String password = jsonObj.getPassword();
         response.addHeader("X-latestVersion", MusicUtil.getVersion());
         if (appName == null || userId == null || isAAF == null || password == null) {
-        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
+        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
             resultMap.put("Exception",
-                            "Please check the request parameters. Some of the required values appName(ns), userId, password, isAAF are missing.");
+                            "Unauthorized: Please check the request parameters. Some of the required values appName(ns), userId, password, isAAF are missing.");
+            response.setStatus(401);
             return resultMap;
         }
 
@@ -135,8 +138,10 @@ public class RestMusicAdminAPI {
         String isAAF = jsonObj.getIsAAF();
         
         if (appName == null && uuid == null && isAAF == null) {
+        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
             resultMap.put("Exception",
-                            "Please check the request parameters. Enter atleast one of the following parameters: appName(ns), aid, isAAF.");
+                            "Unauthorized: Please check the request parameters. Enter atleast one of the following parameters: appName(ns), aid, isAAF.");
+            response.setStatus(401);
             return resultMap;
         }
 
@@ -193,7 +198,9 @@ public class RestMusicAdminAPI {
         PreparedQueryObject pQuery = new PreparedQueryObject();
         String consistency = MusicUtil.EVENTUAL;;
         if (appName == null && aid == null) {
+        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
             resultMap.put("Exception", "Please make sure either appName(ns) or Aid is present");
+            response.setStatus(400);
             return resultMap;
         }
         if (aid != null) {
@@ -213,12 +220,15 @@ public class RestMusicAdminAPI {
                 pQuery.appendQueryString("delete from admin.keyspace_master where uuid = ? IF EXISTS");
                 pQuery.addValue(MusicUtil.convertToActualDataType(DataType.uuid(),
                                 UUID.fromString(aid)));
-                boolean result = MusicCore.nonKeyRelatedPut(pQuery, consistency);
-                if (result) {
+                ResultType result = MusicCore.nonKeyRelatedPut(pQuery, consistency);
+                if (result==ResultType.SUCCESS) {
     	            resultMap.put("Success", "Your application has been deleted successfully");
     	        } else {
-    	            resultMap.put("Exception",
-    	                            "Oops. Something went wrong. Please make sure Aid is correct or Application is onboarded");
+    	            resultMap.put("Exception","Oops. Spomething went wrong. Please make sure Aid is correct or Application is onboarded");
+    	            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
+    	            response.setStatus(400);
+    	            return resultMap;
+
     	        }
                 return resultMap;    
         }
@@ -235,6 +245,8 @@ public class RestMusicAdminAPI {
         if (rows.size() == 0) {
             resultMap.put("Exception",
                             "Application not found. Please make sure Application exists.");
+            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
+            response.setStatus(400);
             return resultMap;
         } else if (rows.size() == 1) {
             uuid = rows.get(0).getUUID("uuid").toString();
@@ -259,6 +271,8 @@ public class RestMusicAdminAPI {
             return resultMap;
         } else {
             resultMap.put("Failure", "More than one Aid exists for this application, so please provide Aid.");
+            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MULTIPLERECORDS  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
+            response.setStatus(400);
         }
 
         return resultMap;
@@ -284,12 +298,16 @@ public class RestMusicAdminAPI {
 
         if (aid == null) {
             resultMap.put("Exception", "Please make sure Aid is present");
+            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
+            response.setStatus(400);
             return resultMap;
         }
 
         if (appName == null && userId == null && password == null && isAAF == null) {
             resultMap.put("Exception",
                             "No parameters found to update. Please update atleast one parameter.");
+            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
+            response.setStatus(400);
             return resultMap;
         }
         
@@ -302,6 +320,8 @@ public class RestMusicAdminAPI {
 	        if (!rs.all().isEmpty()) {
 	            resultMap.put("Exception", "Application " + appName
 	                            + " has already been onboarded. Please contact admin.");
+	            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.ALREADYEXIST  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
+	            response.setStatus(400);
 	            return resultMap;
 	        }
         }
@@ -329,13 +349,15 @@ public class RestMusicAdminAPI {
 	            pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), isAAF));
 	
 	        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), UUID.fromString(aid)));
-	        boolean result = MusicCore.nonKeyRelatedPut(pQuery, consistency);
+	        ResultType result = MusicCore.nonKeyRelatedPut(pQuery, consistency);
 	
-	        if (result) {
+	        if (result==ResultType.SUCCESS) {
 	            resultMap.put("Success", "Your application has been updated successfully");
 	        } else {
 	            resultMap.put("Exception",
-	                            "Oops. Something went wrong. Please make sure Aid is correct and application is onboarded");
+	                            "Oops. Spomething went wrong. Please make sure Aid is correct and application is onboarded");
+	            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
+	            response.setStatus(400);
 	        }
 	        
         return resultMap;

@@ -40,7 +40,7 @@ docker network create music-net;
 # Start Cassandra
 docker run -d --rm --name music-db --network music-net \
 -p "7000:7000" -p "7001:7001" -p "7199:7199" -p "9042:9042" -p "9160:9160" \
--e CASSNAME=${CASS_USERNAME} \
+-e CASSUSER=${CASS_USERNAME} \
 -e CASSPASS=${CASS_PASSWORD} \
 ${CASS_IMG};
 
