@@ -21,10 +21,13 @@
  */
 package org.onap.music.datastore.jsonobjects;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 @ApiModel(value = "JsonTable", description = "model for leased lock")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonLeasedLock {
     long leasePeriod;
     String notifyUrl;

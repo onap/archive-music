@@ -201,8 +201,8 @@ public class TestRestMusicData {
         Map<String, Object> resultMap = data.createKeySpace("1", "1", "1", null, "TestApp1",
                         "TestUser1", password, jsonKeyspace, keyspaceName, http);
         System.out.println("#######status is " + resultMap.get("Exception"));
-        assertEquals("Couldn't create keyspace. Please make sure all the information is correct.",
-                        resultMap.get("error"));
+        assertEquals("Keyspace testcassa already exists",
+                resultMap.get("error"));;
     }
 
     @Test

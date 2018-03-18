@@ -205,48 +205,10 @@ public class RestMusicDataAPI {
         ResultType result = ResultType.FAILURE;
         try {
             result = MusicCore.nonKeyRelatedPut(queryObject, consistency);
-            logger.error(EELFLoggerDelegate.errorLogger, "resulta = " + result);
-        } catch (Exception e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
-            return new JsonResponse(ResultType.FAILURE)
-            		.setError("Couldn't create keyspace. Please make sure all the information is correct.").toMap();
-        }
-
-        if (result==ResultType.FAILURE) {
-        	logger.info(EELFLoggerDelegate.applicationLogger, "Cannot create keyspace, cleaning up");
-        	JsonResponse resultJson = new JsonResponse(ResultType.FAILURE);
-            resultJson.setError("Keyspace already exists. Please contact admin.");
-            if (authMap.get("uuid").equals("new")) {
-                queryObject = new PreparedQueryObject();
-                queryObject.appendQueryString(
-                                "DELETE FROM admin.keyspace_master where uuid = " + newAid);
-                queryObject.appendQueryString(";");
-                try {
-					MusicCore.nonKeyRelatedPut(queryObject, consistency);
-				} catch (MusicServiceException e) {
-					logger.error(EELFLoggerDelegate.errorLogger,
-							"Error cleaning up createKeyspace. Cannot DELETE uuid. " + e.getMessage());
-				}
-                return resultJson.toMap();
-            } else {
-                queryObject = new PreparedQueryObject();
-                queryObject.appendQueryString(
-                                "UPDATE admin.keyspace_master SET keyspace_name=? where uuid = ?;");
-                try {
-                	queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(),
-                                MusicUtil.DEFAULTKEYSPACENAME));
-					queryObject.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), newAid));
-				} catch (Exception e) {
-					logger.error(EELFLoggerDelegate.errorLogger,
-							"Error cleaning up createKeyspace. Cannot get correct data types" + e.getMessage());
-				}
-                try {
-					 MusicCore.nonKeyRelatedPut(queryObject, consistency);
-				} catch (MusicServiceException e) {
-					logger.error(EELFLoggerDelegate.errorLogger, "Unable to process operation. Error: "+e.getMessage());
-				}
-                return resultJson.toMap();
-            }
+            logger.error(EELFLoggerDelegate.errorLogger, "result = " + result);
+        } catch ( MusicServiceException ex) {
+            logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
+            return new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap();
         }
         
         try {
@@ -261,6 +223,26 @@ public class RestMusicDataAPI {
             MusicCore.nonKeyRelatedPut(queryObject, consistency);
         } catch (Exception e) {
         	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
+        }
+        
+        try {
+            boolean isAAF = Boolean.valueOf(CachingUtil.isAAFApplication(ns));
+            queryObject = new PreparedQueryObject();
+            queryObject.appendQueryString(
+                        "INSERT into admin.keyspace_master (uuid, keyspace_name, application_name, is_api, "
+                                        + "password, username, is_aaf) values (?,?,?,?,?,?,?)");
+            queryObject.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), newAid));
+            queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), keyspaceName));
+            queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), ns));
+            queryObject.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), "True"));
+            queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), password));
+            queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
+            queryObject.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), isAAF));
+            CachingUtil.updateMusicCache(newAid, keyspaceName);
+            MusicCore.eventualPut(queryObject);
+        } catch (Exception e) {
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
+            return new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap();
         }
         
         return new JsonResponse(ResultType.SUCCESS).toMap();
@@ -444,7 +426,7 @@ public class RestMusicDataAPI {
             result = MusicCore.nonKeyRelatedPut(queryObject, consistency);
         } catch (MusicServiceException ex) {
         	response.setStatus(400);
-            return new JsonResponse(result).toMap();
+            return new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap();
         }
 
         return new JsonResponse(result).toMap();
@@ -585,8 +567,13 @@ public class RestMusicDataAPI {
                 primaryKey = entry.getValue() + "";
                 primaryKey = primaryKey.replace("'", "''");
             }
-
-            DataType colType = tableInfo.getColumn(entry.getKey()).getType();
+            DataType colType = null;
+            try {
+                colType = tableInfo.getColumn(entry.getKey()).getType();
+            } catch(NullPointerException ex) {
+                logger.error(EELFLoggerDelegate.errorLogger, "Invalid column name : "+entry.getKey());
+                return new JsonResponse(ResultType.FAILURE).setError("Invalid column name : "+entry.getKey()).toMap();
+            }
 
             Object formattedValue = null;
             try {
@@ -646,6 +633,12 @@ public class RestMusicDataAPI {
                 result = MusicCore.eventualPut(queryObject);
             } else if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
                 String lockId = insObj.getConsistencyInfo().get("lockId");
+                if(lockId == null) {
+                    logger.error(EELFLoggerDelegate.errorLogger,"LockId cannot be null. Create lock reference or"
+                            + " use ATOMIC instead of CRITICAL", ErrorSeverity.FATAL, ErrorTypes.MUSICSERVICEERROR);
+                    return new JsonResponse(ResultType.FAILURE).setError("LockId cannot be null. Create lock "
+                            + "and acquire lock or use ATOMIC instead of CRITICAL").toMap();
+                }
                 result = MusicCore.criticalPut(keyspace, tablename, primaryKey, queryObject, lockId,
                                 null);
             } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
@@ -745,7 +738,13 @@ public class RestMusicDataAPI {
         int counter = 0;
         for (Map.Entry<String, Object> entry : valuesMap.entrySet()) {
             Object valueObj = entry.getValue();
-            DataType colType = tableInfo.getColumn(entry.getKey()).getType();
+            DataType colType = null;
+            try {
+                colType = tableInfo.getColumn(entry.getKey()).getType();
+            } catch(NullPointerException ex) {
+                logger.error(EELFLoggerDelegate.errorLogger, "Invalid column name : "+entry.getKey());
+                return new JsonResponse(ResultType.FAILURE).setError("Invalid column name : "+entry.getKey()).toMap();
+            }
             Object valueString = null;
             try {
               valueString = MusicUtil.convertToActualDataType(colType, valueObj);
@@ -818,6 +817,12 @@ public class RestMusicDataAPI {
             operationResult = MusicCore.eventualPut(queryObject);
         else if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
             String lockId = updateObj.getConsistencyInfo().get("lockId");
+            if(lockId == null) {
+                logger.error(EELFLoggerDelegate.errorLogger,"LockId cannot be null. Create lock reference or"
+                        + " use ATOMIC instead of CRITICAL", ErrorSeverity.FATAL, ErrorTypes.MUSICSERVICEERROR);
+                return new JsonResponse(ResultType.FAILURE).setError("LockId cannot be null. Create lock "
+                        + "and acquire lock or use ATOMIC instead of CRITICAL").toMap();
+            }
             operationResult = MusicCore.criticalPut(keyspace, tablename, rowId.primarKeyValue,
                             queryObject, lockId, conditionInfo);
         } else if (consistency.equalsIgnoreCase("atomic_delete_lock")) {
@@ -946,7 +951,6 @@ public class RestMusicDataAPI {
             queryObject.appendQueryString(
                             "DELETE " + columnString + " FROM " + keyspace + "." + rowSpec + ";");
         }
-
         // get the conditional, if any
         Condition conditionInfo;
         if (delObj.getConditions() == null)
@@ -968,6 +972,12 @@ public class RestMusicDataAPI {
 	            operationResult = MusicCore.eventualPut(queryObject);
 	        else if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
 	            String lockId = delObj.getConsistencyInfo().get("lockId");
+	            if(lockId == null) {
+                    logger.error(EELFLoggerDelegate.errorLogger,"LockId cannot be null. Create lock reference or"
+                            + " use ATOMIC instead of CRITICAL", ErrorSeverity.FATAL, ErrorTypes.MUSICSERVICEERROR);
+                    return new JsonResponse(ResultType.FAILURE).setError("LockId cannot be null. Create lock "
+                            + "and acquire lock or use ATOMIC instead of CRITICAL").toMap();
+                }
 	            operationResult = MusicCore.criticalPut(keyspace, tablename, rowId.primarKeyValue,
 	                            queryObject, lockId, conditionInfo);
 	        } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
@@ -982,8 +992,8 @@ public class RestMusicDataAPI {
 			return new JsonResponse(ResultType.FAILURE)
 					.setError("Unable to perform Delete operation. Exception from music").toMap();
 		}
-        if (operationResult==null) {
-        	return new JsonResponse(ResultType.FAILURE).toMap();
+        if (operationResult.getResult().equals(ResultType.FAILURE)) {
+        	return new JsonResponse(ResultType.FAILURE).setError(operationResult.getMessage()).toMap();
         }
         return new JsonResponse(operationResult.getResult()).toMap();
     }
@@ -1100,6 +1110,12 @@ public class RestMusicDataAPI {
         String consistency = selObj.getConsistencyInfo().get("type");
 
         if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
+        	if(lockId == null) {
+                logger.error(EELFLoggerDelegate.errorLogger,"LockId cannot be null. Create lock reference or"
+                        + " use ATOMIC instead of CRITICAL", ErrorSeverity.FATAL, ErrorTypes.MUSICSERVICEERROR);
+                return new JsonResponse(ResultType.FAILURE).setError("LockId cannot be null. Create lock "
+                        + "and acquire lock or use ATOMIC instead of CRITICAL").toMap();
+            }
             results = MusicCore.criticalGet(keyspace, tablename, rowId.primarKeyValue, queryObject,
                             lockId);
         } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {

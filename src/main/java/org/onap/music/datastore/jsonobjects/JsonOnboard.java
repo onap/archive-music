@@ -21,10 +21,13 @@
  */
 package org.onap.music.datastore.jsonobjects;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 @ApiModel(value = "JsonOnboard", description = "Defines the Json for Onboarding an application.")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonOnboard {
     private String appname;
     private String userId;
