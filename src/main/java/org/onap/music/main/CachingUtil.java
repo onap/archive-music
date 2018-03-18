@@ -244,7 +244,7 @@ public class CachingUtil implements Runnable {
                 return resultMap;
             }
             if (!musicCache.get(keyspace).toString().equals(aid)) {
-                resultMap.put("Exception Message",
+                resultMap.put("Exception",
                                 "Unauthorized operation. Invalid AID for the keyspace");
                 return resultMap;
             }
@@ -267,8 +267,7 @@ public class CachingUtil implements Runnable {
         appNameCache.put(namespace, isAAF);
     }
 
-    public static Boolean isAAFApplication(String namespace) throws MusicServiceException {
-
+    public static String isAAFApplication(String namespace) throws MusicServiceException {
         String isAAF = appNameCache.get(namespace);
         if (isAAF == null) {
             PreparedQueryObject pQuery = new PreparedQueryObject();
@@ -278,14 +277,14 @@ public class CachingUtil implements Runnable {
             Row rs = MusicCore.get(pQuery).one();
             try {
                 isAAF = String.valueOf(rs.getBool("is_aaf"));
-                appNameCache.put(namespace, isAAF);
+                if(isAAF != null)
+                    appNameCache.put(namespace, isAAF);
             } catch (Exception e) {
             	logger.error(EELFLoggerDelegate.errorLogger,  e.getMessage(), AppMessages.QUERYERROR,ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
             	e.printStackTrace();
             }
         }
-
-        return Boolean.valueOf(isAAF);
+        return isAAF;
     }
 
     public static String getUuidFromMusicCache(String keyspace) throws MusicServiceException {

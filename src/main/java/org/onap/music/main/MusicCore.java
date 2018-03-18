@@ -890,7 +890,13 @@ public class MusicCore {
                         operation);
         if (!resultMap.isEmpty())
             return resultMap;
-        boolean isAAF = CachingUtil.isAAFApplication(nameSpace);
+        String isAAFApp = CachingUtil.isAAFApplication(nameSpace);
+        if(isAAFApp == null) {
+            resultMap.put("Exception", "Namespace: "+nameSpace+" doesn't exist. Please make sure ns(appName)"
+                    + " is correct and Application is onboarded.");
+            return resultMap;
+        }
+        boolean isAAF = Boolean.valueOf(isAAFApp);
         if (!isAAF && !(operation.equals("createKeySpace"))) {
         	if(aid == null) {
         		resultMap.put("Exception", "Aid is mandatory for nonAAF applications ");
@@ -947,20 +953,6 @@ public class MusicCore {
                 uuid = CachingUtil.generateUUID();
                 resultMap.put("uuid", "new");
             }
-
-            pQuery = new PreparedQueryObject();
-            pQuery.appendQueryString(
-                            "INSERT into admin.keyspace_master (uuid, keyspace_name, application_name, is_api, "
-                                            + "password, username, is_aaf) values (?,?,?,?,?,?,?)");
-            pQuery.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), uuid));
-            pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), keyspace));
-            pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), nameSpace));
-            pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), "True"));
-            pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), password));
-            pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
-            pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), isAAF));
-            //CachingUtil.updateMusicCache(uuid, keyspace);
-            MusicCore.eventualPut(pQuery);
             resultMap.put("aid", uuid);
         }
 

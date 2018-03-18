@@ -22,10 +22,14 @@
 package org.onap.music.datastore.jsonobjects;
 
 import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 @ApiModel(value = "JsonTable", description = "Defines the Json for Creating a new Table.")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonTable {
     private String keyspaceName;
     private String tableName;

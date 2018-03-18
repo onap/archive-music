@@ -27,10 +27,14 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 @ApiModel(value = "JsonTable", description = "Json model for table vlaues insert")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonInsert implements Serializable {
     private String keyspaceName;
     private String tableName;

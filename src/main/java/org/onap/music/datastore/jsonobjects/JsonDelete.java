@@ -23,10 +23,14 @@ package org.onap.music.datastore.jsonobjects;
 
 import java.util.ArrayList;
 import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 @ApiModel(value = "JsonTable", description = "Json model for delete")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonDelete {
 
     private ArrayList<String> columns = null;
