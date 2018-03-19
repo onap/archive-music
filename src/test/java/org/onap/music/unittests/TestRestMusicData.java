@@ -90,7 +90,7 @@ public class TestRestMusicData {
     public static void init() throws Exception {
         try {
             MusicCore.mDstoreHandle = CassandraCQL.connectToEmbeddedCassandra();
-            zkServer = new TestingServer(2181, new File("    mp/zk"));
+            zkServer = new TestingServer(2181, new File("/tmp/zk"));
             MusicCore.mLockHandle = new MusicLockingService();
         } catch (Exception e) {
             e.printStackTrace();
