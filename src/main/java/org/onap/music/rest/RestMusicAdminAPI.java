@@ -92,6 +92,7 @@ public class RestMusicAdminAPI {
         if (!rs.all().isEmpty()) {
             resultMap.put("Exception", "Application " + appName
                             + " has already been onboarded. Please contact admin.");
+            response.setStatus(400);
             return resultMap;
         }
 
@@ -113,6 +114,7 @@ public class RestMusicAdminAPI {
         if (returnStr.contains("Failure")) {
             resultMap.put("Exception",
                             "Oops. Something wrong with onboarding process. Please retry later or contact admin.");
+            response.setStatus(400);
             return resultMap;
         }
         CachingUtil.updateisAAFCache(appName, isAAF);
@@ -173,11 +175,15 @@ public class RestMusicAdminAPI {
             resultMap.put( row.getUUID("uuid").toString(),row.getString("keyspace_name"));
         }
         if (resultMap.isEmpty()) {
-            if(uuid != null)
+            if(uuid != null) {
                 resultMap.put("Exception", "Please make sure Aid is correct and application is onboarded.");
-            else {
+                response.setStatus(400);
+                return resultMap;
+            }else {
                 resultMap.put("Exception",
                                "Application is not onboarded. Please make sure all the information is correct.");
+                response.setStatus(400);
+                return resultMap;
             }
         }
         return resultMap;
@@ -224,7 +230,7 @@ public class RestMusicAdminAPI {
                 if (result==ResultType.SUCCESS) {
     	            resultMap.put("Success", "Your application has been deleted successfully");
     	        } else {
-    	            resultMap.put("Exception","Oops. Spomething went wrong. Please make sure Aid is correct or Application is onboarded");
+    	            resultMap.put("Exception","Oops. Something went wrong. Please make sure Aid is correct or Application is onboarded");
     	            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
     	            response.setStatus(400);
     	            return resultMap;
@@ -273,9 +279,8 @@ public class RestMusicAdminAPI {
             resultMap.put("Failure", "More than one Aid exists for this application, so please provide Aid.");
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MULTIPLERECORDS  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
             response.setStatus(400);
+            return resultMap;
         }
-
-        return resultMap;
     }
 
 
@@ -355,9 +360,10 @@ public class RestMusicAdminAPI {
 	            resultMap.put("Success", "Your application has been updated successfully");
 	        } else {
 	            resultMap.put("Exception",
-	                            "Oops. Spomething went wrong. Please make sure Aid is correct and application is onboarded");
+	                            "Oops. Something went wrong. Please make sure Aid is correct and application is onboarded");
 	            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
 	            response.setStatus(400);
+	            return resultMap;
 	        }
 	        
         return resultMap;

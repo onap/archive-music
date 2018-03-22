@@ -90,6 +90,8 @@ public class RestMusicLocksAPI {
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());	
         Map<String, Object> resultMap = MusicCore.validateLock(lockName);
         if (resultMap.containsKey("Exception")) {
+        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+            response.setStatus(400);
             return resultMap;
         }
         String keyspaceName = (String) resultMap.get("keyspace");
@@ -99,14 +101,18 @@ public class RestMusicLocksAPI {
         if (resultMap.containsKey("aid"))
             resultMap.remove("aid");
         if (!resultMap.isEmpty()) {
-                return resultMap;
+        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
+            response.setStatus(401);
+            return resultMap;
         }
 		ResultType status = ResultType.SUCCESS;
 		String lockId = MusicCore.createLockReference(lockName);
 		
 		if (lockId == null) { 
 			status = ResultType.FAILURE; 
-			response.setStatus(400);
+			logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.LOCKINGERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+            response.setStatus(400);
+            return new JsonResponse(status).setError("Lock Id is null").toMap();
 		}
 		return new JsonResponse(status).setLock(lockId).toMap();
 	}
@@ -138,6 +144,8 @@ public class RestMusicLocksAPI {
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());
         Map<String, Object> resultMap = MusicCore.validateLock(lockId);
         if (resultMap.containsKey("Exception")) {
+        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+            response.setStatus(400);
             return resultMap;
         }
         String keyspaceName = (String) resultMap.get("keyspace");
@@ -147,7 +155,9 @@ public class RestMusicLocksAPI {
         if (resultMap.containsKey("aid"))
             resultMap.remove("aid");
         if (!resultMap.isEmpty()) {
-                return resultMap;
+        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+            response.setStatus(400);
+            return resultMap;
         }
 		try {
 			String lockName = lockId.substring(lockId.indexOf('$')+1, lockId.lastIndexOf('$'));
@@ -183,6 +193,8 @@ public class RestMusicLocksAPI {
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());
         Map<String, Object> resultMap = MusicCore.validateLock(lockId);
         if (resultMap.containsKey("Exception")) {
+        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+            response.setStatus(400);
             return resultMap;
         }
         String keyspaceName = (String) resultMap.get("keyspace");
@@ -193,6 +205,7 @@ public class RestMusicLocksAPI {
         if (resultMap.containsKey("aid"))
             resultMap.remove("aid");
         if (!resultMap.isEmpty()) {
+        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
             response.setStatus(400);    
         	return resultMap;
         }
@@ -223,6 +236,8 @@ public class RestMusicLocksAPI {
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());
         Map<String, Object> resultMap = MusicCore.validateLock(lockName);
         if (resultMap.containsKey("Exception")) {
+        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+            response.setStatus(400);
             return resultMap;
         }
         String keyspaceName = (String) resultMap.get("keyspace");
@@ -232,7 +247,9 @@ public class RestMusicLocksAPI {
         if (resultMap.containsKey("aid"))
             resultMap.remove("aid");
         if (!resultMap.isEmpty()) {
-                return resultMap;
+        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+            response.setStatus(400);
+            return resultMap;
         }
 		String who = MusicCore.whoseTurnIsIt(lockName);
 		ResultType status = ResultType.SUCCESS;
@@ -240,7 +257,10 @@ public class RestMusicLocksAPI {
 		if ( who == null ) { 
 			status = ResultType.FAILURE; 
 			error = "There was a problem getting the lock holder";
-			response.setStatus(400);
+			logger.error(EELFLoggerDelegate.errorLogger,"There was a problem getting the lock holder", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+            response.setStatus(400);
+            return new JsonResponse(status).setError(error)
+					.setLock(lockName).setLockHolder(who).toMap();
 		}
 		return new JsonResponse(status).setError(error)
 						.setLock(lockName).setLockHolder(who).toMap();
@@ -265,6 +285,8 @@ public class RestMusicLocksAPI {
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());
         Map<String, Object> resultMap = MusicCore.validateLock(lockName);
         if (resultMap.containsKey("Exception")) {
+        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+            response.setStatus(400);
             return resultMap;
         }
         String keyspaceName = (String) resultMap.get("keyspace");
@@ -275,8 +297,9 @@ public class RestMusicLocksAPI {
         if (resultMap.containsKey("aid"))
             resultMap.remove("aid");
         if (!resultMap.isEmpty()) {
-        	response.setStatus(400);
-                return resultMap;
+        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+            response.setStatus(400);
+        	return resultMap;
         }
 		
         MusicLockState mls = MusicCore.getMusicLockState(lockName);
@@ -285,12 +308,15 @@ public class RestMusicLocksAPI {
 		if(mls == null) {
 			jsonResponse.setError("");
 			jsonResponse.setMessage("No lock object created yet..");
+			logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+            response.setStatus(400);
+            return jsonResponse.toMap();
 		} else { 
 			jsonResponse.setStatus(ResultType.SUCCESS);
 			jsonResponse.setLockStatus(mls.getLockStatus());
 			jsonResponse.setLockHolder(mls.getLockHolder());
+			return jsonResponse.toMap();
 		} 
-		return jsonResponse.toMap();
 	}
 
 	/**
@@ -318,6 +344,8 @@ public class RestMusicLocksAPI {
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());
         Map<String, Object> resultMap = MusicCore.validateLock(lockId);
         if (resultMap.containsKey("Exception")) {
+        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+            response.setStatus(400);
             return resultMap;
         }
         String keyspaceName = (String) resultMap.get("keyspace");
@@ -327,13 +355,16 @@ public class RestMusicLocksAPI {
         if (resultMap.containsKey("aid"))
             resultMap.remove("aid");
         if (!resultMap.isEmpty()) {
-        	response.setStatus(400);
+        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+            response.setStatus(400);
             return resultMap;
         }
 		boolean voluntaryRelease = true; 
 		MusicLockState mls = MusicCore.releaseLock(lockId,voluntaryRelease);
 		if(mls.getErrorMessage() != null) {
 			resultMap.put(ResultType.EXCEPTION.getResult(), mls.getErrorMessage());
+			logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+            response.setStatus(400);
 			return resultMap;
 		}
 		Map<String,Object> returnMap = null;
@@ -342,6 +373,8 @@ public class RestMusicLocksAPI {
 								.setLockStatus(mls.getLockStatus()).toMap();
 		}
 		if (mls.getLockStatus() == MusicLockState.LockStatus.LOCKED) {
+			logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.LOCKINGERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+            response.setStatus(400);
 			returnMap = new JsonResponse(ResultType.FAILURE).setLock(lockId)
 								.setLockStatus(mls.getLockStatus()).toMap();
 		}
@@ -369,6 +402,8 @@ public class RestMusicLocksAPI {
 		response.addHeader(xLatestVersion,MusicUtil.getVersion());
         Map<String, Object> resultMap = MusicCore.validateLock(lockName);
         if (resultMap.containsKey("Exception")) {
+        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.UNKNOWNERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+            response.setStatus(400);
             return resultMap;
         }
         String keyspaceName = (String) resultMap.get("keyspace");
@@ -378,8 +413,9 @@ public class RestMusicLocksAPI {
         if (resultMap.containsKey("aid"))
             resultMap.remove("aid");
         if (!resultMap.isEmpty()) {
-        	response.setStatus(400);
-            return resultMap;
+        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.UNKNOWNERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+            response.setStatus(400);
+        	return resultMap;
         }
 		MusicCore.deleteLock(lockName);
 		return new JsonResponse(ResultType.SUCCESS).toMap();
