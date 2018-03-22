@@ -253,6 +253,6 @@ public class RestMusicQAPI {
 		@ApiParam(value="Key Space",required=true) @PathParam("keyspace") String keyspace, 
 		@ApiParam(value="Table Name",required=true) @PathParam("tablename") String tablename,
 		@Context HttpServletResponse response) throws Exception{ 
-		return new RestMusicDataAPI().dropTable(version,minorVersion,patchVersion,aid, ns, userId, password, tabObj, keyspace, tablename,response);
+		return new RestMusicDataAPI().dropTable(version,minorVersion,patchVersion,aid, ns, userId, password, keyspace, tablename,response);
 	}
 }

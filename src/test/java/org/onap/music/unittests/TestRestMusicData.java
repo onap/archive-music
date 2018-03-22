@@ -342,7 +342,7 @@ public class TestRestMusicData {
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Map<String, Object> resultMap = data.dropTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, userId, password,
-                        jsonTable, keyspaceName, tableName, http);
+                         keyspaceName, tableName, http);
         assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
 
@@ -360,7 +360,7 @@ public class TestRestMusicData {
         jsonKeyspace.setReplicationInfo(replicationInfo);
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Map<String, Object> resultMap = data.dropKeySpace("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
-                appName, userId, password, jsonKeyspace, keyspaceName, http);
+                appName, userId, password, keyspaceName, http);
         assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
     
@@ -414,7 +414,7 @@ public class TestRestMusicData {
     @Test
     public void Test3_createLockReference() throws Exception {
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Map<String, Object> resultMap = lock.createLockReference(lockName, uuid.toString(), appName, null, null, http);
+        Map<String, Object> resultMap = lock.createLockReference(lockName, null, appName, userId, password, http);
         @SuppressWarnings("unchecked")
         Map<String, Object> resultMap1 = (Map<String, Object>) resultMap.get("lock");
         lockId = (String) resultMap1.get("lock");
@@ -424,28 +424,28 @@ public class TestRestMusicData {
     @Test
     public void Test4_accquireLock() throws Exception {
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Map<String, Object> resultMap = lock.accquireLock(lockId, uuid.toString(), appName, null, null, http);
+        Map<String, Object> resultMap = lock.accquireLock(lockId, null, appName, userId, password, http);
         assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
 
     @Test
     public void Test5_currentLockHolder() throws Exception {
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Map<String, Object> resultMap = lock.currentLockHolder(lockName, uuid.toString(), appName, null, null, http);
+        Map<String, Object> resultMap = lock.currentLockHolder(lockName, null, appName, userId, password, http);
         assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
 
     @Test
     public void Test7_unLock() throws Exception {
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Map<String, Object> resultMap = lock.unLock(lockId, uuid.toString(), appName, null, null, http);
+        Map<String, Object> resultMap = lock.unLock(lockId, null, appName, userId, password, http);
         assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
 
     @Test
     public void Test8_delete() throws Exception {
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Map<String, Object> resultMap = lock.deleteLock(lockName, uuid.toString(), appName, null, null, http);
+        Map<String, Object> resultMap = lock.deleteLock(lockName, null, appName, userId, password, http);
         assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
 }

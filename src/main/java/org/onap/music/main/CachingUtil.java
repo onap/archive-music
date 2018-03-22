@@ -62,6 +62,7 @@ public class CachingUtil implements Runnable {
     private static CacheAccess<String, String> musicCache = JCS.getInstance("musicCache");
     private static CacheAccess<String, Map<String, String>> aafCache = JCS.getInstance("aafCache");
     private static CacheAccess<String, String> appNameCache = JCS.getInstance("appNameCache");
+    private static CacheAccess<String, Map<String, String>> musicValidateCache = JCS.getInstance("musicValidateCache");
     private static Map<String, Number> userAttempts = new HashMap<>();
     private static Map<String, Calendar> lastFailedTime = new HashMap<>();
 
@@ -104,7 +105,7 @@ public class CachingUtil implements Runnable {
                     map = new HashMap<>();
                     map.put(userId, password);
                     aafCache.put(nameSpace, map);
-                    musicCache.put(nameSpace, keySpace);
+                    musicCache.put(keySpace, nameSpace);
                     logger.debug("Cronjob: Cache Updated with AAF response for namespace "
                                     + nameSpace);
                 }
@@ -131,7 +132,7 @@ public class CachingUtil implements Runnable {
                     String keySpace) throws Exception {
 
         if (aafCache.get(nameSpace) != null) {
-            if (keySpace != null && !musicCache.get(nameSpace).equals(keySpace)) {
+            if (keySpace != null && !musicCache.get(keySpace).equals(nameSpace)) {
             	logger.info(EELFLoggerDelegate.applicationLogger,"Create new application for the same namespace.");
             } else if (aafCache.get(nameSpace).get(userId).equals(password)) {
             	logger.info(EELFLoggerDelegate.applicationLogger,"Authenticated with cache value..");
@@ -217,52 +218,18 @@ public class CachingUtil implements Runnable {
         return responseObj;
     }
 
-    public static Map<String, Object> authenticateAIDUser(String aid, String keyspace)
-                    throws Exception {
-        Map<String, Object> resultMap = new HashMap<>();
-        String uuid = null;
-        /*
-         * if(aid == null || aid.length() == 0) { resultMap.put("Exception Message",
-         * "AID is missing for the keyspace requested."); //create a new AID ?? } else
-         */
-        if (musicCache.get(keyspace) == null) {
-            PreparedQueryObject pQuery = new PreparedQueryObject();
-            pQuery.appendQueryString(
-                            "SELECT uuid from admin.keyspace_master where keyspace_name = '"
-                                            + keyspace + "' allow filtering");
-            Row rs = MusicCore.get(pQuery).one();
-            try {
-                uuid = rs.getUUID("uuid").toString();
-                musicCache.put(keyspace, uuid);
-            } catch (Exception e) {
-                String msg = e.getMessage();
-                logger.error(EELFLoggerDelegate.errorLogger,  e.getMessage(), AppMessages.QUERYERROR,ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
-                resultMap.put("Exception", "Unauthorized operation. Check AID and Keyspace. "
-                                + "Exception from MUSIC is: "
-                                + (msg == null ? "Keyspace is new so no AID should be passed in Header."
-                                                : msg));
-                return resultMap;
-            }
-            if (!musicCache.get(keyspace).toString().equals(aid)) {
-                resultMap.put("Exception",
-                                "Unauthorized operation. Invalid AID for the keyspace");
-                return resultMap;
-            }
-        } else if (musicCache.get(keyspace) != null
-                        && !musicCache.get(keyspace).toString().equals(aid)) {
-            resultMap.put("Exception Message",
-                            "Unauthorized operation. Invalid AID for the keyspace");
-            return resultMap;
-        }
-        resultMap.put("aid", uuid);
-        return resultMap;
+    public static void updateMusicCache(String keyspace, String nameSpace) {
+        logger.info(EELFLoggerDelegate.applicationLogger,"Updating musicCache for keyspace " + keyspace + " with nameSpace " + nameSpace);
+        musicCache.put(keyspace, nameSpace);
     }
 
-    public static void updateMusicCache(String aid, String keyspace) {
-    	logger.info(EELFLoggerDelegate.applicationLogger,"Updating musicCache for keyspace " + keyspace + " with aid " + aid);
-        musicCache.put(keyspace, aid);
+    public static void updateMusicValidateCache(String nameSpace, String userId, String password) {
+        logger.info(EELFLoggerDelegate.applicationLogger,"Updating musicCache for nameSpacce " + nameSpace + " with userId " + userId);
+        Map<String, String> map = new HashMap<>();
+        map.put(userId, password);
+        musicValidateCache.put(nameSpace, map);
     }
-
+    
     public static void updateisAAFCache(String namespace, String isAAF) {
         appNameCache.put(namespace, isAAF);
     }
@@ -288,7 +255,7 @@ public class CachingUtil implements Runnable {
     }
 
     public static String getUuidFromMusicCache(String keyspace) throws MusicServiceException {
-        String uuid = musicCache.get(keyspace);
+        String uuid = null;
         if (uuid == null) {
             PreparedQueryObject pQuery = new PreparedQueryObject();
             pQuery.appendQueryString(
@@ -297,7 +264,6 @@ public class CachingUtil implements Runnable {
             Row rs = MusicCore.get(pQuery).one();
             try {
                 uuid = rs.getUUID("uuid").toString();
-                musicCache.put(keyspace, uuid);
             } catch (Exception e) {
                 logger.error(EELFLoggerDelegate.errorLogger,"Exception occured during uuid retrieval from DB."+e.getMessage());
                 e.printStackTrace();
@@ -372,23 +338,70 @@ public class CachingUtil implements Runnable {
             logger.error(EELFLoggerDelegate.errorLogger,"Application is not onboarded. Please contact admin.");
             resultMap.put("Exception", "Application is not onboarded. Please contact admin.");
         } else {
-            if(!(rs.getString("username").equals(userId)) && !(rs.getString("password").equals("password"))) {
+            if(!(rs.getString("username").equals(userId)) || !(rs.getString("password").equals(password))) {
                 logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
                 logger.error(EELFLoggerDelegate.errorLogger,"Namespace, UserId and password doesn't match. namespace: "+ns+" and userId: "+userId);
                 resultMap.put("Exception", "Namespace, UserId and password doesn't match. namespace: "+ns+" and userId: "+userId);
                 return resultMap;
             }
-            boolean is_aaf = rs.getBool("is_aaf");
-            String keyspace = rs.getString("keyspace_name");
-            if (!is_aaf) {
-                if (!keyspace.equals(MusicUtil.DEFAULTKEYSPACENAME)) {
-                    logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO ,ErrorSeverity.WARN, ErrorTypes.DATAERROR);
-                    logger.error(EELFLoggerDelegate.errorLogger,"Non AAF applications are allowed to have only one keyspace per application.");
-                    resultMap.put("Exception",
-                                    "Non AAF applications are allowed to have only one keyspace per application.");
-                }
+        }
+        return resultMap;
+    }
+
+    public static Map<String, Object> authenticateAIDUser(String nameSpace, String userId, String password,
+           String keyspace) {
+        Map<String, Object> resultMap = new HashMap<>();
+        if((musicCache.get(keyspace) != null) && (musicValidateCache.get(nameSpace) != null) 
+                && (musicValidateCache.get(nameSpace).containsKey(userId))) {
+            if(!musicCache.get(keyspace).equals(nameSpace)) {
+                resultMap.put("Exception", "Namespace and keyspace doesn't match");
+                return resultMap;
+            }
+            if(!musicValidateCache.get(nameSpace).get(userId).equals(password)) {
+                resultMap.put("Exception", "Namespace, userId and password doesn't match");
+                return resultMap;
+            }
+            return resultMap;
+        }
+        PreparedQueryObject queryObject = new PreparedQueryObject();
+        queryObject.appendQueryString(
+                        "select * from admin.keyspace_master where keyspace_name = ? allow filtering");
+        try {
+            queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), keyspace));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        Row rs = null;
+        try {
+            rs = MusicCore.get(queryObject).one();
+        } catch (MusicServiceException e) {
+            e.printStackTrace();
+            resultMap.put("Exception", "Unable to process operation. Error is "+e.getMessage());
+            return resultMap;
+        }
+        if(rs == null) {
+            resultMap.put("Exception", "Please make sure keyspace:"+keyspace+" exists.");
+            return resultMap;
+        }
+        else {
+            String user = rs.getString("username");
+            String pwd = rs.getString("password");
+            String ns = rs.getString("application_name");
+            if(!ns.equals(nameSpace)) {
+            resultMap.put("Exception", "Namespace and keyspace doesn't match");
+            return resultMap;
+            }
+            if(!user.equals(userId)) {
+                resultMap.put("Exception", "Invalid userId :"+userId);
+                return resultMap;
+            }
+            if(!pwd.equals(password)) {
+                resultMap.put("Exception", "Invalid password");
+                return resultMap;
             }
         }
+        CachingUtil.updateMusicCache(keyspace, nameSpace);
+        CachingUtil.updateMusicValidateCache(nameSpace, userId, password);
         return resultMap;
     }
 }

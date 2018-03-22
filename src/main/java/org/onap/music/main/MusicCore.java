@@ -897,17 +897,7 @@ public class MusicCore {
             return resultMap;
         }
         boolean isAAF = Boolean.valueOf(isAAFApp);
-        if (!isAAF && !(operation.equals("createKeySpace"))) {
-        	if(aid == null) {
-        		resultMap.put("Exception", "Aid is mandatory for nonAAF applications ");
-        		return resultMap;
-        	}
-            resultMap = CachingUtil.authenticateAIDUser(aid, keyspace);
-            
-            if (!resultMap.isEmpty())
-                return resultMap;
-        }
-        if (aid == null && (userId == null || password == null)) {
+        if (userId == null || password == null) {
         	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
             logger.error(EELFLoggerDelegate.errorLogger,"One or more required headers is missing. userId: " + userId
                             + " :: password: " + password);
@@ -915,7 +905,12 @@ public class MusicCore {
                             "UserId and Password are mandatory for the operation " + operation);
             return resultMap;
         }
-        
+        if(!isAAF && !(operation.equals("createKeySpace"))) {
+            resultMap = CachingUtil.authenticateAIDUser(nameSpace, userId, password, keyspace);
+            if (!resultMap.isEmpty())
+                return resultMap;
+            
+        }
         if (isAAF && nameSpace != null && userId != null && password != null) {
             boolean isValid = true;
             try {
