@@ -17,7 +17,8 @@
 		     <param-value>
 		     	io.swagger.jaxrs.json,
                 io.swagger.jaxrs.listing,
-		     	org.onap.music.rest
+                org.onap.music.rest,
+                org.onap.music.exceptions
 		     </param-value>
 		</init-param>
 		<init-param>

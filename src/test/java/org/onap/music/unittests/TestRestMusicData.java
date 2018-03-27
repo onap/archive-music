@@ -18,7 +18,8 @@
 package org.onap.music.unittests;
 
 import static org.junit.Assert.assertEquals;
-import static org.onap.music.main.MusicCore.mLockHandle;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.Map;
 import java.util.UUID;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import org.apache.curator.test.TestingServer;
 import org.junit.AfterClass;
@@ -46,7 +48,6 @@ import org.onap.music.datastore.jsonobjects.JsonSelect;
 import org.onap.music.datastore.jsonobjects.JsonTable;
 import org.onap.music.datastore.jsonobjects.JsonUpdate;
 import org.onap.music.lockingservice.MusicLockingService;
-import org.onap.music.main.CachingUtil;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
@@ -180,9 +181,38 @@ public class TestRestMusicData {
         jsonKeyspace.setKeyspaceName(keyspaceName);
         jsonKeyspace.setReplicationInfo(replicationInfo);
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Map<String, Object> resultMap = data.createKeySpace("1", "1", "1", null, appName, userId,
-                        password, jsonKeyspace, keyspaceName, http);
-        assertEquals(ResultType.SUCCESS, resultMap.get("status"));
+        Response response = data.createKeySpace("1", "1", "1", null, appName, userId,
+                        password, jsonKeyspace, keyspaceName);
+        System.out.println("#######status is " + response.getStatus());
+        System.out.println("Entity" + response.getEntity());
+        assertEquals(200,response.getStatus());
+    }
+
+    @Test
+    public void Test2_createKeyspace0() throws Exception {
+        JsonKeySpace jsonKeyspace = new JsonKeySpace();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        Map<String, Object> replicationInfo = new HashMap<>();
+        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        Response response = data.createKeySpace("1", "1", "1", null, appName, userId,
+                        password, jsonKeyspace, keyspaceName);
+        System.out.println("#######status is " + response.getStatus());
+        System.out.println("Entity" + response.getEntity());
+        assertEquals(400,response.getStatus());
+    }
+//MusicCore.autheticateUser
+    @Test
+    public void Test2_createKeyspace01() throws Exception {
+        JsonKeySpace jsonKeyspace = new JsonKeySpace();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        Map<String, Object> replicationInfo = new HashMap<>();
+        String appName1 = "test";
+        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        Response response = data.createKeySpace("1", "1", "1", null, appName1, userId,
+                        password, jsonKeyspace, keyspaceName);
+        System.out.println("#######status is " + response.getStatus());
+        System.out.println("Entity" + response.getEntity());
+        assertEquals(401,response.getStatus());
     }
 
     @Test
@@ -198,11 +228,11 @@ public class TestRestMusicData {
         jsonKeyspace.setKeyspaceName("TestApp1");
         jsonKeyspace.setReplicationInfo(replicationInfo);
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Map<String, Object> resultMap = data.createKeySpace("1", "1", "1", null, "TestApp1",
-                        "TestUser1", password, jsonKeyspace, keyspaceName, http);
-        System.out.println("#######status is " + resultMap.get("Exception"));
-        assertEquals("Keyspace testcassa already exists",
-                resultMap.get("error"));;
+        Response response = data.createKeySpace("1", "1", "1", null, "TestApp1",
+                        "TestUser1", password, jsonKeyspace, keyspaceName);
+        System.out.println("#######status is " + response.getStatus());
+        System.out.println("Entity" + response.getEntity());
+        assertEquals(400,response.getStatus());
     }
 
     @Test
@@ -221,11 +251,65 @@ public class TestRestMusicData {
         jsonTable.setTableName(tableName);
         jsonTable.setFields(fields);
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Map<String, Object> resultMap = data.createTable("1", "1", "1",
+        Response response = data.createTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, userId, password,
-                        jsonTable, keyspaceName, tableName, http);
-        assertEquals(ResultType.SUCCESS, resultMap.get("status"));
+                        jsonTable, keyspaceName, tableName);
+        System.out.println("#######status is " + response.getStatus());
+        System.out.println("Entity" + response.getEntity());
+        assertEquals(200, response.getStatus());
     }
+
+    // Improper Auth
+    @Test
+    public void Test3_createTable1() throws Exception {
+        JsonTable jsonTable = new JsonTable();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        Map<String, String> fields = new HashMap<>();
+        fields.put("uuid", "text");
+        fields.put("emp_name", "text");
+        fields.put("emp_salary", "varint");
+        fields.put("PRIMARY KEY", "(emp_name)");
+        consistencyInfo.put("type", "eventual");
+        jsonTable.setConsistencyInfo(consistencyInfo);
+        jsonTable.setKeyspaceName(keyspaceName);
+        jsonTable.setPrimaryKey("emp_name");
+        jsonTable.setTableName(tableName);
+        jsonTable.setFields(fields);
+        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        Response response = data.createTable("1", "1", "1",
+                        "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, userId, "wrong",
+                        jsonTable, keyspaceName, tableName);
+        System.out.println("#######status is " + response.getStatus());
+        System.out.println("Entity" + response.getEntity());
+        assertEquals(401, response.getStatus());
+    }
+
+    // Improper keyspace
+    @Test
+    public void Test3_createTable2() throws Exception {
+        JsonTable jsonTable = new JsonTable();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        Map<String, String> fields = new HashMap<>();
+        fields.put("uuid", "text");
+        fields.put("emp_name", "text");
+        fields.put("emp_salary", "varint");
+        fields.put("PRIMARY KEY", "(emp_name)");
+        consistencyInfo.put("type", "eventual");
+        jsonTable.setConsistencyInfo(consistencyInfo);
+        jsonTable.setKeyspaceName(keyspaceName);
+        jsonTable.setPrimaryKey("emp_name");
+        jsonTable.setTableName(tableName);
+        jsonTable.setFields(fields);
+        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        Response response = data.createTable("1", "1", "1",
+                        "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, userId, password,
+                        jsonTable, "wrong", tableName);
+        System.out.println("#######status is " + response.getStatus());
+        System.out.println("Entity" + response.getEntity());
+        assertEquals(401, response.getStatus());
+    }
+
+
 
     @Test
     public void Test4_insertIntoTable() throws Exception {
@@ -241,9 +325,9 @@ public class TestRestMusicData {
         jsonInsert.setTableName(tableName);
         jsonInsert.setValues(values);
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Map<String, Object> resultMap = data.insertIntoTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
-                appName, userId, password, jsonInsert, keyspaceName, tableName, http);
-        assertEquals(ResultType.SUCCESS, resultMap.get("status"));
+        Response response = data.insertIntoTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
+                appName, userId, password, jsonInsert, keyspaceName, tableName);
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -260,12 +344,56 @@ public class TestRestMusicData {
         jsonInsert.setTableName(tableName);
         jsonInsert.setValues(values);
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Map<String, Object> resultMap = data.insertIntoTable("1", "1", "1",
+        Response response = data.insertIntoTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, userId, password,
-                        jsonInsert, keyspaceName, tableName, http);
-        assertEquals(ResultType.SUCCESS, resultMap.get("status"));
+                        jsonInsert, keyspaceName, tableName);
+        assertEquals(200, response.getStatus());
     }
 
+    // Auth Error
+    @Test
+    public void Test4_insertIntoTable3() throws Exception {
+        JsonInsert jsonInsert = new JsonInsert();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        Map<String, Object> values = new HashMap<>();
+        values.put("uuid", "cfd66ccc-d857-4e90-b1e5-df98a3d40cd6");
+        values.put("emp_name", "test1");
+        values.put("emp_salary", 1500);
+        consistencyInfo.put("type", "eventual");
+        jsonInsert.setConsistencyInfo(consistencyInfo);
+        jsonInsert.setKeyspaceName(keyspaceName);
+        jsonInsert.setTableName(tableName);
+        jsonInsert.setValues(values);
+        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        Response response = data.insertIntoTable("1", "1", "1",
+                        "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, userId, "wrong",
+                        jsonInsert, keyspaceName, tableName);
+        assertEquals(401, response.getStatus());
+    }
+
+    // Table wrong
+    @Test
+    public void Test4_insertIntoTable4() throws Exception {
+        JsonInsert jsonInsert = new JsonInsert();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        Map<String, Object> values = new HashMap<>();
+        values.put("uuid", "cfd66ccc-d857-4e90-b1e5-df98a3d40cd6");
+        values.put("emp_name", "test1");
+        values.put("emp_salary", 1500);
+        consistencyInfo.put("type", "eventual");
+        jsonInsert.setConsistencyInfo(consistencyInfo);
+        jsonInsert.setKeyspaceName(keyspaceName);
+        jsonInsert.setTableName(tableName);
+        jsonInsert.setValues(values);
+        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        Response response = data.insertIntoTable("1", "1", "1",
+                        "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, userId, password,
+                        jsonInsert, keyspaceName, "wrong");
+        assertEquals(400, response.getStatus());
+    }
+    
+    
+    
     @Test
     public void Test5_updateTable() throws Exception {
         JsonUpdate jsonUpdate = new JsonUpdate();
@@ -281,9 +409,9 @@ public class TestRestMusicData {
         jsonUpdate.setValues(values);
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Mockito.when(info.getQueryParameters()).thenReturn(row);
-        Map<String, Object> resultMap = data.updateTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
-                userId, password, jsonUpdate, keyspaceName, tableName, info, http);
-        assertEquals(ResultType.SUCCESS, resultMap.get("status"));
+        Response response = data.updateTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
+                userId, password, jsonUpdate, keyspaceName, tableName, info);
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -296,9 +424,11 @@ public class TestRestMusicData {
         jsonSelect.setConsistencyInfo(consistencyInfo);
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Mockito.when(info.getQueryParameters()).thenReturn(row);
-        Map<String, Object> resultMap = data.select("1", "1", "1",
-                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, userId, password, keyspaceName, tableName, info, http);
-        assertEquals("2500", ((HashMap<String,HashMap<String,Object>>) resultMap.get("result")).get("row 0").get("emp_salary").toString());
+        Response response = data.select("1", "1", "1","abc66ccc-d857-4e90-b1e5-df98a3d40ce6", 
+                        appName, userId, password, keyspaceName, tableName, info);
+        HashMap<String,HashMap<String,Object>> map = (HashMap<String, HashMap<String, Object>>) response.getEntity();
+        HashMap<String, Object> result = map.get("result");
+        assertEquals("2500", ((HashMap<String,Object>) result.get("row 0")).get("emp_salary").toString());
     }
 
     @Test
@@ -311,10 +441,11 @@ public class TestRestMusicData {
         jsonInsert.setConsistencyInfo(consistencyInfo);
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Mockito.when(info.getQueryParameters()).thenReturn(row);
-        Map<String, Object> resultMap = data.selectCritical("1", "1", "1",
-                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, userId, password, jsonInsert, keyspaceName, tableName,
-                info, http);
-        assertEquals("2500", ((HashMap<String,HashMap<String,Object>>) resultMap.get("result")).get("row 0").get("emp_salary").toString());
+        Response response = data.selectCritical("1", "1", "1","abc66ccc-d857-4e90-b1e5-df98a3d40ce6", 
+                        appName, userId, password, jsonInsert, keyspaceName, tableName,info);
+        HashMap<String,HashMap<String,Object>> map = (HashMap<String, HashMap<String, Object>>) response.getEntity();
+        HashMap<String, Object> result = map.get("result");
+        assertEquals("2500", ((HashMap<String,Object>) result.get("row 0")).get("emp_salary").toString());
     }
 
     @Test
@@ -327,10 +458,44 @@ public class TestRestMusicData {
         jsonDelete.setConsistencyInfo(consistencyInfo);
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Mockito.when(info.getQueryParameters()).thenReturn(row);
-        Map<String, Object> resultMap = data.deleteFromTable("1", "1", "1",
+        Response response = data.deleteFromTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, userId, password,
-                        jsonDelete, keyspaceName, tableName, info, http);
-        assertEquals(ResultType.SUCCESS, resultMap.get("status"));
+                        jsonDelete, keyspaceName, tableName, info);
+        assertEquals(200, response.getStatus());
+    }
+
+    // Values
+    @Test
+    public void Test6_deleteFromTable1() throws Exception {
+        JsonDelete jsonDelete = new JsonDelete();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        MultivaluedMap<String, String> row = new MultivaluedMapImpl();
+        //row.add("emp_name", "test1");
+        consistencyInfo.put("type", "atomic");
+        jsonDelete.setConsistencyInfo(consistencyInfo);
+        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        Mockito.when(info.getQueryParameters()).thenReturn(row);
+        Response response = data.deleteFromTable("1", "1", "1",
+                        "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, userId, password,
+                        jsonDelete, keyspaceName, tableName, info);
+        assertEquals(400, response.getStatus());
+    }
+
+    // delObj
+    @Test
+    public void Test6_deleteFromTable2() throws Exception {
+        JsonDelete jsonDelete = new JsonDelete();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        MultivaluedMap<String, String> row = new MultivaluedMapImpl();
+        row.add("emp_name", "test1");
+        consistencyInfo.put("type", "atomic");
+        jsonDelete.setConsistencyInfo(consistencyInfo);
+        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        Mockito.when(info.getQueryParameters()).thenReturn(row);
+        Response response = data.deleteFromTable("1", "1", "1",
+                        "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, userId, password,
+                        null, keyspaceName, tableName, info);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -340,10 +505,10 @@ public class TestRestMusicData {
         consistencyInfo.put("type", "atomic");
         jsonTable.setConsistencyInfo(consistencyInfo);
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Map<String, Object> resultMap = data.dropTable("1", "1", "1",
+        Response response = data.dropTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, userId, password,
-                         keyspaceName, tableName, http);
-        assertEquals(ResultType.SUCCESS, resultMap.get("status"));
+                         keyspaceName, tableName);
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -359,10 +524,48 @@ public class TestRestMusicData {
         jsonKeyspace.setKeyspaceName("TestApp1");
         jsonKeyspace.setReplicationInfo(replicationInfo);
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Map<String, Object> resultMap = data.dropKeySpace("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
-                appName, userId, password, keyspaceName, http);
-        assertEquals(ResultType.SUCCESS, resultMap.get("status"));
+        Response response = data.dropKeySpace("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
+                appName, userId, password, keyspaceName);
+        assertEquals(200, response.getStatus());
     }
+    
+    @Test
+    public void Test8_deleteKeyspace2() throws Exception {
+        JsonKeySpace jsonKeyspace = new JsonKeySpace();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        Map<String, Object> replicationInfo = new HashMap<>();
+        consistencyInfo.put("type", "eventual");
+        replicationInfo.put("class", "SimpleStrategy");
+        replicationInfo.put("replication_factor", 1);
+        jsonKeyspace.setConsistencyInfo(consistencyInfo);
+        jsonKeyspace.setDurabilityOfWrites("true");
+        jsonKeyspace.setKeyspaceName("TestApp1");
+        jsonKeyspace.setReplicationInfo(replicationInfo);
+        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        Response response = data.dropKeySpace("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
+                appName, userId, "wrong", keyspaceName);
+        assertEquals(401, response.getStatus());
+    }
+
+    @Test
+    public void Test8_deleteKeyspace3() throws Exception {
+        JsonKeySpace jsonKeyspace = new JsonKeySpace();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        Map<String, Object> replicationInfo = new HashMap<>();
+//        consistencyInfo.put("type", "eventual");
+//        replicationInfo.put("class", "SimpleStrategy");
+//        replicationInfo.put("replication_factor", 1);
+//        jsonKeyspace.setConsistencyInfo(consistencyInfo);
+//        jsonKeyspace.setDurabilityOfWrites("true");
+ //       jsonKeyspace.setKeyspaceName("TestApp1");
+//        jsonKeyspace.setReplicationInfo(replicationInfo);
+        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        Response response = data.dropKeySpace("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
+                appName, userId, password, keyspaceName);
+        assertEquals(400, response.getStatus());
+    }
+
+    
     
     @Test
     public void Test6_onboard() throws Exception {
@@ -371,19 +574,48 @@ public class TestRestMusicData {
         jsonOnboard.setIsAAF("false");
         jsonOnboard.setUserId("TestUser2");
         jsonOnboard.setPassword("TestPassword2");
-        Map<String, Object> resultMap = admin.onboardAppWithMusic(jsonOnboard, http);
+        Map<String, Object> resultMap = (Map<String, Object>) admin.onboardAppWithMusic(jsonOnboard).getEntity();
         resultMap.containsKey("success");
         onboardUUID = resultMap.get("Generated AID").toString();
         assertEquals("Your application TestApp2 has been onboarded with MUSIC.", resultMap.get("Success"));
     }
+    // Missing appname
+    @Test
+    public void Test6_onboard1() throws Exception {
+        JsonOnboard jsonOnboard = new JsonOnboard();
+//        jsonOnboard.setAppname("TestApp2");
+        jsonOnboard.setIsAAF("false");
+        jsonOnboard.setUserId("TestUser2");
+        jsonOnboard.setPassword("TestPassword2");
+        Map<String, Object> resultMap = (Map<String, Object>) admin.onboardAppWithMusic(jsonOnboard).getEntity();
+        resultMap.containsKey("success");
+        System.out.println("--->" + resultMap.toString());
+//        onboardUUID = resultMap.get("Generated AID").toString();
+        assertEquals("Unauthorized: Please check the request parameters. Some of the required values appName(ns), userId, password, isAAF are missing.", resultMap.get("Exception"));
+    }
 
+    
     @Test
     public void Test7_onboardSearch() throws Exception {
         JsonOnboard jsonOnboard = new JsonOnboard();
         jsonOnboard.setAppname("TestApp2");
         jsonOnboard.setIsAAF("false");
         jsonOnboard.setAid(onboardUUID);
-        Map<String, Object> resultMap = admin.getOnboardedInfoSearch(jsonOnboard, http);
+        Map<String, Object> resultMap = (Map<String, Object>) admin.getOnboardedInfoSearch(jsonOnboard).getEntity();
+        resultMap.containsKey("success");
+        assertEquals(MusicUtil.DEFAULTKEYSPACENAME, resultMap.get(onboardUUID));
+
+    }
+
+    // Missing appname
+    @Test
+    public void Test7_onboardSearch1() throws Exception {
+        JsonOnboard jsonOnboard = new JsonOnboard();
+//        jsonOnboard.setAppname("TestApp2");
+        jsonOnboard.setIsAAF("false");
+        jsonOnboard.setAid(onboardUUID);
+        Map<String, Object> resultMap = (Map<String, Object>) admin.getOnboardedInfoSearch(jsonOnboard).getEntity();
+        System.out.println("--->" + resultMap.toString());
         resultMap.containsKey("success");
         assertEquals(MusicUtil.DEFAULTKEYSPACENAME, resultMap.get(onboardUUID));
 
@@ -396,9 +628,52 @@ public class TestRestMusicData {
         jsonOnboard.setUserId("TestUser3");
         jsonOnboard.setPassword("TestPassword3");
         jsonOnboard.setAid(onboardUUID);
-        Map<String, Object> resultMap = admin.updateOnboardApp(jsonOnboard, http);
+        Map<String, Object> resultMap = (Map<String, Object>) admin.updateOnboardApp(jsonOnboard).getEntity();
+        System.out.println("--->" + resultMap.toString());
         resultMap.containsKey("success");
         assertEquals("Your application has been updated successfully", resultMap.get("Success"));
+    }
+
+    // Aid null
+    @Test
+    public void Test8_onboardUpdate1() throws Exception {
+        JsonOnboard jsonOnboard = new JsonOnboard();
+        jsonOnboard.setIsAAF("false");
+        jsonOnboard.setUserId("TestUser3");
+        jsonOnboard.setPassword("TestPassword3");
+//        jsonOnboard.setAid(onboardUUID);
+        Map<String, Object> resultMap = (Map<String, Object>) admin.updateOnboardApp(jsonOnboard).getEntity();
+        System.out.println("--->" + resultMap.toString());
+        resultMap.containsKey("success");
+        assertEquals("Please make sure Aid is present", resultMap.get("Exception"));
+    }
+
+    // Appname not null
+    @Test
+    public void Test8_onboardUpdate2() throws Exception {
+        JsonOnboard jsonOnboard = new JsonOnboard();
+        jsonOnboard.setAppname("TestApp2");
+        jsonOnboard.setIsAAF("false");
+        jsonOnboard.setUserId("TestUser3");
+        jsonOnboard.setPassword("TestPassword3");
+        jsonOnboard.setAid(onboardUUID);
+        Map<String, Object> resultMap = (Map<String, Object>) admin.updateOnboardApp(jsonOnboard).getEntity();
+        resultMap.containsKey("success");
+        System.out.println("--->" + resultMap.toString());
+        assertEquals("Application TestApp2 has already been onboarded. Please contact admin.", resultMap.get("Exception"));
+    }
+
+    // All null
+    @Test
+    public void Test8_onboardUpdate3() throws Exception {
+        JsonOnboard jsonOnboard = new JsonOnboard();
+//        jsonOnboard.setAppname("TestApp2");
+//        jsonOnboard.setIsAAF("false");
+//        jsonOnboard.setUserId("TestUser3");
+//        jsonOnboard.setPassword("TestPassword3");
+        jsonOnboard.setAid(onboardUUID);
+        Map<String, Object> resultMap = (Map<String, Object>) admin.updateOnboardApp(jsonOnboard).getEntity();
+        assertTrue(resultMap.containsKey("Exception") );
     }
 
     @Test
@@ -406,9 +681,18 @@ public class TestRestMusicData {
         JsonOnboard jsonOnboard = new JsonOnboard();
         jsonOnboard.setAppname("TestApp2");
         jsonOnboard.setAid(onboardUUID);
-        Map<String, Object> resultMap = admin.deleteOnboardApp(jsonOnboard, http);
+        Map<String, Object> resultMap = (Map<String, Object>) admin.deleteOnboardApp(jsonOnboard).getEntity();
         resultMap.containsKey("success");
         assertEquals("Your application has been deleted successfully", resultMap.get("Success"));
+    }
+
+    @Test
+    public void Test9_onboardDelete1() throws Exception {
+        JsonOnboard jsonOnboard = new JsonOnboard();
+//        jsonOnboard.setAppname("TestApp2");
+//        jsonOnboard.setAid(onboardUUID);
+        Map<String, Object> resultMap = (Map<String, Object>) admin.deleteOnboardApp(jsonOnboard).getEntity();
+        assertTrue(resultMap.containsKey("Exception"));
     }
 
     @Test

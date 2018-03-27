@@ -890,7 +890,13 @@ public class MusicCore {
                         operation);
         if (!resultMap.isEmpty())
             return resultMap;
-        String isAAFApp = CachingUtil.isAAFApplication(nameSpace);
+        String isAAFApp = null;
+        try {
+            isAAFApp= CachingUtil.isAAFApplication(nameSpace);
+        } catch(MusicServiceException e) {
+           resultMap.put("Exception", e.getMessage());
+           return resultMap;
+        }
         if(isAAFApp == null) {
             resultMap.put("Exception", "Namespace: "+nameSpace+" doesn't exist. Please make sure ns(appName)"
                     + " is correct and Application is onboarded.");

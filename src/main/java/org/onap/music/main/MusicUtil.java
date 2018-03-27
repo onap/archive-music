@@ -25,15 +25,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.UUID;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
-import org.onap.music.exceptions.MusicServiceException;
-
 import com.datastax.driver.core.DataType;
 
 /**
@@ -51,21 +48,22 @@ public class MusicUtil {
     public static final String EVENTUAL = "eventual";
     public static final String CRITICAL = "critical";
     public static final String ATOMICDELETELOCK = "atomic_delete_lock";
-    
     public static final String DEFAULTKEYSPACENAME = "TBD";
 
+    private static final String LOCALHOST = "localhost";
+    private static final String PROPERTIES_FILE = "/opt/app/music/etc/music.properties";
     
     private static int myId = 0;
     private static ArrayList<String> allIds = new ArrayList<>();
     private static String publicIp = "";
     private static ArrayList<String> allPublicIps = new ArrayList<>();
-    private static String myZkHost = "localhost";
-    private static String myCassaHost = "localhost";
-    private static String defaultMusicIp = "localhost";
+    private static String myZkHost = LOCALHOST;
+    private static String myCassaHost = LOCALHOST;
+    private static String defaultMusicIp = LOCALHOST;
     private static boolean debug = true;
     private static String version = "2.3.0";
-    private static String musicRestIp = "localhost";
-    private static String musicPropertiesFilePath = "/opt/app/music/etc/music.properties";
+    private static String musicRestIp = LOCALHOST;
+    private static String musicPropertiesFilePath = PROPERTIES_FILE;
     private static long defaultLockLeasePeriod = 6000;
     private static final String[] propKeys = new String[] { "zookeeper.host", "cassandra.host", "music.ip", "debug",
             "version", "music.rest.ip", "music.properties", "lock.lease.period", "id", "all.ids", "public.ip",
@@ -424,9 +422,10 @@ public class MusicUtil {
      * @param colType
      * @param valueObj
      * @return
+     * @throws MusicTypeConversionException 
      * @throws Exception
      */
-    public static Object convertToActualDataType(DataType colType, Object valueObj)  throws Exception{
+    public static Object convertToActualDataType(DataType colType, Object valueObj) throws Exception {
         String valueObjString = valueObj + "";
         switch (colType.getName()) {
         case UUID:

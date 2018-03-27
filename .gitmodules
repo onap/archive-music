@@ -1,5 +1,0 @@
-[submodule "distributed-kv-store"]
-	path = distributed-kv-store
-	url = ../music/distributed-kv-store
-	branch = .
-	ignore = dirty

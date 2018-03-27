@@ -375,11 +375,12 @@ public class MusicDataStore {
         }
         logger.info(EELFLoggerDelegate.applicationLogger,
                         "Executing Eventual  get query:" + queryObject.getQuery());
-        PreparedStatement preparedEventualGet = session.prepare(queryObject.getQuery());
-        preparedEventualGet.setConsistencyLevel(ConsistencyLevel.ONE);
+       
         ResultSet results = null;
         try {
-            results = session.execute(preparedEventualGet.bind(queryObject.getValues().toArray()));
+        	 PreparedStatement preparedEventualGet = session.prepare(queryObject.getQuery());
+             preparedEventualGet.setConsistencyLevel(ConsistencyLevel.ONE);
+             results = session.execute(preparedEventualGet.bind(queryObject.getValues().toArray()));
 
         } catch (Exception ex) {
         	logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.UNKNOWNERROR+ "[" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);

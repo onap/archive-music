@@ -45,6 +45,7 @@ import com.att.eelf.configuration.EELFLogger;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
@@ -241,7 +242,13 @@ public class CachingUtil implements Runnable {
             pQuery.appendQueryString(
                             "SELECT is_aaf from admin.keyspace_master where application_name = '"
                                             + namespace + "' allow filtering");
-            Row rs = MusicCore.get(pQuery).one();
+            Row rs = null;
+            try {
+                rs = MusicCore.get(pQuery).one();
+            } catch(InvalidQueryException e) {
+                logger.error(EELFLoggerDelegate.errorLogger,"Exception admin keyspace not configured."+e.getMessage());
+                throw new MusicServiceException("Please make sure admin.keyspace_master table is configured.");
+            }
             try {
                 isAAF = String.valueOf(rs.getBool("is_aaf"));
                 if(isAAF != null)
@@ -333,7 +340,11 @@ public class CachingUtil implements Runnable {
 			e.printStackTrace();
 			resultMap.put("Exception", "Unable to process operation. Error is "+e.getMessage());
 			return resultMap;
-		}
+        } catch (InvalidQueryException e) {
+            logger.error(EELFLoggerDelegate.errorLogger,"Exception admin keyspace not configured."+e.getMessage());
+            resultMap.put("Exception", "Please make sure admin.keyspace_master table is configured.");
+            return resultMap;
+        }
         if (rs == null) {
             logger.error(EELFLoggerDelegate.errorLogger,"Application is not onboarded. Please contact admin.");
             resultMap.put("Exception", "Application is not onboarded. Please contact admin.");
