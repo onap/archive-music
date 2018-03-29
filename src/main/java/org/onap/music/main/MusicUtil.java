@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.UUID;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import com.datastax.driver.core.DataType;
@@ -49,6 +51,9 @@ public class MusicUtil {
     public static final String CRITICAL = "critical";
     public static final String ATOMICDELETELOCK = "atomic_delete_lock";
     public static final String DEFAULTKEYSPACENAME = "TBD";
+    private static final String XLATESTVERSION = "X-latestVersion";
+    private static final String XMINORVERSION = "X-minorVersion";
+    private static final String XPATCHVERSION = "X-patchVersion";
 
     private static final String LOCALHOST = "localhost";
     private static final String PROPERTIES_FILE = "/opt/app/music/etc/music.properties";
@@ -474,4 +479,51 @@ public class MusicUtil {
         }
         return sqlString.toString();
     }
+
+    @SuppressWarnings("unused")
+    public static String buildVersion(String major, String minor, String patch) {
+        if (minor != null) {
+            major += "." + minor;
+            if (patch != null) {
+                major += "." + patch;
+            }
+        }
+        return major;
+    }
+    
+    /**
+     * Currently this will build a header with X-latestVersion, X-minorVersion and X-pathcVersion
+     * X-latestVerstion will be equal to the latest full version.
+     * X-minorVersion - will be equal to the latest minor version.
+     * X-pathVersion - will be equal to the latest patch version.
+     * Future plans will change this. 
+     * @param response
+     * @param major
+     * @param minor
+     * @param patch
+     * @return
+     */
+    public static ResponseBuilder buildVersionResponse(String major, String minor, String patch) {
+        ResponseBuilder response = Response.noContent();
+        String versionIn = buildVersion(major,minor,patch);
+        String version = MusicUtil.getVersion();
+        String[] verArray = version.split("\\.",3);
+        if ( minor != null ) { 
+            response.header(XMINORVERSION,minor);
+        } else {
+            response.header(XMINORVERSION,verArray[1]);
+        } 
+        if ( patch != null ) {
+            response.header(XPATCHVERSION,patch);
+        } else {
+            response.header(XPATCHVERSION,verArray[2]);
+        } 
+        response.header(XLATESTVERSION,version);
+        logger.info(EELFLoggerDelegate.applicationLogger,"Version In:" + versionIn);
+        return response;
+    }
+
+    
+    
+    
 }

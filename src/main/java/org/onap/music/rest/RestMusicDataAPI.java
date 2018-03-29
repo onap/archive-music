@@ -99,12 +99,12 @@ public class RestMusicDataAPI {
      */
 
     private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(RestMusicDataAPI.class);
-    private static final String XLATESTVERSION = "X-latestVersion";
     private static final String XMINORVERSION = "X-minorVersion";
     private static final String XPATCHVERSION = "X-patchVersion";
     private static final String NS = "ns";
     private static final String USERID = "userId";
     private static final String PASSWORD = "password";
+    private static final String VERSION = "v2";
     
     private class RowIdentifier {
         public String primarKeyValue;
@@ -121,47 +121,6 @@ public class RestMusicDataAPI {
         }
     }
 
-    @SuppressWarnings("unused")
-    private String buildVersion(String major, String minor, String patch) {
-        if (minor != null) {
-            major += "." + minor;
-            if (patch != null) {
-                major += "." + patch;
-            }
-        }
-        return major;
-    }
-    
-    /**
-     * Currently this will build a header with X-latestVersion, X-minorVersion and X-pathcVersion
-     * X-latestVerstion will be equal to the latest full version.
-     * X-minorVersion - will be equal to the latest minor version.
-     * X-pathVersion - will be equal to the latest patch version.
-     * Future plans will change this. 
-     * @param response
-     * @param major
-     * @param minor
-     * @param patch
-     * @return
-     */
-    private ResponseBuilder buildVersionResponse(String major, String minor, String patch) {
-        ResponseBuilder response = Response.noContent();
-        String versionIn = buildVersion(major,minor,patch);
-        String version = MusicUtil.getVersion();
-        String[] verArray = version.split("\\.",3);
-        if ( minor != null ) { 
-            response.header(XMINORVERSION,minor);
-        } else {
-            response.header(XMINORVERSION,verArray[1]);
-        } 
-        if ( patch != null ) {
-            response.header(XPATCHVERSION,patch);
-        } else {
-            response.header(XPATCHVERSION,verArray[2]);
-        } 
-        response.header(XLATESTVERSION,version);
-        return response;
-    }
 
     /**
      * Create Keyspace REST
@@ -187,7 +146,7 @@ public class RestMusicDataAPI {
                     @ApiParam(value = "Password",required = true) @HeaderParam(PASSWORD) String password,
                     JsonKeySpace kspObject,
                     @ApiParam(value = "Keyspace Name",required = true) @PathParam("name") String keyspaceName) {
-        ResponseBuilder response = buildVersionResponse(version, minorVersion, patchVersion);
+        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
         
         Map<String, Object> authMap = CachingUtil.verifyOnboarding(ns, userId, password);
         if (!authMap.isEmpty()) {
@@ -313,7 +272,7 @@ public class RestMusicDataAPI {
                     @ApiParam(value = "userId",required = true) @HeaderParam(USERID) String userId,
                     @ApiParam(value = "Password",required = true) @HeaderParam(PASSWORD) String password,
                     @ApiParam(value = "Keyspace Name",required = true) @PathParam("name") String keyspaceName) throws Exception {
-        ResponseBuilder response = buildVersionResponse(version, minorVersion, patchVersion);
+        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
 
         Map<String, Object> authMap = MusicCore.autheticateUser(ns, userId, password,keyspaceName, aid, "dropKeySpace");
         if (authMap.containsKey("aid"))
@@ -389,7 +348,7 @@ public class RestMusicDataAPI {
                      JsonTable tableObj,
                     @ApiParam(value = "Keyspace Name",required = true) @PathParam("keyspace") String keyspace,
                     @ApiParam(value = "Table Name",required = true) @PathParam("tablename") String tablename) throws Exception {
-        ResponseBuilder response = buildVersionResponse(version, minorVersion, patchVersion);
+        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
         Map<String, Object> authMap = MusicCore.autheticateUser(ns, userId, password, keyspace,
                         aid, "createTable");
         if (authMap.containsKey("aid"))
@@ -494,10 +453,9 @@ public class RestMusicDataAPI {
                     @ApiParam(value = "Table Name",required = true) @PathParam("tablename") String tablename,
                     @ApiParam(value = "Field Name",required = true) @PathParam("field") String fieldName,
                     @Context UriInfo info) throws Exception {
-        ResponseBuilder response = buildVersionResponse(version, minorVersion, patchVersion);
+        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
 
         Map<String, Object> authMap = MusicCore.autheticateUser(ns, userId, password, keyspace,aid, "createIndex");
-        response.header(XLATESTVERSION, MusicUtil.getVersion());
         if (authMap.containsKey("aid"))
             authMap.remove("aid");
         if (!authMap.isEmpty()) {
@@ -554,7 +512,7 @@ public class RestMusicDataAPI {
                                     required = true) @PathParam("keyspace") String keyspace,
                     @ApiParam(value = "Table Name",
                                     required = true) @PathParam("tablename") String tablename) {
-        ResponseBuilder response = buildVersionResponse(version, minorVersion, patchVersion);
+        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
 
         Map<String, Object> authMap = null;
         
@@ -727,7 +685,7 @@ public class RestMusicDataAPI {
                     @ApiParam(value = "Table Name",
                                     required = true) @PathParam("tablename") String tablename,
                     @Context UriInfo info) {
-        ResponseBuilder response = buildVersionResponse(version, minorVersion, patchVersion);
+        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
 
         Map<String, Object> authMap;
         try {
@@ -940,7 +898,7 @@ public class RestMusicDataAPI {
                     @ApiParam(value = "Table Name",
                                     required = true) @PathParam("tablename") String tablename,
                     @Context UriInfo info) {
-        ResponseBuilder response = buildVersionResponse(version, minorVersion, patchVersion);
+        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
 
         Map<String, Object> authMap = null;
         try {
@@ -1081,7 +1039,7 @@ public class RestMusicDataAPI {
                                     required = true) @PathParam("keyspace") String keyspace,
                     @ApiParam(value = "Table Name",
                                     required = true) @PathParam("tablename") String tablename) throws Exception {
-        ResponseBuilder response = buildVersionResponse(version, minorVersion, patchVersion);
+        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
 
         Map<String, Object> authMap =
                         MusicCore.autheticateUser(ns, userId, password, keyspace, aid, "dropTable");
@@ -1137,7 +1095,7 @@ public class RestMusicDataAPI {
                     @ApiParam(value = "Table Name",
                                     required = true) @PathParam("tablename") String tablename,
                     @Context UriInfo info) throws Exception {
-        ResponseBuilder response = buildVersionResponse(version, minorVersion, patchVersion);
+        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
 
         Map<String, Object> authMap = MusicCore.autheticateUser(ns, userId, password, keyspace,aid, "selectCritical");
         if (authMap.containsKey("aid"))
@@ -1215,7 +1173,7 @@ public class RestMusicDataAPI {
                     @ApiParam(value = "Table Name",
                                     required = true) @PathParam("tablename") String tablename,
                     @Context UriInfo info) throws Exception {
-        ResponseBuilder response = buildVersionResponse(version, minorVersion, patchVersion);
+        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
 
         Map<String, Object> authMap =
                         MusicCore.autheticateUser(ns, userId, password, keyspace, aid, "select");
@@ -1232,7 +1190,7 @@ public class RestMusicDataAPI {
         else {
             int limit = -1; // do not limit the number of results
             try {
-                queryObject = selectSpecificQuery(version, minorVersion, patchVersion, aid, ns,
+                queryObject = selectSpecificQuery(VERSION, minorVersion, patchVersion, aid, ns,
                                 userId, password, keyspace, tablename, info, limit);
             } catch (MusicServiceException ex) {
                 logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);

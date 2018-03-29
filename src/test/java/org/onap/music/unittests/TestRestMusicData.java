@@ -470,7 +470,6 @@ public class TestRestMusicData {
         JsonDelete jsonDelete = new JsonDelete();
         Map<String, String> consistencyInfo = new HashMap<>();
         MultivaluedMap<String, String> row = new MultivaluedMapImpl();
-        //row.add("emp_name", "test1");
         consistencyInfo.put("type", "atomic");
         jsonDelete.setConsistencyInfo(consistencyInfo);
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
@@ -552,13 +551,6 @@ public class TestRestMusicData {
         JsonKeySpace jsonKeyspace = new JsonKeySpace();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, Object> replicationInfo = new HashMap<>();
-//        consistencyInfo.put("type", "eventual");
-//        replicationInfo.put("class", "SimpleStrategy");
-//        replicationInfo.put("replication_factor", 1);
-//        jsonKeyspace.setConsistencyInfo(consistencyInfo);
-//        jsonKeyspace.setDurabilityOfWrites("true");
- //       jsonKeyspace.setKeyspaceName("TestApp1");
-//        jsonKeyspace.setReplicationInfo(replicationInfo);
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.dropKeySpace("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
                 appName, userId, password, keyspaceName);
@@ -583,14 +575,12 @@ public class TestRestMusicData {
     @Test
     public void Test6_onboard1() throws Exception {
         JsonOnboard jsonOnboard = new JsonOnboard();
-//        jsonOnboard.setAppname("TestApp2");
         jsonOnboard.setIsAAF("false");
         jsonOnboard.setUserId("TestUser2");
         jsonOnboard.setPassword("TestPassword2");
         Map<String, Object> resultMap = (Map<String, Object>) admin.onboardAppWithMusic(jsonOnboard).getEntity();
         resultMap.containsKey("success");
         System.out.println("--->" + resultMap.toString());
-//        onboardUUID = resultMap.get("Generated AID").toString();
         assertEquals("Unauthorized: Please check the request parameters. Some of the required values appName(ns), userId, password, isAAF are missing.", resultMap.get("Exception"));
     }
 
@@ -611,7 +601,6 @@ public class TestRestMusicData {
     @Test
     public void Test7_onboardSearch1() throws Exception {
         JsonOnboard jsonOnboard = new JsonOnboard();
-//        jsonOnboard.setAppname("TestApp2");
         jsonOnboard.setIsAAF("false");
         jsonOnboard.setAid(onboardUUID);
         Map<String, Object> resultMap = (Map<String, Object>) admin.getOnboardedInfoSearch(jsonOnboard).getEntity();
@@ -641,7 +630,6 @@ public class TestRestMusicData {
         jsonOnboard.setIsAAF("false");
         jsonOnboard.setUserId("TestUser3");
         jsonOnboard.setPassword("TestPassword3");
-//        jsonOnboard.setAid(onboardUUID);
         Map<String, Object> resultMap = (Map<String, Object>) admin.updateOnboardApp(jsonOnboard).getEntity();
         System.out.println("--->" + resultMap.toString());
         resultMap.containsKey("success");
@@ -667,10 +655,6 @@ public class TestRestMusicData {
     @Test
     public void Test8_onboardUpdate3() throws Exception {
         JsonOnboard jsonOnboard = new JsonOnboard();
-//        jsonOnboard.setAppname("TestApp2");
-//        jsonOnboard.setIsAAF("false");
-//        jsonOnboard.setUserId("TestUser3");
-//        jsonOnboard.setPassword("TestPassword3");
         jsonOnboard.setAid(onboardUUID);
         Map<String, Object> resultMap = (Map<String, Object>) admin.updateOnboardApp(jsonOnboard).getEntity();
         assertTrue(resultMap.containsKey("Exception") );
@@ -689,8 +673,6 @@ public class TestRestMusicData {
     @Test
     public void Test9_onboardDelete1() throws Exception {
         JsonOnboard jsonOnboard = new JsonOnboard();
-//        jsonOnboard.setAppname("TestApp2");
-//        jsonOnboard.setAid(onboardUUID);
         Map<String, Object> resultMap = (Map<String, Object>) admin.deleteOnboardApp(jsonOnboard).getEntity();
         assertTrue(resultMap.containsKey("Exception"));
     }
@@ -698,7 +680,7 @@ public class TestRestMusicData {
     @Test
     public void Test3_createLockReference() throws Exception {
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Map<String, Object> resultMap = lock.createLockReference(lockName, null, appName, userId, password, http);
+        Map<String, Object> resultMap = (Map<String, Object>) lock.createLockReference(lockName,"1","1", null, appName, userId, password).getEntity();
         @SuppressWarnings("unchecked")
         Map<String, Object> resultMap1 = (Map<String, Object>) resultMap.get("lock");
         lockId = (String) resultMap1.get("lock");
@@ -708,28 +690,28 @@ public class TestRestMusicData {
     @Test
     public void Test4_accquireLock() throws Exception {
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Map<String, Object> resultMap = lock.accquireLock(lockId, null, appName, userId, password, http);
+        Map<String, Object> resultMap = (Map<String, Object>) lock.accquireLock(lockId,"1","1", null, appName, userId, password).getEntity();
         assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
 
     @Test
     public void Test5_currentLockHolder() throws Exception {
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Map<String, Object> resultMap = lock.currentLockHolder(lockName, null, appName, userId, password, http);
+        Map<String, Object> resultMap = (Map<String, Object>) lock.currentLockHolder(lockName,"1","1", null, appName, userId, password).getEntity();
         assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
 
     @Test
     public void Test7_unLock() throws Exception {
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Map<String, Object> resultMap = lock.unLock(lockId, null, appName, userId, password, http);
+        Map<String, Object> resultMap = (Map<String, Object>) lock.unLock(lockId,"1","1", null, appName, userId, password).getEntity();
         assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
 
     @Test
     public void Test8_delete() throws Exception {
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Map<String, Object> resultMap = lock.deleteLock(lockName, null, appName, userId, password, http);
+        Map<String, Object> resultMap = (Map<String, Object>) lock.deleteLock(lockName,"1","1", null, appName, userId, password).getEntity();
         assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
 }
