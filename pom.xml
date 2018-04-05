@@ -55,7 +55,7 @@
         <sitePath>/content/sites/site/org/onap/music/${project.version}</sitePath>
         <!--maven -->
         <timestamp>${maven.build.timestamp}</timestamp>
-        <maven.build.timestamp.format>yyyy.MM.dd.HH.mm</maven.build.timestamp.format>
+        <maven.build.timestamp.format>yyyyMMdd'T'HHmmss'Z'</maven.build.timestamp.format>
         <!--docker -->
         <docker.tag>${project.version}-${timestamp}</docker.tag>
         <docker.latest.tag>${project.version}-latest</docker.latest.tag>
