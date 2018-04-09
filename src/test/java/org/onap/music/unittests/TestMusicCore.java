@@ -257,7 +257,7 @@ public class TestMusicCore {
     }
 
     @Test
-    public void testDeleteLock() {
+    public void testDeleteLock() throws MusicLockingException {
         Mockito.doNothing().when(mLockHandle).deleteLock("/" + "id1");
         MusicCore.deleteLock("id1");
         Mockito.verify(mLockHandle).deleteLock("/" + "id1");

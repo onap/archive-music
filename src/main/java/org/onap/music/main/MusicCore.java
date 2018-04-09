@@ -518,14 +518,16 @@ public class MusicCore {
     /**
      * 
      * @param lockName
+     * @throws MusicLockingException 
      */
-    public static void deleteLock(String lockName) {
+    public static void deleteLock(String lockName) throws MusicLockingException {
         long start = System.currentTimeMillis();
         logger.info(EELFLoggerDelegate.applicationLogger,"Deleting lock for " + lockName);
         try {
             getLockingServiceHandle().deleteLock("/" + lockName);
         } catch (MusicLockingException e) {
          	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.DELTELOCK+lockName  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+         	throw new MusicLockingException(e.getMessage());
         }
         long end = System.currentTimeMillis();
         logger.info(EELFLoggerDelegate.applicationLogger,"Time taken to delete lock:" + (end - start) + " ms");

@@ -412,7 +412,11 @@ public class RestMusicLocksAPI {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.UNKNOWNERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
-        MusicCore.deleteLock(lockName);
+        try{
+        	MusicCore.deleteLock(lockName);
+        }catch (Exception e) {
+            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
+		}
         return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).toMap()).build();
     }
 

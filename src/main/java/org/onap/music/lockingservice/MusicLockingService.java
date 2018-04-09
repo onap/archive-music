@@ -133,8 +133,12 @@ public class MusicLockingService implements Watcher {
         zkLockHandle.unlock(lockId);
     }
 
-    public void deleteLock(String lockName) {
-        zkLockHandle.deleteLock(lockName);
+    public void deleteLock(String lockName) throws MusicLockingException {
+    	if(lockIdExists(lockName))
+    		zkLockHandle.deleteLock(lockName);
+    	else{
+    		throw new MusicLockingException("Lock does not exist.Please check the lock: " + lockName + " and try again");
+    	}
     }
 
     public String whoseTurnIsIt(String lockName) {
