@@ -3,7 +3,7 @@
 <p>Please update the <b>properties/music.properties</b> file to fit your env.<br/>
 Update the music.sh file.<br/>
 The beginning of the <b>music.sh</b> file contains various variables.<br/></p>
-
+NEXUS_DOCKER_REPO - default REPO - Will read /opt/config/nexus_docker_repo.txt if other is needed.<br/>
 CASS_IMG - Cassandra Image<br/>
 TOMCAT_IMG - Tomcat Image<br/>
 ZK_IMG - Zookeeper Image<br/>

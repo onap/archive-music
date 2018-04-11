@@ -21,10 +21,19 @@
 # 
 #
 #
-CASS_IMG=nexus3.onap.org:10001/onap/music/cassandra_music:latest
-MUSIC_IMG=nexus3.onap.org:10001/onap/music/music:latest
-TOMCAT_IMG=nexus3.onap.org:10001/library/tomcat:8.5
-ZK_IMG=nexus3.onap.org:10001/library/zookeeper:3.4
+SS=0
+if [ -e /opt/config/nexus_docker_repo.txt ]
+then
+	NEXUS_DOCKER_REPO=$(cat /opt/config/nexus_docker_repo.txt)
+else
+	NEXUS_DOCKER_REPO=nexus3.onap.org:10001
+fi
+echo "Using ${NEXUS_DOCKER_REPO} for docker Repo"
+
+CASS_IMG=${NEXUS_DOCKER_REPO}/onap/music/cassandra_music:latest
+MUSIC_IMG=${NEXUS_DOCKER_REPO}/onap/music/music:latest
+TOMCAT_IMG=library/tomcat:8.5
+ZK_IMG=library/zookeeper:3.4
 WORK_DIR=${PWD}
 CASS_USERNAME=cassandra1
 CASS_PASSWORD=cassandra1
@@ -66,7 +75,7 @@ ${TOMCAT_IMG};
 
 # Connect tomcat to host bridge network so that its port can be seen. 
 docker network connect bridge music-tomcat;
-
+SS=1;
 fi
 
 
@@ -79,4 +88,14 @@ docker stop music-tomcat;
 docker network rm music-net;
 sleep 5;
 docker volume rm music-vol;
+SS=1
 fi
+
+if [ $SS = 0 ]; then
+	echo "Please type ${0} start or ${0} stop"
+fi
+
+
+
+
+
