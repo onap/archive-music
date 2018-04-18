@@ -1,9 +1,11 @@
 #!/bin/bash
 set -e
 
-for f in /docker-entrypoint-initdb.d/*.cql; do
-    chown cassandra.root "$f"
-done
+# Removal for issues with Kubernetes - Need to make sure any injected files 
+# Are chown 664 or ID is smae ID as Cassandra in Container. 
+#for f in /docker-entrypoint-initdb.d/*.cql; do
+#    chown cassandra.root "$f"
+#done
 
 
 # first arg is `-f` or `--some-option`
