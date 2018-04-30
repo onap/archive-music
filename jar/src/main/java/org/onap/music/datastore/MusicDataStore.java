@@ -171,13 +171,14 @@ public class MusicDataStore {
             				"Building with credentials "+MusicUtil.getCassName()+" & "+MusicUtil.getCassPwd());
             		cluster = Cluster.builder().withPort(9042)
             		                   .withCredentials(MusicUtil.getCassName(), MusicUtil.getCassPwd())
-            		                   .withLoadBalancingPolicy(new RoundRobinPolicy())
+            		                   //.withLoadBalancingPolicy(new RoundRobinPolicy())
             		                   .withPoolingOptions(poolingOptions)
             		                   .addContactPoints(addresses).build();
             	}
             	else
             		cluster = Cluster.builder().withPort(9042)
-            		 					.withLoadBalancingPolicy(new RoundRobinPolicy())
+            		 					//.withLoadBalancingPolicy(new RoundRobinPolicy())
+            							.withPoolingOptions(poolingOptions)
             		 					.addContactPoints(addresses).build();
                 
                 Metadata metadata = cluster.getMetadata();
@@ -206,9 +207,27 @@ public class MusicDataStore {
      * @param address
      */
     private void connectToCassaCluster(String address) throws MusicServiceException {
-        cluster = Cluster.builder().withPort(9042)
-                        .withCredentials(MusicUtil.getCassName(), MusicUtil.getCassPwd())
-                        .addContactPoint(address).build();
+    	String[] addresses = null;
+		addresses = address.split(",");
+		PoolingOptions poolingOptions = new PoolingOptions();
+        poolingOptions
+        .setConnectionsPerHost(HostDistance.LOCAL,  4, 10)
+        .setConnectionsPerHost(HostDistance.REMOTE, 2, 4);
+        if(MusicUtil.getCassName() != null && MusicUtil.getCassPwd() != null) {
+    		logger.info(EELFLoggerDelegate.applicationLogger,
+    				"Building with credentials "+MusicUtil.getCassName()+" & "+MusicUtil.getCassPwd());
+    		cluster = Cluster.builder().withPort(9042)
+	                   .withCredentials(MusicUtil.getCassName(), MusicUtil.getCassPwd())
+	                   .withLoadBalancingPolicy(new RoundRobinPolicy())
+	                   .withPoolingOptions(poolingOptions)
+	                   .addContactPoints(addresses).build();
+        }
+        else {
+        	cluster = Cluster.builder().withPort(9042)
+        				.withLoadBalancingPolicy(new RoundRobinPolicy())
+        				.withPoolingOptions(poolingOptions)
+        				.addContactPoints(addresses).build();
+        }
         Metadata metadata = cluster.getMetadata();
         logger.info(EELFLoggerDelegate.applicationLogger, "Connected to cassa cluster "
                         + metadata.getClusterName() + " at " + address);
