@@ -551,8 +551,8 @@ public class MusicUtil {
 	    }
 	    // get the property value and return it
 		MusicUtil.setMyCassaHost(prop.getProperty("cassandra.host"));
-		String[] zkHost = prop.getProperty("zookeeper.host").split(",");
-		MusicUtil.setMyZkHost(zkHost[0]);
+		String zkHosts = prop.getProperty("zookeeper.host");
+		MusicUtil.setMyZkHost(zkHosts);
 		MusicUtil.setCassName(prop.getProperty("cassandra.user"));
 		MusicUtil.setCassPwd(prop.getProperty("cassandra.password"));
 	}
