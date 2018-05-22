@@ -34,6 +34,7 @@ import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.MusicUtil;
+import java.util.concurrent.TimeUnit;
 
 
 public class MusicLockingService implements Watcher {
@@ -75,6 +76,23 @@ public class MusicLockingService implements Watcher {
 		}catch(Exception e) {
 			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
 		}
+    }
+    
+    public MusicLockingService(int timeout) throws MusicServiceException { 
+    	CountDownLatch connectedSignal1 = new CountDownLatch(1); 
+    	try { 
+            ZooKeeper zk1 = new ZooKeeper(MusicUtil.getMyZkHost(), SESSION_TIMEOUT, this); 
+            connectedSignal1.await(timeout, TimeUnit.SECONDS); 
+            if(!zk1.getState().isConnected()) { 
+            	throw new MusicServiceException("Unable to Connect. Some nodes are down."); 
+            } 
+        } catch (IOException e ) { 
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.IOERROR, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR); 
+            throw new MusicServiceException("IO Error has occured" + e.getMessage()); 
+        } catch (InterruptedException e) { 
+        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR); 
+            throw new MusicServiceException("Exception Occured " + e.getMessage()); 
+        } 
     }
 
     public void createLockaIfItDoesNotExist(String lockName) {
