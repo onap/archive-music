@@ -51,6 +51,10 @@ import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.policies.RoundRobinPolicy;
+import com.datastax.driver.core.HostDistance;
+import com.datastax.driver.core.PoolingOptions;
+
 
 /**
  * @author nelson24
@@ -149,14 +153,33 @@ public class MusicDataStore {
     private void connectToCassaCluster() {
         Iterator<String> it = getAllPossibleLocalIps().iterator();
         String address = "localhost";
+        String[] addresses = null;
+        address = MusicUtil.getMyCassaHost();
+		addresses = address.split(",");
+		
         logger.info(EELFLoggerDelegate.applicationLogger,
                         "Connecting to cassa cluster: Iterating through possible ips:"
                                         + getAllPossibleLocalIps());
+        PoolingOptions poolingOptions = new PoolingOptions();
+        poolingOptions
+        .setConnectionsPerHost(HostDistance.LOCAL,  4, 10)
+        .setConnectionsPerHost(HostDistance.REMOTE, 2, 4);
         while (it.hasNext()) {
             try {
-                cluster = Cluster.builder().withPort(9042)
-                                .withCredentials(MusicUtil.getCassName(), MusicUtil.getCassPwd())
-                                .addContactPoint(address).build();
+            	if(MusicUtil.getCassName() != null && MusicUtil.getCassPwd() != null) {
+            		logger.info(EELFLoggerDelegate.applicationLogger,
+            				"Building with credentials "+MusicUtil.getCassName()+" & "+MusicUtil.getCassPwd());
+            		cluster = Cluster.builder().withPort(9042)
+            		                   .withCredentials(MusicUtil.getCassName(), MusicUtil.getCassPwd())
+            		                   //.withLoadBalancingPolicy(new RoundRobinPolicy())
+            		                   .withPoolingOptions(poolingOptions)
+            		                   .addContactPoints(addresses).build();
+            	}
+            	else
+            		cluster = Cluster.builder().withPort(9042)
+            		 					//.withLoadBalancingPolicy(new RoundRobinPolicy())
+            		 					.addContactPoints(addresses).build();
+                
                 Metadata metadata = cluster.getMetadata();
                 logger.info(EELFLoggerDelegate.applicationLogger, "Connected to cassa cluster "
                                 + metadata.getClusterName() + " at " + address);
@@ -183,9 +206,27 @@ public class MusicDataStore {
      * @param address
      */
     private void connectToCassaCluster(String address) throws MusicServiceException {
-        cluster = Cluster.builder().withPort(9042)
-                        .withCredentials(MusicUtil.getCassName(), MusicUtil.getCassPwd())
-                        .addContactPoint(address).build();
+    	String[] addresses = null;
+		addresses = address.split(",");
+		PoolingOptions poolingOptions = new PoolingOptions();
+        poolingOptions
+        .setConnectionsPerHost(HostDistance.LOCAL,  4, 10)
+        .setConnectionsPerHost(HostDistance.REMOTE, 2, 4);
+        if(MusicUtil.getCassName() != null && MusicUtil.getCassPwd() != null) {
+    		logger.info(EELFLoggerDelegate.applicationLogger,
+    				"Building with credentials "+MusicUtil.getCassName()+" & "+MusicUtil.getCassPwd());
+    		cluster = Cluster.builder().withPort(9042)
+	                   .withCredentials(MusicUtil.getCassName(), MusicUtil.getCassPwd())
+	                   //.withLoadBalancingPolicy(new RoundRobinPolicy())
+	                   .withPoolingOptions(poolingOptions)
+	                   .addContactPoints(addresses).build();
+        }
+        else {
+        	cluster = Cluster.builder().withPort(9042)
+        				//.withLoadBalancingPolicy(new RoundRobinPolicy())
+        				.withPoolingOptions(poolingOptions)
+        				.addContactPoints(addresses).build();
+        }
         Metadata metadata = cluster.getMetadata();
         logger.info(EELFLoggerDelegate.applicationLogger, "Connected to cassa cluster "
                         + metadata.getClusterName() + " at " + address);
@@ -253,8 +294,6 @@ public class MusicDataStore {
                 return row.getBool(colName);
             case MAP:
                 return row.getMap(colName, String.class, String.class);
-            case LIST:
-            	return row.getList(colName, String.class);
             default:
                 return null;
         }
@@ -326,10 +365,15 @@ public class MusicDataStore {
                                         + queryObject.getValues());
         PreparedStatement preparedInsert = null;
         try {
-        	preparedInsert = session.prepare(queryObject.getQuery());
+        	
+				preparedInsert = session.prepare(queryObject.getQuery());
+			
         } catch(InvalidQueryException iqe) {
-        	logger.error(EELFLoggerDelegate.errorLogger, iqe.getMessage());
+        	logger.error(EELFLoggerDelegate.errorLogger, iqe.getMessage(),AppMessages.QUERYERROR, ErrorSeverity.CRITICAL, ErrorTypes.QUERYERROR);
         	throw new MusicQueryException(iqe.getMessage());
+        }catch(Exception e) {
+        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.QUERYERROR, ErrorSeverity.CRITICAL, ErrorTypes.QUERYERROR);
+        	throw new MusicQueryException(e.getMessage());
         }
         
         try {

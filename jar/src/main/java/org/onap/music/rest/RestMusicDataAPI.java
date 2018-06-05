@@ -42,6 +42,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
+
+import org.mindrot.jbcrypt.BCrypt;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
@@ -229,6 +231,7 @@ public class RestMusicDataAPI {
         
         try {
             boolean isAAF = Boolean.valueOf(CachingUtil.isAAFApplication(ns));
+            String hashedpwd = BCrypt.hashpw(password, BCrypt.gensalt());
             queryObject = new PreparedQueryObject();
             queryObject.appendQueryString(
                         "INSERT into admin.keyspace_master (uuid, keyspace_name, application_name, is_api, "
@@ -237,11 +240,11 @@ public class RestMusicDataAPI {
             queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), keyspaceName));
             queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), ns));
             queryObject.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), "True"));
-            queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), password));
+            queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), hashedpwd));
             queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
             queryObject.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), isAAF));
             CachingUtil.updateMusicCache(keyspaceName, ns);
-            CachingUtil.updateMusicValidateCache(ns, userId, password);
+            CachingUtil.updateMusicValidateCache(ns, userId, hashedpwd);
             MusicCore.eventualPut(queryObject);
         } catch (Exception e) {
             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
@@ -1139,10 +1142,7 @@ public class RestMusicDataAPI {
             results = MusicCore.atomicGetWithDeleteLock(keyspace, tablename, rowId.primarKeyValue, queryObject);
         }
 
-        if(results!=null && results.getAvailableWithoutFetching() >0) {
-        	return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setDataResult(MusicCore.marshallResults(results)).toMap()).build();
-        }
-        return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setError("No data found").setDataResult(MusicCore.marshallResults(results)).toMap()).build();
+        return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setDataResult(MusicCore.marshallResults(results)).toMap()).build();
     }
 
     /**
@@ -1203,10 +1203,7 @@ public class RestMusicDataAPI {
 
         try {
             ResultSet results = MusicCore.get(queryObject);
-            if(results!=null && results.getAvailableWithoutFetching() >0) {
-            	return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setDataResult(MusicCore.marshallResults(results)).toMap()).build();
-            }
-            return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setError("No data found").setDataResult(MusicCore.marshallResults(results)).toMap()).build();
+            return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setDataResult(MusicCore.marshallResults(results)).toMap()).build();
         } catch (MusicServiceException ex) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.UNKNOWNERROR  ,ErrorSeverity.ERROR, ErrorTypes.MUSICSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
@@ -1280,7 +1277,6 @@ public class RestMusicDataAPI {
             } catch (Exception e) {
               logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
             }
-            if(tableInfo.getPrimaryKey().get(0).getName().equals(entry.getKey()))
             primaryKey.append(indValue);
             rowSpec.append(keyName + "= ?");
             queryObject.addValue(formattedValue);

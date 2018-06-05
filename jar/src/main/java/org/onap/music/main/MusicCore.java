@@ -22,7 +22,6 @@
 package org.onap.music.main;
 
 
-import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
@@ -106,6 +105,11 @@ public class MusicCore {
         logger.info(EELFLoggerDelegate.applicationLogger,"Acquiring data store handle");
         long start = System.currentTimeMillis();
         if (mDstoreHandle == null) {
+        	try {
+    			MusicUtil.loadProperties();
+    		} catch (Exception e) {
+    			logger.error(EELFLoggerDelegate.errorLogger, "No properties file defined. Falling back to default.");
+    		}
             mDstoreHandle = new MusicDataStore(remoteIp);
         }
         long end = System.currentTimeMillis();
@@ -122,6 +126,11 @@ public class MusicCore {
         logger.info(EELFLoggerDelegate.applicationLogger,"Acquiring data store handle");
         long start = System.currentTimeMillis();
         if (mDstoreHandle == null) {
+        	try {
+    			MusicUtil.loadProperties();
+    		} catch (Exception e) {
+    			logger.error(EELFLoggerDelegate.errorLogger, "No properties file defined. Falling back to default.");
+    		}
             // Quick Fix - Best to put this into every call to getDSHandle?
             if (! MusicUtil.getMyCassaHost().equals("localhost") ) {
                 mDstoreHandle = new MusicDataStore(MusicUtil.getMyCassaHost());
@@ -665,7 +674,6 @@ public class MusicCore {
                             "Exception thrown while doing the critical put, check sanctity of the row/conditions:\n"
                                             + e.getMessage());
         }catch(MusicLockingException ex){
-			logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage());
             return new ReturnType(ResultType.FAILURE,ex.getMessage());
         }
 

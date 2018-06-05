@@ -24,7 +24,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.onap.music</groupId>
     <artifactId>MUSIC</artifactId>
-    <packaging>war</packaging>
+    <packaging>jar</packaging>
     <version>2.5.11</version>
     <description>
             This is the MUSIC REST interface, packaged as a war file.
@@ -114,6 +114,9 @@
                 <configuration>
                     <source>1.7</source>
                     <target>1.7</target>
+                    <excludes>
+				     	<exclude>jar/**</exclude>
+				   	</excludes>
                 </configuration>
             </plugin>
             <plugin>
@@ -330,6 +333,11 @@
             <artifactId>guava</artifactId>
             <version>19.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.mindrot</groupId>
+            <artifactId>jbcrypt</artifactId>
+            <version>0.4</version>
+        </dependency>
     </dependencies>
 
     <reporting>
@@ -361,13 +369,6 @@
                         <groupId>io.fabric8</groupId>
                         <artifactId>docker-maven-plugin</artifactId>
                         <version>0.19.1</version>
-                        <dependencies>
-                            <dependency>
-                                <groupId>com.github.jnr</groupId>
-                                <artifactId>jnr-unixsocket</artifactId>
-                                <version>0.13</version>
-                            </dependency>
-                        </dependencies>
                         <configuration>
                             <verbose>true</verbose>
                             <apiVersion>1.23</apiVersion>
@@ -396,8 +397,8 @@
                                     <build>
                                         <cleanup>true</cleanup>
                                         <tags>
-                                            <tag>3.0.0-${timestamp}</tag>
-                                            <tag>3.0.0-latest</tag>
+                                            <tag>3.0-${timestamp}</tag>
+                                            <tag>3.0-latest</tag>
                                         </tags>
                                         <dockerFileDir>${project.basedir}/distribution/cassandra</dockerFileDir>
                                     </build>

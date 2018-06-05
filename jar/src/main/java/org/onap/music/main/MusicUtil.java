@@ -34,6 +34,12 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import com.datastax.driver.core.DataType;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
 
 /**
  * @author nelson24
@@ -54,10 +60,6 @@ public class MusicUtil {
     private static final String XLATESTVERSION = "X-latestVersion";
     private static final String XMINORVERSION = "X-minorVersion";
     private static final String XPATCHVERSION = "X-patchVersion";
-    public static final String SELECT = "select";
-    public static final String INSERT = "insert";
-    public static final String UPDATE = "update";
-    public static final String UPSERT = "upsert";
 
     private static final String LOCALHOST = "localhost";
     private static final String PROPERTIES_FILE = "/opt/app/music/etc/music.properties";
@@ -79,7 +81,7 @@ public class MusicUtil {
             "all.pubic.ips", "cassandra.user", "cassandra.password", "aaf.endpoint.url" };
 
     private static String cassName = "cassandra";
-    private static String cassPwd;
+    private static String cassPwd = "cassandra";
     private static String aafEndpointUrl = null;
 
     private MusicUtil() {
@@ -347,8 +349,7 @@ public class MusicUtil {
         try {
             Scanner fileScanner = new Scanner(new File(""));
             testType = fileScanner.next();// ignore the my id line
-            @SuppressWarnings("unused")
-			String batchSize = fileScanner.next();// ignore the my public ip
+            String batchSize = fileScanner.next();// ignore the my public ip
                                                     // line
             fileScanner.close();
         } catch (FileNotFoundException e) {
@@ -416,8 +417,7 @@ public class MusicUtil {
             value = "'" + valueString + "'";
             break;
         case MAP: {
-            @SuppressWarnings("unchecked")
-			Map<String, Object> otMap = (Map<String, Object>) valueObj;
+            Map<String, Object> otMap = (Map<String, Object>) valueObj;
             value = "{" + jsonMaptoSqlString(otMap, ",") + "}";
             break;
         }
@@ -436,8 +436,7 @@ public class MusicUtil {
      * @throws MusicTypeConversionException 
      * @throws Exception
      */
-    @SuppressWarnings("unchecked")
-	public static Object convertToActualDataType(DataType colType, Object valueObj) throws Exception {
+    public static Object convertToActualDataType(DataType colType, Object valueObj) throws Exception {
         String valueObjString = valueObj + "";
         switch (colType.getName()) {
         case UUID:
@@ -456,8 +455,6 @@ public class MusicUtil {
             return Boolean.parseBoolean(valueObjString);
         case MAP:
             return (Map<String, Object>) valueObj;
-        case LIST:
-        	return (List<String>)valueObj;
         default:
             return valueObjString;
         }
@@ -489,6 +486,7 @@ public class MusicUtil {
         return sqlString.toString();
     }
 
+    @SuppressWarnings("unused")
     public static String buildVersion(String major, String minor, String patch) {
         if (minor != null) {
             major += "." + minor;
@@ -532,6 +530,31 @@ public class MusicUtil {
     }
 
     
-    
+    public static void loadProperties() throws Exception {
+		Properties prop = new Properties();
+	    InputStream input = null;
+	    try {
+	    	// load the properties file
+	        input = MusicUtil.class.getClassLoader().getResourceAsStream("music.properties");
+	        prop.load(input);
+	    } catch (Exception ex) {
+	    	logger.error(EELFLoggerDelegate.errorLogger, "Unable to find properties file.");
+	        throw new Exception();
+	    } finally {
+	        if (input != null) {
+	            try {
+	                input.close();
+	            } catch (IOException e) {
+	                e.printStackTrace();
+	            }
+	        }
+	    }
+	    // get the property value and return it
+		MusicUtil.setMyCassaHost(prop.getProperty("cassandra.host"));
+		String zkHosts = prop.getProperty("zookeeper.host");
+		MusicUtil.setMyZkHost(zkHosts);
+		MusicUtil.setCassName(prop.getProperty("cassandra.user"));
+		MusicUtil.setCassPwd(prop.getProperty("cassandra.password"));
+	}
     
 }
