@@ -7,7 +7,7 @@ Release Notes
 Initial Release for Beijing
 
 Version: 2.5.4
--------
+--------------
 
 :Release Date: 2018-06-07
 
@@ -34,18 +34,23 @@ N/A
 MUSIC code has been formally scanned during build time using NexusIQ and all Critical vulnerabilities have been addressed, items that remain open have been assessed for risk and determined to be false positive. The MUSIC open Critical security vulnerabilities and their risk assessment have been documented as part of the `project <https://wiki.onap.org/pages/viewpage.action?pageId=25439359>`_.
 
 Quick Links:
- 	- `MUSIC project page <https://wiki.onap.org/display/DW/MUSIC+Project>`_
- 	
- 	- `Passing Badge information for MUSIC <https://bestpractices.coreinfrastructure.org/en/projects/1722>`_
- 	
- 	- `Project Vulnerability Review Table for MUSIC <https://wiki.onap.org/pages/viewpage.action?pageId=25439359>`_
+
+- `MUSIC project page <https://wiki.onap.org/display/DW/MUSIC+Project>`_
+- `Passing Badge information for MUSIC <https://bestpractices.coreinfrastructure.org/en/projects/1722>`_
+- `Project Vulnerability Review Table for MUSIC <https://wiki.onap.org/pages/viewpage.action?pageId=25439359>`_
 
 **Upgrade Notes**
-N/A
+
+	N/A
+
 **Deprecation Notes**
-N/A
+
+	N/A
+
 **Other**
-N/A
+
+	N/A
+
 ===========
 
 End of Release Notes
