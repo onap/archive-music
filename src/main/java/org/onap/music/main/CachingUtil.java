@@ -133,9 +133,9 @@ public class CachingUtil implements Runnable {
                     String keySpace) throws Exception {
 
         if (aafCache.get(nameSpace) != null) {
-            if (keySpace != null && !musicCache.get(keySpace).equals(nameSpace)) {
+          /*  if (keySpace != null && !musicCache.get(keySpace).equals(nameSpace)) {
             	logger.info(EELFLoggerDelegate.applicationLogger,"Create new application for the same namespace.");
-            } else if (aafCache.get(nameSpace).get(userId).equals(password)) {
+            } else */if (aafCache.get(nameSpace).get(userId).equals(password)) {
             	logger.info(EELFLoggerDelegate.applicationLogger,"Authenticated with cache value..");
                 // reset invalid attempts to 0
                 userAttempts.put(nameSpace, 0);
@@ -167,9 +167,9 @@ public class CachingUtil implements Runnable {
         if (aafRresponse) {
         	//TODO
             //if (responseObj.getNs().get(0).getAdmin().contains(userId)) {
-            	//Map<String, String> map = new HashMap<>();
-                //map.put(userId, password);
-                //aafCache.put(nameSpace, map);
+            	Map<String, String> map = new HashMap<>();
+                map.put(userId, password);
+                aafCache.put(nameSpace, map);
             	return true;
             //}
         }

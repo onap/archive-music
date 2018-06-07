@@ -6,7 +6,7 @@ Setup for Developing MUSIC
 
    Single-Site Install <single>
    Muili-Site Install <multi>
-   Authentication
+   Authentication <authentication>
 
 MUSIC is to be installed in a single Dir on a vm. 
 
@@ -47,4 +47,4 @@ Continue by selecting the link to the setup you are doing.
 
    Single-Site Install <single>
    Muili-Site Install <multi>
-   Authentication
+   Authentication <authentication>

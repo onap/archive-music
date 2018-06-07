@@ -136,11 +136,11 @@ public class TestMusicCore {
     @Test
     public void testAcquireLockifisMyTurnTrueandIsTableOrKeySpaceLockFalseandDontHaveLock() throws MusicLockingException {
         MusicLockState musicLockState = new MusicLockState(LockStatus.LOCKED, "id2");
-        Mockito.when(mLockHandle.isMyTurn("id1")).thenReturn(true);
+        Mockito.when(mLockHandle.isMyTurn("id2")).thenReturn(true);
         Mockito.when(mLockHandle.getLockState("ks1.tn1.pk1")).thenReturn(musicLockState);
-        ReturnType lock = MusicCore.acquireLock("ks1.tn1.pk1", "id1");
+        ReturnType lock = MusicCore.acquireLock("ks1.tn1.pk1", "id2");
         assertEquals(lock.getResult(), ResultType.SUCCESS);
-        Mockito.verify(mLockHandle).isMyTurn("id1");
+        Mockito.verify(mLockHandle).isMyTurn("id2");
         Mockito.verify(mLockHandle).getLockState("ks1.tn1.pk1");
     }
     
