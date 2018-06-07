@@ -470,7 +470,7 @@ public class TestRestMusicData {
         JsonDelete jsonDelete = new JsonDelete();
         Map<String, String> consistencyInfo = new HashMap<>();
         MultivaluedMap<String, String> row = new MultivaluedMapImpl();
-        consistencyInfo.put("type", "atomic");
+        consistencyInfo.put("type", "eventual");
         jsonDelete.setConsistencyInfo(consistencyInfo);
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Mockito.when(info.getQueryParameters()).thenReturn(row);

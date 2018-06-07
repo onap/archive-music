@@ -4,14 +4,8 @@
 Logging
 =======
 
-.. note::
-   * This section is used to describe the informational or diagnostic messages emitted from 
-     a software component and the methods or collecting them.
-   
-   * This section is typically: provided for a platform-component and sdk; and
-     referenced in developer and user guides
-   
-   * This note must be removed after content has been added.
+Log file produced will be in /opt/app/music/logs/MUSIC/music.log,error.log,debug.log
+Log files are in EELF format. 
 
 
 Where to Access Information
@@ -20,3 +14,6 @@ Where to Access Information
 
 Error / Warning Messages
 ------------------------
+
+
+

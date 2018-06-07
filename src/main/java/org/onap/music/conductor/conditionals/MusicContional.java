@@ -95,7 +95,7 @@ public class MusicContional {
 			if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
 				ReturnType criticalPutResult = conditionalInsertAtomic(lockId, keyspace, tablename, primaryKey,
 						queryBank);
-				MusicCore.destroyLockRef(lockId);
+				MusicCore.releaseLock(lockId, true);
 				if (criticalPutResult.getMessage().contains("insert"))
 					criticalPutResult
 							.setMessage("Insert values: ");
@@ -105,11 +105,11 @@ public class MusicContional {
 				return criticalPutResult;
 
 			} else {
-				MusicCore.destroyLockRef(lockId);
+				MusicCore.releaseLock(lockId, true);
 				return lockAcqResult;
 			}
 		} catch (Exception e) {
-			MusicCore.destroyLockRef(lockId);
+			MusicCore.releaseLock(lockId, true);
 			return new ReturnType(ResultType.FAILURE, e.getMessage());
 		}
 
@@ -163,15 +163,17 @@ public class MusicContional {
 		try {
 
 			if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
-				return updateAtomic(lockId, keyspace, tableName, primaryKey,primaryKeyValue, queryBank,planId,cascadeColumnValues,cascadeColumnName);
+				ReturnType updateResult= updateAtomic(lockId, keyspace, tableName, primaryKey,primaryKeyValue, queryBank,planId,cascadeColumnValues,cascadeColumnName);
+				MusicCore.releaseLock(lockId, true);
+				return updateResult;
 
 			} else {
-				MusicCore.destroyLockRef(lockId);
+				MusicCore.releaseLock(lockId, true);
 				return lockAcqResult;
 			}
 
 		} catch (Exception e) {
-			MusicCore.destroyLockRef(lockId);
+			MusicCore.releaseLock(lockId, true);
 			return new ReturnType(ResultType.FAILURE, e.getMessage());
 
 		}
