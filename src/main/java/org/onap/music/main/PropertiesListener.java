@@ -30,26 +30,22 @@ import java.util.Arrays;
 import java.util.Properties;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
-import javax.servlet.annotation.WebListener;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 
-@WebListener
 public class PropertiesListener implements ServletContextListener {
     private Properties prop;
 
-    private static EELFLoggerDelegate logger =
-                    EELFLoggerDelegate.getLogger(PropertiesListener.class);
+    private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(PropertiesListener.class);
 
     @Override
     public void contextInitialized(ServletContextEvent servletContextEvent) {
         prop = new Properties();
         Properties projectProp = new Properties();
         URL resource = getClass().getResource("/");
-        String musicPropertiesFilePath = resource.getPath().replace("WEB-INF/classes/",
-                        "WEB-INF/classes/project.properties");
+        String musicPropertiesFilePath = resource.getPath().replace("WEB-INF/classes/","WEB-INF/classes/project.properties");
 
         // Open the file
         try {

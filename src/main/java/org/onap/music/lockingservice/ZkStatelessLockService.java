@@ -28,10 +28,15 @@ import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.data.ACL;
 import org.apache.zookeeper.data.Stat;
+import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
+import org.onap.music.main.MusicCore;
+import org.onap.music.main.MusicUtil;
+
+import com.datastax.driver.core.DataType;
 
 /**
  * A <a href="package.html">protocol to implement an exclusive write lock or to elect a leader</a>.
@@ -288,8 +293,28 @@ public class ZkStatelessLockService extends ProtocolSupport {
                     if (logger.isDebugEnabled()) {
                     	logger.debug(EELFLoggerDelegate.debugLogger, "Created id: " + id);
                     }
-                    if (id != null)
+                    if (id != null) {
+                        Stat stat = null;
+                        try {
+                            stat = zookeeper.exists(id, false);
+                        } catch (KeeperException | InterruptedException e1) {
+                            e1.printStackTrace();
+                        }
+                        Long ctime = stat.getCtime();
+                        System.out.println("Created id ....####"+ctime+"##.......id...:"+id);
+                        MusicUtil.zkNodeMap.put(id, ctime);
+                        PreparedQueryObject pQuery = new PreparedQueryObject();
+                        pQuery.appendQueryString(
+                                        "INSERT INTO admin.locks(lock_id, ctime) VALUES (?,?)");
+                        try {
+                            pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), id));
+                            pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), ctime));
+                            MusicCore.eventualPut(pQuery);
+                        } catch (Exception e) {
+                               e.printStackTrace();
+                        }
                         break;
+                   }
                 }
                 if (id != null) {
                     List<String> names = zookeeper.getChildren(dir, false);

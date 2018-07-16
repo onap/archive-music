@@ -43,7 +43,18 @@ public class JsonInsert implements Serializable {
     private String timestamp;
     private Map<String, Object> row_specification;
     private Map<String, String> consistencyInfo;
-
+    private byte[] data;
+    private Map<String, byte[]> objectMap;
+    
+    @ApiModelProperty(value = "objectMap")
+    public Map<String, byte[]> getObjectMap() {
+		return objectMap;
+	}
+    
+    public void setObjectMap(Map<String, byte[]> objectMap) {
+		this.objectMap = objectMap;
+	}
+    
     @ApiModelProperty(value = "keyspace")
     public String getKeyspaceName() {
         return keyspaceName;

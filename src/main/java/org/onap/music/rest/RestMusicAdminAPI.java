@@ -37,7 +37,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
+
+import org.mindrot.jbcrypt.BCrypt;
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.datastore.jsonobjects.JSONObject;
 import org.onap.music.datastore.jsonobjects.JsonOnboard;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
@@ -107,7 +110,7 @@ public class RestMusicAdminAPI {
                         MusicUtil.DEFAULTKEYSPACENAME));
         pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), appName));
         pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), "True"));
-        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), password));
+        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), BCrypt.hashpw(password, BCrypt.gensalt())));
         pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
         pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), isAAF));
 
@@ -142,7 +145,7 @@ public class RestMusicAdminAPI {
                             ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
             resultMap.put("Exception",
                             "Unauthorized: Please check the request parameters. Enter atleast one of the following parameters: appName(ns), aid, isAAF.");
-            return Response.status(Status.UNAUTHORIZED).entity(resultMap).build();
+            return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
 
         PreparedQueryObject pQuery = new PreparedQueryObject();
@@ -348,7 +351,7 @@ public class RestMusicAdminAPI {
         if (userId != null)
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
         if (password != null)
-            pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), password));
+            pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), BCrypt.hashpw(password, BCrypt.gensalt())));
         if (isAAF != null)
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), isAAF));
 
@@ -366,5 +369,15 @@ public class RestMusicAdminAPI {
         }
 
         return Response.status(Status.OK).entity(resultMap).build();
+    }
+    
+    @POST
+    @Path("/callbackOps")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public String callbackOps(JSONObject inputJsonObj) throws Exception {
+       
+       System.out.println("Input JSON: "+inputJsonObj.getData());
+       return "Success";
     }
 }

@@ -22,7 +22,6 @@
 package org.onap.music.main;
 
 
-import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
@@ -294,10 +293,6 @@ public class MusicCore {
                 logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: You already have the lock!");
                 return new ReturnType(ResultType.SUCCESS, "You already have the lock!");
             }
-            if (currentMls.getLockStatus() != MusicLockState.LockStatus.UNLOCKED || currentMls.getLockHolder() != null) {
-				logger.info("In acquire lock: the previous lock has not been released yet! current mls:"+currentMls.toString());
-				return new ReturnType(ResultType.FAILURE, "The previous lock has not been released yet."); 
-			}
         } catch (NullPointerException e) {
         	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.INVALIDLOCK+lockId,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         }
@@ -515,14 +510,6 @@ public class MusicCore {
     public static  void  voluntaryReleaseLock(String lockId) throws MusicLockingException{
 		try {
 			getLockingServiceHandle().unlockAndDeleteId(lockId);
-			String lockName = getLockNameFromId(lockId);
-	        String lockHolder = null;
-	        MusicLockState mls = new MusicLockState(MusicLockState.LockStatus.UNLOCKED, lockHolder);
-	        try {
-	            getLockingServiceHandle().setLockState(lockName, mls);
-	        } catch (MusicLockingException e) {
-	        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.RELEASELOCK+lockId  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
-	        }
 		} catch (KeeperException.NoNodeException e) {
 			// ??? No way
 		}
@@ -653,7 +640,6 @@ public class MusicCore {
         try {
             MusicLockState mls = getLockingServiceHandle()
                             .getLockState(keyspaceName + "." + tableName + "." + primaryKey);
-            logger.info("Got MusicLockState object... :"+mls.toString());
             if (mls.getLockHolder().equals(lockId) == true) {
                 if (conditionInfo != null)
                   try {
@@ -678,7 +664,6 @@ public class MusicCore {
                             "Exception thrown while doing the critical put, check sanctity of the row/conditions:\n"
                                             + e.getMessage());
         }catch(MusicLockingException ex){
-			logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage());
             return new ReturnType(ResultType.FAILURE,ex.getMessage());
         }
 
@@ -775,7 +760,7 @@ public class MusicCore {
             ReturnType criticalPutResult = criticalPut(keyspaceName, tableName, primaryKey,
                             queryObject, lockId, conditionInfo);
             long criticalPutTime = System.currentTimeMillis();
-            releaseLock(lockId, true);
+            voluntaryReleaseLock(lockId);
             long lockDeleteTime = System.currentTimeMillis();
             String timingInfo = "|lock creation time:" + (lockCreationTime - start)
                             + "|lock accquire time:" + (lockAcqTime - lockCreationTime)
@@ -785,7 +770,7 @@ public class MusicCore {
             return criticalPutResult;
         } else {
             logger.info(EELFLoggerDelegate.applicationLogger,"unable to acquire lock, id " + lockId);
-            releaseLock(lockId, true);;
+            destroyLockRef(lockId);
             return lockAcqResult;
         }
     }
@@ -855,10 +840,10 @@ public class MusicCore {
             logger.info(EELFLoggerDelegate.applicationLogger,"acquired lock with id " + lockId);
             ResultSet result =
                             criticalGet(keyspaceName, tableName, primaryKey, queryObject, lockId);
-            releaseLock(lockId, true);
+            voluntaryReleaseLock(lockId);
             return result;
         } else {
-        	releaseLock(lockId, true);
+        	destroyLockRef(lockId);
             logger.info(EELFLoggerDelegate.applicationLogger,"unable to acquire lock, id " + lockId);
             return null;
         }

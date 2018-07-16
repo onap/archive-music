@@ -49,6 +49,8 @@ import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
 import org.onap.music.response.jsonobjects.JsonResponse;
 import org.onap.music.rest.RestMusicAdminAPI;
+import org.onap.music.conductor.*;
+
 
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.TableMetadata;
@@ -58,13 +60,11 @@ import io.swagger.annotations.ApiParam;
 
 @Path("/v2/conditional")
 @Api(value = "Conditional Api", hidden = true)
-public class RestMusicConditonalAPI {
+public class RestMusicConditionalAPI {
 	private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(RestMusicAdminAPI.class);
 	private static final String XMINORVERSION = "X-minorVersion";
 	private static final String XPATCHVERSION = "X-patchVersion";
 	private static final String NS = "ns";
-	private static final String USERID = "userId";
-	private static final String PASSWORD = "password";
 	private static final String VERSION = "v2";
 
 	@POST
@@ -77,8 +77,7 @@ public class RestMusicConditonalAPI {
 			@ApiParam(value = "Patch Version", required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
 			@ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
 			@ApiParam(value = "Application namespace", required = true) @HeaderParam(NS) String ns,
-			@ApiParam(value = "userId", required = true) @HeaderParam(USERID) String userId,
-			@ApiParam(value = "Password", required = true) @HeaderParam(PASSWORD) String password,
+			@ApiParam(value = "Authorization", required = true) @HeaderParam("Authorization") String authorization,
 			@ApiParam(value = "Major Version", required = true) @PathParam("keyspace") String keyspace,
 			@ApiParam(value = "Major Version", required = true) @PathParam("tablename") String tablename,
 			JsonConditional jsonObj) throws Exception {
@@ -98,6 +97,9 @@ public class RestMusicConditonalAPI {
 					.setError(String.valueOf("One or more input values missing")).toMap()).build();
 
 		}
+		Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
+		String userId = userCredentials.get(MusicUtil.USERID);
+		String password = userCredentials.get(MusicUtil.PASSWORD);
 
 		Map<String, Object> authMap = null;
 		try {
@@ -128,7 +130,7 @@ public class RestMusicConditonalAPI {
 		status.put("nonexists", conditions.get("nonexists").get("status").toString());
 		ReturnType out = null;
 
-		out = MusicContional.conditionalInsert(keyspace, tablename, casscadeColumnName, casscadeColumnData,
+		out = MusicConditional.conditionalInsert(keyspace, tablename, casscadeColumnName, casscadeColumnData,
 				primaryKeyValue, valuesMap, status);
 		return response.status(Status.OK).entity(new JsonResponse(out.getResult()).setMessage(out.getMessage()).toMap())
 				.build();
@@ -146,8 +148,7 @@ public class RestMusicConditonalAPI {
 			@ApiParam(value = "Patch Version", required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
 			@ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
 			@ApiParam(value = "Application namespace", required = true) @HeaderParam(NS) String ns,
-			@ApiParam(value = "userId", required = true) @HeaderParam(USERID) String userId,
-			@ApiParam(value = "Password", required = true) @HeaderParam(PASSWORD) String password,
+			@ApiParam(value = "Authorization", required = true) @HeaderParam("Authorization") String authorization,
 			@ApiParam(value = "Major Version", required = true) @PathParam("keyspace") String keyspace,
 			@ApiParam(value = "Major Version", required = true) @PathParam("tablename") String tablename,
 			JsonConditional upObj) throws Exception {
@@ -167,6 +168,9 @@ public class RestMusicConditonalAPI {
 					.setError(String.valueOf("One or more input values missing")).toMap()).build();
 
 		}
+		Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
+		String userId = userCredentials.get(MusicUtil.USERID);
+		String password = userCredentials.get(MusicUtil.PASSWORD);
 
 		Map<String, Object> authMap = null;
 		try {
@@ -194,17 +198,15 @@ public class RestMusicConditonalAPI {
 		DataType primaryIdType = tableInfo.getPrimaryKey().get(0).getType();
 		String primaryId = tableInfo.getPrimaryKey().get(0).getName();
 		
-		PreparedQueryObject upsert = MusicContional.extractQuery(tableValues, tableInfo, tablename, keyspace, primaryKey, primaryKeyValue, null, null);
-		
 		PreparedQueryObject select = new PreparedQueryObject();
 		select.appendQueryString("SELECT * FROM " + keyspace + "." + tablename + " where " + primaryId + " = ?");
 		select.addValue(MusicUtil.convertToActualDataType(primaryIdType, primaryKeyValue));
 		
+		PreparedQueryObject upsert = MusicConditional.extractQuery(tableValues, tableInfo, tablename, keyspace, primaryKey, primaryKeyValue, null, null);
 		Map<String,PreparedQueryObject> queryBank = new HashMap<>();
-		//queryBank.put(MusicUtil.UPDATE, update);
-		queryBank.put(MusicUtil.UPSERT, upsert);
 		queryBank.put(MusicUtil.SELECT, select);
-		ReturnType result = MusicContional.update(queryBank, keyspace, tablename, primaryKey,primaryKeyValue,planId,casscadeColumnName,casscadeColumnValueMap);
+		queryBank.put(MusicUtil.UPSERT, upsert);
+		ReturnType result = MusicConditional.update(queryBank, keyspace, tablename, primaryKey,primaryKeyValue,planId,casscadeColumnName,casscadeColumnValueMap);
 		if (result.getResult() == ResultType.SUCCESS) {
 			return response.status(Status.OK)
 					.entity(new JsonResponse(result.getResult()).setMessage(result.getMessage()).toMap()).build();

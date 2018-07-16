@@ -21,10 +21,13 @@
  */
 package org.onap.music.rest;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -42,6 +45,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
+
+import org.apache.commons.lang3.StringUtils;
+import org.mindrot.jbcrypt.BCrypt;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
@@ -66,6 +72,7 @@ import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.TableMetadata;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -102,8 +109,6 @@ public class RestMusicDataAPI {
     private static final String XMINORVERSION = "X-minorVersion";
     private static final String XPATCHVERSION = "X-patchVersion";
     private static final String NS = "ns";
-    private static final String USERID = "userId";
-    private static final String PASSWORD = "password";
     private static final String VERSION = "v2";
     
     private class RowIdentifier {
@@ -141,13 +146,15 @@ public class RestMusicDataAPI {
                     @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
                     @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
                     @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+                    @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
                     @ApiParam(value = "Application namespace",required = true) @HeaderParam(NS) String ns,
-                    @ApiParam(value = "userId",required = true) @HeaderParam(USERID) String userId,
-                    @ApiParam(value = "Password",required = true) @HeaderParam(PASSWORD) String password,
                     JsonKeySpace kspObject,
                     @ApiParam(value = "Keyspace Name",required = true) @PathParam("name") String keyspaceName) {
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
         
+		Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
+		String userId = userCredentials.get(MusicUtil.USERID);
+		String password = userCredentials.get(MusicUtil.PASSWORD);
         Map<String, Object> authMap = CachingUtil.verifyOnboarding(ns, userId, password);
         if (!authMap.isEmpty()) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
@@ -159,6 +166,7 @@ public class RestMusicDataAPI {
             response.status(Status.BAD_REQUEST);
             return response.entity(authMap).build();
         }
+
 
         try {
             authMap = MusicCore.autheticateUser(ns, userId, password, keyspaceName, aid,
@@ -229,6 +237,7 @@ public class RestMusicDataAPI {
         
         try {
             boolean isAAF = Boolean.valueOf(CachingUtil.isAAFApplication(ns));
+            String hashedpwd = BCrypt.hashpw(password, BCrypt.gensalt());
             queryObject = new PreparedQueryObject();
             queryObject.appendQueryString(
                         "INSERT into admin.keyspace_master (uuid, keyspace_name, application_name, is_api, "
@@ -237,11 +246,11 @@ public class RestMusicDataAPI {
             queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), keyspaceName));
             queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), ns));
             queryObject.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), "True"));
-            queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), password));
+            queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), hashedpwd));
             queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
             queryObject.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), isAAF));
             CachingUtil.updateMusicCache(keyspaceName, ns);
-            CachingUtil.updateMusicValidateCache(ns, userId, password);
+            CachingUtil.updateMusicValidateCache(ns, userId, hashedpwd);
             MusicCore.eventualPut(queryObject);
         } catch (Exception e) {
             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
@@ -268,12 +277,14 @@ public class RestMusicDataAPI {
                     @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
                     @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
                     @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+                    @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
                     @ApiParam(value = "Application namespace",required = true) @HeaderParam(NS) String ns,
-                    @ApiParam(value = "userId",required = true) @HeaderParam(USERID) String userId,
-                    @ApiParam(value = "Password",required = true) @HeaderParam(PASSWORD) String password,
                     @ApiParam(value = "Keyspace Name",required = true) @PathParam("name") String keyspaceName) throws Exception {
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
 
+		Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
+		String userId = userCredentials.get(MusicUtil.USERID);
+		String password = userCredentials.get(MusicUtil.PASSWORD);
         Map<String, Object> authMap = MusicCore.autheticateUser(ns, userId, password,keyspaceName, aid, "dropKeySpace");
         if (authMap.containsKey("aid"))
             authMap.remove("aid");
@@ -343,12 +354,14 @@ public class RestMusicDataAPI {
                     @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
                     @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
                     @ApiParam(value = "Application namespace",required = true) @HeaderParam(NS) String ns,
-                    @ApiParam(value = "userId",required = true) @HeaderParam(USERID) String userId,
-                    @ApiParam(value = "Password",required = true) @HeaderParam(PASSWORD) String password,
+                    @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
                      JsonTable tableObj,
                     @ApiParam(value = "Keyspace Name",required = true) @PathParam("keyspace") String keyspace,
                     @ApiParam(value = "Table Name",required = true) @PathParam("tablename") String tablename) throws Exception {
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
+		Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
+		String userId = userCredentials.get(MusicUtil.USERID);
+		String password = userCredentials.get(MusicUtil.PASSWORD);
         Map<String, Object> authMap = MusicCore.autheticateUser(ns, userId, password, keyspace,
                         aid, "createTable");
         if (authMap.containsKey("aid"))
@@ -359,30 +372,116 @@ public class RestMusicDataAPI {
         }
         String consistency = MusicUtil.EVENTUAL;
         // for now this needs only eventual consistency
+
+        String primaryKey = null;
+        String partitionKey = tableObj.getPartitionKey();
+        String clusterKey = tableObj.getClusteringKey();
+        String filteringKey = tableObj.getFilteringKey();
+        if(filteringKey != null) {
+            clusterKey = clusterKey + "," + filteringKey;
+        }
+        primaryKey = tableObj.getPrimaryKey(); // get primaryKey if available
+
         PreparedQueryObject queryObject = new PreparedQueryObject();
         // first read the information about the table fields
         Map<String, String> fields = tableObj.getFields();
         StringBuilder fieldsString = new StringBuilder("(vector_ts text,");
         int counter = 0;
-        String primaryKey;
         for (Map.Entry<String, String> entry : fields.entrySet()) {
-            
             if (entry.getKey().equals("PRIMARY KEY")) {
-                if(! entry.getValue().contains("("))
-                    primaryKey = entry.getValue();
-                else {
-                    primaryKey = entry.getValue().substring(entry.getValue().indexOf('(') + 1);
-                    primaryKey = primaryKey.substring(0, primaryKey.indexOf(')'));
+                primaryKey = entry.getValue(); // replaces primaryKey
+                primaryKey.trim();
+            } else {
+                  if (counter == 0 )  fieldsString.append("" + entry.getKey() + " " + entry.getValue() + "");
+                  else fieldsString.append("," + entry.getKey() + " " + entry.getValue() + "");             
+            }
+
+      	   if (counter != (fields.size() - 1) ) {
+        	  
+        	  //logger.info("cjc2 field="+entry.getValue()+"counter=" + counter+"fieldsize-1="+(fields.size() -1) + ",");
+        	  counter = counter + 1; 
+      	   } else {
+         //logger.info("cjc3 field="+entry.getValue()+"counter=" + counter+"fieldsize="+fields.size() + ",");
+               if((primaryKey != null) && (partitionKey == null)) {
+                  primaryKey.trim();
+                  int count1 = StringUtils.countMatches(primaryKey, ')');
+                  int count2 = StringUtils.countMatches(primaryKey, '(');
+                  if (count1 != count2) {
+                        return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
+                             .setError("Create Table Error: primary key '(' and ')' do not match, primary key=" + primaryKey)
+                                   .toMap()).build();
+                  }
+
+                if ( primaryKey.indexOf('(') == -1  || ( count2 == 1 && (primaryKey.lastIndexOf(")") +1) ==  primaryKey.length() ) )
+                  {
+               	      if (primaryKey.contains(",") ) {
+                  	      partitionKey= primaryKey.substring(0,primaryKey.indexOf(","));
+                   	      partitionKey=partitionKey.replaceAll("[\\(]+","");
+                   	      clusterKey=primaryKey.substring(primaryKey.indexOf(',')+1);  // make sure index
+                   	      clusterKey=clusterKey.replaceAll("[)]+", "");
+               	      } else {
+                    	  partitionKey=primaryKey;
+                    	  partitionKey=partitionKey.replaceAll("[\\)]+","");
+                   	      partitionKey=partitionKey.replaceAll("[\\(]+","");
+                    	  clusterKey="";
+                    }
+                } else {   // not null and has ) before the last char
+               	    partitionKey= primaryKey.substring(0,primaryKey.indexOf(')'));
+               		partitionKey=partitionKey.replaceAll("[\\(]+","");
+               		partitionKey.trim();
+               		clusterKey= primaryKey.substring(primaryKey.indexOf(')'));
+               		clusterKey=clusterKey.replaceAll("[\\(]+","");
+               		clusterKey=clusterKey.replaceAll("[\\)]+","");
+               		clusterKey.trim();
+               		if (clusterKey.indexOf(",") == 0) clusterKey=clusterKey.substring(1);
+               		   clusterKey.trim();
+               		if (clusterKey.equals(",") ) clusterKey=""; // print error if needed    ( ... ),)
+
+              } 
+
+              if (!(partitionKey.isEmpty() || clusterKey.isEmpty())
+                    && (partitionKey.equalsIgnoreCase(clusterKey) ||
+                      clusterKey.contains(partitionKey) || partitionKey.contains(clusterKey)) )
+               {
+              	logger.error("DataAPI createTable partition/cluster key ERROR: partitionKey="+partitionKey+", clusterKey=" + clusterKey + " and primary key=" + primaryKey );
+              		return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(
+                            "Create Table primary key error: clusterKey(" + clusterKey + ") equals/contains/overlaps partitionKey(" +partitionKey+ ")  of"
+                                    + " primary key=" + primaryKey)
+                          	.toMap()).build();
+
+        	}
+
+            if (partitionKey.isEmpty() )  primaryKey="";
+            else  if (clusterKey.isEmpty() ) primaryKey=" (" + partitionKey  + ")";
+            else  primaryKey=" (" + partitionKey + ")," + clusterKey;
+
+            //if (primaryKey != null) fieldsString.append("" + entry.getKey() + " (" + primaryKey + " )");
+            if (primaryKey != null) fieldsString.append(", PRIMARY KEY (" + primaryKey + " )");
+
+      } // end of length > 0
+              else {
+                 if (!(partitionKey.isEmpty() || clusterKey.isEmpty())
+                        && (partitionKey.equalsIgnoreCase(clusterKey) ||
+                          clusterKey.contains(partitionKey) || partitionKey.contains(clusterKey)) )
+                   {
+                     logger.error("DataAPI createTable partition/cluster key ERROR: partitionKey="+partitionKey+", clusterKey=" + clusterKey);
+                     return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(
+                                "Create Table primary key error: clusterKey(" + clusterKey + ") equals/contains/overlaps partitionKey(" +partitionKey+ ")")
+                                .toMap()).build();
                 }
-                fieldsString.append("" + entry.getKey() + " (" + primaryKey + ")");
-            } else
-                fieldsString.append("" + entry.getKey() + " " + entry.getValue() + "");
-            if (counter == fields.size() - 1)
-                fieldsString.append(")");
-            else
-                fieldsString.append(",");
-            counter = counter + 1;
-        }
+
+                if (partitionKey.isEmpty() )  primaryKey="";
+                else  if (clusterKey.isEmpty() ) primaryKey=" (" + partitionKey  + ")";
+                else  primaryKey=" (" + partitionKey + ")," + clusterKey;
+
+                //if (primaryKey != null) fieldsString.append("" + entry.getKey() + " (" + primaryKey + " )");
+                if (primaryKey != null) fieldsString.append(", PRIMARY KEY (" + primaryKey + " )");
+            }
+      fieldsString.append(")");
+
+     } // end of last field check
+
+    } // end of for each
         // information about the name-value style properties
         Map<String, Object> propertiesMap = tableObj.getProperties();
         StringBuilder propertiesString = new StringBuilder();
@@ -407,16 +506,48 @@ public class RestMusicDataAPI {
             }
         }
 
-        queryObject.appendQueryString(
-                        "CREATE TABLE " + keyspace + "." + tablename + " " + fieldsString);
+    String clusteringOrder = tableObj.getClusteringOrder();
 
-        if (propertiesMap != null)
-            queryObject.appendQueryString(" WITH " + propertiesString);
+    if (clusteringOrder != null && !(clusteringOrder.isEmpty())) {
+       String[] arrayClusterOrder = clusteringOrder.split("[,]+");
 
+       for (int i = 0; i < arrayClusterOrder.length; i++) 
+	   {
+           String[] clusterS = arrayClusterOrder[i].trim().split("[ ]+");
+                if ( (clusterS.length ==2)  && (clusterS[1].equalsIgnoreCase("ASC") || clusterS[1].equalsIgnoreCase("DESC"))) continue;
+                else {
+                  //logger.error("createTable/Clustering Order vlaue ERROR: valid clustering order is ASC or DESC or expecting colname  order; please correct clusteringOrder:\"+ clusteringOrder+\".\"", " valid clustering order is ASC or DESC; please correct clusteringOrder:"+ clusteringOrder+".");
+                    // logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA,
+                      //       ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
+                             return response.status(Status.BAD_REQUEST)
+                                     .entity(new JsonResponse(ResultType.FAILURE)
+                                             .setError("createTable/Clustering Order vlaue ERROR: valid clustering order is ASC or DESC or expecting colname  order; please correct clusteringOrder:"+ clusteringOrder+".")
+                                                       .toMap()).build();
+               }
+        	// add validation for column names in cluster key
+       }
+
+       if (!(clusterKey.isEmpty())) 
+       {
+             	 clusteringOrder = "CLUSTERING ORDER BY (" +clusteringOrder +")";
+             	 //cjc check if propertiesString.length() >0 instead propertiesMap
+             	 if (propertiesMap != null)  propertiesString.append(" AND  "+ clusteringOrder);
+                 else propertiesString.append(clusteringOrder);
+       } else {
+                logger.warn("Skipping clustering order=("+clusteringOrder+ ") since clustering key is empty ");
+       }
+    } //if non empty
+	
+	queryObject.appendQueryString(
+	           "CREATE TABLE " + keyspace + "." + tablename + " " + fieldsString);
+
+
+    if (propertiesString != null &&  propertiesString.length()>0 )
+        queryObject.appendQueryString(" WITH " + propertiesString);
         queryObject.appendQueryString(";");
         ResultType result = ResultType.FAILURE;
-
         try {
+          //logger.info("cjc query="+queryObject.getQuery());
             result = MusicCore.nonKeyRelatedPut(queryObject, consistency);
         } catch (MusicServiceException ex) {
             logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.MUSICSERVICEERROR);
@@ -447,14 +578,16 @@ public class RestMusicDataAPI {
                     @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
                     @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
                     @ApiParam(value = "Application namespace",required = true) @HeaderParam(NS) String ns,
-                    @ApiParam(value = "userId",required = true) @HeaderParam(USERID) String userId,
-                    @ApiParam(value = "Password",required = true) @HeaderParam(PASSWORD) String password,
+                    @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
                     @ApiParam(value = "Keyspace Name",required = true) @PathParam("keyspace") String keyspace,
                     @ApiParam(value = "Table Name",required = true) @PathParam("tablename") String tablename,
                     @ApiParam(value = "Field Name",required = true) @PathParam("field") String fieldName,
                     @Context UriInfo info) throws Exception {
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
 
+		Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
+		String userId = userCredentials.get(MusicUtil.USERID);
+		String password = userCredentials.get(MusicUtil.PASSWORD);
         Map<String, Object> authMap = MusicCore.autheticateUser(ns, userId, password, keyspace,aid, "createIndex");
         if (authMap.containsKey("aid"))
             authMap.remove("aid");
@@ -468,7 +601,7 @@ public class RestMusicDataAPI {
         if (rowParams.getFirst("index_name") != null)
             indexName = rowParams.getFirst("index_name");
         PreparedQueryObject query = new PreparedQueryObject();
-        query.appendQueryString("Create index " + indexName + " if not exists on " + keyspace + "."
+        query.appendQueryString("Create index if not exists " + indexName + "  on " + keyspace + "."
                         + tablename + " (" + fieldName + ");");
         
         ResultType result = ResultType.FAILURE;
@@ -480,9 +613,9 @@ public class RestMusicDataAPI {
             return response.entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
         }
         if ( result.equals(ResultType.SUCCESS) ) {
-            return response.entity(new JsonResponse(result).setMessage("Index Created on " + keyspace+"."+tablename+"."+fieldName).toMap()).build();
+            return response.status(Status.OK).entity(new JsonResponse(result).setMessage("Index Created on " + keyspace+"."+tablename+"."+fieldName).toMap()).build();
         } else {
-            return response.entity(new JsonResponse(result).setError("Unknown Error in create index.").toMap()).build();
+            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(result).setError("Unknown Error in create index.").toMap()).build();
         }
     }
 
@@ -505,8 +638,7 @@ public class RestMusicDataAPI {
                     @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
                     @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
                     @ApiParam(value = "Application namespace",required = true) @HeaderParam(NS) String ns,
-                    @ApiParam(value = "userId",required = true) @HeaderParam(USERID) String userId,
-                    @ApiParam(value = "Password",required = true) @HeaderParam(PASSWORD) String password,
+                    @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
                     JsonInsert insObj,
                     @ApiParam(value = "Keyspace Name",
                                     required = true) @PathParam("keyspace") String keyspace,
@@ -514,6 +646,9 @@ public class RestMusicDataAPI {
                                     required = true) @PathParam("tablename") String tablename) {
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
 
+		Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
+		String userId = userCredentials.get(MusicUtil.USERID);
+		String password = userCredentials.get(MusicUtil.PASSWORD);
         Map<String, Object> authMap = null;
         
         try {
@@ -550,7 +685,7 @@ public class RestMusicDataAPI {
         queryObject.addValue(vectorTs);
         int counter = 0;
         String primaryKey = "";
-
+        Map<String, byte[]> objectMap = insObj.getObjectMap();
         for (Map.Entry<String, Object> entry : valuesMap.entrySet()) {
             fieldsString.append("" + entry.getKey());
             Object valueObj = entry.getValue();
@@ -573,6 +708,7 @@ public class RestMusicDataAPI {
               logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
           }
             valueString.append("?");
+            
             queryObject.addValue(formattedValue);
 
             if (counter == valuesMap.size() - 1) {
@@ -585,11 +721,48 @@ public class RestMusicDataAPI {
             counter = counter + 1;
         }
         
+        //blobs..
+        if(objectMap != null) {
+        for (Map.Entry<String, byte[]> entry : objectMap.entrySet()) {
+        	if(counter > 0) {
+        		fieldsString.replace(fieldsString.length()-1, fieldsString.length(), ",");
+        		valueString.replace(valueString.length()-1, valueString.length(), ",");
+        	}
+            fieldsString.append("" + entry.getKey());
+            byte[] valueObj = entry.getValue();
+            if (primaryKeyName.equals(entry.getKey())) {
+                primaryKey = entry.getValue() + "";
+                primaryKey = primaryKey.replace("'", "''");
+            }
+
+            DataType colType = tableInfo.getColumn(entry.getKey()).getType();
+
+            ByteBuffer formattedValue = null;
+            
+            if(colType.toString().toLowerCase().contains("blob"))
+            	formattedValue = MusicUtil.convertToActualDataType(colType, valueObj);
+            
+            valueString.append("?");
+            
+            queryObject.addValue(formattedValue);
+            counter = counter + 1;
+            /*if (counter == valuesMap.size() - 1) {
+                fieldsString.append(")");
+                valueString.append(")");
+            } else {*/
+                fieldsString.append(",");
+                valueString.append(",");
+            //}
+        } }
+        
         if(primaryKey == null || primaryKey.length() <= 0) {
             logger.error(EELFLoggerDelegate.errorLogger, "Some required partition key parts are missing: "+primaryKeyName );
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.SYNTAXERROR).setError("Some required partition key parts are missing: "+primaryKeyName).toMap()).build();
         }
 
+        fieldsString.replace(fieldsString.length()-1, fieldsString.length(), ")");
+		valueString.replace(valueString.length()-1, valueString.length(), ")");
+		
         queryObject.appendQueryString("INSERT INTO " + keyspace + "." + tablename + " "
                         + fieldsString + " VALUES " + valueString);
 
@@ -675,10 +848,7 @@ public class RestMusicDataAPI {
                     @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
                     @ApiParam(value = "Application namespace",
                                     required = true) @HeaderParam(NS) String ns,
-                    @ApiParam(value = "userId",
-                                    required = true) @HeaderParam(USERID) String userId,
-                    @ApiParam(value = "Password",
-                                    required = true) @HeaderParam(PASSWORD) String password,
+                    @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
                     JsonUpdate updateObj,
                     @ApiParam(value = "Keyspace Name",
                                     required = true) @PathParam("keyspace") String keyspace,
@@ -687,6 +857,9 @@ public class RestMusicDataAPI {
                     @Context UriInfo info) {
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
 
+		Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
+		String userId = userCredentials.get(MusicUtil.USERID);
+		String password = userCredentials.get(MusicUtil.PASSWORD);
         Map<String, Object> authMap;
         try {
             authMap = MusicCore.autheticateUser(ns, userId, password, keyspace,
@@ -888,10 +1061,7 @@ public class RestMusicDataAPI {
                     @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
                     @ApiParam(value = "Application namespace",
                                     required = true) @HeaderParam(NS) String ns,
-                    @ApiParam(value = "userId",
-                                    required = true) @HeaderParam(USERID) String userId,
-                    @ApiParam(value = "Password",
-                                    required = true) @HeaderParam(PASSWORD) String password,
+                    @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
                     JsonDelete delObj,
                     @ApiParam(value = "Keyspace Name",
                                     required = true) @PathParam("keyspace") String keyspace,
@@ -900,6 +1070,9 @@ public class RestMusicDataAPI {
                     @Context UriInfo info) {
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
 
+		Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
+		String userId = userCredentials.get(MusicUtil.USERID);
+		String password = userCredentials.get(MusicUtil.PASSWORD);
         Map<String, Object> authMap = null;
         try {
             authMap = MusicCore.autheticateUser(ns, userId, password, keyspace,
@@ -1031,16 +1204,16 @@ public class RestMusicDataAPI {
                     @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
                     @ApiParam(value = "Application namespace",
                                     required = true) @HeaderParam(NS) String ns,
-                    @ApiParam(value = "userId",
-                                    required = true) @HeaderParam(USERID) String userId,
-                    @ApiParam(value = "Password",
-                                    required = true) @HeaderParam(PASSWORD) String password,
+                    @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
                     @ApiParam(value = "Keyspace Name",
                                     required = true) @PathParam("keyspace") String keyspace,
                     @ApiParam(value = "Table Name",
                                     required = true) @PathParam("tablename") String tablename) throws Exception {
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
 
+		Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
+		String userId = userCredentials.get(MusicUtil.USERID);
+		String password = userCredentials.get(MusicUtil.PASSWORD);
         Map<String, Object> authMap =
                         MusicCore.autheticateUser(ns, userId, password, keyspace, aid, "dropTable");
         if (authMap.containsKey("aid"))
@@ -1085,10 +1258,7 @@ public class RestMusicDataAPI {
                     @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
                     @ApiParam(value = "Application namespace",
                                     required = true) @HeaderParam(NS) String ns,
-                    @ApiParam(value = "userId",
-                                    required = true) @HeaderParam(USERID) String userId,
-                    @ApiParam(value = "Password",
-                                    required = true) @HeaderParam(PASSWORD) String password,
+                    @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
                     JsonInsert selObj,
                     @ApiParam(value = "Keyspace Name",
                                     required = true) @PathParam("keyspace") String keyspace,
@@ -1097,6 +1267,9 @@ public class RestMusicDataAPI {
                     @Context UriInfo info) throws Exception {
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
 
+		Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
+		String userId = userCredentials.get(MusicUtil.USERID);
+		String password = userCredentials.get(MusicUtil.PASSWORD);
         Map<String, Object> authMap = MusicCore.autheticateUser(ns, userId, password, keyspace,aid, "selectCritical");
         if (authMap.containsKey("aid"))
             authMap.remove("aid");
@@ -1138,11 +1311,12 @@ public class RestMusicDataAPI {
         else if (consistency.equalsIgnoreCase(MusicUtil.ATOMICDELETELOCK)) {
             results = MusicCore.atomicGetWithDeleteLock(keyspace, tablename, rowId.primarKeyValue, queryObject);
         }
-
         if(results!=null && results.getAvailableWithoutFetching() >0) {
         	return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setDataResult(MusicCore.marshallResults(results)).toMap()).build();
         }
-        return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setError("No data found").setDataResult(MusicCore.marshallResults(results)).toMap()).build();
+        return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setError("No data found").toMap()).build();
+
+        
     }
 
     /**
@@ -1167,10 +1341,7 @@ public class RestMusicDataAPI {
                     @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
                     @ApiParam(value = "Application namespace",
                                     required = true) @HeaderParam(NS) String ns,
-                    @ApiParam(value = "userId",
-                                    required = true) @HeaderParam(USERID) String userId,
-                    @ApiParam(value = "Password",
-                                    required = true) @HeaderParam(PASSWORD) String password,
+                    @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
                     @ApiParam(value = "Keyspace Name",
                                     required = true) @PathParam("keyspace") String keyspace,
                     @ApiParam(value = "Table Name",
@@ -1178,6 +1349,9 @@ public class RestMusicDataAPI {
                     @Context UriInfo info) throws Exception {
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
 
+		Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
+		String userId = userCredentials.get(MusicUtil.USERID);
+		String password = userCredentials.get(MusicUtil.PASSWORD);
         Map<String, Object> authMap =
                         MusicCore.autheticateUser(ns, userId, password, keyspace, aid, "select");
         if (authMap.containsKey("aid"))
@@ -1203,10 +1377,10 @@ public class RestMusicDataAPI {
 
         try {
             ResultSet results = MusicCore.get(queryObject);
-            if(results!=null && results.getAvailableWithoutFetching() >0) {
+            if(results.getAvailableWithoutFetching() >0) {
             	return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setDataResult(MusicCore.marshallResults(results)).toMap()).build();
             }
-            return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setError("No data found").setDataResult(MusicCore.marshallResults(results)).toMap()).build();
+            return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setError("No data found").toMap()).build();
         } catch (MusicServiceException ex) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.UNKNOWNERROR  ,ErrorSeverity.ERROR, ErrorTypes.MUSICSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();

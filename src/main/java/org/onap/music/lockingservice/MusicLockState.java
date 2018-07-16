@@ -134,11 +134,4 @@ public class MusicLockState implements Serializable {
         }
         return (MusicLockState) o;
     }
-    
-    @Override
-	public String toString() {
-		// TODO Auto-generated method stub
-		return "lockStatus:"+ (lockStatus == null ? null : lockStatus.toString())+" |needToSyncQuorum:"+needToSyncQuorum+" |lockHolder:"+lockHolder
-				+" |leasePeriod:"+leasePeriod+" |leaseStartTime:"+leaseStartTime;
-	}
 }

@@ -38,6 +38,9 @@ public class JsonTable {
     private Map<String, Object> properties;
     private String primaryKey;
     private String sortingKey;
+    private String partitionKey;
+    private String clusteringKey;
+    private String filteringKey;
     private String clusteringOrder;
     private Map<String, String> consistencyInfo;
 
@@ -112,6 +115,30 @@ public class JsonTable {
     public void setPrimaryKey(String primaryKey) {
         this.primaryKey = primaryKey;
     }
+
+	public String getClusteringKey() {
+		return clusteringKey;
+	}
+
+	public void setClusteringKey(String clusteringKey) {
+		this.clusteringKey = clusteringKey;
+	}
+
+	public String getFilteringKey() {
+		return filteringKey;
+	}
+
+	public void setFilteringKey(String filteringKey) {
+		this.filteringKey = filteringKey;
+	}
+
+	public String getPartitionKey() {
+		return partitionKey;
+	}
+
+	public void setPartitionKey(String partitionKey) {
+		this.partitionKey = partitionKey;
+	}
 
 
 }

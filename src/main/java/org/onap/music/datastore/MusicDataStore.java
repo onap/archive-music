@@ -24,6 +24,7 @@ package org.onap.music.datastore;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -51,6 +52,7 @@ import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.sun.jersey.core.util.Base64;
 
 /**
  * @author nelson24
@@ -259,6 +261,12 @@ public class MusicDataStore {
                 return null;
         }
     }
+    
+    public byte[] getBlobValue(Row row, String colName, DataType colType) {
+    	ByteBuffer bb = row.getBytes(colName);
+    	byte[] data = bb.array();
+    	return data;
+    }
 
     public boolean doesRowSatisfyCondition(Row row, Map<String, Object> condition) throws Exception {
         ColumnDefinitions colInfo = row.getColumnDefinitions();
@@ -288,9 +296,15 @@ public class MusicDataStore {
             ColumnDefinitions colInfo = row.getColumnDefinitions();
             HashMap<String, Object> resultOutput = new HashMap<String, Object>();
             for (Definition definition : colInfo) {
-                if (!definition.getName().equals("vector_ts"))
-                    resultOutput.put(definition.getName(),
+                if (!definition.getName().equals("vector_ts")) {
+                	if(definition.getType().toString().toLowerCase().contains("blob")) {
+                		resultOutput.put(definition.getName(),
+                                getBlobValue(row, definition.getName(), definition.getType()));
+                	} 
+                	else
+                		resultOutput.put(definition.getName(),
                                     getColValue(row, definition.getName(), definition.getType()));
+                }
             }
             resultMap.put("row " + counter, resultOutput);
             counter++;
@@ -326,10 +340,15 @@ public class MusicDataStore {
                                         + queryObject.getValues());
         PreparedStatement preparedInsert = null;
         try {
-        	preparedInsert = session.prepare(queryObject.getQuery());
+        	
+				preparedInsert = session.prepare(queryObject.getQuery());
+			
         } catch(InvalidQueryException iqe) {
-        	logger.error(EELFLoggerDelegate.errorLogger, iqe.getMessage());
+        	logger.error(EELFLoggerDelegate.errorLogger, iqe.getMessage(),AppMessages.QUERYERROR, ErrorSeverity.CRITICAL, ErrorTypes.QUERYERROR);
         	throw new MusicQueryException(iqe.getMessage());
+        }catch(Exception e) {
+        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.QUERYERROR, ErrorSeverity.CRITICAL, ErrorTypes.QUERYERROR);
+        	throw new MusicQueryException(e.getMessage());
         }
         
         try {

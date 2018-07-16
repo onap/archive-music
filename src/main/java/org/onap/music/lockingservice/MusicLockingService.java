@@ -19,8 +19,6 @@ package org.onap.music.lockingservice;
 
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.StringTokenizer;
 import java.util.concurrent.CountDownLatch;
 
@@ -99,12 +97,7 @@ public class MusicLockingService implements Watcher {
         try{
         	data = zkLockHandle.getNodeData(lockName);
         }catch (Exception ex){
-        	StringWriter sw = new StringWriter();
-			ex.printStackTrace();
-			ex.printStackTrace(new PrintWriter(sw));
-			String exceptionAsString = sw.toString();
-			logger.error(EELFLoggerDelegate.errorLogger,exceptionAsString);
-        	throw new  MusicLockingException(exceptionAsString);
+        	logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
         if(data !=null)
         return MusicLockState.deSerialize(data);

@@ -81,19 +81,19 @@ public class RestMusicLocksAPI {
             @ApiParam(value="Lock Name",required=true) @PathParam("lockname") String lockName,
             @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
             @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
+            @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
             @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
             @ApiParam(value = "Application namespace",
-                            required = true) @HeaderParam("ns") String ns,
-            @ApiParam(value = "userId",
-                            required = true) @HeaderParam("userId") String userId,
-            @ApiParam(value = "Password",
-                            required = true) @HeaderParam("password") String password) throws Exception{
+                            required = true) @HeaderParam("ns") String ns) throws Exception{
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
         Map<String, Object> resultMap = MusicCore.validateLock(lockName);
         if (resultMap.containsKey("Exception")) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
+		Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
+		String userId = userCredentials.get(MusicUtil.USERID);
+		String password = userCredentials.get(MusicUtil.PASSWORD);
         String keyspaceName = (String) resultMap.get("keyspace");
         resultMap.remove("keyspace");
         resultMap = MusicCore.autheticateUser(ns, userId, password, keyspaceName, aid,
@@ -133,19 +133,19 @@ public class RestMusicLocksAPI {
             @ApiParam(value="Lock Reference",required=true) @PathParam("lockreference") String lockId,
             @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
             @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
+            @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
             @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
             @ApiParam(value = "Application namespace",
-                            required = true) @HeaderParam("ns") String ns,
-            @ApiParam(value = "userId",
-                            required = true) @HeaderParam("userId") String userId,
-            @ApiParam(value = "Password",
-                            required = true) @HeaderParam("password") String password) throws Exception{
+                            required = true) @HeaderParam("ns") String ns) throws Exception{
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
         Map<String, Object> resultMap = MusicCore.validateLock(lockId);
         if (resultMap.containsKey("Exception")) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
+		Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
+		String userId = userCredentials.get(MusicUtil.USERID);
+		String password = userCredentials.get(MusicUtil.PASSWORD);
         String keyspaceName = (String) resultMap.get("keyspace");
         resultMap.remove("keyspace");
         resultMap = MusicCore.autheticateUser(ns, userId, password, keyspaceName, aid,
@@ -183,19 +183,19 @@ public class RestMusicLocksAPI {
             @ApiParam(value="Lock Reference",required=true) @PathParam("lockreference") String lockId,
             @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
             @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
+            @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
             @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
             @ApiParam(value = "Application namespace",
-                            required = true) @HeaderParam("ns") String ns,
-            @ApiParam(value = "userId",
-                            required = true) @HeaderParam("userId") String userId,
-            @ApiParam(value = "Password",
-                            required = true) @HeaderParam("password") String password) throws Exception{
+                            required = true) @HeaderParam("ns") String ns) throws Exception{
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
         Map<String, Object> resultMap = MusicCore.validateLock(lockId);
         if (resultMap.containsKey("Exception")) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
+		Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
+		String userId = userCredentials.get(MusicUtil.USERID);
+		String password = userCredentials.get(MusicUtil.PASSWORD);
         String keyspaceName = (String) resultMap.get("keyspace");
         resultMap.remove("keyspace");
         resultMap = MusicCore.autheticateUser(ns, userId, password, keyspaceName, aid,
@@ -230,19 +230,19 @@ public class RestMusicLocksAPI {
             @ApiParam(value="Lock Name",required=true) @PathParam("lockname") String lockName,
             @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
             @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
+            @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
             @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
             @ApiParam(value = "Application namespace",
-                            required = true) @HeaderParam("ns") String ns,
-            @ApiParam(value = "userId",
-                            required = true) @HeaderParam("userId") String userId,
-            @ApiParam(value = "Password",
-                            required = true) @HeaderParam("password") String password) throws Exception{
+                            required = true) @HeaderParam("ns") String ns) throws Exception{
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
         Map<String, Object> resultMap = MusicCore.validateLock(lockName);
         if (resultMap.containsKey("Exception")) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
+		Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
+		String userId = userCredentials.get(MusicUtil.USERID);
+		String password = userCredentials.get(MusicUtil.PASSWORD);
         String keyspaceName = (String) resultMap.get("keyspace");
         resultMap.remove("keyspace");
         resultMap = MusicCore.autheticateUser(ns, userId, password, keyspaceName, aid,
@@ -275,6 +275,7 @@ public class RestMusicLocksAPI {
             @ApiParam(value="Lock Name",required=true) @PathParam("lockname") String lockName,
             @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
             @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
+            @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
             @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
             @ApiParam(value = "Application namespace",
                             required = true) @HeaderParam("ns") String ns,
@@ -332,19 +333,19 @@ public class RestMusicLocksAPI {
     public Response unLock(@PathParam("lockreference") String lockId,
             @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
             @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
+            @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
             @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
             @ApiParam(value = "Application namespace",
-                            required = true) @HeaderParam("ns") String ns,
-            @ApiParam(value = "userId",
-                            required = true) @HeaderParam("userId") String userId,
-            @ApiParam(value = "Password",
-                            required = true) @HeaderParam("password") String password) throws Exception{
+                            required = true) @HeaderParam("ns") String ns) throws Exception{
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
         Map<String, Object> resultMap = MusicCore.validateLock(lockId);
         if (resultMap.containsKey("Exception")) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
+		Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
+		String userId = userCredentials.get(MusicUtil.USERID);
+		String password = userCredentials.get(MusicUtil.PASSWORD);
         String keyspaceName = (String) resultMap.get("keyspace");
         resultMap.remove("keyspace");
         resultMap = MusicCore.autheticateUser(ns, userId, password, keyspaceName, aid,
@@ -390,18 +391,18 @@ public class RestMusicLocksAPI {
             @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
             @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
             @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+            @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
             @ApiParam(value = "Application namespace",
-                            required = true) @HeaderParam("ns") String ns,
-            @ApiParam(value = "userId",
-                            required = true) @HeaderParam("userId") String userId,
-            @ApiParam(value = "Password",
-                            required = true) @HeaderParam("password") String password) throws Exception{
+                            required = true) @HeaderParam("ns") String ns) throws Exception{
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
         Map<String, Object> resultMap = MusicCore.validateLock(lockName);
         if (resultMap.containsKey("Exception")) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.UNKNOWNERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
+		Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
+		String userId = userCredentials.get(MusicUtil.USERID);
+		String password = userCredentials.get(MusicUtil.PASSWORD);
         String keyspaceName = (String) resultMap.get("keyspace");
         resultMap.remove("keyspace");
         resultMap = MusicCore.autheticateUser(ns, userId, password, keyspaceName, aid,

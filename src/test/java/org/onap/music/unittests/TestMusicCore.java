@@ -24,9 +24,11 @@ package org.onap.music.unittests;
 import static org.junit.Assert.*;
 import static org.onap.music.main.MusicCore.mDstoreHandle;
 import static org.onap.music.main.MusicCore.mLockHandle;
-
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -45,6 +47,11 @@ import org.onap.music.main.ReturnType;
 import org.onap.music.main.MusicCore.Condition;
 import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.eelf.logging.format.AppMessages;
+import org.onap.music.eelf.logging.format.ErrorSeverity;
+import org.onap.music.eelf.logging.format.ErrorTypes;
+import com.att.eelf.exception.EELFException;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
 
@@ -77,6 +84,16 @@ public class TestMusicCore {
         Mockito.verify(mLockHandle).createLockId("/" + "test");
     }
 
+
+    @Test
+    public void testCreateLockReferencefornullname() {
+        Mockito.when(mLockHandle.createLockId("/" + "test")).thenReturn("lock");
+        String lockId = MusicCore.createLockReference("x"); //test");
+        //System.out.println("cjc exception lockhandle=" + mLockHandle+"lockid="+lockId );
+        assertNotEquals("lock", lockId);
+        //Mockito.verify(mLockHandle).createLockId("/" + "test");
+    }
+    
     @Test
     public void testIsTableOrKeySpaceLock() {
         Boolean result = MusicCore.isTableOrKeySpaceLock("ks1.tn1");
@@ -136,11 +153,11 @@ public class TestMusicCore {
     @Test
     public void testAcquireLockifisMyTurnTrueandIsTableOrKeySpaceLockFalseandDontHaveLock() throws MusicLockingException {
         MusicLockState musicLockState = new MusicLockState(LockStatus.LOCKED, "id2");
-        Mockito.when(mLockHandle.isMyTurn("id2")).thenReturn(true);
+        Mockito.when(mLockHandle.isMyTurn("id1")).thenReturn(true);
         Mockito.when(mLockHandle.getLockState("ks1.tn1.pk1")).thenReturn(musicLockState);
-        ReturnType lock = MusicCore.acquireLock("ks1.tn1.pk1", "id2");
+        ReturnType lock = MusicCore.acquireLock("ks1.tn1.pk1", "id1");
         assertEquals(lock.getResult(), ResultType.SUCCESS);
-        Mockito.verify(mLockHandle).isMyTurn("id2");
+        Mockito.verify(mLockHandle).isMyTurn("id1");
         Mockito.verify(mLockHandle).getLockState("ks1.tn1.pk1");
     }
     
@@ -485,5 +502,177 @@ public class TestMusicCore {
         Mockito.verify(mLockHandle, Mockito.atLeastOnce())
                         .getLockState("ks1" + "." + "tn1" + "." + "pk1");
     }
+
+    @Test
+    public void testAtomicGetPreparedQuerywithDeleteLockWithLeaseFalse()
+                    throws MusicServiceException, MusicLockingException {
+        mDstoreHandle = Mockito.mock(MusicDataStore.class);
+        preparedQueryObject = Mockito.mock(PreparedQueryObject.class);
+        rs = Mockito.mock(ResultSet.class);
+        Mockito.when(mLockHandle.createLockId("/" + "ks1.tn1.pk1")).thenReturn("id1");
+        Mockito.when(mLockHandle.isMyTurn("id1")).thenReturn(false);
+        ResultSet rs1 = MusicCore.atomicGet("ks1", "tn1", "pk1", preparedQueryObject);
+        assertNull(rs1);
+        Mockito.verify(mLockHandle).createLockId("/" + "ks1.tn1.pk1");
+        Mockito.verify(mLockHandle).isMyTurn("id1");
+    }
+    
+    @Test
+    public void testCondition() throws Exception {
+      //Condition conClass =  Mockito.mock(Condition.class);
+     // boolean ret=true;
+     //Mockito.when(conClass.testCondition().thenReturn(ret);
+      Map<String, Object> conditionsx=null;
+      PreparedQueryObject selectQueryForTheRowx=null;
+      try {
+      Condition con = new Condition(conditionsx,selectQueryForTheRowx);
+      assertTrue(con.testCondition());
+      } catch (Exception e) {
+        assertFalse(false);
+      }
+    }
+  //getLockingServiceHandl  
+    
+    @Ignore
+    @Test(expected = MusicLockingException.class) //("Failed to aquire Locl store handle " + e))
+    public void testgetLockingServiceHandle() throws Exception {
+     // MusicLockingService mLockHandlex =  Mockito.mock(MusicLockingService.class);
+      //MusicLockingService mLockHandlea = mLockHandle;
+      //mLockHandle=null;
+      System.out.println("cjc 0 locking test n");
+     // Mockito.when(MusicCore.getLockingServiceHandle()).thenReturn(mLockHandle);
+      //mLockHandle=null;
+      //System.out.println("cjc 0-1  locking test n");
+      MusicLockingService mLockHandlea = mLockHandle;
+      mLockHandle=null;
+      
+      MusicLockingService mLockHandley=null; //MusicCore.getLockingServiceHandle();
+      Mockito.when(MusicCore.getLockingServiceHandle()).thenReturn(mLockHandley);
+      System.out.println("cjc locking test n");
+      mLockHandle=mLockHandlea;
+      assertTrue(true);
+      
+    }
+   
+   @Test(expected = MusicServiceException.class)
+   public void testGetDSHandle() throws MusicServiceException, MusicQueryException {
+      // rs = Mockito.mock(ResultSet.class);
+      // session = Mockito.mock(Session.class);
+       //Mockito.when(mDstoreHandle.getSession()).thenReturn(session);
+       //Mockito.when(mDstoreHandle.executeCriticalGet(preparedQueryObject)).thenReturn(rs);
+      
+       MusicDataStore mDstoreHandlea = Mockito.mock(MusicDataStore.class);
+       //MusicUtil mMusicUtil=Mockito.mock(MusicUtil.class);
+       //System.out.println("cjc 0 getDsHandle");
+       Mockito.when(MusicCore.getDSHandle()).thenReturn(mDstoreHandlea);
+      // System.out.println("cjc localhost");
+      // Mockito.when(mMusicUtil.getMyCassaHost().equals("localhost")).thenReturn(null);
+       //System.out.println("cjc 1 localhost");
+    //     mDstoreHandle = new MusicDataStore(MusicUtil.getMyCassaHost());
+    // } else {
+    //     mDstoreHandle = new MusicDataStore();
+    // }
+       assertTrue(true);
+   }
+   
+  //add mocking 
+   @Ignore
+   @Test
+   public void testGetDSHandleIp() throws MusicServiceException, MusicQueryException {
+      // rs = Mockito.mock(ResultSet.class);
+      // session = Mockito.mock(Session.class);
+       //Mockito.when(mDstoreHandle.getSession()).thenReturn(session);
+       //Mockito.when(mDstoreHandle.executeCriticalGet(preparedQueryObject)).thenReturn(rs);
+      
+       //mDstoreHandle = Mockito.mock(MusicDataStore.class);
+       //MusicUtil mMusicUtil=Mockito.mock(MusicUtil.class);
+       System.out.println("cjc 0 getDsHandleIP");
+       Mockito.when(MusicCore.getDSHandle("1.127.0.1")).thenReturn(mDstoreHandle);
+       System.out.println("cjc localhost");
+      // Mockito.when(mMusicUtil.getMyCassaHost().equals("localhost")).thenReturn(null);
+       System.out.println("cjc 1 localhost IP");
+    //     mDstoreHandle = new MusicDataStore(MusicUtil.getMyCassaHost());
+    // } else {
+    //     mDstoreHandle = new MusicDataStore();
+    // }
+       assertTrue(true);
+   }
+   
+   @Ignore
+   @Test
+   public void testPureZkCreate() { 
+     try {
+     MusicCore.pureZkCreate("local");
+     } catch(NullPointerException e) {
+       System.out.println("cjc zkcreate null pointwer exception:"+ e);
+     }
+   }  
+   
+   @Ignore
+   @Test 
+   public void testPureZkRead() {   //String nodeName) {
+     byte[] data = MusicCore.pureZkRead("localhost");
+   }
+
+   //need fixing
+   @Ignore
+   @Test
+   public void testPureZkWrite() { //String nodeName, byte[] data) {
+     /*
+     long start = System.currentTimeMillis();
+     logger.info(EELFLoggerDelegate.applicationLogger,"Performing zookeeper write to " + nodeName);
+     try {
+         getLockingServiceHandle().getzkLockHandle().setNodeData(nodeName, data);
+     } catch (MusicLockingException e) {
+         logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), "[ERR512E] Failed to get ZK Lock Handle "  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+     }
+     logger.info(EELFLoggerDelegate.applicationLogger,"Performed zookeeper write to " + nodeName);
+     long end = System.currentTimeMillis();
+     logger.info(EELFLoggerDelegate.applicationLogger,"Time taken for the actual zk put:" + (end - start) + " ms");
+    */
+    
+      // mDstoreHandle = Mockito.mock(MusicDataStore.class);
+      // rs = Mockito.mock(ResultSet.class);
+      // session = Mockito.mock(Session.class);
+       //Mockito.when(mDstoreHandle.getSession()).thenReturn(session);
+       
+       byte[] data= "Testing Zoo Keeper".getBytes();
+       MusicCore.pureZkWrite("1.127.0.1", data);
+      // assertNotNull(rs1);
+   }
+   
+   @Test
+   public void testWhoseTurnIsIt() { //(String lockName) {
+
+     /*
+     try {
+         return getLockingServiceHandle().whoseTurnIsIt("/" + lockName) + "";
+     } catch (MusicLockingException e) {
+         logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.LOCKINGERROR+lockName ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+     }
+     return null;
+     */
+     
+     String lockName="xxx";
+     if (MusicCore.whoseTurnIsIt(lockName) != null) assertTrue(true);
+     
+
+
+ }
+   
+   @Test
+   public void testMarshallResults() { 
+     Map<String, HashMap<String, Object>> ret=null;
+     //ResultSet results =null;
+     rs = Mockito.mock(ResultSet.class);
+    try { 
+      ret= MusicCore.marshallResults(rs);
+      
+     } catch( Exception e ) {
+     
+     }
+    
+     if (ret != null) assertTrue(true);
+   }
 
 }

@@ -24,16 +24,25 @@ package org.onap.music.main;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.StringTokenizer;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
+
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
+
 import com.datastax.driver.core.DataType;
+import com.sun.jersey.core.util.Base64;
 
 /**
  * @author nelson24
@@ -58,6 +67,9 @@ public class MusicUtil {
     public static final String INSERT = "insert";
     public static final String UPDATE = "update";
     public static final String UPSERT = "upsert";
+    public static final String USERID = "userId";
+    public static final String PASSWORD = "password";
+    public static final String AUTHORIZATION = "Authorization";
 
     private static final String LOCALHOST = "localhost";
     private static final String PROPERTIES_FILE = "/opt/app/music/etc/music.properties";
@@ -81,6 +93,7 @@ public class MusicUtil {
     private static String cassName = "cassandra";
     private static String cassPwd;
     private static String aafEndpointUrl = null;
+    public static ConcurrentMap<String, Long> zkNodeMap = new ConcurrentHashMap<>();
 
     private MusicUtil() {
         throw new IllegalStateException("Utility Class");
@@ -402,7 +415,8 @@ public class MusicUtil {
         MusicUtil.cassPwd = cassPwd;
     }
 
-    public static String convertToCQLDataType(DataType type, Object valueObj) throws Exception {
+    @SuppressWarnings("unchecked")
+	public static String convertToCQLDataType(DataType type, Object valueObj) throws Exception {
 
         String value = "";
         switch (type.getName()) {
@@ -416,8 +430,7 @@ public class MusicUtil {
             value = "'" + valueString + "'";
             break;
         case MAP: {
-            @SuppressWarnings("unchecked")
-			Map<String, Object> otMap = (Map<String, Object>) valueObj;
+            Map<String, Object> otMap = (Map<String, Object>) valueObj;
             value = "{" + jsonMaptoSqlString(otMap, ",") + "}";
             break;
         }
@@ -440,29 +453,34 @@ public class MusicUtil {
 	public static Object convertToActualDataType(DataType colType, Object valueObj) throws Exception {
         String valueObjString = valueObj + "";
         switch (colType.getName()) {
-        case UUID:
-            return UUID.fromString(valueObjString);
-        case VARINT:
-            return BigInteger.valueOf(Long.parseLong(valueObjString));
-        case BIGINT:
-            return Long.parseLong(valueObjString);
-        case INT:
-            return Integer.parseInt(valueObjString);
-        case FLOAT:
-            return Float.parseFloat(valueObjString);
-        case DOUBLE:
-            return Double.parseDouble(valueObjString);
-        case BOOLEAN:
-            return Boolean.parseBoolean(valueObjString);
-        case MAP:
-            return (Map<String, Object>) valueObj;
-        case LIST:
-        	return (List<String>)valueObj;
-        default:
-            return valueObjString;
+            case UUID:
+                return UUID.fromString(valueObjString);
+            case VARINT:
+                return BigInteger.valueOf(Long.parseLong(valueObjString));
+            case BIGINT:
+                return Long.parseLong(valueObjString);
+            case INT:
+                return Integer.parseInt(valueObjString);
+            case FLOAT:
+                return Float.parseFloat(valueObjString);
+            case DOUBLE:
+                return Double.parseDouble(valueObjString);
+            case BOOLEAN:
+                return Boolean.parseBoolean(valueObjString);
+            case MAP:
+                return (Map<String, Object>) valueObj;
+            case BLOB:
+            	
+            default:
+                return valueObjString;
         }
     }
 
+    public static ByteBuffer convertToActualDataType(DataType colType, byte[] valueObj) {
+         ByteBuffer buffer = ByteBuffer.wrap(valueObj);
+         return buffer;
+    }
+ 
     /**
      *
      * Utility function to parse json map into sql like string
@@ -489,6 +507,7 @@ public class MusicUtil {
         return sqlString.toString();
     }
 
+    @SuppressWarnings("unused")
     public static String buildVersion(String major, String minor, String patch) {
         if (minor != null) {
             major += "." + minor;
@@ -530,8 +549,18 @@ public class MusicUtil {
         logger.info(EELFLoggerDelegate.applicationLogger,"Version In:" + versionIn);
         return response;
     }
+    
+    
+    public static Map<String,String> extractBasicAuthentication(String authorization){
+		
+    	Map<String,String> authValues = new HashMap<>();
+    	authorization = authorization.replaceFirst("Basic", "");
+    	String decoded = Base64.base64Decode(authorization);
+    	StringTokenizer token = new StringTokenizer(decoded, ":");
+    	authValues.put(MusicUtil.USERID, token.nextToken().toString());
+    	authValues.put(MusicUtil.PASSWORD,token.nextToken());
+    	return authValues;
+    	
+    }
 
-    
-    
-    
 }

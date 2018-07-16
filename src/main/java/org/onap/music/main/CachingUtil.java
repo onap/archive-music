@@ -33,6 +33,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.jcs.JCS;
 import org.apache.commons.jcs.access.CacheAccess;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.mindrot.jbcrypt.BCrypt;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.AAFResponse;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
@@ -101,8 +102,8 @@ public class CachingUtil implements Runnable {
             String keySpace = row.getString("application_name");
             try {
                 userAttempts.put(nameSpace, 0);
-                boolean aafRresponse = triggerAAF(nameSpace, userId, password);
-                if (aafRresponse) {
+                AAFResponse responseObj = triggerAAF(nameSpace, userId, password);
+                if (responseObj.getNs().size() > 0) {
                     map = new HashMap<>();
                     map.put(userId, password);
                     aafCache.put(nameSpace, map);
@@ -133,9 +134,9 @@ public class CachingUtil implements Runnable {
                     String keySpace) throws Exception {
 
         if (aafCache.get(nameSpace) != null) {
-          /*  if (keySpace != null && !musicCache.get(keySpace).equals(nameSpace)) {
+            if (keySpace != null && !musicCache.get(keySpace).equals(nameSpace)) {
             	logger.info(EELFLoggerDelegate.applicationLogger,"Create new application for the same namespace.");
-            } else */if (aafCache.get(nameSpace).get(userId).equals(password)) {
+            } else if (aafCache.get(nameSpace).get(userId).equals(password)) {
             	logger.info(EELFLoggerDelegate.applicationLogger,"Authenticated with cache value..");
                 // reset invalid attempts to 0
                 userAttempts.put(nameSpace, 0);
@@ -163,21 +164,20 @@ public class CachingUtil implements Runnable {
             }
         }
 
-        boolean aafRresponse = triggerAAF(nameSpace, userId, password);
-        if (aafRresponse) {
-        	//TODO
+        AAFResponse responseObj = triggerAAF(nameSpace, userId, password);
+        if (responseObj.getNs().size() > 0) {
             //if (responseObj.getNs().get(0).getAdmin().contains(userId)) {
-            	Map<String, String> map = new HashMap<>();
-                map.put(userId, password);
-                aafCache.put(nameSpace, map);
+            	//Map<String, String> map = new HashMap<>();
+                //map.put(userId, password);
+                //aafCache.put(nameSpace, map);
             	return true;
             //}
         }
         logger.info(EELFLoggerDelegate.applicationLogger,"Invalid user. Cache not updated");
-        return aafRresponse;
+        return false;
     }
 
-    private static boolean triggerAAF(String nameSpace, String userId, String password)
+    private static AAFResponse triggerAAF(String nameSpace, String userId, String password)
                     throws Exception {
         if (MusicUtil.getAafEndpointUrl() == null) {
         	logger.error(EELFLoggerDelegate.errorLogger,"",AppMessages.UNKNOWNERROR,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
@@ -195,9 +195,7 @@ public class CachingUtil implements Runnable {
         ClientResponse response = webResource.accept(MediaType.APPLICATION_JSON)
                         .header("Authorization", "Basic " + base64Creds)
                         .header("content-type", "application/json").get(ClientResponse.class);
-        if(response.getStatus() == 200) 
-        	return true;
-        else if (response.getStatus() != 200) {
+        if (response.getStatus() != 200) {
             if (userAttempts.get(nameSpace) == null)
                 userAttempts.put(nameSpace, 0);
             if ((Integer) userAttempts.get(nameSpace) >= 2) {
@@ -212,14 +210,14 @@ public class CachingUtil implements Runnable {
             // TODO Allow for 2-3 times and forbid any attempt to trigger AAF with invalid values
             // for specific time.
         }
-        /*response.getHeaders().put(HttpHeaders.CONTENT_TYPE,
+        response.getHeaders().put(HttpHeaders.CONTENT_TYPE,
                         Arrays.asList(MediaType.APPLICATION_JSON));
         // AAFResponse output = response.getEntity(AAFResponse.class);
         response.bufferEntity();
         String x = response.getEntity(String.class);
-        AAFResponse responseObj = new ObjectMapper().readValue(x, AAFResponse.class);*/
+        AAFResponse responseObj = new ObjectMapper().readValue(x, AAFResponse.class);
         
-        return false;
+        return responseObj;
     }
 
     public static void updateMusicCache(String keyspace, String nameSpace) {
@@ -352,7 +350,7 @@ public class CachingUtil implements Runnable {
             logger.error(EELFLoggerDelegate.errorLogger,"Application is not onboarded. Please contact admin.");
             resultMap.put("Exception", "Application is not onboarded. Please contact admin.");
         } else {
-            if(!(rs.getString("username").equals(userId)) || !(rs.getString("password").equals(password))) {
+        	if(!(rs.getString("username").equals(userId)) || !(BCrypt.checkpw(password, rs.getString("password")))) {
                 logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
                 logger.error(EELFLoggerDelegate.errorLogger,"Namespace, UserId and password doesn't match. namespace: "+ns+" and userId: "+userId);
                 resultMap.put("Exception", "Namespace, UserId and password doesn't match. namespace: "+ns+" and userId: "+userId);
@@ -365,13 +363,14 @@ public class CachingUtil implements Runnable {
     public static Map<String, Object> authenticateAIDUser(String nameSpace, String userId, String password,
            String keyspace) {
         Map<String, Object> resultMap = new HashMap<>();
+        String pwd = null;
         if((musicCache.get(keyspace) != null) && (musicValidateCache.get(nameSpace) != null) 
                 && (musicValidateCache.get(nameSpace).containsKey(userId))) {
             if(!musicCache.get(keyspace).equals(nameSpace)) {
                 resultMap.put("Exception", "Namespace and keyspace doesn't match");
                 return resultMap;
             }
-            if(!musicValidateCache.get(nameSpace).get(userId).equals(password)) {
+            if(!BCrypt.checkpw(password,musicValidateCache.get(nameSpace).get(userId))) {
                 resultMap.put("Exception", "Namespace, userId and password doesn't match");
                 return resultMap;
             }
@@ -399,7 +398,7 @@ public class CachingUtil implements Runnable {
         }
         else {
             String user = rs.getString("username");
-            String pwd = rs.getString("password");
+            pwd = rs.getString("password");
             String ns = rs.getString("application_name");
             if(!ns.equals(nameSpace)) {
             resultMap.put("Exception", "Namespace and keyspace doesn't match");
@@ -409,13 +408,13 @@ public class CachingUtil implements Runnable {
                 resultMap.put("Exception", "Invalid userId :"+userId);
                 return resultMap;
             }
-            if(!pwd.equals(password)) {
+            if(!BCrypt.checkpw(password, pwd)) {
                 resultMap.put("Exception", "Invalid password");
                 return resultMap;
             }
         }
         CachingUtil.updateMusicCache(keyspace, nameSpace);
-        CachingUtil.updateMusicValidateCache(nameSpace, userId, password);
+        CachingUtil.updateMusicValidateCache(nameSpace, userId, pwd);
         return resultMap;
     }
 }

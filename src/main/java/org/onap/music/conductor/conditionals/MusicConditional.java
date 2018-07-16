@@ -26,8 +26,6 @@ import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.ws.rs.core.Response.Status;
-
 import org.codehaus.jettison.json.JSONObject;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
@@ -39,7 +37,6 @@ import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
-import org.onap.music.response.jsonobjects.JsonResponse;
 import org.onap.music.rest.RestMusicDataAPI;
 
 import com.datastax.driver.core.ColumnDefinitions;
@@ -48,7 +45,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.TableMetadata;
 
-public class MusicContional {
+public class MusicConditional {
 	private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(RestMusicDataAPI.class);
 
 	public static ReturnType conditionalInsert(String keyspace, String tablename, String casscadeColumnName,
@@ -79,7 +76,8 @@ public class MusicContional {
 		update.addValue(MusicUtil.convertToActualDataType(primaryIdType, primaryKey));
 		queryBank.put(MusicUtil.UPDATE, update);
 
-		Map<String, String> insertColumnvalues = new HashMap<>();
+
+		Map<String, String> insertColumnvalues = new HashMap<>();//casscade column values
 		insertColumnvalues = getValues(false, casscadeColumnData, status);
 		formatedValues = MusicUtil.convertToActualDataType(casscadeColumnType, insertColumnvalues);
 		PreparedQueryObject insert = extractQuery(valuesMap, tableInfo, tablename, keyspace, primaryId, primaryKey,casscadeColumnName,formatedValues);
@@ -95,7 +93,7 @@ public class MusicContional {
 			if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
 				ReturnType criticalPutResult = conditionalInsertAtomic(lockId, keyspace, tablename, primaryKey,
 						queryBank);
-				MusicCore.releaseLock(lockId, true);
+				MusicCore.destroyLockRef(lockId);
 				if (criticalPutResult.getMessage().contains("insert"))
 					criticalPutResult
 							.setMessage("Insert values: ");
@@ -105,11 +103,11 @@ public class MusicContional {
 				return criticalPutResult;
 
 			} else {
-				MusicCore.releaseLock(lockId, true);
+				MusicCore.destroyLockRef(lockId);
 				return lockAcqResult;
 			}
 		} catch (Exception e) {
-			MusicCore.releaseLock(lockId, true);
+			MusicCore.destroyLockRef(lockId);
 			return new ReturnType(ResultType.FAILURE, e.getMessage());
 		}
 
@@ -163,17 +161,15 @@ public class MusicContional {
 		try {
 
 			if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
-				ReturnType updateResult= updateAtomic(lockId, keyspace, tableName, primaryKey,primaryKeyValue, queryBank,planId,cascadeColumnValues,cascadeColumnName);
-				MusicCore.releaseLock(lockId, true);
-				return updateResult;
+				return updateAtomic(lockId, keyspace, tableName, primaryKey,primaryKeyValue, queryBank,planId,cascadeColumnValues,cascadeColumnName);
 
 			} else {
-				MusicCore.releaseLock(lockId, true);
+				MusicCore.destroyLockRef(lockId);
 				return lockAcqResult;
 			}
 
 		} catch (Exception e) {
-			MusicCore.releaseLock(lockId, true);
+			MusicCore.destroyLockRef(lockId);
 			return new ReturnType(ResultType.FAILURE, e.getMessage());
 
 		}
@@ -206,7 +202,6 @@ public class MusicContional {
 				}else {
 					return new ReturnType(ResultType.FAILURE,"Cannot find data related to key: "+primaryKey);
 				}
-				
 				MusicCore.getDSHandle().executePut(queryBank.get(MusicUtil.UPSERT), "critical");
 				return new ReturnType(ResultType.SUCCESS, "update success");
 
@@ -247,7 +242,6 @@ public class MusicContional {
 		return returnMap;
 
 	}
-	
 	
 	public static PreparedQueryObject extractQuery(Map<String, Object> valuesMap, TableMetadata tableInfo, String tableName,
 			String keySpaceName,String primaryKeyName,String primaryKey,String casscadeColumn,Object casscadeColumnValues) throws Exception {
