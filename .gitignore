@@ -25,3 +25,7 @@ src/main/webapp
 .idea
 debug-logs/
 .README.md.html
+
+docs/Makefile
+docs/_build
+docs/conf.py
