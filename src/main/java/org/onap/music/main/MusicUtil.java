@@ -23,12 +23,15 @@ package org.onap.music.main;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 import java.util.UUID;
@@ -69,7 +72,8 @@ public class MusicUtil {
     public static final String UPSERT = "upsert";
     public static final String USERID = "userId";
     public static final String PASSWORD = "password";
-    public static final String AUTHORIZATION = "Authorization";
+
+	public static final String AUTHORIZATION = "Authorization";
 
     private static final String LOCALHOST = "localhost";
     private static final String PROPERTIES_FILE = "/opt/app/music/etc/music.properties";
@@ -81,6 +85,8 @@ public class MusicUtil {
     private static String myZkHost = LOCALHOST;
     private static String myCassaHost = LOCALHOST;
     private static String defaultMusicIp = LOCALHOST;
+    private static int cassandraPort = 9042;
+    
     private static boolean debug = true;
     private static String version = "2.3.0";
     private static String musicRestIp = LOCALHOST;
@@ -88,7 +94,7 @@ public class MusicUtil {
     private static long defaultLockLeasePeriod = 6000;
     private static final String[] propKeys = new String[] { "zookeeper.host", "cassandra.host", "music.ip", "debug",
             "version", "music.rest.ip", "music.properties", "lock.lease.period", "id", "all.ids", "public.ip",
-            "all.pubic.ips", "cassandra.user", "cassandra.password", "aaf.endpoint.url" };
+            "all.pubic.ips", "cassandra.user", "cassandra.password", "aaf.endpoint.url","cassandra.port" };
 
     private static String cassName = "cassandra";
     private static String cassPwd;
@@ -98,8 +104,21 @@ public class MusicUtil {
     private MusicUtil() {
         throw new IllegalStateException("Utility Class");
     }
-    
-    
+    /**
+     * 
+     * @return cassandra port
+     */
+    public static int getCassandraPort() {
+		return cassandraPort;
+	}
+
+    /**
+     * set cassandra port
+     * @param cassandraPort
+     */
+	public static void setCassandraPort(int cassandraPort) {
+		MusicUtil.cassandraPort = cassandraPort;
+	}
     /**
      * @return the cassName
      */
@@ -562,5 +581,34 @@ public class MusicUtil {
     	return authValues;
     	
     }
+    
+    public static void loadProperties() throws Exception {
+		Properties prop = new Properties();
+	    InputStream input = null;
+	    try {
+	    	// load the properties file
+	        input = MusicUtil.class.getClassLoader().getResourceAsStream("music.properties");
+	        prop.load(input);
+	    } catch (Exception ex) {
+	    	logger.error(EELFLoggerDelegate.errorLogger, "Unable to find properties file.");
+	        throw new Exception();
+	    } finally {
+	        if (input != null) {
+	            try {
+	                input.close();
+	            } catch (IOException e) {
+	                e.printStackTrace();
+	            }
+	        }
+	    }
+	    // get the property value and return it
+		MusicUtil.setMyCassaHost(prop.getProperty("cassandra.host"));
+		String zkHosts = prop.getProperty("zookeeper.host");
+		MusicUtil.setMyZkHost(zkHosts);
+		MusicUtil.setCassName(prop.getProperty("cassandra.user"));
+		MusicUtil.setCassPwd(prop.getProperty("cassandra.password"));
+		MusicUtil.setCassandraPort(Integer.parseInt(prop.getProperty("cassandra.port")));
+		
+	}
 
 }

@@ -25,7 +25,7 @@
     <groupId>org.onap.music</groupId>
     <artifactId>MUSIC</artifactId>
     <packaging>war</packaging>
-    <version>3.0.3</version>
+    <version>3.0.5-SNAPSHOT</version>
     <description>
             This is the MUSIC REST interface, packaged as a war file.
     </description>
@@ -338,6 +338,12 @@
             <artifactId>jbcrypt</artifactId>
             <version>0.4</version>
         </dependency>
+        <dependency>
+		   <groupId>com.owlike</groupId>
+		   <artifactId>genson</artifactId>
+		   <version>0.99</version>
+        </dependency>
+
     </dependencies>
 
     <reporting>

@@ -42,8 +42,10 @@ import com.datastax.driver.core.ColumnDefinitions;
 import com.datastax.driver.core.ColumnDefinitions.Definition;
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.HostDistance;
 import com.datastax.driver.core.KeyspaceMetadata;
 import com.datastax.driver.core.Metadata;
+import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -149,16 +151,35 @@ public class MusicDataStore {
      * clusters.
      */
     private void connectToCassaCluster() {
-        Iterator<String> it = getAllPossibleLocalIps().iterator();
+    	Iterator<String> it = getAllPossibleLocalIps().iterator();
         String address = "localhost";
+        String[] addresses = null;
+        address = MusicUtil.getMyCassaHost();
+		addresses = address.split(",");
+		
         logger.info(EELFLoggerDelegate.applicationLogger,
                         "Connecting to cassa cluster: Iterating through possible ips:"
                                         + getAllPossibleLocalIps());
+        PoolingOptions poolingOptions = new PoolingOptions();
+        poolingOptions
+        .setConnectionsPerHost(HostDistance.LOCAL,  4, 10)
+        .setConnectionsPerHost(HostDistance.REMOTE, 2, 4);
         while (it.hasNext()) {
             try {
-                cluster = Cluster.builder().withPort(9042)
-                                .withCredentials(MusicUtil.getCassName(), MusicUtil.getCassPwd())
-                                .addContactPoint(address).build();
+            	if(MusicUtil.getCassName() != null && MusicUtil.getCassPwd() != null) {
+            		logger.info(EELFLoggerDelegate.applicationLogger,
+            				"Building with credentials "+MusicUtil.getCassName()+" & "+MusicUtil.getCassPwd());
+            		cluster = Cluster.builder().withPort(MusicUtil.getCassandraPort())
+            		                   .withCredentials(MusicUtil.getCassName(), MusicUtil.getCassPwd())
+            		                   //.withLoadBalancingPolicy(new RoundRobinPolicy())
+            		                   .withPoolingOptions(poolingOptions)
+            		                   .addContactPoints(addresses).build();
+            	}
+            	else
+            		cluster = Cluster.builder().withPort(MusicUtil.getCassandraPort())
+            		 					//.withLoadBalancingPolicy(new RoundRobinPolicy())
+            		 					.addContactPoints(addresses).build();
+                
                 Metadata metadata = cluster.getMetadata();
                 logger.info(EELFLoggerDelegate.applicationLogger, "Connected to cassa cluster "
                                 + metadata.getClusterName() + " at " + address);
@@ -185,9 +206,27 @@ public class MusicDataStore {
      * @param address
      */
     private void connectToCassaCluster(String address) throws MusicServiceException {
-        cluster = Cluster.builder().withPort(9042)
-                        .withCredentials(MusicUtil.getCassName(), MusicUtil.getCassPwd())
-                        .addContactPoint(address).build();
+    	String[] addresses = null;
+		addresses = address.split(",");
+		PoolingOptions poolingOptions = new PoolingOptions();
+        poolingOptions
+        .setConnectionsPerHost(HostDistance.LOCAL,  4, 10)
+        .setConnectionsPerHost(HostDistance.REMOTE, 2, 4);
+        if(MusicUtil.getCassName() != null && MusicUtil.getCassPwd() != null) {
+    		logger.info(EELFLoggerDelegate.applicationLogger,
+    				"Building with credentials "+MusicUtil.getCassName()+" & "+MusicUtil.getCassPwd());
+    		cluster = Cluster.builder().withPort(MusicUtil.getCassandraPort())
+	                   .withCredentials(MusicUtil.getCassName(), MusicUtil.getCassPwd())
+	                   //.withLoadBalancingPolicy(new RoundRobinPolicy())
+	                   .withPoolingOptions(poolingOptions)
+	                   .addContactPoints(addresses).build();
+        }
+        else {
+        	cluster = Cluster.builder().withPort(MusicUtil.getCassandraPort())
+        				//.withLoadBalancingPolicy(new RoundRobinPolicy())
+        				.withPoolingOptions(poolingOptions)
+        				.addContactPoints(addresses).build();
+        }
         Metadata metadata = cluster.getMetadata();
         logger.info(EELFLoggerDelegate.applicationLogger, "Connected to cassa cluster "
                         + metadata.getClusterName() + " at " + address);

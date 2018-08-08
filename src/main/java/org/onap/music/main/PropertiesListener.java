@@ -119,6 +119,9 @@ public class PropertiesListener implements ServletContextListener {
                         case "aaf.endpoint.url":
                             MusicUtil.setAafEndpointUrl(prop.getProperty(key));
                             break;
+                        case "cassandra.port":
+                            MusicUtil.setCassandraPort(Integer.parseInt(prop.getProperty(key)));
+                            break;
                         default:
                             logger.error(EELFLoggerDelegate.errorLogger,
                                             "No case found for " + key);

@@ -29,10 +29,12 @@ import java.util.Map;
 import java.util.UUID;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
@@ -41,20 +43,32 @@ import javax.ws.rs.core.Response.Status;
 import org.mindrot.jbcrypt.BCrypt;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JSONObject;
+import org.onap.music.datastore.jsonobjects.JsonCallback;
 import org.onap.music.datastore.jsonobjects.JsonOnboard;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
+//import org.onap.music.main.CacheAccess;
 import org.onap.music.main.CachingUtil;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
+import org.onap.music.response.jsonobjects.JsonResponse;
+
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.core.util.Base64;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.apache.commons.jcs.JCS;
+import org.apache.commons.jcs.access.CacheAccess;
 
 @Path("/v2/admin")
 // @Path("/v{version: [0-9]+}/admin")
@@ -63,7 +77,6 @@ import io.swagger.annotations.ApiOperation;
 public class RestMusicAdminAPI {
     private static EELFLoggerDelegate logger =
                     EELFLoggerDelegate.getLogger(RestMusicAdminAPI.class);
-
     /*
      * API to onboard an application with MUSIC. This is the mandatory first step.
      * 
@@ -370,14 +383,105 @@ public class RestMusicAdminAPI {
 
         return Response.status(Status.OK).entity(resultMap).build();
     }
+
+    Client client = Client.create();
     
     @POST
     @Path("/callbackOps")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public String callbackOps(JSONObject inputJsonObj) throws Exception {
-       
-       System.out.println("Input JSON: "+inputJsonObj.getData());
-       return "Success";
+	public String callbackOps(JSONObject inputJsonObj) {
+         // trigger response  {"full_table":"admin.race_winners","keyspace":"admin","name":"Siri","operation":"update","table_name":"race_winner","primary_key":"1"}
+        try {
+		logger.info("Got notification: " + inputJsonObj.getData());
+		String dataStr = inputJsonObj.getData();
+		String[] dataStrArr = dataStr.substring(1, dataStr.length() - 1).split(",");
+
+		for (String key : dataStrArr) {
+			if (key.contains("full_table")) {
+				String tableName = key.split(":")[1].substring(1, key.split(":")[1].length() - 1);
+				PreparedQueryObject pQuery = new PreparedQueryObject();
+		        pQuery.appendQueryString(
+		                        "select endpoint, username, password from admin.callback_api where changes = ? allow filtering");
+		        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), tableName));
+		        ResultSet rs = MusicCore.get(pQuery);
+		        Row row = rs.all().get(0);
+		        if(row != null) {
+		            String endpoint = row.getString("endpoint");
+		            String username = row.getString("username");
+		            String password = row.getString("password");
+		            logger.info("Notifying the changes to endpoint: "+endpoint);
+		            WebResource webResource = client.resource(endpoint);
+		            String authData = username+":"+password;
+		            byte[] plainCredsBytes = authData.getBytes();
+		            byte[] base64CredsBytes = Base64.encode(plainCredsBytes);
+		            String base64Creds = new String(base64CredsBytes);
+		            ClientResponse response = webResource.header("Authorization", "Basic " + base64Creds).accept("application/json")
+		                .post(ClientResponse.class, inputJsonObj);
+		            if(response.getStatus() != 200){
+		                logger.error("Exception while notifying");
+		            }
+		        }
+		        break;
+			}
+		}
+        } catch(Exception e) {
+            e.printStackTrace();
+            logger.info("Exception...");
+        }
+		return "Success";
+	}
+
+    @POST
+    @Path("/addCallback")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response addCallback(JsonCallback jsonCallback) throws Exception {
+        Map<String, Object> resultMap = new HashMap<>();
+        ResponseBuilder response =
+                        Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
+        String username = jsonCallback.getApplicationUsername();
+        String password = jsonCallback.getApplicationPassword();
+        String endpoint = jsonCallback.getApplicationNotificationEndpoint();
+        String changes = jsonCallback.getNotifyWhenChangeIn();
+        String inserts = jsonCallback.getNotifyWhenInsertsIn();
+        String deletes = jsonCallback.getNotifyWhenDeletesIn();
+        PreparedQueryObject pQuery = new PreparedQueryObject();
+        if (username == null || password == null || endpoint == null || changes == null || inserts == null || deletes == null) {
+            logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGINFO,
+                            ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
+            resultMap.put("Exception",
+                            "Please check the request parameters. Some of the required values are missing.");
+            return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
+        }
+        String uuid = CachingUtil.generateUUID();
+        try {
+        pQuery.appendQueryString(
+                        "INSERT INTO admin.callback_api (uuid, username, password, endpoint, "
+                                        + "changes, inserts, deletes) VALUES (?,?,?,?,?,?,?)");
+        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), uuid));
+        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), username));
+        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), password));
+        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), endpoint));
+        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), changes));
+        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), inserts));
+        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), deletes));
+        MusicCore.eventualPut(pQuery);
+        
+        Map<String, String> jsonMap = new HashMap<>();
+        jsonMap.put("username", username);
+        jsonMap.put("password", password);
+        jsonMap.put("endpoint", endpoint);
+        jsonMap.put("changes", changes);
+        jsonMap.put("inserts", inserts);
+        jsonMap.put("deletes", deletes);
+        
+        //callBackCache.put(jsonCallback.getApplicationName(), jsonMap);
+        } catch (InvalidQueryException e) {
+            logger.error(EELFLoggerDelegate.errorLogger,"Exception callback_api table not configured."+e.getMessage());
+            resultMap.put("Exception", "Please make sure admin.callback_api table is configured.");
+            return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
+        }
+       return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setMessage("Callback api successfully registered").toMap()).build();
     }
 }
