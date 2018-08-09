@@ -13,6 +13,11 @@ Version: 2.5.4
 
 **New Features**
 
+MUSIC provides a service with recipes that individual ONAP components and microservice can use for 
+    - state replication across multiple geo-distributed sites
+    - flexible fine-grained consistency management of state
+    - policy driven state-ownership across replicas of the service 
+
 
 **Bug Fixes**
 

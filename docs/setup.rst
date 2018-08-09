@@ -5,8 +5,8 @@ Setup for Developing MUSIC
    :maxdepth: 1
 
    Single-Site Install <single>
-   Muili-Site Install <multi>
-   Authentication
+   Multi-Site Install <multi>
+   Authentication <authentication>
 
 MUSIC is to be installed in a single Dir on a vm. 
 
@@ -46,5 +46,5 @@ Continue by selecting the link to the setup you are doing.
    :maxdepth: 1
 
    Single-Site Install <single>
-   Muili-Site Install <multi>
-   Authentication
+   Multi-Site Install <multi>
+   Authentication <authentication>
