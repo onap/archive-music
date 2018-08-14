@@ -9,7 +9,7 @@ Installation
    :maxdepth: 1
 
    Single-Site Install <single>
-   Muili-Site Install <multi>
+   Multi-Site Install <multi>
 
 
 .. Environment
