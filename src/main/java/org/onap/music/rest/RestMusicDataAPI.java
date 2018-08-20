@@ -1380,7 +1380,7 @@ public class RestMusicDataAPI {
             if(results.getAvailableWithoutFetching() >0) {
             	return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setDataResult(MusicCore.marshallResults(results)).toMap()).build();
             }
-            return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setError("No data found").toMap()).build();
+            return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setDataResult(MusicCore.marshallResults(results)).setError("No data found").toMap()).build();
         } catch (MusicServiceException ex) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.UNKNOWNERROR  ,ErrorSeverity.ERROR, ErrorTypes.MUSICSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();

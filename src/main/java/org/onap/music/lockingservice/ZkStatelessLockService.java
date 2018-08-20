@@ -301,7 +301,6 @@ public class ZkStatelessLockService extends ProtocolSupport {
                             e1.printStackTrace();
                         }
                         Long ctime = stat.getCtime();
-                        System.out.println("Created id ....####"+ctime+"##.......id...:"+id);
                         MusicUtil.zkNodeMap.put(id, ctime);
                         PreparedQueryObject pQuery = new PreparedQueryObject();
                         pQuery.appendQueryString(

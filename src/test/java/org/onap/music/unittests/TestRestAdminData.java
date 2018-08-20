@@ -85,7 +85,7 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 @RunWith(MockitoJUnitRunner.class)
-public class TestRestMusicData {
+public class TestRestAdminData {
 
     RestMusicDataAPI data = new RestMusicDataAPI();
     RestMusicAdminAPI admin = new RestMusicAdminAPI();

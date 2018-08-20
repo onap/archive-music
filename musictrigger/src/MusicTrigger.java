@@ -23,7 +23,9 @@
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -74,7 +76,7 @@ public class MusicTrigger implements ITrigger {
         	operation = "insert";
         else
         	operation = "update";
-        
+        Map<String, String> changeMap = new HashMap<>();
         
         obj.put("operation", operation);
         obj.put("keyspace", ksName);
@@ -83,31 +85,38 @@ public class MusicTrigger implements ITrigger {
         obj.put("primary_key", partition.metadata().getKeyValidator().getString(partition.partitionKey().getKey()));
         
         //obj.put("message_id", partition.metadata().getKeyValidator().getString(partition.partitionKey().getKey()));
-        try {
-            UnfilteredRowIterator it = partition.unfilteredIterator();
-            while (it.hasNext()) {
-                Unfiltered un = it.next();
-                Clustering clt = (Clustering) un.clustering();  
-                Iterator<Cell> cells = partition.getRow(clt).cells().iterator();
-                Iterator<ColumnDefinition> columns = partition.getRow(clt).columns().iterator();
-
-                while(columns.hasNext()){
-                    ColumnDefinition columnDef = columns.next();
-                    Cell cell = cells.next();
-                    String data = new String(cell.value().array()); // If cell type is text
-                    logger.info("Inside triggers loop: "+columnDef.toString()+" : "+data);
-                    obj.put(columnDef.toString(), data);
-                }
-            }
-        } catch (Exception e) {
-
+        if("update".equals(operation)) {
+	        try {
+	            UnfilteredRowIterator it = partition.unfilteredIterator();
+	            while (it.hasNext()) {
+	                Unfiltered un = it.next();
+	                Clustering clt = (Clustering) un.clustering();  
+	                Iterator<Cell> cells = partition.getRow(clt).cells().iterator();
+	                Iterator<ColumnDefinition> columns = partition.getRow(clt).columns().iterator();
+	
+	                while(columns.hasNext()){
+	                    ColumnDefinition columnDef = columns.next();
+	                    Cell cell = cells.next();
+	                    String data = new String(cell.value().array()); // If cell type is text
+	                    logger.info("Inside triggers loop: "+columnDef.name+" : "+data);
+	                    changeMap.put(ksName+"."+tableName+"."+columnDef.name,data);
+	                    changeMap.put("field_value",ksName+"."+tableName+":"+columnDef.name+":"+data);
+	                }
+	            }
+	        } catch (Exception e) {
+	
+	        }
+        } else {
+        	changeMap.put("field_value", ksName+"."+tableName);
         }
+        
+        obj.put("changeValue", changeMap);
         logger.info("Sending response: "+obj.toString());
         try {
             notifyMusic(obj.toString());
         } catch(Exception e) {
             e.printStackTrace();
-            logger.error("Notification failed..."+e.getMessage()s);
+            logger.error("Notification failed..."+e.getMessage());
         }
         return Collections.emptyList();
     }

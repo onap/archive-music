@@ -86,6 +86,8 @@ public class MusicUtil {
     private static String myCassaHost = LOCALHOST;
     private static String defaultMusicIp = LOCALHOST;
     private static int cassandraPort = 9042;
+    private static int notifytimeout = 30000;
+    private static int notifyinterval = 5000;
     
     private static boolean debug = true;
     private static String version = "2.3.0";
@@ -94,7 +96,7 @@ public class MusicUtil {
     private static long defaultLockLeasePeriod = 6000;
     private static final String[] propKeys = new String[] { "zookeeper.host", "cassandra.host", "music.ip", "debug",
             "version", "music.rest.ip", "music.properties", "lock.lease.period", "id", "all.ids", "public.ip",
-            "all.pubic.ips", "cassandra.user", "cassandra.password", "aaf.endpoint.url","cassandra.port" };
+            "all.pubic.ips", "cassandra.user", "cassandra.password", "aaf.endpoint.url","cassandra.port", "notify.timeout", "notify.interval" };
 
     private static String cassName = "cassandra";
     private static String cassPwd;
@@ -608,7 +610,24 @@ public class MusicUtil {
 		MusicUtil.setCassName(prop.getProperty("cassandra.user"));
 		MusicUtil.setCassPwd(prop.getProperty("cassandra.password"));
 		MusicUtil.setCassandraPort(Integer.parseInt(prop.getProperty("cassandra.port")));
+		MusicUtil.setNotifyTimeOut(Integer.parseInt(prop.getProperty("notify.timeout")));
+		MusicUtil.setNotifyInterval(Integer.parseInt(prop.getProperty("notify.interval")));
 		
 	}
+    
+	private static void setNotifyInterval(int notifyinterval) {
+		MusicUtil.notifyinterval = notifyinterval;
+	}
+	private static void setNotifyTimeOut(int notifytimeout) {
+		MusicUtil.notifytimeout = notifytimeout;
+	}
 
+	public static int getNotifyInterval() {
+		return MusicUtil.notifyinterval;
+	}
+	
+	public static int getNotifyTimeout() {
+		return MusicUtil.notifytimeout;
+		
+	}
 }

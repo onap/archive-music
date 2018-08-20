@@ -22,6 +22,7 @@
 package org.onap.music.datastore.jsonobjects;
 
 import java.io.Serializable;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -39,6 +40,17 @@ public class JsonCallback implements Serializable {
     private String notifyWhenChangeIn;
     private String notifyWhenInsertsIn;
     private String notifyWhenDeletesIn;
+    private Map<String, String> responseBody;
+
+    private String uuid;
+    
+    public String getUuid() {
+    	return uuid;
+    }
+    
+    public void setUuid(String uuid) {
+    	this.uuid = uuid;
+    }
 
     @ApiModelProperty(value = "application name")
     public String getApplicationName() {
@@ -112,4 +124,12 @@ public class JsonCallback implements Serializable {
         this.notifyWhenDeletesIn = notifyWhenDeletesIn;
     }
 
+    public Map<String, String> getResponseBody() {
+		return responseBody;
+	}
+    
+    public void setResponseBody(Map<String, String> responseBody) {
+		this.responseBody = responseBody;
+	}
+    
 }

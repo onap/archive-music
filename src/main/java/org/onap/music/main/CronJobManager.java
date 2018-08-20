@@ -32,16 +32,18 @@ import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicServiceException;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 
-@WebListener
+//@WebListener
 public class CronJobManager implements ServletContextListener {
 
     private ScheduledExecutorService scheduler;
+    private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(CronJobManager.class);
 
     @Override
     public void contextInitialized(ServletContextEvent event) {
@@ -55,8 +57,23 @@ public class CronJobManager implements ServletContextListener {
         } catch (MusicServiceException e1) {
             e1.printStackTrace();
         }
-        
-        pQuery = new PreparedQueryObject();
+
+      //Zookeeper cleanup
+        scheduler.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                deleteLocksFromDB();
+            }
+        } , 0, 24, TimeUnit.HOURS);
+    }
+
+    @Override
+    public void contextDestroyed(ServletContextEvent event) {
+        scheduler.shutdownNow();
+    }
+
+    public void deleteLocksFromDB() {
+        PreparedQueryObject pQuery = new PreparedQueryObject();
         pQuery.appendQueryString(
                         "select * from admin.locks");
             try {
@@ -71,68 +88,22 @@ public class CronJobManager implements ServletContextListener {
                     if(System.currentTimeMillis() >= ctime + 24 * 60 * 60 * 1000) {
                         expiredKeys = true;
                         String new_id = id.substring(1);
-                        MusicCore.deleteLock(new_id);
-                        deleteKeys.append(id).append(",");
+                        try {
+                            MusicCore.deleteLock(new_id);
+                        } catch (MusicLockingException e) {
+                            logger.info(EELFLoggerDelegate.applicationLogger,
+                                     e.getMessage());
+                        }
+                        deleteKeys.append("'").append(id).append("'").append(",");
                     }
-                    else {
-                        MusicUtil.zkNodeMap.put(id, ctime);
-                    }
-                };
-                if(expiredKeys) {
-                    deleteKeys.deleteCharAt(deleteKeys.length()-1);
-                    deleteKeysFromDB(deleteKeys);
-               }
-            } catch (MusicServiceException e) {
-                e.printStackTrace();
-            } catch (MusicLockingException e) {
-                e.printStackTrace();
-       }
-       
-      //Zookeeper cleanup
-        scheduler.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                Iterator<Entry<String, Long>> it = MusicUtil.zkNodeMap.entrySet().iterator();
-                StringBuilder deleteKeys = new StringBuilder();
-                Boolean expiredKeys = false;
-                while (it.hasNext()) {
-                    Map.Entry<String, Long> pair = (Map.Entry<String, Long>)it.next();
-                    long ctime = pair.getValue();
-                   if (System.currentTimeMillis() >= ctime + 24 * 60 * 60 * 1000) {
-                       try {
-                           expiredKeys = true;
-                           String id = pair.getKey();
-                           deleteKeys.append("'").append(id).append("'").append(",");
-                           MusicCore.deleteLock(id.substring(1));
-                           MusicUtil.zkNodeMap.remove(id);
-                           
-                       } catch (MusicLockingException e) {
-                          e.printStackTrace();
-                       }
-                   }
                 }
                 if(expiredKeys) {
                     deleteKeys.deleteCharAt(deleteKeys.length()-1);
-                    deleteKeysFromDB(deleteKeys);
+                    CachingUtil.deleteKeysFromDB(deleteKeys.toString());
                }
+            } catch (MusicServiceException e) {
+                e.printStackTrace();
             }
-        } , 0, 24, TimeUnit.HOURS);
-    }
-
-    @Override
-    public void contextDestroyed(ServletContextEvent event) {
-        scheduler.shutdownNow();
-    }
-    
-    public void deleteKeysFromDB(StringBuilder deleteKeys) {
-        PreparedQueryObject pQuery = new PreparedQueryObject();
-        pQuery.appendQueryString(
-                        "DELETE FROM admin.locks WHERE lock_id IN ("+deleteKeys+")");
-        try {
-            MusicCore.nonKeyRelatedPut(pQuery, "eventual");
-        } catch (Exception e) {
-              e.printStackTrace();
-        }
     }
 
 }

@@ -708,6 +708,22 @@ public class MusicCore {
         }
         return results;
     }
+    
+    public static String getMyHostId() {
+    	PreparedQueryObject pQuery = new PreparedQueryObject();
+    	pQuery.appendQueryString("SELECT HOST_ID FROM SYSTEM.LOCAL");
+		ResultSet rs = null;
+		try {
+			rs = getDSHandle().executeEventualGet(pQuery);
+			Row row = rs.one();
+			return (row == null) ? "UNKNOWN" : row.getUUID("HOST_ID").toString();
+		} catch (Exception e) {
+			e.printStackTrace();
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
+        }
+		logger.error(EELFLoggerDelegate.errorLogger, "Some issue during MusicCore.getMyHostId");
+		return "UNKNOW";
+	}
 
     /**
      * This method performs DDL operations on cassandra, if the the resource is available. Lock ID

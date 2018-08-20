@@ -41,7 +41,8 @@ import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicServiceException;
-
+import org.onap.music.datastore.jsonobjects.JsonNotification;
+import org.onap.music.datastore.jsonobjects.JsonCallback;
 import com.att.eelf.configuration.EELFLogger;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
@@ -65,6 +66,7 @@ public class CachingUtil implements Runnable {
     private static CacheAccess<String, Map<String, String>> aafCache = JCS.getInstance("aafCache");
     private static CacheAccess<String, String> appNameCache = JCS.getInstance("appNameCache");
     private static CacheAccess<String, Map<String, String>> musicValidateCache = JCS.getInstance("musicValidateCache");
+    private static CacheAccess<String, JsonCallback> callBackCache = JCS.getInstance("callBackCache");
     private static Map<String, Number> userAttempts = new HashMap<>();
     private static Map<String, Calendar> lastFailedTime = new HashMap<>();
 
@@ -72,6 +74,14 @@ public class CachingUtil implements Runnable {
         if (aafCache.get("initBlankMap") == null)
             return true;
         return false;
+    }
+    
+    public static void updateCallBackCache(String appName, JsonCallback jsonCallBack) {
+    	callBackCache.put(appName, jsonCallBack);
+    }
+    
+    public static JsonCallback getCallBackCache(String appName) {
+    	return callBackCache.get(appName);
     }
 
     public void initializeMusicCache() {
@@ -102,8 +112,8 @@ public class CachingUtil implements Runnable {
             String keySpace = row.getString("application_name");
             try {
                 userAttempts.put(nameSpace, 0);
-                AAFResponse responseObj = triggerAAF(nameSpace, userId, password);
-                if (responseObj.getNs().size() > 0) {
+                boolean responseObj = triggerAAF(nameSpace, userId, password);
+                if (responseObj) {
                     map = new HashMap<>();
                     map.put(userId, password);
                     aafCache.put(nameSpace, map);
@@ -164,8 +174,8 @@ public class CachingUtil implements Runnable {
             }
         }
 
-        AAFResponse responseObj = triggerAAF(nameSpace, userId, password);
-        if (responseObj.getNs().size() > 0) {
+        boolean responseObj = triggerAAF(nameSpace, userId, password);
+        if (responseObj) {
             //if (responseObj.getNs().get(0).getAdmin().contains(userId)) {
             	//Map<String, String> map = new HashMap<>();
                 //map.put(userId, password);
@@ -177,7 +187,7 @@ public class CachingUtil implements Runnable {
         return false;
     }
 
-    private static AAFResponse triggerAAF(String nameSpace, String userId, String password)
+    private static boolean triggerAAF(String nameSpace, String userId, String password)
                     throws Exception {
         if (MusicUtil.getAafEndpointUrl() == null) {
         	logger.error(EELFLoggerDelegate.errorLogger,"",AppMessages.UNKNOWNERROR,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
@@ -210,14 +220,14 @@ public class CachingUtil implements Runnable {
             // TODO Allow for 2-3 times and forbid any attempt to trigger AAF with invalid values
             // for specific time.
         }
-        response.getHeaders().put(HttpHeaders.CONTENT_TYPE,
+        /*response.getHeaders().put(HttpHeaders.CONTENT_TYPE,
                         Arrays.asList(MediaType.APPLICATION_JSON));
         // AAFResponse output = response.getEntity(AAFResponse.class);
         response.bufferEntity();
         String x = response.getEntity(String.class);
-        AAFResponse responseObj = new ObjectMapper().readValue(x, AAFResponse.class);
+        AAFResponse responseObj = new ObjectMapper().readValue(x, AAFResponse.class);*/
         
-        return responseObj;
+        return true;
     }
 
     public static void updateMusicCache(String keyspace, String nameSpace) {
@@ -416,5 +426,16 @@ public class CachingUtil implements Runnable {
         CachingUtil.updateMusicCache(keyspace, nameSpace);
         CachingUtil.updateMusicValidateCache(nameSpace, userId, pwd);
         return resultMap;
+    }
+
+    public static void deleteKeysFromDB(String deleteKeys) {
+        PreparedQueryObject pQuery = new PreparedQueryObject();
+        pQuery.appendQueryString(
+                        "DELETE FROM admin.locks WHERE lock_id IN ("+deleteKeys+")");
+        try {
+            MusicCore.nonKeyRelatedPut(pQuery, "eventual");
+        } catch (Exception e) {
+              e.printStackTrace();
+        }
     }
 }

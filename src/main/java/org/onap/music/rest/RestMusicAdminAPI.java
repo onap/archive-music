@@ -22,28 +22,32 @@
 package org.onap.music.rest;
 
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
+import org.codehaus.jackson.map.ObjectMapper;
 import org.mindrot.jbcrypt.BCrypt;
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.datastore.jsonobjects.JSONCallbackResponse;
 import org.onap.music.datastore.jsonobjects.JSONObject;
 import org.onap.music.datastore.jsonobjects.JsonCallback;
+import org.onap.music.datastore.jsonobjects.JsonNotification;
 import org.onap.music.datastore.jsonobjects.JsonOnboard;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
@@ -54,6 +58,7 @@ import org.onap.music.main.CachingUtil;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
+import org.onap.music.main.ReturnType;
 import org.onap.music.response.jsonobjects.JsonResponse;
 
 import com.datastax.driver.core.DataType;
@@ -67,8 +72,15 @@ import com.sun.jersey.core.util.Base64;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import org.apache.commons.jcs.JCS;
-import org.apache.commons.jcs.access.CacheAccess;
+import com.datastax.driver.core.TableMetadata;
+
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import com.datastax.driver.core.ColumnDefinitions;
+import com.datastax.driver.core.ColumnDefinitions.Definition;
+import com.datastax.driver.core.TableMetadata;
+import java.util.Base64.Encoder; 
+import java.util.Base64.Decoder;
 
 @Path("/v2/admin")
 // @Path("/v{version: [0-9]+}/admin")
@@ -123,7 +135,7 @@ public class RestMusicAdminAPI {
                         MusicUtil.DEFAULTKEYSPACENAME));
         pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), appName));
         pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), "True"));
-        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), BCrypt.hashpw(password, BCrypt.gensalt())));
+        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), password));
         pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
         pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), isAAF));
 
@@ -172,9 +184,8 @@ public class RestMusicAdminAPI {
 
         if (cql.endsWith("AND "))
             cql = cql.trim().substring(0, cql.length() - 4);
-        System.out.println("Query is: " + cql);
+        logger.info("Query in callback is: " + cql);
         cql = cql + " allow filtering";
-        System.out.println("Get OnboardingInfo CQL: " + cql);
         pQuery.appendQueryString(cql);
         if (appName != null)
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), appName));
@@ -390,98 +401,336 @@ public class RestMusicAdminAPI {
     @Path("/callbackOps")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-	public String callbackOps(JSONObject inputJsonObj) {
-         // trigger response  {"full_table":"admin.race_winners","keyspace":"admin","name":"Siri","operation":"update","table_name":"race_winner","primary_key":"1"}
-        try {
-		logger.info("Got notification: " + inputJsonObj.getData());
-		String dataStr = inputJsonObj.getData();
-		String[] dataStrArr = dataStr.substring(1, dataStr.length() - 1).split(",");
-
-		for (String key : dataStrArr) {
-			if (key.contains("full_table")) {
-				String tableName = key.split(":")[1].substring(1, key.split(":")[1].length() - 1);
-				PreparedQueryObject pQuery = new PreparedQueryObject();
-		        pQuery.appendQueryString(
-		                        "select endpoint, username, password from admin.callback_api where changes = ? allow filtering");
-		        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), tableName));
-		        ResultSet rs = MusicCore.get(pQuery);
-		        Row row = rs.all().get(0);
-		        if(row != null) {
-		            String endpoint = row.getString("endpoint");
-		            String username = row.getString("username");
-		            String password = row.getString("password");
-		            logger.info("Notifying the changes to endpoint: "+endpoint);
-		            WebResource webResource = client.resource(endpoint);
-		            String authData = username+":"+password;
-		            byte[] plainCredsBytes = authData.getBytes();
-		            byte[] base64CredsBytes = Base64.encode(plainCredsBytes);
-		            String base64Creds = new String(base64CredsBytes);
-		            ClientResponse response = webResource.header("Authorization", "Basic " + base64Creds).accept("application/json")
-		                .post(ClientResponse.class, inputJsonObj);
-		            if(response.getStatus() != 200){
-		                logger.error("Exception while notifying");
-		            }
-		        }
-		        break;
+	public Response callbackOps(final JSONObject inputJsonObj) {
+         // {"keyspace":"conductor","full_table":"conductor.plans","changeValue":{"conductor.plans.status":"Who??","position":"3"},"operation":"update","table_name":"plans","primary_key":"3"}
+    	Map<String, Object> resultMap = new HashMap<>();
+    	new Thread(new Runnable() {
+    	    public void run() {
+    	        makeAsyncCall(inputJsonObj);
+    	    }
+    	}).start();
+	    
+		return Response.status(Status.OK).entity(resultMap).build();
+	}
+    
+    private Response makeAsyncCall(JSONObject inputJsonObj) {
+    	
+    	Map<String, Object> resultMap = new HashMap<>();
+    	try {
+			logger.info("Got notification: " + inputJsonObj.getData());
+			String dataStr = inputJsonObj.getData();
+			ObjectMapper mapper = new ObjectMapper();
+			JSONCallbackResponse jsonResponse = mapper.readValue(dataStr, JSONCallbackResponse.class);
+			String operation = jsonResponse.getOperation();
+			Map<String, String> changeValueMap = jsonResponse.getChangeValue();
+			String primaryKey = jsonResponse.getPrimary_key();
+			//String full_table = jsonResponse.getFull_table(); //conductor.plans
+			String field_value = changeValueMap.get("field_value");
+			if(field_value == null)
+				field_value = jsonResponse.getFull_table();
+			//Get from Cache
+			JsonCallback baseRequestObj = CachingUtil.getCallBackCache(field_value);
+			//baseRequestObj = null;
+			
+			if(baseRequestObj == null) {
+				logger.info("Is cache empty? reconstructing Object from cache..");
+				baseRequestObj = constructJsonCallbackFromCache(field_value);
 			}
-		}
-        } catch(Exception e) {
+			if(baseRequestObj == null) {
+				resultMap.put("Exception",
+	                    "Oops. Something went wrong. Please make sure Callback properties are onboarded.");
+				logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.INCORRECTDATA,
+	                    ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
+				return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
+			}
+			
+			String key = "admin" + "." + "notification_master" + "." + baseRequestObj.getUuid();
+	        String lockId = MusicCore.createLockReference(key);
+	        long lockCreationTime = System.currentTimeMillis();
+	        ReturnType lockAcqResult = MusicCore.acquireLock(key, lockId);
+	        if(! lockAcqResult.getResult().toString().equals("SUCCESS")) {
+	        	logger.info("Some other node is notifying the caller..");
+	        }
+			
+			logger.info(operation+ ": Operation :: changeValue: "+changeValueMap);
+			if(operation.equals("update")) {
+				String notifyWhenChangeIn = baseRequestObj.getNotifyWhenChangeIn(); // conductor.plans.status
+				logger.info("**********notifyWhenChangeIn: "+notifyWhenChangeIn);
+				if(field_value.equals(notifyWhenChangeIn)) {
+					logger.info("********** notifyting the endpoint: "+baseRequestObj.getApplicationNotificationEndpoint());
+					notifyCallBackAppl(jsonResponse, baseRequestObj);
+				}
+				
+			} else if(operation.equals("delete")) {
+				String notifyWhenDeletesIn = baseRequestObj.getNotifyWhenDeletesIn(); // conductor.plans.status
+				logger.info("**********notifyWhenDeletesIn: "+notifyWhenDeletesIn);
+				if(field_value.equals(notifyWhenDeletesIn)) {
+					logger.info("********** notifyting the endpoint: "+baseRequestObj.getApplicationNotificationEndpoint());
+					notifyCallBackAppl(jsonResponse, baseRequestObj);
+				}
+			} else if(operation.equals("insert")) {
+				String notifyWhenInsertsIn = baseRequestObj.getNotifyWhenInsertsIn(); // conductor.plans.status
+				logger.info("**********notifyWhenInsertsIn: "+notifyWhenInsertsIn);
+				if(field_value.equals(notifyWhenInsertsIn)) {
+					logger.info("********** notifyting the endpoint: "+baseRequestObj.getApplicationNotificationEndpoint());
+					notifyCallBackAppl(jsonResponse, baseRequestObj);
+				}
+			}
+			MusicCore.releaseLock(lockId, true);	
+	    } catch(Exception e) {
             e.printStackTrace();
             logger.info("Exception...");
         }
-		return "Success";
-	}
+    	logger.info(">>> callback is completed. Notification was sent from Music...");
+    	return Response.status(Status.OK).entity(resultMap).build();
+    }
+    
+    private void notifyCallBackAppl(JSONCallbackResponse jsonResponse, JsonCallback baseRequestObj) {
+    	int notifytimeout = MusicUtil.getNotifyTimeout();
+    	int notifyinterval = MusicUtil.getNotifyInterval();
+    	String endpoint = baseRequestObj.getApplicationNotificationEndpoint();
+        String username = baseRequestObj.getApplicationUsername();
+        String password = baseRequestObj.getApplicationPassword();
+        JsonNotification jsonNotification = constructJsonNotification(jsonResponse, baseRequestObj);
+        jsonNotification.setOperation_type(jsonResponse.getOperation());
+        logger.info("Response sent is: "+jsonNotification);
+        WebResource webResource = client.resource(endpoint);
+        String authData = username+":"+password;
+        byte[] plainCredsBytes = authData.getBytes();
+        byte[] base64CredsBytes = Base64.encode(plainCredsBytes);
+        String base64Creds = new String(base64CredsBytes);
+        Map<String, String> response_body = baseRequestObj.getResponseBody();
+        ClientResponse response = null;
+        try { 
+        	response = webResource.header("Authorization", "Basic " + base64Creds).accept("application/json").type("application/json")
+            .post(ClientResponse.class, jsonNotification);
+        } catch (com.sun.jersey.api.client.ClientHandlerException chf) {
+        	boolean ok = false;
+        	logger.info("Is Service down?");
+        	long now= System.currentTimeMillis();
+        	long end = now+notifytimeout;
+        	while(! ok) {
+        		logger.info("retrying since error in notifying callback..");
+        		try {
+        			response = webResource.header("Authorization", "Basic " + base64Creds).accept("application/json").type("application/json")
+        	            .post(ClientResponse.class, jsonNotification);
+        			if(response.getStatus() == 200) ok = true;
+        		}catch (Exception e) {
+        			System.err.println("Is response null: "+response==null);
+        			System.err.println("Retry until "+(end-System.currentTimeMillis()));
+        			if(response == null && System.currentTimeMillis() < end) ok = false;
+        			else ok = true;
+        			try{ Thread.sleep(notifyinterval); } catch(Exception e1) {}
+        		}
+        	}
+        }
+        response.bufferEntity();
+        String responseStr = response.getEntity(String.class);
+        logger.info(">>>>> Response from Notified client: "+responseStr);
+        
+        if(response.getStatus() != 200){
+        	long now= System.currentTimeMillis();
+        	long end = now+30000;
+        	while(response.getStatus() != 200 && System.currentTimeMillis() < end) {
+        		logger.info("retrying since error in notifying callback..");
+        		response = webResource.header("Authorization", "Basic " + base64Creds).accept("application/json").type("application/json")
+        	            .post(ClientResponse.class, jsonNotification);
+        	}
+            logger.error("Exception while notifying.. "+response.getStatus());
+        }
+    }
+    
+    private JsonNotification constructJsonNotification(JSONCallbackResponse jsonResponse, JsonCallback baseRequestObj) {
+    	
+    	JsonNotification jsonNotification = new JsonNotification();
+    	try {
+	    	jsonNotification.setNotify_field(baseRequestObj.getNotifyOn());
+	    	jsonNotification.setEndpoint(baseRequestObj.getApplicationNotificationEndpoint());
+	    	jsonNotification.setUsername(baseRequestObj.getApplicationUsername());
+	    	jsonNotification.setPassword(baseRequestObj.getApplicationPassword());
+	    	String pkValue = jsonResponse.getPrimary_key();
+	    	
+	    	String[] fullNotifyArr = baseRequestObj.getNotifyOn().split(":");
+	    	
+	    	String[] tableArr = fullNotifyArr[0].split("\\.");
+	    	TableMetadata tableInfo = MusicCore.returnColumnMetadata(tableArr[0], tableArr[1]);
+			DataType primaryIdType = tableInfo.getPrimaryKey().get(0).getType();
+			String primaryId = tableInfo.getPrimaryKey().get(0).getName();
+			logger.info(">>>>>>> Primary Id: "+primaryId);
+			
+			Map<String, String> responseBodyMap = baseRequestObj.getResponseBody();
+	    	Set<String> keySet = responseBodyMap.keySet();
+	    	/*for (Map.Entry<String, Object> entry : valuesMap.entrySet()) {
+				DataType colType = null;
+	            try {
+	                colType = tableInfo.getColumn(entry.getKey()).getType();
+	            } catch(NullPointerException ex) {
+	                
+	            }
+	    	}*/
+			
+	    	
+	    	String cql = "select ";
+	    	for(String keys: keySet) {
+	    		cql = cql + keys + ",";
+	    	}
+	    	cql = cql.substring(0, cql.length()-1);
+	    	cql = cql + " FROM "+fullNotifyArr[0]+" WHERE "+primaryId+" = ?";
+	    	logger.info("CQL in constructJsonNotification: "+cql);
+	    	PreparedQueryObject pQuery = new PreparedQueryObject();
+	    	pQuery.appendQueryString(cql);
+	    	pQuery.addValue(MusicUtil.convertToActualDataType(primaryIdType, pkValue));
+	    	Row row = MusicCore.get(pQuery).one();
+	    	Map<String, String> newMap = new HashMap<>();
+	    	if(row != null) {
+	    		for(String keys: keySet) {
+	    			String value = null;
+	    			logger.info("responseBodyMap: "+responseBodyMap.toString());
+	    			logger.info(">>>>>>>> converting <<<<<<<<<<<< "+keys + " : "+responseBodyMap.get(keys)+ ":" +responseBodyMap.get(keys).equals("uuid"));
+	    			if(responseBodyMap.get(keys).equals("uuid"))
+	    				value = row.getUUID(keys).toString();
+	    			else if (responseBodyMap.get(keys).equals("text"))
+	    				value = row.getString(keys);
+	    			/*else if (responseBodyMap.get(keys).contains("int"))
+	    				value = row.getLong(keys).toString();*/
+	    			newMap.put(keys, value);
+	    		}
+	    	}
+	    	if("delete".equals(jsonResponse.getOperation())) {
+	    		newMap.put(primaryId, pkValue);
+	    	}
+	    	jsonNotification.setResponse_body(newMap);
+    	} catch(Exception e) {
+    		e.printStackTrace();
+    	}
+    	return jsonNotification;
+    }
+    
+    private JsonCallback constructJsonCallbackFromCache(String fullTable) throws Exception{
+    	PreparedQueryObject pQuery = new PreparedQueryObject();
+		JsonCallback jsonCallback = new JsonCallback();
+		String cql = 
+                "select id, endpoint_userid, endpoint_password, notify_to_endpoint, notify_insert_on,"
+                + " notify_delete_on, notify_update_on, request from admin.notification_master where notifyon = ? allow filtering";
+        pQuery.appendQueryString(cql);
+        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), fullTable));
+        logger.info("Query: "+pQuery.getQuery() + " : "+fullTable);
+        
+        Row row = MusicCore.get(pQuery).one();
+        if(row != null) {
+        	String endpoint = row.getString("notify_to_endpoint");
+            String username = row.getString("endpoint_userid");
+            String password = row.getString("endpoint_password");
+            String insert = row.getString("notify_insert_on");
+            String delete = row.getString("notify_delete_on");
+            String update = row.getString("notify_update_on");
+            String request = row.getString("request");
+            String uuid = row.getUUID("id").toString();
+            jsonCallback.setApplicationNotificationEndpoint(endpoint);
+            jsonCallback.setApplicationPassword(password);
+            jsonCallback.setApplicationUsername(username);
+            jsonCallback.setNotifyOn(fullTable);
+            jsonCallback.setNotifyWhenInsertsIn(insert);
+            jsonCallback.setNotifyWhenDeletesIn(delete);
+            jsonCallback.setNotifyWhenChangeIn(update);
+            jsonCallback.setUuid(uuid);
+            logger.info("From DB. Saved request_body: "+request);
+            request = request.substring(1, request.length()-1);           
+            String[] keyValuePairs = request.split(",");              
+            Map<String,String> responseBody = new HashMap<>();               
+
+            for(String pair : keyValuePairs) {
+                String[] entry = pair.split("="); 
+                String val = "";
+                if(entry.length == 2)
+                	val = entry[1];
+                responseBody.put(entry[0], val);          
+            }
+            logger.info("After parsing. Saved request_body: "+responseBody);
+            jsonCallback.setResponseBody(responseBody);
+        }
+        return jsonCallback;
+    }
 
     @POST
-    @Path("/addCallback")
+    @Path("/onboardCallback")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response addCallback(JsonCallback jsonCallback) throws Exception {
+    public Response addCallback(JsonNotification jsonNotification) {
         Map<String, Object> resultMap = new HashMap<>();
         ResponseBuilder response =
                         Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
-        String username = jsonCallback.getApplicationUsername();
-        String password = jsonCallback.getApplicationPassword();
-        String endpoint = jsonCallback.getApplicationNotificationEndpoint();
-        String changes = jsonCallback.getNotifyWhenChangeIn();
-        String inserts = jsonCallback.getNotifyWhenInsertsIn();
-        String deletes = jsonCallback.getNotifyWhenDeletesIn();
+        String username = jsonNotification.getUsername();
+        String password = jsonNotification.getPassword();
+        String endpoint = jsonNotification.getEndpoint();
+        String notify_field = jsonNotification.getNotify_field();
+        Map<String, String> responseBody = jsonNotification.getResponse_body();
+        
+        String[] allFields = notify_field.split(":");
+        String inserts = null;
+        String updates = null;
+        String deletes = null;
+        if(allFields.length >= 2) {
+        	inserts = updates = notify_field;
+        } else if(allFields.length == 1) {
+        	inserts = deletes = notify_field;;
+        }
+        		
         PreparedQueryObject pQuery = new PreparedQueryObject();
-        if (username == null || password == null || endpoint == null || changes == null || inserts == null || deletes == null) {
+        /*if (username == null || password == null || endpoint == null) {
             logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGINFO,
                             ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
             resultMap.put("Exception",
                             "Please check the request parameters. Some of the required values are missing.");
             return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
-        }
+        }*/
         String uuid = CachingUtil.generateUUID();
         try {
-        pQuery.appendQueryString(
-                        "INSERT INTO admin.callback_api (uuid, username, password, endpoint, "
-                                        + "changes, inserts, deletes) VALUES (?,?,?,?,?,?,?)");
-        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), uuid));
-        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), username));
-        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), password));
-        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), endpoint));
-        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), changes));
-        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), inserts));
-        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), deletes));
-        MusicCore.eventualPut(pQuery);
-        
-        Map<String, String> jsonMap = new HashMap<>();
-        jsonMap.put("username", username);
-        jsonMap.put("password", password);
-        jsonMap.put("endpoint", endpoint);
-        jsonMap.put("changes", changes);
-        jsonMap.put("inserts", inserts);
-        jsonMap.put("deletes", deletes);
-        
+	        pQuery.appendQueryString(
+	                        "INSERT INTO admin.notification_master (id, endpoint_userid, endpoint_password, notify_to_endpoint, "
+	                                        + "notifyon, notify_insert_on, notify_delete_on, notify_update_on, request, current_notifier) VALUES (?,?,?,?,?,?,?,?,?,?)");
+	        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), uuid));
+	        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), username));
+	        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), password));
+	        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), endpoint));
+	        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), notify_field));
+	        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), inserts));
+	        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), deletes));
+	        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), updates));
+	        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), responseBody));
+	        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), "UNKNOWN"));
+	        MusicCore.nonKeyRelatedPut(pQuery, MusicUtil.EVENTUAL);
+	        JsonCallback jsonCallback = new JsonCallback();
+	        jsonCallback.setUuid(uuid);
+	        jsonCallback.setApplicationNotificationEndpoint(endpoint);
+	        jsonCallback.setApplicationPassword(password);
+	        jsonCallback.setApplicationUsername(username);
+	        jsonCallback.setNotifyOn(notify_field);
+	        jsonCallback.setNotifyWhenChangeIn(updates);
+	        jsonCallback.setNotifyWhenDeletesIn(deletes);
+	        jsonCallback.setNotifyWhenInsertsIn(inserts);
+	        jsonCallback.setResponseBody(responseBody);
+	        CachingUtil.updateCallBackCache(notify_field, jsonCallback);
+	        logger.info("Cache updated ");
         //callBackCache.put(jsonCallback.getApplicationName(), jsonMap);
         } catch (InvalidQueryException e) {
             logger.error(EELFLoggerDelegate.errorLogger,"Exception callback_api table not configured."+e.getMessage());
-            resultMap.put("Exception", "Please make sure admin.callback_api table is configured.");
+            resultMap.put("Exception", "Please make sure admin.notification_master table is configured.");
+            return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
+        } catch(Exception e) {
+        	e.printStackTrace();
+        	resultMap.put("Exception", "Exception Occured.");
             return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
        return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setMessage("Callback api successfully registered").toMap()).build();
     }
+
+    /*public String encodePwd(String password) {
+    	return Base64.getEncoder().encodeToString(password.getBytes());
+    }
+    
+    public String decodePwd(String password) {
+    	byte[] bytes = Base64.getDecoder().decode(password); 
+    	return new String(bytes);
+    }*/
 }
