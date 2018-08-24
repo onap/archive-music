@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <!--
 /*
  * 
@@ -25,8 +26,8 @@ stated inside of the file.
   <groupId>com.att.reserarch.VoteAppForMUSIC</groupId>
   <artifactId>VoteAppForMUSIC</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  
-    
+
+
     	<repositories>
 		<repository>
 			<id>maven2-repository.java.net</id>
@@ -64,13 +65,13 @@ stated inside of the file.
 			<artifactId>jersey-json</artifactId>
 			<version>1.9</version>
 		</dependency>
-		
+
 		<dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-bundle</artifactId>
             <version>1.18</version>
         </dependency>	
-        
+
         		<dependency>
 	<groupId>com.googlecode.json-simple</groupId>
 	<artifactId>json-simple</artifactId>
@@ -86,7 +87,7 @@ stated inside of the file.
 			<artifactId>zookeeper</artifactId>
 			<version>3.4.6</version>
 		</dependency>
-        
+
 	</dependencies>
-  
+
 </project>
