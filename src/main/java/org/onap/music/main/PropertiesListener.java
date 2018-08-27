@@ -122,6 +122,12 @@ public class PropertiesListener implements ServletContextListener {
                         case "cassandra.port":
                             MusicUtil.setCassandraPort(Integer.parseInt(prop.getProperty(key)));
                             break;
+                        case "notify.interval":
+                        	MusicUtil.setNotifyInterval(Integer.parseInt(prop.getProperty(key)));
+                        	break;
+                        case "notify.timeout":
+                        	MusicUtil.setNotifyTimeOut(Integer.parseInt(prop.getProperty(key)));
+                        	break;
                         default:
                             logger.error(EELFLoggerDelegate.errorLogger,
                                             "No case found for " + key);

@@ -21,10 +21,12 @@
  */
 package org.onap.music.main;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import javax.ws.rs.core.HttpHeaders;
@@ -67,6 +69,7 @@ public class CachingUtil implements Runnable {
     private static CacheAccess<String, String> appNameCache = JCS.getInstance("appNameCache");
     private static CacheAccess<String, Map<String, String>> musicValidateCache = JCS.getInstance("musicValidateCache");
     private static CacheAccess<String, JsonCallback> callBackCache = JCS.getInstance("callBackCache");
+    private static CacheAccess<String, List<String>> callbackNotifyList = JCS.getInstance("callbackNotifyList");
     private static Map<String, Number> userAttempts = new HashMap<>();
     private static Map<String, Calendar> lastFailedTime = new HashMap<>();
 
@@ -77,6 +80,7 @@ public class CachingUtil implements Runnable {
     }
     
     public static void updateCallBackCache(String appName, JsonCallback jsonCallBack) {
+    	logger.info("updateCallBackCache: updating cache.....");
     	callBackCache.put(appName, jsonCallBack);
     }
     
@@ -84,6 +88,15 @@ public class CachingUtil implements Runnable {
     	return callBackCache.get(appName);
     }
 
+    public static void updateCallbackNotifyList(List<String> notifyList) {
+    	logger.info("callbackNotifyList: updating cache.....");
+    	callbackNotifyList.put("callbackNotify", notifyList);
+    }
+    
+    public static List<String> getCallbackNotifyList() {
+    	return callbackNotifyList.get("callbackNotify");
+    }
+    
     public void initializeMusicCache() {
         logger.info(EELFLoggerDelegate.applicationLogger,"Initializing Music Cache...");
         musicCache.put("isInitialized", "true");

@@ -44,7 +44,7 @@ public class JsonNotification implements Serializable {
     private String notify_insert;
     private String notify_delete;
     private String operation_type;
-    
+    private String triggerName;
     private Map<String, String> response_body;
     
 	public String getNotify_field() {
@@ -101,7 +101,12 @@ public class JsonNotification implements Serializable {
 	public void setOperation_type(String operation_type) {
 		this.operation_type = operation_type;
 	}
-
+	public String getTriggerName() {
+		return triggerName;
+	}
+	public void setTriggerName(String triggerName) {
+		this.triggerName = triggerName;
+	}
 	@Override
 	public String toString() {
 		try {

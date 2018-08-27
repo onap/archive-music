@@ -615,10 +615,10 @@ public class MusicUtil {
 		
 	}
     
-	private static void setNotifyInterval(int notifyinterval) {
+	public static void setNotifyInterval(int notifyinterval) {
 		MusicUtil.notifyinterval = notifyinterval;
 	}
-	private static void setNotifyTimeOut(int notifytimeout) {
+	public static void setNotifyTimeOut(int notifytimeout) {
 		MusicUtil.notifytimeout = notifytimeout;
 	}
 

@@ -1001,29 +1001,18 @@
         }
       }
     },
-    "/v2/locks/acquire-with-lease/{lockreference}": {
-      "post": {
+    "/v2/locks/acquire/{lockreference}": {
+      "get": {
         "tags": [
           "Lock Api"
         ],
-        "summary": "Aquire Lock with Lease",
-        "description": "",
-        "operationId": "accquireLockWithLease",
-        "consumes": [
-          "application/json"
-        ],
+        "summary": "Aquire Lock",
+        "description": "Checks if the node is in the top of the queue and hence acquires the lock",
+        "operationId": "accquireLock",
         "produces": [
           "application/json"
         ],
         "parameters": [
-          {
-            "in": "body",
-            "name": "body",
-            "required": false,
-            "schema": {
-              "$ref": "#/definitions/JsonTable"
-            }
-          },
           {
             "name": "lockreference",
             "in": "path",
@@ -1080,18 +1069,29 @@
         }
       }
     },
-    "/v2/locks/acquire/{lockreference}": {
-      "get": {
+    "/v2/locks/acquire-with-lease/{lockreference}": {
+      "post": {
         "tags": [
           "Lock Api"
         ],
-        "summary": "Aquire Lock",
-        "description": "Checks if the node is in the top of the queue and hence acquires the lock",
-        "operationId": "accquireLock",
+        "summary": "Aquire Lock with Lease",
+        "description": "",
+        "operationId": "accquireLockWithLease",
+        "consumes": [
+          "application/json"
+        ],
         "produces": [
           "application/json"
         ],
         "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": false,
+            "schema": {
+              "$ref": "#/definitions/JsonTable"
+            }
+          },
           {
             "name": "lockreference",
             "in": "path",

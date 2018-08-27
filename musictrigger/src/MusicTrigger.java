@@ -25,6 +25,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Map;
 
 import javax.ws.rs.core.HttpHeaders;
@@ -68,7 +73,6 @@ public class MusicTrigger implements ITrigger {
         boolean isInsert = checkQueryType(partition);
         org.json.simple.JSONObject obj = new org.json.simple.JSONObject();
         
-        
         String operation = null;
         if(isDelete)
         	operation = "delete";
@@ -76,14 +80,14 @@ public class MusicTrigger implements ITrigger {
         	operation = "insert";
         else
         	operation = "update";
-        Map<String, String> changeMap = new HashMap<>();
+        Map<String, Object> changeMap = new HashMap<>();
         
         obj.put("operation", operation);
         obj.put("keyspace", ksName);
         obj.put("table_name", tableName);
         obj.put("full_table", ksName+"."+tableName);
         obj.put("primary_key", partition.metadata().getKeyValidator().getString(partition.partitionKey().getKey()));
-        
+        List<String> updateList = new ArrayList<>();
         //obj.put("message_id", partition.metadata().getKeyValidator().getString(partition.partitionKey().getKey()));
         if("update".equals(operation)) {
 	        try {
@@ -97,15 +101,29 @@ public class MusicTrigger implements ITrigger {
 	                while(columns.hasNext()){
 	                    ColumnDefinition columnDef = columns.next();
 	                    Cell cell = cells.next();
-	                    String data = new String(cell.value().array()); // If cell type is text
+	                    
+	                    String data = null;
+	                    if(cell.column().type.toString().equals("org.apache.cassandra.db.marshal.UTF8Type")) {
+	                        logger.info(">> type is String");
+	                        data = new String(cell.value().array()); // If cell type is text
+	                    } else if(cell.column().type.toString().equals("org.apache.cassandra.db.marshal.Int32Type")) {
+	                    	//ByteBuffer wrapped = ByteBuffer.wrap(cell.value()); // big-endian by default
+	                        int num = fromByteArray(cell.value().array());
+	                        logger.info(">> type is Integer1 :: "+num);
+	                        data = String.valueOf(num);
+	                    }
+	                    
 	                    logger.info("Inside triggers loop: "+columnDef.name+" : "+data);
-	                    changeMap.put(ksName+"."+tableName+"."+columnDef.name,data);
+	                    //changeMap.put(ksName+"."+tableName+"."+columnDef.name,data);
+	                    updateList.add(ksName+"."+tableName+":"+columnDef.name+":"+data);
 	                    changeMap.put("field_value",ksName+"."+tableName+":"+columnDef.name+":"+data);
+	                    
 	                }
 	            }
 	        } catch (Exception e) {
 	
 	        }
+	        obj.put("updateList", updateList);
         } else {
         	changeMap.put("field_value", ksName+"."+tableName);
         }
@@ -119,6 +137,10 @@ public class MusicTrigger implements ITrigger {
             logger.error("Notification failed..."+e.getMessage());
         }
         return Collections.emptyList();
+    }
+    
+    private int fromByteArray(byte[] bytes) {
+        return bytes[0] << 24 | (bytes[1] & 0xFF) << 16 | (bytes[2] & 0xFF) << 8 | (bytes[3] & 0xFF);
     }
     
     private boolean checkQueryType(Partition partition) { 
@@ -149,12 +171,12 @@ public class MusicTrigger implements ITrigger {
                 .post(ClientResponse.class, data);
 		
 		if(response.getStatus() != 200){
-			System.out.println("Exception...");
+			System.out.println("Exception while notifying MUSIC...");
         }
-		response.getHeaders().put(HttpHeaders.CONTENT_TYPE, Arrays.asList(MediaType.APPLICATION_JSON));
+		/*response.getHeaders().put(HttpHeaders.CONTENT_TYPE, Arrays.asList(MediaType.APPLICATION_JSON));
 		response.bufferEntity();
 		String x = response.getEntity(String.class);
-		System.out.println("Response: "+x);
+		System.out.println("Response: "+x);*/
 		
 	}
 

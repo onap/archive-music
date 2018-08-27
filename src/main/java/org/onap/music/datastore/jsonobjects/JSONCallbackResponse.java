@@ -22,6 +22,7 @@
 
 package org.onap.music.datastore.jsonobjects;
 
+import java.util.List;
 import java.util.Map;
 
 public class JSONCallbackResponse {
@@ -33,6 +34,8 @@ public class JSONCallbackResponse {
 	private String table_name;
 	private String primary_key;
 	private Object miscObjects;
+	private List<String> updateList;
+	
 	public String getFull_table() {
 		return full_table;
 	}
@@ -74,6 +77,12 @@ public class JSONCallbackResponse {
 	}
 	public Map<String, String> getChangeValue() {
 		return changeValue;
+	}
+	public List<String> getUpdateList() {
+		return updateList;
+	}
+	public void setUpdateList(List<String> updateList) {
+		this.updateList = updateList;
 	}
 	
 	
