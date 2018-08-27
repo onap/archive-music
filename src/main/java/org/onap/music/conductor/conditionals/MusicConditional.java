@@ -335,15 +335,17 @@ public class MusicConditional {
 
 		Map<String, String> finalValues = new HashMap<>();
 		values = (Map<String, String>) columnValue;
-		if (values.keySet().contains(planId)) {
-			String valueString = values.get(planId);
-			String tempValueString = valueString.replaceAll("\\{", "").replaceAll("\"", "").replaceAll("\\}", "");
-			String[] elements = tempValueString.split(",");
-			for (String str : elements) {
-				String[] keyValue = str.split(":");
-				if ((changeOfStatus.keySet().contains(keyValue[0].replaceAll("\\s", ""))))
-				keyValue[1] = changeOfStatus.get(keyValue[0].replaceAll("\\s", ""));
-				finalValues.put(keyValue[0], keyValue[1]);
+		if(values!=null) {
+			if (values.keySet().contains(planId)) {
+				String valueString = values.get(planId);
+				String tempValueString = valueString.replaceAll("\\{", "").replaceAll("\"", "").replaceAll("\\}", "");
+				String[] elements = tempValueString.split(",");
+				for (String str : elements) {
+					String[] keyValue = str.split(":");
+					if ((changeOfStatus.keySet().contains(keyValue[0].replaceAll("\\s", ""))))
+					keyValue[1] = changeOfStatus.get(keyValue[0].replaceAll("\\s", ""));
+					finalValues.put(keyValue[0], keyValue[1]);
+				}
 			}
 		}
 		return finalValues;
