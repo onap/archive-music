@@ -335,7 +335,7 @@ public class MusicConditional {
 
 		Map<String, String> finalValues = new HashMap<>();
 		values = (Map<String, String>) columnValue;
-		if (values.keySet().contains(planId)) {
+		if (values != null && values.keySet().contains(planId)) {
 			String valueString = values.get(planId);
 			String tempValueString = valueString.replaceAll("\\{", "").replaceAll("\"", "").replaceAll("\\}", "");
 			String[] elements = tempValueString.split(",");
