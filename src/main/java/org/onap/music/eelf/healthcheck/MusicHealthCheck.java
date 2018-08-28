@@ -63,7 +63,7 @@ public class MusicHealthCheck {
 						result = getAdminKeySpace(consistency);
 					} catch (MusicServiceException e1) {
 						// TODO Auto-generated catch block
-						e1.printStackTrace();
+						logger.error(EELFLoggerDelegate.applicationLogger, "Cassandra Service is not responding "+e1.getMessage());
 					}
 			} else {
 				return "One or more nodes are down or not responding.";
@@ -101,8 +101,7 @@ public class MusicHealthCheck {
 		try {
 			rs = MusicCore.nonKeyRelatedPut(pQuery, ConsistencyLevel.ONE.toString());
 		} catch (MusicServiceException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error(EELFLoggerDelegate.applicationLogger, "nonKeyRelatedPut failed : " + e.getMessage());
 		}
 		if(rs.getResult().toLowerCase().contains("success"))
 			return true;
