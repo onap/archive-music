@@ -101,7 +101,7 @@ public class MusicUtil {
     private static String cassName = "cassandra";
     private static String cassPwd;
     private static String aafEndpointUrl = null;
-    public static ConcurrentMap<String, Long> zkNodeMap = new ConcurrentHashMap<>();
+    public static final ConcurrentMap<String, Long> zkNodeMap = new ConcurrentHashMap<>();
 
     private MusicUtil() {
         throw new IllegalStateException("Utility Class");
@@ -599,7 +599,7 @@ public class MusicUtil {
 	            try {
 	                input.close();
 	            } catch (IOException e) {
-	                e.printStackTrace();
+	                logger.error(EELFLoggerDelegate.applicationLogger,"Load properties failed "+e.getMessage(),e);
 	            }
 	        }
 	    }
