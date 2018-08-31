@@ -27,13 +27,13 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Map;
-
+import org.apache.log4j.Logger;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonSelect implements Serializable {
     private Map<String, String> consistencyInfo;
-
+    static Logger logger = Logger.getLogger(JsonSelect.class.getName());
 
     public Map<String, String> getConsistencyInfo() {
         return consistencyInfo;
@@ -51,6 +51,7 @@ public class JsonSelect implements Serializable {
             out.writeObject(this);
         } catch (IOException e) {
             // TODO Auto-generated catch block
+        	logger.error("Error", e);
             e.printStackTrace();
         }
         return bos.toByteArray();
