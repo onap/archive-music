@@ -35,8 +35,8 @@ public class JsonConditional implements Serializable {
 	private String primaryKey;
 	private String primaryKeyValue;
 	private String casscadeColumnName;
-	private Map<String,Object> tableValues;
-	private Map<String,Object> casscadeColumnData;
+	private transient Map<String,Object> tableValues;
+	private transient Map<String,Object> casscadeColumnData;
 	private Map<String,Map<String,String>> conditions;
 	
 	public Map<String, Object> getTableValues() {
