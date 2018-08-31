@@ -22,18 +22,18 @@
 package org.onap.music.datastore.jsonobjects;
 
 import java.io.Serializable;
-import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import org.apache.log4j.Logger;
 
 @ApiModel(value = "JsonNotifyClientResponse", description = "Json model for callback")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonNotifyClientResponse implements Serializable {
 	private String message;
     private String status;
+    Logger logger = Logger.getLogger(JsonNotifyClientResponse.class.getName());
     
 	public String getMessage() {
 		return message;
@@ -53,6 +53,7 @@ public class JsonNotifyClientResponse implements Serializable {
 		try {
 	        return new com.fasterxml.jackson.databind.ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(this);
 	    } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+	    	logger.error("Error", e);
 			return message+ " : "+status;
 	    }
 
