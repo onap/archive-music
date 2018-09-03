@@ -174,8 +174,10 @@ class ProtocolSupport {
                 }
             });
         } catch (KeeperException e) {
+        	logger.error("Error", e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         } catch (InterruptedException e) {
+        	logger.error("Error", e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
     }
