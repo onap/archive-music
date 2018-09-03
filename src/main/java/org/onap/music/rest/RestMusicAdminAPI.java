@@ -506,19 +506,24 @@ public class RestMusicAdminAPI {
 			logger.info(operation+ ": Operation :: changeValue: "+changeValueMap);
 			if(operation.equals("update")) {
 				String notifyWhenChangeIn = baseRequestObj.getNotifyWhenChangeIn(); // conductor.plans.status
-				if(field_value.equals(notifyWhenChangeIn)) {
-					notifyCallBackAppl(jsonResponse, baseRequestObj);
+				if(null!=field_value) {
+					if(field_value.equals(notifyWhenChangeIn)) {
+						notifyCallBackAppl(jsonResponse, baseRequestObj);
+					}
 				}
-				
 			} else if(operation.equals("delete")) {
 				String notifyWhenDeletesIn = baseRequestObj.getNotifyWhenDeletesIn(); // conductor.plans.status
-				if(field_value.equals(notifyWhenDeletesIn)) {
-					notifyCallBackAppl(jsonResponse, baseRequestObj);
+				if(null!=field_value) {
+					if(field_value.equals(notifyWhenDeletesIn)) {
+						notifyCallBackAppl(jsonResponse, baseRequestObj);
+					}
 				}
 			} else if(operation.equals("insert")) {
 				String notifyWhenInsertsIn = baseRequestObj.getNotifyWhenInsertsIn(); // conductor.plans.status
-				if(field_value.equals(notifyWhenInsertsIn)) {
-					notifyCallBackAppl(jsonResponse, baseRequestObj);
+				if(null!=field_value) {
+					if(field_value.equals(notifyWhenInsertsIn)) {
+						notifyCallBackAppl(jsonResponse, baseRequestObj);
+					}
 				}
 			}
 			MusicCore.releaseLock(lockId, true);	

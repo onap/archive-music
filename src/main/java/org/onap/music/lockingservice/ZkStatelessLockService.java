@@ -298,7 +298,7 @@ public class ZkStatelessLockService extends ProtocolSupport {
                         try {
                             stat = zookeeper.exists(id, false);
                         } catch (KeeperException | InterruptedException e1) {
-                            e1.printStackTrace();
+                            logger.error(EELFLoggerDelegate.errorLogger, "Error in execute: " + e1);
                         }
                         Long ctime = stat.getCtime();
                         MusicUtil.zkNodeMap.put(id, ctime);
@@ -310,7 +310,7 @@ public class ZkStatelessLockService extends ProtocolSupport {
                             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), ctime));
                             MusicCore.eventualPut(pQuery);
                         } catch (Exception e) {
-                               e.printStackTrace();
+                        	logger.error(EELFLoggerDelegate.errorLogger, "Error in execute: " + e);
                         }
                         break;
                    }
