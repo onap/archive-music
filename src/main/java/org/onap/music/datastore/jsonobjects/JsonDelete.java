@@ -36,7 +36,8 @@ public class JsonDelete {
     private ArrayList<String> columns = null;
     private Map<String, String> consistencyInfo;
     private Map<String, Object> conditions;
-    String ttl, timestamp;
+    String ttl;
+    String timestamp;
 
 
     @ApiModelProperty(value = "Conditions")
