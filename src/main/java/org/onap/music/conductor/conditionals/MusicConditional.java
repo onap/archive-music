@@ -122,7 +122,7 @@ public class MusicConditional {
 
 			MusicLockState mls = MusicCore.getLockingServiceHandle()
 					.getLockState(keyspace + "." + tableName + "." + primaryKey);
-			if (mls.getLockHolder().equals(lockId) == true) {
+			if (mls.getLockHolder().equals(lockId)) {
 				try {
 					results = MusicCore.getDSHandle().executeCriticalGet(queryBank.get(MusicUtil.SELECT));
 				} catch (Exception e) {
@@ -181,7 +181,7 @@ public class MusicConditional {
 
 			MusicLockState mls = MusicCore.getLockingServiceHandle()
 					.getLockState(keyspace + "." + tableName + "." + primaryKeyValue);
-			if (mls.getLockHolder().equals(lockId) == true) {
+			if (mls.getLockHolder().equals(lockId)) {
 				Row row  = MusicCore.getDSHandle().executeCriticalGet(queryBank.get(MusicUtil.SELECT)).one();
 				
 				if(row != null) {
