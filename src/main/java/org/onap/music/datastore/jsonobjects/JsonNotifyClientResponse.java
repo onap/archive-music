@@ -22,12 +22,10 @@
 package org.onap.music.datastore.jsonobjects;
 
 import java.io.Serializable;
-import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
 
 @ApiModel(value = "JsonNotifyClientResponse", description = "Json model for callback")
 @JsonIgnoreProperties(ignoreUnknown = true)
