@@ -21,31 +21,24 @@
  */
 package org.onap.music.main;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.jcs.JCS;
 import org.apache.commons.jcs.access.CacheAccess;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.mindrot.jbcrypt.BCrypt;
 import org.onap.music.datastore.PreparedQueryObject;
-import org.onap.music.datastore.jsonobjects.AAFResponse;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicServiceException;
-import org.onap.music.datastore.jsonobjects.JsonNotification;
 import org.onap.music.datastore.jsonobjects.JsonCallback;
-import com.att.eelf.configuration.EELFLogger;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -112,7 +105,6 @@ public class CachingUtil implements Runnable {
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), false));
         } catch (Exception e1) {
             logger.error(EELFLoggerDelegate.errorLogger, e1.getMessage(),AppMessages.CACHEERROR, ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
-            e1.printStackTrace();
         }
         ResultSet rs = MusicCore.get(pQuery);
         Iterator<Row> it = rs.iterator();
@@ -137,7 +129,6 @@ public class CachingUtil implements Runnable {
             } catch (Exception e) {
                 logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.INFO, ErrorTypes.GENERALSERVICEERROR);
                 logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),"Something at AAF was changed for ns: " + nameSpace+" So not updating Cache for the namespace. ");
-                e.printStackTrace();
             }
         }
 
@@ -279,7 +270,6 @@ public class CachingUtil implements Runnable {
                     appNameCache.put(namespace, isAAF);
             } catch (Exception e) {
             	logger.error(EELFLoggerDelegate.errorLogger,  e.getMessage(), AppMessages.QUERYERROR,ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
-            	e.printStackTrace();
             }
         }
         return isAAF;
@@ -297,7 +287,6 @@ public class CachingUtil implements Runnable {
                 uuid = rs.getUUID("uuid").toString();
             } catch (Exception e) {
                 logger.error(EELFLoggerDelegate.errorLogger,"Exception occured during uuid retrieval from DB."+e.getMessage());
-                e.printStackTrace();
             }
         }
         return uuid;
@@ -314,7 +303,6 @@ public class CachingUtil implements Runnable {
             appName = rs.getString("application_name");
         } catch (Exception e) {
         	logger.error(EELFLoggerDelegate.errorLogger,  e.getMessage(), AppMessages.QUERYERROR, ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
-            e.printStackTrace();
         }
         return appName;
     }
@@ -361,7 +349,6 @@ public class CachingUtil implements Runnable {
 			rs = MusicCore.get(queryObject).one();
 		} catch (MusicServiceException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
 			resultMap.put("Exception", "Unable to process operation. Error is "+e.getMessage());
 			return resultMap;
         } catch (InvalidQueryException e) {
@@ -405,14 +392,13 @@ public class CachingUtil implements Runnable {
         try {
             queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), keyspace));
         } catch (Exception e) {
-            e.printStackTrace();
+        	 logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
         }
         Row rs = null;
         try {
             rs = MusicCore.get(queryObject).one();
         } catch (MusicServiceException e) {
-            e.printStackTrace();
-            resultMap.put("Exception", "Unable to process operation. Error is "+e.getMessage());
+        	resultMap.put("Exception", "Unable to process operation. Error is "+e.getMessage());
             return resultMap;
         }
         if(rs == null) {
@@ -448,7 +434,7 @@ public class CachingUtil implements Runnable {
         try {
             MusicCore.nonKeyRelatedPut(pQuery, "eventual");
         } catch (Exception e) {
-              e.printStackTrace();
+        	 logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.AUTHENTICATIONERROR, "Error in deleteKeysFromDB");
         }
     }
 }
