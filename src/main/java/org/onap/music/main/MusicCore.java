@@ -125,7 +125,7 @@ public class MusicCore {
         long start = System.currentTimeMillis();
         if (mDstoreHandle == null) {
             // Quick Fix - Best to put this into every call to getDSHandle?
-            if (! MusicUtil.getMyCassaHost().equals("localhost") ) {
+            if (! "localhost".equals(MusicUtil.getMyCassaHost())) {
                 mDstoreHandle = new MusicDataStore(MusicUtil.getMyCassaHost());
             } else {
                 mDstoreHandle = new MusicDataStore();
