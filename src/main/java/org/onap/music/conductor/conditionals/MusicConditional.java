@@ -107,6 +107,7 @@ public class MusicConditional {
 				return lockAcqResult;
 			}
 		} catch (Exception e) {
+			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED);
 			MusicCore.destroyLockRef(lockId);
 			return new ReturnType(ResultType.FAILURE, e.getMessage());
 		}
@@ -143,6 +144,7 @@ public class MusicConditional {
 		} catch (Exception e) {
 			StringWriter sw = new StringWriter();
 			e.printStackTrace(new PrintWriter(sw));
+			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
 			String exceptionAsString = sw.toString();
 			return new ReturnType(ResultType.FAILURE,
 					"Exception thrown while doing the critical put, check sanctity of the row/conditions:\n"
@@ -169,6 +171,7 @@ public class MusicConditional {
 			}
 
 		} catch (Exception e) {
+			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
 			MusicCore.destroyLockRef(lockId);
 			return new ReturnType(ResultType.FAILURE, e.getMessage());
 
@@ -211,6 +214,7 @@ public class MusicConditional {
 			}
 
 		} catch (Exception e) {
+			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
 			StringWriter sw = new StringWriter();
 			e.printStackTrace(new PrintWriter(sw));
 			String exceptionAsString = sw.toString();
