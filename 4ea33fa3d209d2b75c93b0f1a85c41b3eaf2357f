@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "1a76adc5_50d2d15c",
+        "filename": "src/main/java/org/onap/music/rest/RestMusicQAPI.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 399,
+      "author": {
+        "id": 1827
+      },
+      "writtenOn": "2018-09-06T15:49:57Z",
+      "side": 1,
+      "message": "Ah, I see the issue it seems that the exception is not being logged. Can you please correct the logging by putting the exception  in the EELF logger statement.  So the error goes to the proper log file.",
+      "parentUuid": "1a76adc5_5084115d",
+      "revId": "4ea33fa3d209d2b75c93b0f1a85c41b3eaf2357f",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "1a76adc5_70890d74",
         "filename": "src/main/java/org/onap/music/rest/RestMusicQAPI.java",
         "patchSetId": 1
@@ -30,6 +48,24 @@
       "writtenOn": "2018-09-06T15:43:07Z",
       "side": 1,
       "message": "Not sure if this is needed, we are already logging the error. It seems that SONAR is not recognizing the EELF logging.",
+      "revId": "4ea33fa3d209d2b75c93b0f1a85c41b3eaf2357f",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "1a76adc5_70d7cd4b",
+        "filename": "src/main/java/org/onap/music/rest/RestMusicQAPI.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 413,
+      "author": {
+        "id": 1827
+      },
+      "writtenOn": "2018-09-06T15:49:57Z",
+      "side": 1,
+      "message": "Ah, I see the issue it seems that the exception is not being logged. Can you please correct the logging by putting the exception  in the EELF logger statement.  So the error goes to the proper log file.",
+      "parentUuid": "1a76adc5_70890d74",
       "revId": "4ea33fa3d209d2b75c93b0f1a85c41b3eaf2357f",
       "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
       "unresolved": false
