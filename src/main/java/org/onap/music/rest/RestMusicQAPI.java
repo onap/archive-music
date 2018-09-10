@@ -34,7 +34,6 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
-// cjcimport javax.servlet.http.HttpServletResponse;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
 import org.onap.music.datastore.jsonobjects.JsonTable;
@@ -51,22 +50,19 @@ import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
-// cjc import org.onap.music.main.ReturnType;
 import org.onap.music.response.jsonobjects.JsonResponse;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 
-// import io.swagger.models.Response;
+
 // @Path("/v{version: [0-9]+}/priorityq/")
 @Path("{version}/priorityq/")
 @Api(value = "Q Api")
 public class RestMusicQAPI {
 
   private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(RestMusicQAPI.class);
-  // private static String xLatestVersion = "X-latestVersion";
   /*
-   * private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(RestMusicDataAPI.class);
    * private static final String XMINORVERSION = "X-minorVersion"; private static final String
    * XPATCHVERSION = "X-patchVersion"; private static final String NS = "ns"; private static final
    * String USERID = "userId"; private static final String PASSWORD = "password";
@@ -108,12 +104,12 @@ public class RestMusicQAPI {
           @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
           @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename)
           throws Exception {
-    //logger.info(logger, "cjc before start in q 1** major version=" + version);
+    
 
     ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
 
     Map<String, String> fields = tableObj.getFields();
-    if (fields == null) { // || (!fields.containsKey("order")) ){
+    if (fields == null) {
       logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA,
               ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
       return response.status(Status.BAD_REQUEST)
@@ -190,9 +186,13 @@ public class RestMusicQAPI {
             clusteringKey=clusteringKey.replaceAll("[\\(]+","");
             clusteringKey=clusteringKey.replaceAll("[\\)]+","");
             clusteringKey.trim();
-            if (clusteringKey.indexOf(",") == 0) clusteringKey=clusteringKey.substring(1);
+            if (clusteringKey.indexOf(",") == 0) {
+                clusteringKey=clusteringKey.substring(1);
+            }
             clusteringKey.trim();
-            if (clusteringKey.equals(",") ) clusteringKey=""; // print error if needed    ( ... ),)
+            if (",".equals(clusteringKey) ) {
+            	clusteringKey=""; // print error if needed    ( ... ),)
+            }
          }
     }
 
@@ -252,15 +252,11 @@ public class RestMusicQAPI {
           @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
           @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename)
           throws Exception {
-    // ,@Context HttpServletResponse response) throws Exception {
 
-    // Map<String, Object> valuesMap = insObj.getValues();
     // check valuesMap.isEmpty and proceed
-    // if(valuesMap.isEmpty() ) {
     // response.addHeader(xLatestVersion, MusicUtil.getVersion());
     ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
     if (insObj.getValues().isEmpty()) {
-      // response.status(404);
       logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA,
               ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
       return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
@@ -296,13 +292,11 @@ public class RestMusicQAPI {
           JsonUpdate updateObj,
           @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
           @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename,
-          @Context UriInfo info) throws Exception {
+          @Context UriInfo info) {
 
     //logger.info(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA, ErrorSeverity.CRITICAL,
-      //      ErrorTypes.DATAERROR);
     ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
     if (updateObj.getValues().isEmpty()) {
-      // response.status(404);
       logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA,
               ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
       return response.status(Status.BAD_REQUEST)
@@ -347,11 +341,10 @@ public class RestMusicQAPI {
           JsonDelete delObj,
           @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
           @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename,
-          @Context UriInfo info) throws Exception {
+          @Context UriInfo info) {
     // added checking as per RestMusicDataAPI
     ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
     if (delObj == null) {
-      // response.status(404);
       logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA,
               ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
       return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
@@ -403,6 +396,7 @@ public class RestMusicQAPI {
         queryObject = new RestMusicDataAPI().selectSpecificQuery(version, minorVersion,
                 patchVersion, aid, ns, userId, password, keyspace, tablename, info, limit);
       } catch (MusicServiceException ex) {
+    	logger.error(EELFLoggerDelegate.errorLogger, "MusicServiceException occured in peek"+ ex);
         logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.UNKNOWNERROR,
                 ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
         return response.status(Status.BAD_REQUEST)
@@ -416,6 +410,7 @@ public class RestMusicQAPI {
       return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS)
               .setDataResult(MusicCore.marshallResults(results)).toMap()).build();
     } catch (MusicServiceException ex) {
+      logger.error(EELFLoggerDelegate.errorLogger, "MusicServiceException occured in peek"+ ex);
       logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.UNKNOWNERROR,
               ErrorSeverity.ERROR, ErrorTypes.MUSICSERVICEERROR);
       return response.status(Status.BAD_REQUEST)
@@ -452,11 +447,9 @@ public class RestMusicQAPI {
           @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
           @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename,
           @Context UriInfo info) throws Exception {
-    //int limit = -1;
     /*
      * PreparedQueryObject query = new RestMusicDataAPI().selectSpecificQuery(version, minorVersion,
      * patchVersion, aid, ns, userId, password, keyspace, tablename, info, limit); ResultSet results
-     * = MusicCore.get(query); return MusicCore.marshallResults(results);
      */
    /* Map<String ,String> auth = new HashMap<>();
     String userId =auth.get(MusicUtil.USERID);
@@ -492,8 +485,6 @@ public class RestMusicQAPI {
           @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
           @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename)
           throws Exception {
-    // @Context HttpServletResponse response) throws Exception {
-    // tabObj never in use & thus no need to verify
 
 
     return new RestMusicDataAPI().dropTable(version, minorVersion, patchVersion, aid, ns, authorization, keyspace, tablename);
