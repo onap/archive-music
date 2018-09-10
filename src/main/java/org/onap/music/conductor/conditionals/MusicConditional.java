@@ -47,6 +47,7 @@ import com.datastax.driver.core.TableMetadata;
 
 public class MusicConditional {
 	private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(RestMusicDataAPI.class);
+	private static final String CRITICAL = "critical";
 
 	public static ReturnType conditionalInsert(String keyspace, String tablename, String casscadeColumnName,
 			Map<String, Object> casscadeColumnData, String primaryKey, Map<String, Object> valuesMap,
@@ -130,10 +131,10 @@ public class MusicConditional {
 					return new ReturnType(ResultType.FAILURE, e.getMessage());
 				}
 				if (results.all().isEmpty()) {
-					MusicCore.getDSHandle().executePut(queryBank.get(MusicUtil.INSERT), "critical");
+					MusicCore.getDSHandle().executePut(queryBank.get(MusicUtil.INSERT), CRITICAL);
 					return new ReturnType(ResultType.SUCCESS, "insert");
 				} else {
-					MusicCore.getDSHandle().executePut(queryBank.get(MusicUtil.UPDATE), "critical");
+					MusicCore.getDSHandle().executePut(queryBank.get(MusicUtil.UPDATE), CRITICAL);
 					return new ReturnType(ResultType.SUCCESS, "update");
 				}
 			} else {
@@ -198,14 +199,14 @@ public class MusicConditional {
 					update.addValue(MusicUtil.convertToActualDataType(DataType.text(), vector_ts));
 					update.addValue(MusicUtil.convertToActualDataType(DataType.text(), primaryKeyValue));
 					try {
-						MusicCore.getDSHandle().executePut(update, "critical");
+						MusicCore.getDSHandle().executePut(update, CRITICAL);
 					} catch (Exception ex) {
 						return new ReturnType(ResultType.FAILURE, ex.getMessage());
 					}
 				}else {
 					return new ReturnType(ResultType.FAILURE,"Cannot find data related to key: "+primaryKey);
 				}
-				MusicCore.getDSHandle().executePut(queryBank.get(MusicUtil.UPSERT), "critical");
+				MusicCore.getDSHandle().executePut(queryBank.get(MusicUtil.UPSERT), CRITICAL);
 				return new ReturnType(ResultType.SUCCESS, "update success");
 
 			} else {
