@@ -481,6 +481,32 @@ public class RestMusicAdminAPI {
 						break;
 					}
 				}
+				if(baseRequestObj == null || field_value == null) {
+					for(String element: inputUpdateList) {
+						String[] elementArr = element.split(":");
+						String newElement = null;
+						if(elementArr.length >= 2) {
+							newElement = elementArr[0]+":"+elementArr[1];
+				        } 
+						baseRequestObj = CachingUtil.getCallBackCache(newElement);
+						if(baseRequestObj != null) {
+							logger.info("Found the element that was changed... "+newElement);
+							break;
+						}
+					}
+					for(String element : updateList) {
+						String[] elementArr = element.split(":");
+						String newElement = null;
+						if(elementArr.length >= 2) {
+							newElement = elementArr[0]+":"+elementArr[1];
+				        } 
+						if(notifiyList.contains(newElement)) {
+							logger.info("Found the notifyOn property: "+newElement);
+							field_value = newElement;
+							break;
+						}
+					}
+				}
 			} else {
 				field_value = jsonResponse.getFull_table();
 				baseRequestObj = CachingUtil.getCallBackCache(field_value);
@@ -609,80 +635,62 @@ public class RestMusicAdminAPI {
 			String primaryId = tableInfo.getPrimaryKey().get(0).getName();
 			
 			Map<String, String> responseBodyMap = baseRequestObj.getResponseBody();
-			for (Entry<String, String> entry : new HashSet<>(responseBodyMap.entrySet())) {
-			    String trimmed = entry.getKey().trim();
-			    if (!trimmed.equals(entry.getKey())) {
-			    	responseBodyMap.remove(entry.getKey());
-			    	responseBodyMap.put(trimmed, entry.getValue());
-			    }
+			Map<String, String> newMap = new HashMap<>();
+			if(responseBodyMap.size() == 1 && responseBodyMap.containsKey("")) {
+				jsonNotification.setResponse_body(newMap);
+			} else {
+				for (Entry<String, String> entry : new HashSet<>(responseBodyMap.entrySet())) {
+				    String trimmed = entry.getKey().trim();
+				    if (!trimmed.equals(entry.getKey())) {
+				    	responseBodyMap.remove(entry.getKey());
+				    	responseBodyMap.put(trimmed, entry.getValue());
+				    }
+				}
+				
+				Set<String> keySet = responseBodyMap.keySet();
+				String cql = "select *";
+				/*for(String keys: keySet) {
+					cql = cql + keys + ",";
+				}*/
+				//cql = cql.substring(0, cql.length()-1);
+				cql = cql + " FROM "+fullNotifyArr[0]+" WHERE "+primaryId+" = ?";
+				logger.info("CQL in constructJsonNotification: "+cql);
+				PreparedQueryObject pQuery = new PreparedQueryObject();
+				pQuery.appendQueryString(cql);
+				pQuery.addValue(MusicUtil.convertToActualDataType(primaryIdType, pkValue));
+				Row row = MusicCore.get(pQuery).one();
+				if(row != null) {
+					ColumnDefinitions colInfo = row.getColumnDefinitions();
+			        for (Definition definition : colInfo) {
+			            String colName = definition.getName();
+			            if(keySet.contains(colName)) {
+			                DataType colType = definition.getType();
+			                Object valueObj = MusicCore.getDSHandle().getColValue(row, colName, colType);
+			                Object valueString = MusicUtil.convertToActualDataType(colType, valueObj);
+			                logger.info(colName+" : "+valueString);
+			                newMap.put(colName, valueString.toString());
+			                keySet.remove(colName);
+			            }
+			        }
+				}
+				if(! keySet.isEmpty()) {
+					Iterator<String> iterator = keySet.iterator();
+					while (iterator.hasNext()) {
+					    String element = iterator.next();
+					    if(element != null && element.length() > 0)
+					    	newMap.put(element,"COLUMN_NOT_FOUND");
+					}
+				}
+			    
+				if("delete".equals(jsonResponse.getOperation()) || newMap.isEmpty()) {
+					newMap.put(primaryId, pkValue);
+				}
+				jsonNotification.setResponse_body(newMap);
 			}
-			
-	    	Set<String> keySet = responseBodyMap.keySet();
-	    	String cql = "select *";
-	    	/*for(String keys: keySet) {
-	    		cql = cql + keys + ",";
-	    	}*/
-	    	//cql = cql.substring(0, cql.length()-1);
-	    	cql = cql + " FROM "+fullNotifyArr[0]+" WHERE "+primaryId+" = ?";
-	    	logger.info("CQL in constructJsonNotification: "+cql);
-	    	PreparedQueryObject pQuery = new PreparedQueryObject();
-	    	pQuery.appendQueryString(cql);
-	    	pQuery.addValue(MusicUtil.convertToActualDataType(primaryIdType, pkValue));
-	    	Row row = MusicCore.get(pQuery).one();
-	    	Map<String, String> newMap = new HashMap<>();
-	    	if(row != null) {
-	    		ColumnDefinitions colInfo = row.getColumnDefinitions();
-	            for (Definition definition : colInfo) {
-	                String colName = definition.getName();
-	                if(keySet.contains(colName)) {
-		                DataType colType = definition.getType();
-		                Object valueObj = MusicCore.getDSHandle().getColValue(row, colName, colType);
-		                Object valueString = MusicUtil.convertToActualDataType(colType, valueObj);
-		                logger.info(colName+" : "+valueString);
-		                newMap.put(colName, valueString.toString());
-		                keySet.remove(colName);
-	                }
-	            }
-	    	}
-	    	if(! keySet.isEmpty()) {
-	    		Iterator<String> iterator = keySet.iterator();
-	    		while (iterator.hasNext()) {
-	    		    String element = iterator.next();
-	    		    newMap.put(element,"COLUMN_NOT_FOUND");
-	    		}
-	    	}
-            
-		    	/*if(row != null) {
-		    		for(String keys: keySet1) {
-		    			String value = null;
-		    			try {
-			    			logger.info(">>>>>>>> converting <<<<<<<<<<<< "+keys + " : "+responseBodyMap.get(keys));
-			    			if(responseBodyMap.get(keys).equals("uuid"))
-			    				value = row.getUUID(keys.trim()).toString();
-			    			else if (responseBodyMap.get(keys).equals("text"))
-			    				value = row.getString(keys.trim());
-			    			else if (responseBodyMap.get(keys).equals("int"))
-			    				value = String.valueOf(row.getInt(keys.trim()));
-			    			else if (responseBodyMap.get(keys).equals("bigint"))
-			    				value = String.valueOf(row.getLong(keys.trim()));
-		    			} catch (Exception e) {
-		    	    		newMap.put(primaryId, pkValue);
-		    		    	logger.info("Error in constructJsonNotification: Invalid column..");
-		    	    	}
-		    			else if (responseBodyMap.get(keys).contains("int"))
-		    				value = row.getLong(keys).toString();
-		    			newMap.put(keys.trim(), value);
-		    		}
-		    	}*/
-	    	
-	    	if("delete".equals(jsonResponse.getOperation()) || newMap.isEmpty()) {
-	    		newMap.put(primaryId, pkValue);
-	    	}
-	    	jsonNotification.setResponse_body(newMap);
-    	} catch(Exception e) {
-    		e.printStackTrace();
-    	}
-    	return jsonNotification;
+			} catch(Exception e) {
+			e.printStackTrace();
+			}
+			return jsonNotification;
     }
     
     private void constructJsonCallbackFromCache() throws Exception{

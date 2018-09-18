@@ -16,7 +16,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-
+ 
  ============LICENSE_END=============================================
  ====================================================================
 -->
@@ -25,12 +25,12 @@
     <groupId>org.onap.music</groupId>
     <artifactId>MUSIC</artifactId>
     <packaging>war</packaging>
-    <version>3.0.15-SNAPSHOT</version>
+    <version>3.0.19-SNAPSHOT</version>
     <description>
             This is the MUSIC REST interface, packaged as a war file.
     </description>
 
-    <parent>
+     <parent>
         <groupId>org.onap.oparent</groupId>
         <artifactId>oparent</artifactId>
         <version>1.2.0</version>
@@ -42,7 +42,7 @@
         <jersey1.version>1.19</jersey1.version>
         <jersey2.version>2.25.1</jersey2.version>
         <jaxrs.version>2.0.1</jaxrs.version>
-        <cassandra.version>3.4.0</cassandra.version>
+        <cassandra.version>3.6.0</cassandra.version>
         <zookeeper.version>3.4.11</zookeeper.version>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -219,7 +219,6 @@
             <version>1.0.1-oss</version>
         </dependency>
         <!-- End Logging -->
-
         <!-- Cassandra -->       
         <dependency>
             <groupId>com.datastax.cassandra</groupId>
@@ -227,7 +226,6 @@
             <version>${cassandra.version}</version>
         </dependency>
         <!-- /Cassandra -->       
-
         <!-- Zookeeper -->
         <dependency>
             <groupId>org.apache.zookeeper</groupId>
@@ -241,7 +239,6 @@
             </exclusions>
         </dependency>
         <!-- /Zookeeper -->
-
         <!-- Jersey -->
         <dependency>
             <groupId>com.sun.jersey</groupId>
@@ -335,7 +332,6 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-
         </dependency>
         <dependency>
             <groupId>org.mindrot</groupId>
@@ -402,15 +398,28 @@
                                 </image>
                                 <!-- Cassandra -->
                                 <image>
-                                    <name>onap/music/cassandra_music</name>
-                                    <alias>docker_cassandra</alias>
+                                    <name>onap/music/cassandra_3_11</name>
+                                    <alias>docker_cassandra_sec</alias>
                                     <build>
                                         <cleanup>true</cleanup>
                                         <tags>
-                                            <tag>3.0-${timestamp}</tag>
-                                            <tag>3.0-latest</tag>
+                                            <tag>${docker.tag}</tag>
+                                            <tag>${docker.latest.tag}</tag>
                                         </tags>
                                         <dockerFileDir>${project.basedir}/distribution/cassandra</dockerFileDir>
+                                    </build>
+                                </image>
+                                <!-- Cassandra Job -->
+                                <image>
+                                    <name>onap/music/cassandra_job</name>
+                                    <alias>docker_cassandra_job</alias>
+                                    <build>
+                                        <cleanup>true</cleanup>
+                                        <tags>
+                                            <tag>${docker.tag}</tag>
+                                            <tag>${docker.latest.tag}</tag>
+                                        </tags>
+                                        <dockerFileDir>${project.basedir}/distribution/cassandra_job</dockerFileDir>
                                     </build>
                                 </image>
                                 <!-- Zookeeper -->
