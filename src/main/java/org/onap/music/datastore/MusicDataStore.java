@@ -335,7 +335,7 @@ public class MusicDataStore {
             ColumnDefinitions colInfo = row.getColumnDefinitions();
             HashMap<String, Object> resultOutput = new HashMap<String, Object>();
             for (Definition definition : colInfo) {
-                if (!"vector_ts".equals(definition.getName())) {
+                if (!definition.getName().equals("vector_ts")) {
                 	if(definition.getType().toString().toLowerCase().contains("blob")) {
                 		resultOutput.put(definition.getName(),
                                 getBlobValue(row, definition.getName(), definition.getType()));

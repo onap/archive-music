@@ -530,7 +530,8 @@ native_transport_port: 9042
 # native_transport_max_concurrent_connections_per_ip: -1
 
 # Whether to start the thrift rpc server.
-start_rpc: false
+#start_rpc: false
+start_rpc: true
 
 # The address or interface to bind the Thrift RPC service and native transport
 # server to.
@@ -720,7 +721,7 @@ sstable_preemptive_open_interval_in_mb: 50
 # How long the coordinator should wait for read operations to complete
 read_request_timeout_in_ms: 5000
 # How long the coordinator should wait for seq or index scans to complete
-range_request_timeout_in_ms: 10000
+range_request_timeout_in_ms: 15000
 # How long the coordinator should wait for writes to complete
 write_request_timeout_in_ms: 2000
 # How long the coordinator should wait for counter writes to complete

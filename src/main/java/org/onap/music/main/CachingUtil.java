@@ -147,7 +147,7 @@ public class CachingUtil implements Runnable {
     public static boolean authenticateAAFUser(String nameSpace, String userId, String password,
                     String keySpace) throws Exception {
 
-        if (aafCache.get(nameSpace) != null) {
+        if (aafCache.get(nameSpace) != null && musicCache.get(keySpace)!=null) {
             if (keySpace != null && !musicCache.get(keySpace).equals(nameSpace)) {
             	logger.info(EELFLoggerDelegate.applicationLogger,"Create new application for the same namespace.");
             } else if (aafCache.get(nameSpace).get(userId).equals(password)) {
@@ -181,9 +181,10 @@ public class CachingUtil implements Runnable {
         boolean responseObj = triggerAAF(nameSpace, userId, password);
         if (responseObj) {
             //if (responseObj.getNs().get(0).getAdmin().contains(userId)) {
-            	//Map<String, String> map = new HashMap<>();
-                //map.put(userId, password);
-                //aafCache.put(nameSpace, map);
+            	Map<String, String> map = new HashMap<>();
+                map.put(userId, password);
+                aafCache.put(nameSpace, map);
+                CachingUtil.updateMusicCache(keySpace, nameSpace);
             	return true;
             //}
         }
