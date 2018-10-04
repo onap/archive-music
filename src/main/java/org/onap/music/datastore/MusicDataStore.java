@@ -315,7 +315,7 @@ public class MusicDataStore {
             DataType colType = colInfo.getType(colName);
             Object columnValue = getColValue(row, colName, colType);
             Object conditionValue = MusicUtil.convertToActualDataType(colType, entry.getValue());
-            if (columnValue.equals(conditionValue))
+            if (!columnValue.equals(conditionValue))
                 return false;
         }
         return true;
