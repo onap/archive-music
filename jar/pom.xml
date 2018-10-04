@@ -185,7 +185,6 @@
             <scope>provided</scope>
         </dependency>
         <!-- /Development -->
-
         <!-- Logging -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
@@ -215,7 +214,6 @@
             <version>1.0.1-oss</version>
         </dependency>
         <!-- End Logging -->
-
         <!-- Cassandra -->       
         <dependency>
             <groupId>com.datastax.cassandra</groupId>
@@ -223,7 +221,6 @@
             <version>${cassandra.version}</version>
         </dependency>
         <!-- /Cassandra -->       
-
         <!-- Zookeeper -->
         <dependency>
             <groupId>org.apache.zookeeper</groupId>
@@ -237,7 +234,6 @@
             </exclusions>
         </dependency>
         <!-- /Zookeeper -->
-
         <!-- Jersey -->
         <dependency>
             <groupId>com.sun.jersey</groupId>
@@ -331,7 +327,6 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-
         </dependency>
         <dependency>
             <groupId>org.mindrot</groupId>

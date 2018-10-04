@@ -25,7 +25,7 @@
     <groupId>org.onap.music</groupId>
     <artifactId>MUSIC</artifactId>
     <packaging>war</packaging>
-    <version>3.0.19-SNAPSHOT</version>
+    <version>3.0.21-SNAPSHOT</version>
     <description>
             This is the MUSIC REST interface, packaged as a war file.
     </description>
@@ -312,7 +312,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-handler</artifactId>
-            <version>4.0.56.Final</version>
+            <version>4.1.30.Final</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
