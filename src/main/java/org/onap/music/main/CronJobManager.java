@@ -33,9 +33,6 @@ import javax.servlet.annotation.WebListener;
 
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
-import org.onap.music.eelf.logging.format.AppMessages;
-import org.onap.music.eelf.logging.format.ErrorSeverity;
-import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicServiceException;
 
@@ -58,7 +55,7 @@ public class CronJobManager implements ServletContextListener {
         try {
             ResultType result = MusicCore.nonKeyRelatedPut(pQuery, consistency);
         } catch (MusicServiceException e1) {
-        	logger.error(EELFLoggerDelegate.errorLogger, e1.getMessage(),ErrorSeverity.ERROR);
+            e1.printStackTrace();
         }
 
       //Zookeeper cleanup
@@ -105,7 +102,7 @@ public class CronJobManager implements ServletContextListener {
                     CachingUtil.deleteKeysFromDB(deleteKeys.toString());
                }
             } catch (MusicServiceException e) {
-            	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),ErrorSeverity.ERROR);
+                e.printStackTrace();
             }
     }
 

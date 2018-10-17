@@ -47,7 +47,6 @@ import com.datastax.driver.core.TableMetadata;
 
 public class MusicConditional {
 	private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(RestMusicDataAPI.class);
-	private static final String CRITICAL = "critical";
 
 	public static ReturnType conditionalInsert(String keyspace, String tablename, String casscadeColumnName,
 			Map<String, Object> casscadeColumnData, String primaryKey, Map<String, Object> valuesMap,
@@ -108,7 +107,6 @@ public class MusicConditional {
 				return lockAcqResult;
 			}
 		} catch (Exception e) {
-			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED);
 			MusicCore.destroyLockRef(lockId);
 			return new ReturnType(ResultType.FAILURE, e.getMessage());
 		}
@@ -124,17 +122,17 @@ public class MusicConditional {
 
 			MusicLockState mls = MusicCore.getLockingServiceHandle()
 					.getLockState(keyspace + "." + tableName + "." + primaryKey);
-			if (mls.getLockHolder().equals(lockId)) {
+			if (mls.getLockHolder().equals(lockId) == true) {
 				try {
 					results = MusicCore.getDSHandle().executeCriticalGet(queryBank.get(MusicUtil.SELECT));
 				} catch (Exception e) {
 					return new ReturnType(ResultType.FAILURE, e.getMessage());
 				}
 				if (results.all().isEmpty()) {
-					MusicCore.getDSHandle().executePut(queryBank.get(MusicUtil.INSERT), CRITICAL);
+					MusicCore.getDSHandle().executePut(queryBank.get(MusicUtil.INSERT), "critical");
 					return new ReturnType(ResultType.SUCCESS, "insert");
 				} else {
-					MusicCore.getDSHandle().executePut(queryBank.get(MusicUtil.UPDATE), CRITICAL);
+					MusicCore.getDSHandle().executePut(queryBank.get(MusicUtil.UPDATE), "critical");
 					return new ReturnType(ResultType.SUCCESS, "update");
 				}
 			} else {
@@ -145,7 +143,6 @@ public class MusicConditional {
 		} catch (Exception e) {
 			StringWriter sw = new StringWriter();
 			e.printStackTrace(new PrintWriter(sw));
-			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
 			String exceptionAsString = sw.toString();
 			return new ReturnType(ResultType.FAILURE,
 					"Exception thrown while doing the critical put, check sanctity of the row/conditions:\n"
@@ -172,7 +169,6 @@ public class MusicConditional {
 			}
 
 		} catch (Exception e) {
-			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
 			MusicCore.destroyLockRef(lockId);
 			return new ReturnType(ResultType.FAILURE, e.getMessage());
 
@@ -185,7 +181,7 @@ public class MusicConditional {
 
 			MusicLockState mls = MusicCore.getLockingServiceHandle()
 					.getLockState(keyspace + "." + tableName + "." + primaryKeyValue);
-			if (mls.getLockHolder().equals(lockId)) {
+			if (mls.getLockHolder().equals(lockId) == true) {
 				Row row  = MusicCore.getDSHandle().executeCriticalGet(queryBank.get(MusicUtil.SELECT)).one();
 				
 				if(row != null) {
@@ -199,14 +195,14 @@ public class MusicConditional {
 					update.addValue(MusicUtil.convertToActualDataType(DataType.text(), vector_ts));
 					update.addValue(MusicUtil.convertToActualDataType(DataType.text(), primaryKeyValue));
 					try {
-						MusicCore.getDSHandle().executePut(update, CRITICAL);
+						MusicCore.getDSHandle().executePut(update, "critical");
 					} catch (Exception ex) {
 						return new ReturnType(ResultType.FAILURE, ex.getMessage());
 					}
 				}else {
 					return new ReturnType(ResultType.FAILURE,"Cannot find data related to key: "+primaryKey);
 				}
-				MusicCore.getDSHandle().executePut(queryBank.get(MusicUtil.UPSERT), CRITICAL);
+				MusicCore.getDSHandle().executePut(queryBank.get(MusicUtil.UPSERT), "critical");
 				return new ReturnType(ResultType.SUCCESS, "update success");
 
 			} else {
@@ -215,7 +211,6 @@ public class MusicConditional {
 			}
 
 		} catch (Exception e) {
-			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
 			StringWriter sw = new StringWriter();
 			e.printStackTrace(new PrintWriter(sw));
 			String exceptionAsString = sw.toString();

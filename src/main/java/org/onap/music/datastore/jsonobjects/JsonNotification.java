@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 
 @ApiModel(value = "JsonNotification", description = "Json model for callback")
 @JsonIgnoreProperties(ignoreUnknown = true)
