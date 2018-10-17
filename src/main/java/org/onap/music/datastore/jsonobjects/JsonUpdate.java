@@ -38,12 +38,11 @@ import io.swagger.annotations.ApiModelProperty;
 public class JsonUpdate implements Serializable {
     private String keyspaceName;
     private String tableName;
-    private transient Map<String, Object> values;
-    private String ttl;
-    private String timestamp;
+    private Map<String, Object> values;
+    private String ttl, timestamp;
     private Map<String, String> consistencyInfo;
-    private transient Map<String, Object> conditions;
-    private transient Map<String, Object> row_specification;
+    private Map<String, Object> conditions;
+    private Map<String, Object> row_specification;
 
     @ApiModelProperty(value = "Conditions")
     public Map<String, Object> getConditions() {

@@ -31,9 +31,9 @@ import org.junit.runners.MethodSorters;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
-import org.onap.music.lockingservice.MusicLockState;
-import org.onap.music.lockingservice.MusicLockingService;
-import org.onap.music.lockingservice.MusicLockState.LockStatus;
+import org.onap.music.datastore.CassaLockStore;
+import org.onap.music.datastore.MusicLockState;
+import org.onap.music.datastore.MusicLockState.LockStatus;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
@@ -53,8 +53,7 @@ public class TestMusicCoreIntegration {
     public static void init() throws Exception {
         try {
             MusicCore.mDstoreHandle = CassandraCQL.connectToEmbeddedCassandra();
-            zkServer = new TestingServer(2181, new File("/tmp/zk"));
-            MusicCore.mLockHandle = new MusicLockingService();
+            MusicCore.mLockHandle = new CassaLockStore(MusicCore.mDstoreHandle);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -69,15 +68,14 @@ public class TestMusicCoreIntegration {
         MusicCore.eventualPut(testObject);
         MusicCore.deleteLock(lockName);
         MusicCore.mDstoreHandle.close();
-        MusicCore.mLockHandle.getzkLockHandle().close();
-        MusicCore.mLockHandle.close();
         zkServer.stop();
 
     }
 
     @Test
     public void Test1_SetUp() throws MusicServiceException, MusicQueryException {
-        MusicCore.mLockHandle = new MusicLockingService();
+        MusicCore.mDstoreHandle = CassandraCQL.connectToEmbeddedCassandra();
+        MusicCore.mLockHandle = new CassaLockStore(MusicCore.mDstoreHandle);
         ResultType result = ResultType.FAILURE;
         testObject = new PreparedQueryObject();
         testObject.appendQueryString(CassandraCQL.createKeySpace);
@@ -97,24 +95,6 @@ public class TestMusicCoreIntegration {
         assertEquals(ResultType.SUCCESS, returnType.getResult());
     }
 
-    @Test
-    public void Test3_atomicPutWithDeleteLock() throws Exception {
-        testObject = new PreparedQueryObject();
-        testObject = CassandraCQL.setPreparedInsertQueryObject2();
-        ReturnType returnType = MusicCore.atomicPutWithDeleteLock("testCassa", "employees",
-                        "Mr Test two", testObject, null);
-        assertEquals(ResultType.SUCCESS, returnType.getResult());
-    }
-
-    @Test
-    public void Test4_atomicGetWithDeleteLock() throws Exception {
-        testObject = new PreparedQueryObject();
-        testObject = CassandraCQL.setPreparedGetQuery();
-        ResultSet resultSet = MusicCore.atomicGetWithDeleteLock("testCassa", "employees",
-                        "Mr Test one", testObject);
-        List<Row> rows = resultSet.all();
-        assertEquals(1, rows.size());
-    }
 
     @Test
     public void Test5_atomicGet() throws Exception {
@@ -150,27 +130,8 @@ public class TestMusicCoreIntegration {
         MusicLockState musicLockState1 = new MusicLockState(LockStatus.UNLOCKED, "id1");
         MusicCore.whoseTurnIsIt(lockName);
         MusicLockState mls = MusicCore.getMusicLockState(lockName);
-        boolean voluntaryRelease = true;
-        MusicLockState mls1 = MusicCore.releaseLock(lockId, voluntaryRelease);
+        MusicLockState mls1 = MusicCore.voluntaryReleaseLock(lockName,lockId);
         assertEquals(musicLockState.getLockStatus(), mls.getLockStatus());
         assertEquals(musicLockState1.getLockStatus(), mls1.getLockStatus());
     }
-
-    @Test
-    public void Test10_create() {
-        MusicCore.pureZkCreate("/nodeName");
-    }
-
-    @Test
-    public void Test11_write() {
-        MusicCore.pureZkWrite("nodeName", "I'm Test".getBytes());
-    }
-
-    @Test
-    public void Test12_read() {
-        byte[] data = MusicCore.pureZkRead("nodeName");
-        String data1 = new String(data);
-        assertEquals("I'm Test", data1);
-    }
-
 }

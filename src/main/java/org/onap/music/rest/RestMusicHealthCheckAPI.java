@@ -88,28 +88,8 @@ public class RestMusicHealthCheckAPI {
 			resultMap.put("INACTIVE", "One or more nodes in the Cluster is/are down or not responding.");
 			return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
 		}
-		
-		
-		
 	}
 	
-	@GET
-	@Path("/pingZookeeper")
-	@ApiOperation(value = "Get Health Status", response = Map.class)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response ZKStatus(@Context HttpServletResponse response) {
-		logger.info(EELFLoggerDelegate.applicationLogger,"Replying to request for MUSIC Health Check status for Zookeeper");
-		Map<String, Object> resultMap = new HashMap<>();
-		MusicHealthCheck ZKHealthCheck = new MusicHealthCheck();
-		String status = ZKHealthCheck.getZookeeperStatus();
-		if(status.equals("ACTIVE")) {
-			resultMap.put("ACTIVE", "Zookeeper is Active and Running");
-			return Response.status(Status.OK).entity(resultMap).build();
-		}else {
-			resultMap.put("INACTIVE", "Zookeeper is not responding");
-			return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
-		}
-	}
 	
 	
 	

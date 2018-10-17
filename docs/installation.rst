@@ -4,17 +4,17 @@
 Installation
 ============
 
+.. note::
+   * This section is used to describe how a software component is acquired and installed.
+   
+   * This section is typically: provided for a platform-component and application; and
+     referenced in user guides.
 
-.. toctree::
-   :maxdepth: 1
+   * This note must be removed after content has been added.
 
-   Single-Site Install <single>
-   Multi-Site Install <multi>
-
-
-.. Environment
-.. -----------
+Environment
+-----------
 
 
-.. Steps
-.. -----
+Steps
+-----

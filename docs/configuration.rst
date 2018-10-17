@@ -4,25 +4,24 @@
 Configuration
 =============
 
-See the following pages for Configuration Information:
+.. note::
+   * This section is used to describe the options a software component offers for configuration.
 
-.. toctree::
-   :maxdepth: 1
-
-   Single-Site Install <single>
-   Multi-Site Install <multi>
-   Authentication <authentication>
-
+   * Configuration is typically: provided for platform-component and sdk projects;
+     and referenced in developer and user guides.
+   
+   * This note must be removed after content has been added.
 
 
-.. Example ...
 
-.. You can provide the following in ``basic.conf``
+Example ...
 
-.. ``host=ADDRESS``
-..   The address of the host
+You can provide the following in ``basic.conf``
 
-.. ``port=PORT``
-..   The port used for signaling
+``host=ADDRESS``
+  The address of the host
 
-..   Optional. Default: ``8080``
+``port=PORT``
+  The port used for signaling
+
+  Optional. Default: ``8080``

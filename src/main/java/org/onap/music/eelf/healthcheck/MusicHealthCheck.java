@@ -25,12 +25,7 @@ import java.util.UUID;
 
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
-import org.onap.music.eelf.logging.format.AppMessages;
-import org.onap.music.eelf.logging.format.ErrorSeverity;
-import org.onap.music.eelf.logging.format.ErrorTypes;
-import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicServiceException;
-import org.onap.music.lockingservice.MusicLockingService;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
@@ -56,19 +51,16 @@ public class MusicHealthCheck {
 			result = getAdminKeySpace(consistency);
 		} catch(Exception e) {
 			if(e.getMessage().toLowerCase().contains("unconfigured table healthcheck")) {
-				logger.error("Error", e);
-				logger.debug("Creating table....");
+				System.out.println("Creating table....");
 				boolean ksresult = createKeyspace();
 				if(ksresult)
 					try {
 						result = getAdminKeySpace(consistency);
 					} catch (MusicServiceException e1) {
 						// TODO Auto-generated catch block
-						logger.error("Error", e);
 						e1.printStackTrace();
 					}
 			} else {
-				logger.error("Error", e);
 				return "One or more nodes are down or not responding.";
 			}
 		}
@@ -106,30 +98,11 @@ public class MusicHealthCheck {
 		} catch (MusicServiceException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			logger.error("Error", e);
 		}
-		if(rs != null && rs.getResult().toLowerCase().contains("success"))
+		if(rs.getResult().toLowerCase().contains("success"))
 			return true;
 		else
 			return false;
-	}
-
-	public String getZookeeperStatus() {
-
-		String host = MusicUtil.getMyZkHost();
-		logger.info(EELFLoggerDelegate.applicationLogger, "Getting Status for Zookeeper Host: " + host);
-		try {
-			MusicLockingService lockingService = MusicCore.getLockingServiceHandle();
-			// additionally need to call the ZK to create,aquire and delete lock
-		} catch (MusicLockingException e) {
-			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), AppMessages.LOCKINGERROR,
-					ErrorTypes.CONNECTIONERROR, ErrorSeverity.CRITICAL);
-			return "INACTIVE";
-		}
-
-		logger.info(EELFLoggerDelegate.applicationLogger, "Zookeeper is Active and Running");
-		return "ACTIVE";
-
 	}
 
 	public String getCassandrHost() {

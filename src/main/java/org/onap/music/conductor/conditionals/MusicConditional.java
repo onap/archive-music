@@ -32,7 +32,6 @@ import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
-import org.onap.music.lockingservice.MusicLockState;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
@@ -47,7 +46,6 @@ import com.datastax.driver.core.TableMetadata;
 
 public class MusicConditional {
 	private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(RestMusicDataAPI.class);
-	private static final String CRITICAL = "critical";
 
 	public static ReturnType conditionalInsert(String keyspace, String tablename, String casscadeColumnName,
 			Map<String, Object> casscadeColumnData, String primaryKey, Map<String, Object> valuesMap,
@@ -94,7 +92,7 @@ public class MusicConditional {
 			if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
 				ReturnType criticalPutResult = conditionalInsertAtomic(lockId, keyspace, tablename, primaryKey,
 						queryBank);
-				MusicCore.destroyLockRef(lockId);
+				MusicCore.destroyLockRef(key,lockId);
 				if (criticalPutResult.getMessage().contains("insert"))
 					criticalPutResult
 							.setMessage("Insert values: ");
@@ -104,12 +102,11 @@ public class MusicConditional {
 				return criticalPutResult;
 
 			} else {
-				MusicCore.destroyLockRef(lockId);
+				MusicCore.destroyLockRef(key,lockId);
 				return lockAcqResult;
 			}
 		} catch (Exception e) {
-			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED);
-			MusicCore.destroyLockRef(lockId);
+			MusicCore.destroyLockRef(key,lockId);
 			return new ReturnType(ResultType.FAILURE, e.getMessage());
 		}
 
@@ -121,20 +118,19 @@ public class MusicConditional {
 		ResultSet results = null;
 
 		try {
-
-			MusicLockState mls = MusicCore.getLockingServiceHandle()
-					.getLockState(keyspace + "." + tableName + "." + primaryKey);
-			if (mls.getLockHolder().equals(lockId)) {
+			String fullyQualifiedKey = keyspace + "." + tableName + "." + primaryKey;
+	        ReturnType lockAcqResult = MusicCore.acquireLock(fullyQualifiedKey, lockId);
+	        if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
 				try {
 					results = MusicCore.getDSHandle().executeCriticalGet(queryBank.get(MusicUtil.SELECT));
 				} catch (Exception e) {
 					return new ReturnType(ResultType.FAILURE, e.getMessage());
 				}
 				if (results.all().isEmpty()) {
-					MusicCore.getDSHandle().executePut(queryBank.get(MusicUtil.INSERT), CRITICAL);
+					MusicCore.getDSHandle().executePut(queryBank.get(MusicUtil.INSERT), "critical");
 					return new ReturnType(ResultType.SUCCESS, "insert");
 				} else {
-					MusicCore.getDSHandle().executePut(queryBank.get(MusicUtil.UPDATE), CRITICAL);
+					MusicCore.getDSHandle().executePut(queryBank.get(MusicUtil.UPDATE), "critical");
 					return new ReturnType(ResultType.SUCCESS, "update");
 				}
 			} else {
@@ -145,7 +141,6 @@ public class MusicConditional {
 		} catch (Exception e) {
 			StringWriter sw = new StringWriter();
 			e.printStackTrace(new PrintWriter(sw));
-			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
 			String exceptionAsString = sw.toString();
 			return new ReturnType(ResultType.FAILURE,
 					"Exception thrown while doing the critical put, check sanctity of the row/conditions:\n"
@@ -159,21 +154,18 @@ public class MusicConditional {
 		String key = keyspace + "." + tableName + "." + primaryKeyValue;
 		String lockId = MusicCore.createLockReference(key);
 		long leasePeriod = MusicUtil.getDefaultLockLeasePeriod();
-		ReturnType lockAcqResult = MusicCore.acquireLockWithLease(key, lockId, leasePeriod);
-
 		try {
-
+		ReturnType lockAcqResult = MusicCore.acquireLockWithLease(key, lockId, leasePeriod);
 			if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
 				return updateAtomic(lockId, keyspace, tableName, primaryKey,primaryKeyValue, queryBank,planId,cascadeColumnValues,cascadeColumnName);
 
 			} else {
-				MusicCore.destroyLockRef(lockId);
+				MusicCore.destroyLockRef(key,lockId);
 				return lockAcqResult;
 			}
 
 		} catch (Exception e) {
-			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
-			MusicCore.destroyLockRef(lockId);
+			MusicCore.destroyLockRef(key,lockId);
 			return new ReturnType(ResultType.FAILURE, e.getMessage());
 
 		}
@@ -181,11 +173,11 @@ public class MusicConditional {
 
 	public static ReturnType updateAtomic(String lockId, String keyspace, String tableName, String primaryKey,String primaryKeyValue,
 			Map<String,PreparedQueryObject> queryBank,String planId,Map<String,String> cascadeColumnValues,String casscadeColumnName) {
+		String key = keyspace + "." + tableName + "." + primaryKeyValue;
+		long leasePeriod = MusicUtil.getDefaultLockLeasePeriod();
 		try {
-
-			MusicLockState mls = MusicCore.getLockingServiceHandle()
-					.getLockState(keyspace + "." + tableName + "." + primaryKeyValue);
-			if (mls.getLockHolder().equals(lockId)) {
+			ReturnType lockAcqResult = MusicCore.acquireLockWithLease(key, lockId, leasePeriod);
+			if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
 				Row row  = MusicCore.getDSHandle().executeCriticalGet(queryBank.get(MusicUtil.SELECT)).one();
 				
 				if(row != null) {
@@ -199,14 +191,14 @@ public class MusicConditional {
 					update.addValue(MusicUtil.convertToActualDataType(DataType.text(), vector_ts));
 					update.addValue(MusicUtil.convertToActualDataType(DataType.text(), primaryKeyValue));
 					try {
-						MusicCore.getDSHandle().executePut(update, CRITICAL);
+						MusicCore.getDSHandle().executePut(update, "critical");
 					} catch (Exception ex) {
 						return new ReturnType(ResultType.FAILURE, ex.getMessage());
 					}
 				}else {
 					return new ReturnType(ResultType.FAILURE,"Cannot find data related to key: "+primaryKey);
 				}
-				MusicCore.getDSHandle().executePut(queryBank.get(MusicUtil.UPSERT), CRITICAL);
+				MusicCore.getDSHandle().executePut(queryBank.get(MusicUtil.UPSERT), "critical");
 				return new ReturnType(ResultType.SUCCESS, "update success");
 
 			} else {
@@ -215,7 +207,6 @@ public class MusicConditional {
 			}
 
 		} catch (Exception e) {
-			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
 			StringWriter sw = new StringWriter();
 			e.printStackTrace(new PrintWriter(sw));
 			String exceptionAsString = sw.toString();
@@ -340,7 +331,7 @@ public class MusicConditional {
 
 		Map<String, String> finalValues = new HashMap<>();
 		values = (Map<String, String>) columnValue;
-		if (values != null && values.keySet().contains(planId)) {
+		if (values.keySet().contains(planId)) {
 			String valueString = values.get(planId);
 			String tempValueString = valueString.replaceAll("\\{", "").replaceAll("\"", "").replaceAll("\\}", "");
 			String[] elements = tempValueString.split(",");

@@ -1,25 +1,22 @@
-Authentication
-==============
+ `For Single install:`_
 
-`Single-Site Install`_
+ `Multi-Site Install:`_
 
-`Multi-Site Install`_
+ `Headers:`_
 
-`Headers`_
+ `AAF Authentication`_
 
-`AAF Authentication`_
-
-`AID Authentication Non-AAF`_
+ `AID Authentication Non-AAF`_
 
 `Onboarding API`_
 
- `Add Application`_
+`Add Application`_
 
- `Get Application`_
+`Get Application`_
 
- `Edit Application`_
+`Edit Application`_
 
- `Delete Application`_
+`Delete Application`_
 
 
 Steps to test AAF MUSIC has been enhanced to support applications which are already authenticated using AAF and applications which are not authenticated using AAF.
@@ -36,7 +33,7 @@ In the cassandra bin dir run ./cqlsh and log in to db then:
 
 If you want to save the following in a file you can then run ./cqlsh -f <file.cql>
 
-Single-Site Install
+For Single install:
 ^^^^^^^^^^^^^^^^^^^
 ::
 
@@ -61,7 +58,7 @@ Single-Site Install
     );
 
 
-Multi-Site Install
+Multi-Site Install:
 ^^^^^^^^^^^^^^^^^^^
 
 ::
@@ -86,7 +83,7 @@ Multi-Site Install
    PRIMARY KEY (uuid)
  );
 
-Headers
+Headers:
 ^^^^^^^^
 
 For AAF applications all the 3 headers ns, userId and password are mandatory.

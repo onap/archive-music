@@ -24,15 +24,8 @@ package org.onap.music.response.jsonobjects;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.onap.music.lockingservice.MusicLockState.LockStatus;
+import org.onap.music.datastore.MusicLockState.LockStatus;
 import org.onap.music.main.ResultType;
-import org.powermock.core.spi.testresult.Result;
-
-import com.datastax.driver.core.ColumnDefinitions;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.ColumnDefinitions.Definition;
-
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 

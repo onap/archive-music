@@ -38,11 +38,12 @@ import io.swagger.annotations.ApiModelProperty;
 public class JsonInsert implements Serializable {
     private String keyspaceName;
     private String tableName;
-    private transient Map<String, Object> values;
+    private Map<String, Object> values;
     private String ttl;
     private String timestamp;
-    private transient Map<String, Object> row_specification;
+    private Map<String, Object> row_specification;
     private Map<String, String> consistencyInfo;
+    private byte[] data;
     private Map<String, byte[]> objectMap;
     
     @ApiModelProperty(value = "objectMap")

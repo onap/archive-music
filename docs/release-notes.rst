@@ -4,57 +4,46 @@
 
 Release Notes
 =============
-Initial Release for Beijing
 
-Version: 2.5.4
+.. note::
+	* This Release Notes must be updated each time the team decides to Release new artifacts.
+	* The scope of this Release Notes is for this particular component. In other words, each ONAP component has its Release Notes.
+	* This Release Notes is cumulative, the most recently Released artifact is made visible in the top of this Release Notes.
+	* Except the date and the version number, all the other sections are optional but there must be at least one section describing the purpose of this new release.
+	* This note must be removed after content has been added.
+
+
+Version: x.y.z
 --------------
 
-:Release Date: 2018-06-07
+
+:Release Date: yyyy-mm-dd
+
+
 
 **New Features**
 
-MUSIC provides a service with recipes that individual ONAP components and microservice can use for 
-    - state replication across multiple geo-distributed sites
-    - flexible fine-grained consistency management of state
-    - policy driven state-ownership across replicas of the service 
-
+One or two sentences explaining the purpose of this Release.
 
 **Bug Fixes**
-
-	- `MUSIC-33 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-33>`_ CriticalPut is causing HTTP Status 500 – Internal Server Error
-
-	- `MUSIC-34 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-34>`_ CreateTable,InsertIntoTable,UpdateTable,DeleteFromTable,DropTable don't check resource existence
-
-	- `MUSIC-35 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-35>`_ Onboarding issues
-
-	- `MUSIC-36 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-36>`_ Test Case failing
-
-	- `MUSIC-37 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-37>`_ Acquire lock to return more information
-
+	- `CIMAN-65 <https://jira.onap.org/browse/CIMAN-65>`_ and a sentence explaining what this defect is addressing.
 **Known Issues**
-N/A
+	- `CIMAN-65 <https://jira.onap.org/browse/CIMAN-65>`_ and two, three sentences.
+	  One sentences explaining what is the issue.
+	  
+	  Another sentence explaining the impact of the issue.
+	  
+	  And an optional sentence providing a workaround.
 
-**Security Notes**
+**Security Issues**
+	You may want to include a reference to CVE (Common Vulnerabilities and Exposures) `CVE <https://cve.mitre.org>`_
 
-MUSIC code has been formally scanned during build time using NexusIQ and all Critical vulnerabilities have been addressed, items that remain open have been assessed for risk and determined to be false positive. The MUSIC open Critical security vulnerabilities and their risk assessment have been documented as part of the `project <https://wiki.onap.org/pages/viewpage.action?pageId=25439359>`_.
-
-Quick Links:
-
-- `MUSIC project page <https://wiki.onap.org/display/DW/MUSIC+Project>`_
-- `Passing Badge information for MUSIC <https://bestpractices.coreinfrastructure.org/en/projects/1722>`_
-- `Project Vulnerability Review Table for MUSIC <https://wiki.onap.org/pages/viewpage.action?pageId=25439359>`_
 
 **Upgrade Notes**
 
-	N/A
-
 **Deprecation Notes**
 
-	N/A
-
 **Other**
-
-	N/A
 
 ===========
 

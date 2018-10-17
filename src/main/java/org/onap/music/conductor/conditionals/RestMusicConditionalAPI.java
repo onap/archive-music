@@ -103,7 +103,7 @@ public class RestMusicConditionalAPI {
 
 		Map<String, Object> authMap = null;
 		try {
-			authMap = MusicCore.autheticateUser(ns, userId, password, keyspace, aid, "insertIntoTable");
+			authMap = MusicCore.authenticate(ns, userId, password, keyspace, aid, "insertIntoTable");
 		} catch (Exception e) {
 			logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGINFO, ErrorSeverity.CRITICAL,
 					ErrorTypes.AUTHENTICATIONERROR);
@@ -174,7 +174,7 @@ public class RestMusicConditionalAPI {
 
 		Map<String, Object> authMap = null;
 		try {
-			authMap = MusicCore.autheticateUser(ns, userId, password, keyspace, aid, "updateTable");
+			authMap = MusicCore.authenticate(ns, userId, password, keyspace, aid, "updateTable");
 		} catch (Exception e) {
 			logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGINFO, ErrorSeverity.CRITICAL,
 					ErrorTypes.AUTHENTICATIONERROR);

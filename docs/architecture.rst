@@ -4,7 +4,15 @@
 Architecture
 ============
 
-` See ONAP Wiki <https://wiki.onap.org/display/DW/MUSIC-Multi-site+State+Coordination+Service>`_
+.. note::
+   * This section is used to describe a software component from a high level
+     view of capability, common usage scenarios, and interactions with other
+     components required in the usage scenarios.  
+   
+   * The architecture section is typically: provided in a platform-component
+     and sdk collections; and referenced from developer and user guides.
+   
+   * This note must be removed after content has been added.
 
 
 Capabilities

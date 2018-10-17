@@ -8,17 +8,17 @@ Music Developer Documentation
 .. toctree::
    :maxdepth: 1
 
-   installation
+   Single-SIte Install <single>
+   Muili-Site Install <multi>
    setup
    release-notes
-   architecture 
-   logging
-   configuration
-   
+
    
 ..   architecture
+..   configuration
 ..   consumedapis
 ..   delivery
 ..   index
-..    
+..   installation 
+..   logging
 ..   offeredapis

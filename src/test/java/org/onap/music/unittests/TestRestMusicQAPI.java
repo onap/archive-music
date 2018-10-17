@@ -46,6 +46,7 @@ import org.mindrot.jbcrypt.BCrypt;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.onap.music.datastore.CassaLockStore;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
@@ -55,7 +56,6 @@ import org.onap.music.datastore.jsonobjects.JsonKeySpace;
 import org.onap.music.datastore.jsonobjects.JsonSelect;
 import org.onap.music.datastore.jsonobjects.JsonTable;
 import org.onap.music.datastore.jsonobjects.JsonUpdate;
-import org.onap.music.lockingservice.MusicLockingService;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 //import org.onap.music.main.ResultType;
@@ -122,11 +122,9 @@ public class TestRestMusicQAPI {
     @BeforeClass
     public static void init() throws Exception {
         try {
-          System.out.println("before class cassandra");
             MusicCore.mDstoreHandle = CassandraCQL.connectToEmbeddedCassandra();
-            System.out.println("before class zoo");
-            zkServer = new TestingServer(2181, new File("/tmp/zk"));
-            MusicCore.mLockHandle = new MusicLockingService();
+            MusicCore.mLockHandle = new CassaLockStore(MusicCore.mDstoreHandle);
+
            // System.out.println("before class keysp");
             //resp=data.createKeySpace(majorV,minorV,patchV,aid,appName,userId,password,kspObject,keyspaceName);
             //System.out.println("after keyspace="+keyspaceName);
@@ -213,8 +211,6 @@ public class TestRestMusicQAPI {
         testObject.appendQueryString("DROP KEYSPACE IF EXISTS admin");
         MusicCore.eventualPut(testObject);
         MusicCore.mDstoreHandle.close();
-        MusicCore.mLockHandle.getzkLockHandle().close();
-        MusicCore.mLockHandle.close();
         zkServer.stop();
     }
 

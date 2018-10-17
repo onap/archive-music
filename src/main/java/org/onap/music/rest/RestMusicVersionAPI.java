@@ -35,6 +35,9 @@ import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 
+import com.att.eelf.configuration.EELFLogger;
+import com.att.eelf.configuration.EELFManager;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 

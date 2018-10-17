@@ -21,24 +21,28 @@
  */
 package org.onap.music.main;
 
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.jcs.JCS;
 import org.apache.commons.jcs.access.CacheAccess;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.mindrot.jbcrypt.BCrypt;
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.datastore.jsonobjects.AAFResponse;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicServiceException;
-import org.onap.music.datastore.jsonobjects.JsonCallback;
+
+import com.att.eelf.configuration.EELFLogger;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -61,8 +65,6 @@ public class CachingUtil implements Runnable {
     private static CacheAccess<String, Map<String, String>> aafCache = JCS.getInstance("aafCache");
     private static CacheAccess<String, String> appNameCache = JCS.getInstance("appNameCache");
     private static CacheAccess<String, Map<String, String>> musicValidateCache = JCS.getInstance("musicValidateCache");
-    private static CacheAccess<String, JsonCallback> callBackCache = JCS.getInstance("callBackCache");
-    private static CacheAccess<String, List<String>> callbackNotifyList = JCS.getInstance("callbackNotifyList");
     private static Map<String, Number> userAttempts = new HashMap<>();
     private static Map<String, Calendar> lastFailedTime = new HashMap<>();
 
@@ -71,25 +73,7 @@ public class CachingUtil implements Runnable {
             return true;
         return false;
     }
-    
-    public static void updateCallBackCache(String appName, JsonCallback jsonCallBack) {
-    	logger.info("updateCallBackCache: updating cache.....");
-    	callBackCache.put(appName, jsonCallBack);
-    }
-    
-    public static JsonCallback getCallBackCache(String appName) {
-    	return callBackCache.get(appName);
-    }
 
-    public static void updateCallbackNotifyList(List<String> notifyList) {
-    	logger.info("callbackNotifyList: updating cache.....");
-    	callbackNotifyList.put("callbackNotify", notifyList);
-    }
-    
-    public static List<String> getCallbackNotifyList() {
-    	return callbackNotifyList.get("callbackNotify");
-    }
-    
     public void initializeMusicCache() {
         logger.info(EELFLoggerDelegate.applicationLogger,"Initializing Music Cache...");
         musicCache.put("isInitialized", "true");
@@ -105,6 +89,7 @@ public class CachingUtil implements Runnable {
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), false));
         } catch (Exception e1) {
             logger.error(EELFLoggerDelegate.errorLogger, e1.getMessage(),AppMessages.CACHEERROR, ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+            e1.printStackTrace();
         }
         ResultSet rs = MusicCore.get(pQuery);
         Iterator<Row> it = rs.iterator();
@@ -117,8 +102,8 @@ public class CachingUtil implements Runnable {
             String keySpace = row.getString("application_name");
             try {
                 userAttempts.put(nameSpace, 0);
-                boolean responseObj = triggerAAF(nameSpace, userId, password);
-                if (responseObj) {
+                AAFResponse responseObj = triggerAAF(nameSpace, userId, password);
+                if (responseObj.getNs().size() > 0) {
                     map = new HashMap<>();
                     map.put(userId, password);
                     aafCache.put(nameSpace, map);
@@ -129,6 +114,7 @@ public class CachingUtil implements Runnable {
             } catch (Exception e) {
                 logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.INFO, ErrorTypes.GENERALSERVICEERROR);
                 logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),"Something at AAF was changed for ns: " + nameSpace+" So not updating Cache for the namespace. ");
+                e.printStackTrace();
             }
         }
 
@@ -147,7 +133,7 @@ public class CachingUtil implements Runnable {
     public static boolean authenticateAAFUser(String nameSpace, String userId, String password,
                     String keySpace) throws Exception {
 
-        if (aafCache.get(nameSpace) != null && musicCache.get(keySpace)!=null) {
+        if (aafCache.get(nameSpace) != null) {
             if (keySpace != null && !musicCache.get(keySpace).equals(nameSpace)) {
             	logger.info(EELFLoggerDelegate.applicationLogger,"Create new application for the same namespace.");
             } else if (aafCache.get(nameSpace).get(userId).equals(password)) {
@@ -178,13 +164,12 @@ public class CachingUtil implements Runnable {
             }
         }
 
-        boolean responseObj = triggerAAF(nameSpace, userId, password);
-        if (responseObj) {
+        AAFResponse responseObj = triggerAAF(nameSpace, userId, password);
+        if (responseObj.getNs().size() > 0) {
             //if (responseObj.getNs().get(0).getAdmin().contains(userId)) {
-            	Map<String, String> map = new HashMap<>();
-                map.put(userId, password);
-                aafCache.put(nameSpace, map);
-                CachingUtil.updateMusicCache(keySpace, nameSpace);
+            	//Map<String, String> map = new HashMap<>();
+                //map.put(userId, password);
+                //aafCache.put(nameSpace, map);
             	return true;
             //}
         }
@@ -192,7 +177,7 @@ public class CachingUtil implements Runnable {
         return false;
     }
 
-    private static boolean triggerAAF(String nameSpace, String userId, String password)
+    private static AAFResponse triggerAAF(String nameSpace, String userId, String password)
                     throws Exception {
         if (MusicUtil.getAafEndpointUrl() == null) {
         	logger.error(EELFLoggerDelegate.errorLogger,"",AppMessages.UNKNOWNERROR,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
@@ -225,14 +210,14 @@ public class CachingUtil implements Runnable {
             // TODO Allow for 2-3 times and forbid any attempt to trigger AAF with invalid values
             // for specific time.
         }
-        /*response.getHeaders().put(HttpHeaders.CONTENT_TYPE,
+        response.getHeaders().put(HttpHeaders.CONTENT_TYPE,
                         Arrays.asList(MediaType.APPLICATION_JSON));
         // AAFResponse output = response.getEntity(AAFResponse.class);
         response.bufferEntity();
         String x = response.getEntity(String.class);
-        AAFResponse responseObj = new ObjectMapper().readValue(x, AAFResponse.class);*/
+        AAFResponse responseObj = new ObjectMapper().readValue(x, AAFResponse.class);
         
-        return true;
+        return responseObj;
     }
 
     public static void updateMusicCache(String keyspace, String nameSpace) {
@@ -271,6 +256,7 @@ public class CachingUtil implements Runnable {
                     appNameCache.put(namespace, isAAF);
             } catch (Exception e) {
             	logger.error(EELFLoggerDelegate.errorLogger,  e.getMessage(), AppMessages.QUERYERROR,ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
+            	e.printStackTrace();
             }
         }
         return isAAF;
@@ -288,6 +274,7 @@ public class CachingUtil implements Runnable {
                 uuid = rs.getUUID("uuid").toString();
             } catch (Exception e) {
                 logger.error(EELFLoggerDelegate.errorLogger,"Exception occured during uuid retrieval from DB."+e.getMessage());
+                e.printStackTrace();
             }
         }
         return uuid;
@@ -304,6 +291,7 @@ public class CachingUtil implements Runnable {
             appName = rs.getString("application_name");
         } catch (Exception e) {
         	logger.error(EELFLoggerDelegate.errorLogger,  e.getMessage(), AppMessages.QUERYERROR, ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
+            e.printStackTrace();
         }
         return appName;
     }
@@ -350,6 +338,7 @@ public class CachingUtil implements Runnable {
 			rs = MusicCore.get(queryObject).one();
 		} catch (MusicServiceException e) {
 			// TODO Auto-generated catch block
+			e.printStackTrace();
 			resultMap.put("Exception", "Unable to process operation. Error is "+e.getMessage());
 			return resultMap;
         } catch (InvalidQueryException e) {
@@ -393,13 +382,14 @@ public class CachingUtil implements Runnable {
         try {
             queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), keyspace));
         } catch (Exception e) {
-        	 logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
+            e.printStackTrace();
         }
         Row rs = null;
         try {
             rs = MusicCore.get(queryObject).one();
         } catch (MusicServiceException e) {
-        	resultMap.put("Exception", "Unable to process operation. Error is "+e.getMessage());
+            e.printStackTrace();
+            resultMap.put("Exception", "Unable to process operation. Error is "+e.getMessage());
             return resultMap;
         }
         if(rs == null) {
@@ -426,16 +416,5 @@ public class CachingUtil implements Runnable {
         CachingUtil.updateMusicCache(keyspace, nameSpace);
         CachingUtil.updateMusicValidateCache(nameSpace, userId, pwd);
         return resultMap;
-    }
-
-    public static void deleteKeysFromDB(String deleteKeys) {
-        PreparedQueryObject pQuery = new PreparedQueryObject();
-        pQuery.appendQueryString(
-                        "DELETE FROM admin.locks WHERE lock_id IN ("+deleteKeys+")");
-        try {
-            MusicCore.nonKeyRelatedPut(pQuery, "eventual");
-        } catch (Exception e) {
-        	 logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.AUTHENTICATIONERROR, "Error in deleteKeysFromDB");
-        }
     }
 }

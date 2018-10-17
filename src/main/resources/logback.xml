@@ -259,13 +259,12 @@
        
   </logger>
   
+  
+
+  
   <root level="INFO">
     <appender-ref ref="asyncEELF" />
     <appender-ref ref="STDOUT" />
   </root>
-
-  <!-- Conductor Specific additions to squash WARNING and INFO -->
-  <logger name="com.datastax.driver.core.Cluster" level="ERROR"/> 
-  <logger name="org.onap.music.main.MusicCore" level="ERROR"/>  
 
 </configuration>
