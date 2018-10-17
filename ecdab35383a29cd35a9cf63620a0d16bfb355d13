@@ -94,6 +94,30 @@
     },
     {
       "key": {
+        "uuid": "bada0100_59035eb8",
+        "filename": "pom.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 407,
+      "author": {
+        "id": 1827
+      },
+      "writtenOn": "2018-10-17T05:14:01Z",
+      "side": 1,
+      "message": "Thanks, I will correct. In my rush to get this out I overlooked this again.",
+      "parentUuid": "bada0100_d958aefc",
+      "range": {
+        "startLine": 407,
+        "startChar": 50,
+        "endLine": 407,
+        "endChar": 51
+      },
+      "revId": "ecdab35383a29cd35a9cf63620a0d16bfb355d13",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "bada0100_f95d72ea",
         "filename": "src/main/java/org/onap/music/datastore/MusicDataStore.java",
         "patchSetId": 1
