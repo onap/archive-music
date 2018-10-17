@@ -22,18 +22,28 @@
 package org.onap.music.rest;
 
 
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
@@ -66,26 +76,24 @@ import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
 import org.onap.music.response.jsonobjects.JsonResponse;
 
+import com.datastax.driver.core.ColumnDefinitions;
+import com.datastax.driver.core.ColumnDefinitions.Definition;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
+import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.config.ClientConfig;
+import com.sun.jersey.api.client.config.DefaultClientConfig;
+import com.sun.jersey.api.json.JSONConfiguration;
+import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import com.sun.jersey.core.util.Base64;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import com.datastax.driver.core.TableMetadata;
-
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import com.datastax.driver.core.ColumnDefinitions;
-import com.datastax.driver.core.ColumnDefinitions.Definition;
-import com.datastax.driver.core.TableMetadata;
-//import java.util.Base64.Encoder; 
-//import java.util.Base64.Decoder;
 
 @Path("/v2/admin")
 // @Path("/v{version: [0-9]+}/admin")
@@ -424,6 +432,7 @@ public class RestMusicAdminAPI {
     	Map<String, Object> resultMap = new HashMap<>();
     	try {
     		logger.info(EELFLoggerDelegate.applicationLogger, "Got notification: " + inputJsonObj.getData());
+    		logger.info("Got notification: " + inputJsonObj.getData());
 			String dataStr = inputJsonObj.getData();
 			JSONCallbackResponse jsonResponse = mapper.readValue(dataStr, JSONCallbackResponse.class);
 			String operation = jsonResponse.getOperation();
@@ -443,22 +452,6 @@ public class RestMusicAdminAPI {
 			if(notifiyList == null || notifiyList.isEmpty()) {
 				logger.info("Is cache empty? reconstructing Object from cache..");
 				constructJsonCallbackFromCache();
-				/*notifiyList = CachingUtil.getCallbackNotifyList();
-				if("update".equals(operation)) {
-					List<String> updateList = jsonResponse.getUpdateList();
-					//logger.info("update list from trigger: "+updateList);
-					for(String element : updateList) {
-						logger.info("element: "+element);
-						logger.info("notifiyList: "+notifiyList);
-						if(notifiyList.contains(element)) {
-							logger.info("Found the notifyOn property: "+element);
-							field_value = element;
-						}
-					}
-				}
-				
-				baseRequestObj = CachingUtil.getCallBackCache(field_value);
-				logger.info("Reconstructing Object from cache is Successful.."+baseRequestObj);*/
 			}
 			notifiyList = CachingUtil.getCallbackNotifyList();
 			JsonCallback baseRequestObj = null;
@@ -481,45 +474,45 @@ public class RestMusicAdminAPI {
 						break;
 					}
 				}
-				if(baseRequestObj == null || field_value == null) {
-					for(String element: inputUpdateList) {
-						String[] elementArr = element.split(":");
-						String newElement = null;
-						if(elementArr.length >= 2) {
-							newElement = elementArr[0]+":"+elementArr[1];
-				        } 
-						baseRequestObj = CachingUtil.getCallBackCache(newElement);
-						if(baseRequestObj != null) {
-							logger.info("Found the element that was changed... "+newElement);
-							break;
-						}
-					}
-					for(String element : updateList) {
-						String[] elementArr = element.split(":");
-						String newElement = null;
-						if(elementArr.length >= 2) {
-							newElement = elementArr[0]+":"+elementArr[1];
-				        } 
-						if(notifiyList.contains(newElement)) {
-							logger.info("Found the notifyOn property: "+newElement);
-							field_value = newElement;
-							break;
-						}
-					}
+				if(baseRequestObj == null || field_value == null) {		
+					for(String element: inputUpdateList) {		
+						String[] elementArr = element.split(":");		
+						String newElement = null;		
+						if(elementArr.length >= 2) {		
+							newElement = elementArr[0]+":"+elementArr[1];		
+				        } 		
+						baseRequestObj = CachingUtil.getCallBackCache(newElement);		
+						if(baseRequestObj != null) {		
+							logger.info("Found the element that was changed... "+newElement);		
+							break;		
+						}		
+					}		
+					for(String element : updateList) {		
+						String[] elementArr = element.split(":");		
+						String newElement = null;		
+						if(elementArr.length >= 2) {		
+							newElement = elementArr[0]+":"+elementArr[1];		
+				        } 		
+						if(notifiyList.contains(newElement)) {		
+							logger.info("Found the notifyOn property: "+newElement);		
+							field_value = newElement;		
+							break;		
+						}		
+					}		
 				}
 			} else {
 				field_value = jsonResponse.getFull_table();
 				baseRequestObj = CachingUtil.getCallBackCache(field_value);
 			}
 			
-			if(baseRequestObj == null) {
+			if(baseRequestObj == null || field_value == null) {
 				resultMap.put("Exception",
 	                    "Oops. Something went wrong. Please make sure Callback properties are onboarded.");
 				logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.INCORRECTDATA,
 	                    ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
 				return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
 			}
-			logger.info("Going through list: "+operation+ " && List: "+jsonResponse.getUpdateList());
+			logger.info(EELFLoggerDelegate.applicationLogger, "Going through list: "+operation+ " && List: "+jsonResponse.getUpdateList());
 			
 			String key = "admin" + "." + "notification_master" + "." + baseRequestObj.getUuid();
 	        String lockId = MusicCore.createLockReference(key);
@@ -528,7 +521,7 @@ public class RestMusicAdminAPI {
 	        	logger.error(EELFLoggerDelegate.errorLogger, "Some other node is notifying the caller..: ");
 	        }
 			
-			logger.info(operation+ ": Operation :: changeValue: "+changeValueMap);
+	        logger.info(EELFLoggerDelegate.applicationLogger, operation+ ": Operation :: changeValue: "+changeValueMap);
 			if(operation.equals("update")) {
 				String notifyWhenChangeIn = baseRequestObj.getNotifyWhenChangeIn(); // conductor.plans.status
 				if(null!=field_value) {
@@ -554,28 +547,125 @@ public class RestMusicAdminAPI {
 			MusicCore.releaseLock(lockId, true);	
 	    } catch(Exception e) {
             e.printStackTrace();
-            logger.info("Exception...");
+            logger.error(EELFLoggerDelegate.errorLogger, "Exception while notifying...."+e.getMessage());
         }
     	logger.info(EELFLoggerDelegate.applicationLogger, "callback is completed. Notification was sent from Music...");
     	return Response.status(Status.OK).entity(resultMap).build();
     }
     
-    private void notifyCallBackAppl(JSONCallbackResponse jsonResponse, JsonCallback baseRequestObj) {
+    private void notifyCallBackAppl(JSONCallbackResponse jsonResponse, JsonCallback baseRequestObj) throws Exception {
     	int notifytimeout = MusicUtil.getNotifyTimeout();
     	int notifyinterval = MusicUtil.getNotifyInterval();
     	String endpoint = baseRequestObj.getApplicationNotificationEndpoint();
         String username = baseRequestObj.getApplicationUsername();
         String password = baseRequestObj.getApplicationPassword();
         JsonNotification jsonNotification = constructJsonNotification(jsonResponse, baseRequestObj);
+        jsonNotification.setPassword("************");
         jsonNotification.setOperation_type(jsonResponse.getOperation());
-        logger.info(EELFLoggerDelegate.applicationLogger, "Notification Response sent is: "+jsonNotification);
+        logger.info(EELFLoggerDelegate.applicationLogger, "Notification Response sending is: "+jsonNotification);
+        logger.info("Notification Response sending is: "+jsonNotification);
+        jsonNotification.setPassword(baseRequestObj.getApplicationPassword());
         WebResource webResource = client.resource(endpoint);
         String authData = username+":"+password;
         byte[] plainCredsBytes = authData.getBytes();
         byte[] base64CredsBytes = Base64.encode(plainCredsBytes);
         String base64Creds = new String(base64CredsBytes);
-        Map<String, String> response_body = baseRequestObj.getResponseBody();
+        ClientConfig config = new DefaultClientConfig();
+    	config.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
         ClientResponse response = null;
+        WebResource service = null;
+        boolean ok = false;
+        try { 
+        	Client client = Client.create(config);
+        	TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager(){
+                public X509Certificate[] getAcceptedIssuers(){return null;}
+                public void checkClientTrusted(X509Certificate[] certs, String authType){}
+                public void checkServerTrusted(X509Certificate[] certs, String authType){}
+            }};
+
+            // Install the all-trusting trust manager
+            try {
+                SSLContext sc = SSLContext.getInstance("TLS");
+                sc.init(null, trustAllCerts, new SecureRandom());
+                HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+            } catch (Exception e) {
+                ;
+            }
+
+        	try {
+                SSLContext sslcontext = SSLContext.getInstance( "TLS" );
+                sslcontext.init( null, null, null );
+                Map<String, Object> properties = config.getProperties();
+                HTTPSProperties httpsProperties = new HTTPSProperties(
+                        new HostnameVerifier() {
+                            @Override
+                            public boolean verify( String s, SSLSession sslSession ) {
+                                return true;
+                            }
+                        }, sslcontext
+                );
+                properties.put( HTTPSProperties.PROPERTY_HTTPS_PROPERTIES, httpsProperties );
+                HttpsURLConnection.setDefaultHostnameVerifier (new HostnameVerifier() {
+					@Override
+					public boolean verify(String hostname, SSLSession session) {
+						return true;
+					}
+				});
+                Client.create( config );
+            }
+            catch ( KeyManagementException | NoSuchAlgorithmException e ) {
+                throw new RuntimeException( e );
+            }
+        	
+        	service = client.resource(endpoint);
+
+        	response = service.header("Authorization", "Basic " + base64Creds).accept(MediaType.APPLICATION_JSON).type(MediaType.APPLICATION_JSON)
+        			  .post(ClientResponse.class, jsonNotification);
+          	
+        } catch (Exception chf) {
+        	logger.info(EELFLoggerDelegate.applicationLogger, "Is Service down?");
+        	logger.info("An Exception occured while notifying. "+chf+ " : "+chf.getMessage() +" ...Retrying for: "+notifytimeout);
+        }
+        if(response != null && response.getStatus() == 200) ok = true;
+        if(!ok) {
+        	long now= System.currentTimeMillis();
+        	long end = now+notifytimeout;
+        	while(! ok) {
+        		logger.info(EELFLoggerDelegate.applicationLogger, "retrying since error in notifying callback for "+notifytimeout+"ms");
+        		logger.info("retrying since error in notifying callback.. response status: "+ (response == null ? "404" : response.getStatus()));
+        		try {
+        			ok = true;
+        			response = service.header("Authorization", "Basic " + base64Creds).accept(MediaType.APPLICATION_JSON).type(MediaType.APPLICATION_JSON)
+              			  .post(ClientResponse.class, jsonNotification);
+        			if(response != null && response.getStatus() == 200) ok = true;
+        			else if(System.currentTimeMillis() < end) {
+        				try{ Thread.sleep(notifyinterval); } catch(Exception e1) {}
+        				ok = false;
+        			}
+        		}catch (Exception e) {
+        			logger.info(EELFLoggerDelegate.applicationLogger, "Retry until "+(end-System.currentTimeMillis()));
+        			if(response == null && System.currentTimeMillis() < end) ok = false;
+        			else ok = true;
+        			try{ Thread.sleep(notifyinterval); } catch(Exception e1) {}
+        		}
+        	}
+        }
+        
+        if(response == null) {
+        	logger.error(EELFLoggerDelegate.errorLogger, "Can NOT notify the caller as caller failed to respond..");
+        	return;
+        }
+        try {
+        	JsonNotifyClientResponse responseStr = response.getEntity(JsonNotifyClientResponse.class);
+        	logger.info(EELFLoggerDelegate.applicationLogger, "Response from Notified client: "+responseStr);
+        	logger.info("Response from Notified client: "+responseStr);
+        } catch(Exception e) {
+        	logger.info("Exception while reading response from Caller");
+        	logger.error("Exception while reading response from Caller");
+        	logger.error(EELFLoggerDelegate.errorLogger, "Can NOT notify the caller as caller failed to respond..");
+        }
+        
+        /*ClientResponse response = null;
         try { 
         	response = webResource.header("Authorization", "Basic " + base64Creds).accept("application/json").type("application/json")
             .post(ClientResponse.class, jsonNotification);
@@ -614,7 +704,7 @@ public class RestMusicAdminAPI {
         	            .post(ClientResponse.class, jsonNotification);
         	}
         	logger.info(EELFLoggerDelegate.applicationLogger, "Exception while notifying.. "+response.getStatus());
-        }
+        }*/
     }
     
     private JsonNotification constructJsonNotification(JSONCallbackResponse jsonResponse, JsonCallback baseRequestObj) {
@@ -635,63 +725,65 @@ public class RestMusicAdminAPI {
 			String primaryId = tableInfo.getPrimaryKey().get(0).getName();
 			
 			Map<String, String> responseBodyMap = baseRequestObj.getResponseBody();
-			Map<String, String> newMap = new HashMap<>();
-			if(responseBodyMap.size() == 1 && responseBodyMap.containsKey("")) {
-				jsonNotification.setResponse_body(newMap);
-			} else {
-				for (Entry<String, String> entry : new HashSet<>(responseBodyMap.entrySet())) {
-				    String trimmed = entry.getKey().trim();
-				    if (!trimmed.equals(entry.getKey())) {
-				    	responseBodyMap.remove(entry.getKey());
-				    	responseBodyMap.put(trimmed, entry.getValue());
-				    }
-				}
-				
-				Set<String> keySet = responseBodyMap.keySet();
-				String cql = "select *";
-				/*for(String keys: keySet) {
-					cql = cql + keys + ",";
-				}*/
-				//cql = cql.substring(0, cql.length()-1);
-				cql = cql + " FROM "+fullNotifyArr[0]+" WHERE "+primaryId+" = ?";
-				logger.info("CQL in constructJsonNotification: "+cql);
-				PreparedQueryObject pQuery = new PreparedQueryObject();
-				pQuery.appendQueryString(cql);
-				pQuery.addValue(MusicUtil.convertToActualDataType(primaryIdType, pkValue));
-				Row row = MusicCore.get(pQuery).one();
-				if(row != null) {
-					ColumnDefinitions colInfo = row.getColumnDefinitions();
-			        for (Definition definition : colInfo) {
-			            String colName = definition.getName();
-			            if(keySet.contains(colName)) {
-			                DataType colType = definition.getType();
-			                Object valueObj = MusicCore.getDSHandle().getColValue(row, colName, colType);
-			                Object valueString = MusicUtil.convertToActualDataType(colType, valueObj);
-			                logger.info(colName+" : "+valueString);
-			                newMap.put(colName, valueString.toString());
-			                keySet.remove(colName);
-			            }
-			        }
-				}
-				if(! keySet.isEmpty()) {
-					Iterator<String> iterator = keySet.iterator();
-					while (iterator.hasNext()) {
-					    String element = iterator.next();
-					    if(element != null && element.length() > 0)
-					    	newMap.put(element,"COLUMN_NOT_FOUND");
-					}
-				}
-			    
-				if("delete".equals(jsonResponse.getOperation()) || newMap.isEmpty()) {
-					newMap.put(primaryId, pkValue);
-				}
-				jsonNotification.setResponse_body(newMap);
+			for (Entry<String, String> entry : new HashSet<>(responseBodyMap.entrySet())) {
+			    String trimmed = entry.getKey().trim();
+			    if (!trimmed.equals(entry.getKey())) {
+			    	responseBodyMap.remove(entry.getKey());
+			    	responseBodyMap.put(trimmed, entry.getValue());
+			    }
 			}
-			} catch(Exception e) {
-			e.printStackTrace();
-			}
-			return jsonNotification;
+			
+	    	Set<String> keySet = responseBodyMap.keySet();
+	    	Map<String, String> newMap = new HashMap<>();
+	    	if(responseBodyMap.size() == 1 && responseBodyMap.containsKey("")) {
+	    		jsonNotification.setResponse_body(newMap);
+	    		return jsonNotification;
+	    	}
+	    	logger.info(EELFLoggerDelegate.applicationLogger, "responseBodyMap is not blank: "+responseBodyMap);
+	    	String cql = "select *";
+	    	/*for(String keys: keySet) {
+	    		cql = cql + keys + ",";
+	    	}*/
+	    	//cql = cql.substring(0, cql.length()-1);
+	    	cql = cql + " FROM "+fullNotifyArr[0]+" WHERE "+primaryId+" = ?";
+	    	logger.info(EELFLoggerDelegate.applicationLogger, "CQL in constructJsonNotification: "+cql);
+	    	PreparedQueryObject pQuery = new PreparedQueryObject();
+	    	pQuery.appendQueryString(cql);
+	    	pQuery.addValue(MusicUtil.convertToActualDataType(primaryIdType, pkValue));
+	    	Row row = MusicCore.get(pQuery).one();
+	    	if(row != null) {
+	    		ColumnDefinitions colInfo = row.getColumnDefinitions();
+	            for (Definition definition : colInfo) {
+	                String colName = definition.getName();
+	                if(keySet.contains(colName)) {
+		                DataType colType = definition.getType();
+		                Object valueObj = MusicCore.getDSHandle().getColValue(row, colName, colType);
+		                Object valueString = MusicUtil.convertToActualDataType(colType, valueObj);
+		                logger.info(colName+" : "+valueString);
+		                newMap.put(colName, valueString.toString());
+		                keySet.remove(colName);
+	                }
+	            }
+	    	}
+	    	if(! keySet.isEmpty()) {
+	    		Iterator<String> iterator = keySet.iterator();
+	    		while (iterator.hasNext()) {
+	    		    String element = iterator.next();
+	    		    newMap.put(element,"COLUMN_NOT_FOUND");
+	    		}
+	    	}
+            
+	    	if("delete".equals(jsonResponse.getOperation()) || newMap.isEmpty()) {
+	    		newMap.put(primaryId, pkValue);
+	    	}
+	    	jsonNotification.setResponse_body(newMap);
+    	} catch(Exception e) {
+    		e.printStackTrace();
+    	}
+    	return jsonNotification;
     }
+    
+    
     
     private void constructJsonCallbackFromCache() throws Exception{
     	PreparedQueryObject pQuery = new PreparedQueryObject();
@@ -702,7 +794,6 @@ public class RestMusicAdminAPI {
                 + " notify_delete_on, notify_update_on, request, notifyon from admin.notification_master allow filtering";
         pQuery.appendQueryString(cql);
         //pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), fullTable));
-        logger.info("Query: "+pQuery.getQuery());
         
         ResultSet rs = MusicCore.get(pQuery);
         Iterator<Row> it = rs.iterator();
@@ -730,7 +821,7 @@ public class RestMusicAdminAPI {
             jsonCallback.setNotifyWhenDeletesIn(delete);
             jsonCallback.setNotifyWhenChangeIn(update);
             jsonCallback.setUuid(uuid);
-            logger.info("From DB. Saved request_body: "+request);
+            logger.info(EELFLoggerDelegate.applicationLogger, "From DB. Saved request_body: "+request);
             request = request.substring(1, request.length()-1);           
             String[] keyValuePairs = request.split(",");              
             Map<String,String> responseBody = new HashMap<>();               
@@ -742,9 +833,9 @@ public class RestMusicAdminAPI {
                 	val = entry[1];
                 responseBody.put(entry[0], val);          
             }
-            logger.info("After parsing. Saved request_body: "+responseBody);
+            logger.info(EELFLoggerDelegate.applicationLogger, "After parsing. Saved request_body: "+responseBody);
             jsonCallback.setResponseBody(responseBody);
-            logger.info("Updating Cache with updateCallBackCache: "+notifyon+ " :::: "+jsonCallback);
+            logger.info(EELFLoggerDelegate.applicationLogger, "Updating Cache with updateCallBackCache: "+notifyon+ " :::: "+jsonCallback);
             CachingUtil.updateCallBackCache(notifyon, jsonCallback);
         }
         CachingUtil.updateCallbackNotifyList(notifyList);
@@ -816,7 +907,6 @@ public class RestMusicAdminAPI {
 	        jsonCallback.setNotifyWhenInsertsIn(inserts);
 	        jsonCallback.setResponseBody(responseBody);
 	        CachingUtil.updateCallBackCache(notify_field, jsonCallback);
-	        logger.info("Cache updated ");
 	        pQuery = new PreparedQueryObject();
 	        pQuery.appendQueryString(cql);
 	        ResultType nonKeyRelatedPut = MusicCore.nonKeyRelatedPut(pQuery, MusicUtil.EVENTUAL);
@@ -832,6 +922,27 @@ public class RestMusicAdminAPI {
             return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
        return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setMessage("Callback api successfully registered").toMap()).build();
+    }
+    
+    @DELETE
+    @Path("/onboardCallback")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response deleteCallbackProp(JsonNotification jsonNotification) {
+    	Map<String, Object> resultMap = new HashMap<>();
+        ResponseBuilder response =
+                        Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
+        String notifyOn = jsonNotification.getNotify_field();
+        PreparedQueryObject pQuery = new PreparedQueryObject();
+        try {
+	        pQuery.appendQueryString("DELETE FROM admin.notification_master WHERE notifyon = ?");
+	        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), notifyOn));
+	        MusicCore.nonKeyRelatedPut(pQuery, MusicUtil.EVENTUAL);
+        } catch(Exception e) {
+        	e.printStackTrace();
+        	return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setMessage("Callback api registration failed").toMap()).build();
+        }
+    	return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setMessage("Callback api successfully deleted").toMap()).build();
     }
 
     /*public String encodePwd(String password) {
