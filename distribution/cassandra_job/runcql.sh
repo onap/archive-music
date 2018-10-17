@@ -2,11 +2,14 @@
 if [ -z "$TIMEOUT" ]; then
     TIMEOUT=10;
 fi
+if [ -z "$DELAY" ]; then
+    DELAY=60;
+fi
 TO="--request-timeout=$TIMEOUT"
 
 if [ $CASS_HOSTNAME ]; then
-    echo "Sleeping for 60 seconds before running cql";
-    sleep 60;
+    echo "Sleeping for $DELAY seconds before running cql";
+    sleep $DELAY;
     >&2 echo "#############################################"
     >&2 echo "############## Let run cql's ################"
     >&2 echo "#############################################"
