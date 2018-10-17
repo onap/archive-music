@@ -56,16 +56,19 @@ public class MusicHealthCheck {
 			result = getAdminKeySpace(consistency);
 		} catch(Exception e) {
 			if(e.getMessage().toLowerCase().contains("unconfigured table healthcheck")) {
-				System.out.println("Creating table....");
+				logger.error("Error", e);
+				logger.debug("Creating table....");
 				boolean ksresult = createKeyspace();
 				if(ksresult)
 					try {
 						result = getAdminKeySpace(consistency);
 					} catch (MusicServiceException e1) {
 						// TODO Auto-generated catch block
+						logger.error("Error", e);
 						e1.printStackTrace();
 					}
 			} else {
+				logger.error("Error", e);
 				return "One or more nodes are down or not responding.";
 			}
 		}
@@ -103,8 +106,9 @@ public class MusicHealthCheck {
 		} catch (MusicServiceException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			logger.error("Error", e);
 		}
-		if(rs.getResult().toLowerCase().contains("success"))
+		if(rs != null && rs.getResult().toLowerCase().contains("success"))
 			return true;
 		else
 			return false;
@@ -125,8 +129,6 @@ public class MusicHealthCheck {
 
 		logger.info(EELFLoggerDelegate.applicationLogger, "Zookeeper is Active and Running");
 		return "ACTIVE";
-
-		// return "Zookeeper is not responding";
 
 	}
 

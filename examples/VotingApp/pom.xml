@@ -24,6 +24,7 @@ stated inside of the file.
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.att.reserarch.VoteAppForMUSIC</groupId>
   <artifactId>VoteAppForMUSIC</artifactId>
+  <packaging>jar</packaging>
   <version>0.0.1-SNAPSHOT</version>
   
     
@@ -44,15 +45,15 @@ stated inside of the file.
 			<version>1.9</version>
 		</dependency>
 		<dependency>
-    <groupId>com.sun.jersey</groupId>
-    <artifactId>jersey-json</artifactId>
-    <version>1.18.1</version>
-</dependency>
-<dependency>
-   <groupId>com.owlike</groupId>
-   <artifactId>genson</artifactId>
-   <version>0.99</version>
-</dependency>
+                  <groupId>com.sun.jersey</groupId>
+                  <artifactId>jersey-json</artifactId>
+                <version>1.18.1</version>
+                </dependency>
+                <dependency>
+                  <groupId>com.owlike</groupId>
+                    <artifactId>genson</artifactId>
+                    <version>0.99</version>
+                </dependency>
 		<dependency>
 			<groupId>com.sun.jersey</groupId>
 			<artifactId>jersey-client</artifactId>
@@ -65,11 +66,11 @@ stated inside of the file.
 			<version>1.9</version>
 		</dependency>
 		
-		<dependency>
+		<!-- <dependency>
             <groupId>com.sun.jersey</groupId>
             <artifactId>jersey-bundle</artifactId>
             <version>1.18</version>
-        </dependency>	
+        </dependency>	-->
         
         		<dependency>
 	<groupId>com.googlecode.json-simple</groupId>
@@ -86,7 +87,36 @@ stated inside of the file.
 			<artifactId>zookeeper</artifactId>
 			<version>3.4.6</version>
 		</dependency>
-        
+
+		<dependency>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-shade-plugin</artifactId>
+			<version>3.1.1</version>
+		</dependency>
 	</dependencies>
-  
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-shade-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>default-jar</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>main.VotingApp</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>
+

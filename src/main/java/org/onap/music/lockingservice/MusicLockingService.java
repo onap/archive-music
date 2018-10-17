@@ -33,6 +33,7 @@ import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicServiceException;
+import org.onap.music.main.CachingUtil;
 import org.onap.music.main.MusicUtil;
 
 
@@ -131,6 +132,7 @@ public class MusicLockingService implements Watcher {
     public void unlockAndDeleteId(String lockIdWithDollar) throws KeeperException.NoNodeException {
         String lockId = lockIdWithDollar.replace('$', '/');
         zkLockHandle.unlock(lockId);
+        CachingUtil.deleteKeysFromDB("'"+lockId+"'");
     }
 
     public void deleteLock(String lockName) throws MusicLockingException {

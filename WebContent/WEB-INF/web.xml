@@ -6,6 +6,11 @@
              org.onap.music.main.PropertiesListener
          </listener-class>
     </listener>
+    <listener>
+    	 <listener-class>
+             org.onap.music.main.CronJobManager
+         </listener-class>
+    </listener>
     <servlet>
         <servlet-name>music-servlet</servlet-name>
         <servlet-class>

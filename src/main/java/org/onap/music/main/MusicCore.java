@@ -73,7 +73,10 @@ public class MusicCore {
         public boolean testCondition() throws Exception {
             // first generate the row
             ResultSet results = quorumGet(selectQueryForTheRow);
-            Row row = results.one();
+            Row row = null;
+            if(results != null) {
+                row = results.one();
+            }
             return getDSHandle().doesRowSatisfyCondition(row, conditions);
         }
     }
@@ -288,7 +291,8 @@ public class MusicCore {
         MusicLockState newMls = null;
         try {
             currentMls = getMusicLockState(key);
-            String currentLockHolder = currentMls.getLockHolder();
+            String currentLockHolder = null;
+            if(currentMls != null) { currentLockHolder = currentMls.getLockHolder(); };
             if (lockId.equals(currentLockHolder)) {
                 logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: You already have the lock!");
                 return new ReturnType(ResultType.SUCCESS, "You already have the lock!");
@@ -708,6 +712,22 @@ public class MusicCore {
         }
         return results;
     }
+    
+    public static String getMyHostId() {
+    	PreparedQueryObject pQuery = new PreparedQueryObject();
+    	pQuery.appendQueryString("SELECT HOST_ID FROM SYSTEM.LOCAL");
+		ResultSet rs = null;
+		try {
+			rs = getDSHandle().executeEventualGet(pQuery);
+			Row row = rs.one();
+			return (row == null) ? "UNKNOWN" : row.getUUID("HOST_ID").toString();
+		} catch (Exception e) {
+			e.printStackTrace();
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
+        }
+		logger.error(EELFLoggerDelegate.errorLogger, "Some issue during MusicCore.getMyHostId");
+		return "UNKNOW";
+	}
 
     /**
      * This method performs DDL operations on cassandra, if the the resource is available. Lock ID
