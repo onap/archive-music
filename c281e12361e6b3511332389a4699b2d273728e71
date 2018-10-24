@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "bada0100_6e4e8198",
+        "filename": "src/main/java/org/onap/music/rest/RestMusicDataAPI.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 160,
+      "author": {
+        "id": 1827
+      },
+      "writtenOn": "2018-10-24T15:50:15Z",
+      "side": 1,
+      "message": "Can you add something to the error log. It seems to be empty. Maybe something like \"Authorization failed. Possibly Missing required header element.\" Or the Exception that your returning.",
+      "revId": "c281e12361e6b3511332389a4699b2d273728e71",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
