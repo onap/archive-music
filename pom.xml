@@ -25,7 +25,7 @@
     <groupId>org.onap.music</groupId>
     <artifactId>MUSIC</artifactId>
     <packaging>war</packaging>
-    <version>3.0.2</version>
+    <version>3.1.0</version>
     <description>
             This is the MUSIC REST interface, packaged as a war file.
     </description>
