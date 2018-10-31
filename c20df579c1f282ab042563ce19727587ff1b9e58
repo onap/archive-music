@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "bada0100_99a99b7d",
+        "filename": "src/main/java/org/onap/music/datastore/MusicDataStore.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 318,
+      "author": {
+        "id": 1827
+      },
+      "writtenOn": "2018-10-31T19:48:29Z",
+      "side": 1,
+      "message": "It seems this was the wrong fix. \nIt breaks the logic.\nIf condition is false then return false.\nThis fix says if Condition is true return false.  \nCan you please fix. \nJust wanted to update for future fixes that original logic must be the same.  \n\nShould be \n\nif (!columnValue.equals(conditionValue))\n\nProbably a better idea to have other reviewers in future, but this was a tough one to see at first glance.",
+      "revId": "c20df579c1f282ab042563ce19727587ff1b9e58",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
