@@ -105,6 +105,11 @@ public class MusicCore {
         logger.info(EELFLoggerDelegate.applicationLogger,"Acquiring data store handle");
         long start = System.currentTimeMillis();
         if (mDstoreHandle == null) {
+        	try {
+    			MusicUtil.loadProperties();
+    		} catch (Exception e) {
+    			logger.error(EELFLoggerDelegate.errorLogger, "No properties file defined. Falling back to default.");
+    		}
             mDstoreHandle = new CassaDataStore(remoteIp);
         }
         long end = System.currentTimeMillis();
@@ -122,6 +127,11 @@ public class MusicCore {
         logger.info(EELFLoggerDelegate.applicationLogger,"Acquiring data store handle");
         long start = System.currentTimeMillis();
         if (mDstoreHandle == null) {
+        	try {
+    			MusicUtil.loadProperties();
+    		} catch (Exception e) {
+    			logger.error(EELFLoggerDelegate.errorLogger, "No properties file defined. Falling back to default.");
+    		}
             // Quick Fix - Best to put this into every call to getDSHandle?
             if (! MusicUtil.getMyCassaHost().equals("localhost") ) {
                 mDstoreHandle = new CassaDataStore(MusicUtil.getMyCassaHost());

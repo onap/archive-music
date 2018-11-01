@@ -23,12 +23,15 @@ package org.onap.music.main;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 import java.util.UUID;
@@ -334,6 +337,7 @@ public class MusicUtil {
      * @param myCassaHost
      */
     public static void setMyCassaHost(String myCassaHost) {
+    	System.out.println("Setting my cassa host: " + myCassaHost);
         MusicUtil.myCassaHost = myCassaHost;
     }
 
@@ -566,5 +570,30 @@ public class MusicUtil {
     	return authValues;
     	
     }
+
+
+		public static void loadProperties() throws Exception {
+	        Properties prop = new Properties();
+		    InputStream input = null;
+		    try {
+		        // load the properties file
+		        input = MusicUtil.class.getClassLoader().getResourceAsStream("music.properties");
+		        prop.load(input);
+		    } catch (Exception ex) {
+		        logger.error(EELFLoggerDelegate.errorLogger, "Unable to find properties file.");
+		        throw new Exception();
+		    } finally {
+		        if (input != null) {
+		            try {
+		                input.close();
+		            } catch (IOException e) {
+		                e.printStackTrace();
+		            }
+		        }
+		    }
+		    MusicUtil.setMyCassaHost(prop.getProperty("cassandra.host"));
+		    MusicUtil.setCassName(prop.getProperty("cassandra.user"));		
+		    MusicUtil.setCassPwd(prop.getProperty("cassandra.password"));
+	}
 
 }
