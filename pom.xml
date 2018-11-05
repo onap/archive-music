@@ -23,9 +23,9 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.onap.music</groupId>
-    <artifactId>MUSIC</artifactId>
+    <artifactId>dev-MUSIC-cassandra</artifactId>
     <packaging>war</packaging>
-    <version>3.2.0</version>
+    <version>3.2.0-SNAPSHOT</version>
     <description>
             This is the MUSIC REST interface, packaged as a war file.
     </description>
@@ -73,7 +73,7 @@
     </repositories>
 
     <build>
-        <finalName>MUSIC</finalName>
+        <finalName>dev-MUSIC-cassandra</finalName>
         <sourceDirectory>src/main/java</sourceDirectory>
         <outputDirectory>src/main/webapp/WEB-INF/classes</outputDirectory>
         <testSourceDirectory>src/test/java</testSourceDirectory>

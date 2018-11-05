@@ -26,6 +26,7 @@ import org.apache.curator.test.TestingServer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.onap.music.datastore.PreparedQueryObject;
@@ -42,6 +43,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@Ignore
 public class TestMusicCoreIntegration {
 
     static TestingServer zkServer;
