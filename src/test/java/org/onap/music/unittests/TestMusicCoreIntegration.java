@@ -46,7 +46,6 @@ import com.datastax.driver.core.Row;
 @Ignore
 public class TestMusicCoreIntegration {
 
-    static TestingServer zkServer;
     static PreparedQueryObject testObject;
     static String lockId = null;
     static String lockName = "ks1.tb1.pk1";
@@ -59,7 +58,6 @@ public class TestMusicCoreIntegration {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println("####Port:" + zkServer.getPort());
     }
 
     @AfterClass
@@ -70,8 +68,6 @@ public class TestMusicCoreIntegration {
         MusicCore.eventualPut(testObject);
         MusicCore.deleteLock(lockName);
         MusicCore.mDstoreHandle.close();
-        zkServer.stop();
-
     }
 
     @Test
