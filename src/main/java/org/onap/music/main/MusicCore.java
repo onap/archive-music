@@ -230,7 +230,7 @@ public class MusicCore {
 		String query = "select * from "+syncTable+" where key='"+fullyQualifiedKey+"';";
         PreparedQueryObject readQueryObject = new PreparedQueryObject();
         readQueryObject.appendQueryString(query);
-		ResultSet results = getDSHandle().executeCriticalGet(readQueryObject);			
+		ResultSet results = getDSHandle().executeQuorumConsistencyGet(readQueryObject);
 		if (results.all().size() != 0) {
 			logger.info("In acquire lock: Since there was a forcible release, need to sync quorum!");
 			try {
@@ -315,7 +315,7 @@ public class MusicCore {
         selectQuery.addValue(cqlFormattedPrimaryKeyValue);
         ResultSet results = null;
         try {
-            results = getDSHandle().executeCriticalGet(selectQuery);
+            results = getDSHandle().executeQuorumConsistencyGet(selectQuery);
             // write it back to a quorum
             Row row = results.one();
             ColumnDefinitions colInfo = row.getColumnDefinitions();
@@ -356,7 +356,7 @@ public class MusicCore {
     public static ResultSet quorumGet(PreparedQueryObject query) {
         ResultSet results = null;
         try {
-            results = getDSHandle().executeCriticalGet(query);
+            results = getDSHandle().executeQuorumConsistencyGet(query);
         } catch (MusicServiceException | MusicQueryException e) {
         	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR ,ErrorSeverity.MAJOR, ErrorTypes.GENERALSERVICEERROR);
         
@@ -518,15 +518,9 @@ public class MusicCore {
                                       + e.getMessage());
             }
         	 
-          String query = queryObject.getQuery();
-            long timeOfWrite = System.currentTimeMillis();
             long lockOrdinal = Long.parseLong(lockReference);
-            long ts = MusicUtil.v2sTimeStampInMicroseconds(lockOrdinal, timeOfWrite);
-            // TODO: use Statement instead of modifying query
-            query = query.replaceFirst("SET", "USING TIMESTAMP "+ ts + " SET");
-      	  queryObject.replaceQueryString(query);
             CassaDataStore dsHandle = getDSHandle();
-            dsHandle.executePut(queryObject, MusicUtil.CRITICAL);
+            dsHandle.executePut(queryObject, MusicUtil.CRITICAL, lockOrdinal);
           long end = System.currentTimeMillis();
           logger.info(EELFLoggerDelegate.applicationLogger,"Time taken for the critical put:" + (end - start) + " ms");
         }catch (MusicQueryException | MusicServiceException | MusicLockingException  e) {
@@ -572,7 +566,7 @@ public class MusicCore {
     public static ResultSet get(PreparedQueryObject queryObject) throws MusicServiceException {
         ResultSet results = null;
         try {
-			results = getDSHandle().executeEventualGet(queryObject);
+			results = getDSHandle().executeOneConsistencyGet(queryObject);
         } catch (MusicQueryException | MusicServiceException e) {
             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
             throw new MusicServiceException(e.getMessage());
@@ -599,7 +593,7 @@ public class MusicCore {
             ReturnType result = isTopOfLockStore(keyspace, table, primaryKeyValue, lockReference);
             if(result.getResult().equals(ResultType.FAILURE))
             		return null;//not top of the lock store q
-                results = getDSHandle().executeCriticalGet(queryObject);
+                results = getDSHandle().executeQuorumConsistencyGet(queryObject);
         } catch (MusicQueryException | MusicServiceException | MusicLockingException e) {
         		logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
         }

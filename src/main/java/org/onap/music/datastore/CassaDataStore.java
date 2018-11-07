@@ -30,7 +30,6 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.UUID;
 
 import com.datastax.driver.core.*;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
@@ -44,8 +43,6 @@ import com.datastax.driver.core.ColumnDefinitions.Definition;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
-import com.datastax.driver.core.utils.UUIDs;
-import com.sun.jersey.core.util.Base64;
 
 /**
  * @author nelson24
@@ -81,10 +78,11 @@ import com.sun.jersey.core.util.Base64;
  */
 public class CassaDataStore {
 
+    public static final String CONSISTENCY_LEVEL_ONE = "ONE";
+    public static final String CONSISTENCY_LEVEL_QUORUM = "QUORUM";
+
     private Session session;
     private Cluster cluster;
-
-
 
     /**
      * @param session
@@ -94,7 +92,7 @@ public class CassaDataStore {
     }
     
     /**
-     * @param session
+     * @param
      */
     public Session getSession() {
         return session;
@@ -333,11 +331,9 @@ public class CassaDataStore {
         return resultMap;
     }
 
-
-    // Prepared Statements 1802 additions
     /**
-     * This Method performs DDL and DML operations on Cassandra using specified consistency level
-     * 
+     * This Method performs DDL and DML operations on Cassandra using specified consistency level outside any time-slot
+     *
      * @param queryObject Object containing cassandra prepared query and values.
      * @param consistency Specify consistency level for data synchronization across cassandra
      *        replicas
@@ -346,9 +342,27 @@ public class CassaDataStore {
      * @throws MusicQueryException
      */
     public boolean executePut(PreparedQueryObject queryObject, String consistency)
-                    throws MusicServiceException, MusicQueryException {
+            throws MusicServiceException, MusicQueryException {
+        return executePut(queryObject, consistency, 0);
+    }
+
+    // Prepared Statements 1802 additions
+    /**
+     * This Method performs DDL and DML operations on Cassandra using specified consistency level
+     * 
+     * @param queryObject Object containing cassandra prepared query and values.
+     * @param consistencyLevel Specify consistency level for data synchronization across cassandra
+     *        replicas
+     * @param timeSlot Specify timestamp time-slot
+     * @return Boolean Indicates operation success or failure
+     * @throws MusicServiceException
+     * @throws MusicQueryException
+     */
+    public boolean executePut(PreparedQueryObject queryObject, String consistencyLevel, long timeSlot)
+            throws MusicServiceException, MusicQueryException {
 
         boolean result = false;
+        long timeOfWrite = System.currentTimeMillis();
 
         if (!MusicUtil.isValidQueryObject(!queryObject.getValues().isEmpty(), queryObject)) {
         	logger.error(EELFLoggerDelegate.errorLogger, queryObject.getQuery(),AppMessages.QUERYERROR, ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
@@ -359,10 +373,10 @@ public class CassaDataStore {
                         "In preprared Execute Put: the actual insert query:"
                                         + queryObject.getQuery() + "; the values"
                                         + queryObject.getValues());
-        PreparedStatement preparedInsert = null;
+        SimpleStatement statement;
         try {
-        	
-				preparedInsert = session.prepare(queryObject.getQuery());
+
+             statement = new SimpleStatement(queryObject.getQuery(), queryObject.getValues().toArray());
         } catch(InvalidQueryException iqe) {
         	logger.error(EELFLoggerDelegate.errorLogger, iqe.getMessage(),AppMessages.QUERYERROR, ErrorSeverity.CRITICAL, ErrorTypes.QUERYERROR);
         	throw new MusicQueryException(iqe.getMessage());
@@ -372,18 +386,18 @@ public class CassaDataStore {
         }
         
         try {
-            if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
+            if (consistencyLevel.equalsIgnoreCase(MusicUtil.CRITICAL)) {
                 logger.info(EELFLoggerDelegate.applicationLogger, "Executing critical put query");
-                preparedInsert.setConsistencyLevel(ConsistencyLevel.QUORUM);
-            } else if (consistency.equalsIgnoreCase(MusicUtil.EVENTUAL)) {
+                statement.setConsistencyLevel(ConsistencyLevel.QUORUM);
+            } else if (consistencyLevel.equalsIgnoreCase(MusicUtil.EVENTUAL)) {
                 logger.info(EELFLoggerDelegate.applicationLogger, "Executing simple put query");
-                preparedInsert.setConsistencyLevel(ConsistencyLevel.ONE);
+                statement.setConsistencyLevel(ConsistencyLevel.ONE);
             }
 
-            BoundStatement boundStatement = preparedInsert.bind(queryObject.getValues().toArray());
-            boundStatement.setDefaultTimestamp(MusicUtil.v2sTimeStampInMicroseconds(0, System.currentTimeMillis()));
+            long timestamp = MusicUtil.v2sTimeStampInMicroseconds(timeSlot, timeOfWrite);
+            statement.setDefaultTimestamp(timestamp);
 
-            ResultSet rs = session.execute(boundStatement);
+            ResultSet rs = session.execute(statement);
             result = rs.wasApplied();
         }
         catch (AlreadyExistsException ae) {
@@ -401,35 +415,49 @@ public class CassaDataStore {
     }
 
     /**
+     * This method performs DDL operations on Cassandra using consistency specified consistency.
+     *
+     * @param queryObject Object containing cassandra prepared query and values.
+     */
+    public ResultSet executeGet(PreparedQueryObject queryObject, String consistencyLevel)
+            throws MusicServiceException, MusicQueryException {
+
+        if (!MusicUtil.isValidQueryObject(!queryObject.getValues().isEmpty(), queryObject)) {
+            logger.error(EELFLoggerDelegate.errorLogger, "",AppMessages.QUERYERROR+ " [" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
+            throw new MusicQueryException("Ill formed queryObject for the request = " + "["
+                    + queryObject.getQuery() + "]");
+        }
+        logger.info(EELFLoggerDelegate.applicationLogger,
+                "Executing Eventual get query:" + queryObject.getQuery());
+
+        ResultSet results = null;
+        try {
+            SimpleStatement statement = new SimpleStatement(queryObject.getQuery(), queryObject.getValues().toArray());
+
+            if (consistencyLevel.equalsIgnoreCase(CONSISTENCY_LEVEL_ONE)) {
+                statement.setConsistencyLevel(ConsistencyLevel.ONE);
+            }
+            else if (consistencyLevel.equalsIgnoreCase(CONSISTENCY_LEVEL_QUORUM)) {
+                statement.setConsistencyLevel(ConsistencyLevel.QUORUM);
+            }
+
+            results = session.execute(statement);
+
+        } catch (Exception ex) {
+            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.UNKNOWNERROR+ "[" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
+            throw new MusicServiceException(ex.getMessage());
+        }
+        return results;
+    }
+
+    /**
      * This method performs DDL operations on Cassandra using consistency level ONE.
      * 
      * @param queryObject Object containing cassandra prepared query and values.
-     * @return ResultSet
-     * @throws MusicServiceException
-     * @throws MusicQueryException
      */
-    public ResultSet executeEventualGet(PreparedQueryObject queryObject)
+    public ResultSet executeOneConsistencyGet(PreparedQueryObject queryObject)
                     throws MusicServiceException, MusicQueryException {
-
-        if (!MusicUtil.isValidQueryObject(!queryObject.getValues().isEmpty(), queryObject)) {
-        	logger.error(EELFLoggerDelegate.errorLogger, "",AppMessages.QUERYERROR+ " [" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
-        	throw new MusicQueryException("Ill formed queryObject for the request = " + "["
-                            + queryObject.getQuery() + "]");
-        }
-        logger.info(EELFLoggerDelegate.applicationLogger,
-                        "Executing Eventual  get query:" + queryObject.getQuery());
-       
-        ResultSet results = null;
-        try {
-        	 PreparedStatement preparedEventualGet = session.prepare(queryObject.getQuery());
-             preparedEventualGet.setConsistencyLevel(ConsistencyLevel.ONE);
-             results = session.execute(preparedEventualGet.bind(queryObject.getValues().toArray()));
-
-        } catch (Exception ex) {
-        	logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.UNKNOWNERROR+ "[" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
-        	throw new MusicServiceException(ex.getMessage());
-        }
-        return results;
+        return executeGet(queryObject, CONSISTENCY_LEVEL_ONE);
     }
 
     /**
@@ -437,30 +465,10 @@ public class CassaDataStore {
      * This method performs DDL operation on Cassandra using consistency level QUORUM.
      * 
      * @param queryObject Object containing cassandra prepared query and values.
-     * @return ResultSet
-     * @throws MusicServiceException
-     * @throws MusicQueryException
      */
-    public ResultSet executeCriticalGet(PreparedQueryObject queryObject)
+    public ResultSet executeQuorumConsistencyGet(PreparedQueryObject queryObject)
                     throws MusicServiceException, MusicQueryException {
-        if (!MusicUtil.isValidQueryObject(!queryObject.getValues().isEmpty(), queryObject)) {
-        	logger.error(EELFLoggerDelegate.errorLogger, "",AppMessages.QUERYERROR+ " [" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
-            throw new MusicQueryException("Error processing Prepared Query Object for the request = " + "["
-                            + queryObject.getQuery() + "]");
-        }
-        logger.info(EELFLoggerDelegate.applicationLogger,
-                        "Executing Critical get query:" + queryObject.getQuery());
-        PreparedStatement preparedEventualGet = session.prepare(queryObject.getQuery());
-        preparedEventualGet.setConsistencyLevel(ConsistencyLevel.QUORUM);
-        ResultSet results = null;
-        try {
-            results = session.execute(preparedEventualGet.bind(queryObject.getValues().toArray()));
-        } catch (Exception ex) {
-        	logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.UNKNOWNERROR+ "[" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
-        	throw new MusicServiceException(ex.getMessage());
-        }
-        return results;
-
+        return executeGet(queryObject, CONSISTENCY_LEVEL_QUORUM);
     }
 }
 

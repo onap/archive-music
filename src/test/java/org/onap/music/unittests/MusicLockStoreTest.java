@@ -29,7 +29,6 @@ import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
-import org.mockito.Mock;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 
@@ -113,7 +112,7 @@ public class MusicLockStoreTest {
         boolean result = false;
         int count = 0;
         ResultSet output = null;
-        output = dataStore.executeEventualGet(testObject);
+        output = dataStore.executeOneConsistencyGet(testObject);
         System.out.println(output);
         ;
         for (Row row : output) {
@@ -132,7 +131,7 @@ public class MusicLockStoreTest {
         boolean result = false;
         int count = 0;
         ResultSet output = null;
-        output = dataStore.executeCriticalGet(testObject);
+        output = dataStore.executeQuorumConsistencyGet(testObject);
         System.out.println(output);
         ;
         for (Row row : output) {
