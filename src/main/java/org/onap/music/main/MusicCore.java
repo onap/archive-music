@@ -26,7 +26,6 @@ import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
-import java.util.UUID;
 
 import org.onap.music.datastore.CassaDataStore;
 import org.onap.music.datastore.CassaLockStore;
@@ -520,9 +519,14 @@ public class MusicCore {
             }
         	 
           String query = queryObject.getQuery();
-          query = query.replaceFirst("SET", "using TIMESTAMP "+ v2sTimeStampInMicroseconds(lockReference, System.currentTimeMillis())+ " SET");
+            long timeOfWrite = System.currentTimeMillis();
+            long lockOrdinal = Long.parseLong(lockReference);
+            long ts = MusicUtil.v2sTimeStampInMicroseconds(lockOrdinal, timeOfWrite);
+            // TODO: use Statement instead of modifying query
+            query = query.replaceFirst("SET", "USING TIMESTAMP "+ ts + " SET");
       	  queryObject.replaceQueryString(query);
-      	  getDSHandle().executePut(queryObject, MusicUtil.CRITICAL);
+            CassaDataStore dsHandle = getDSHandle();
+            dsHandle.executePut(queryObject, MusicUtil.CRITICAL);
           long end = System.currentTimeMillis();
           logger.info(EELFLoggerDelegate.applicationLogger,"Time taken for the critical put:" + (end - start) + " ms");
         }catch (MusicQueryException | MusicServiceException | MusicLockingException  e) {
@@ -617,29 +621,32 @@ public class MusicCore {
     public static ReturnType atomicPut(String keyspaceName, String tableName, String primaryKey,
                     PreparedQueryObject queryObject, Condition conditionInfo) throws MusicLockingException, MusicQueryException, MusicServiceException {
         long start = System.currentTimeMillis();
+
         String fullyQualifiedKey = keyspaceName + "." + tableName + "." + primaryKey;
         String lockReference = createLockReference(fullyQualifiedKey);
         long lockCreationTime = System.currentTimeMillis();
+
         ReturnType lockAcqResult = acquireLock(fullyQualifiedKey, lockReference);
         long lockAcqTime = System.currentTimeMillis();
-        if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
-            logger.info(EELFLoggerDelegate.applicationLogger,"acquired lock with id " + lockReference);
-            ReturnType criticalPutResult = criticalPut(keyspaceName, tableName, primaryKey,
-                            queryObject, lockReference, conditionInfo);
-            long criticalPutTime = System.currentTimeMillis();
-            voluntaryReleaseLock(fullyQualifiedKey,lockReference);
-            long lockDeleteTime = System.currentTimeMillis();
-            String timingInfo = "|lock creation time:" + (lockCreationTime - start)
-                            + "|lock accquire time:" + (lockAcqTime - lockCreationTime)
-                            + "|critical put time:" + (criticalPutTime - lockAcqTime)
-                            + "|lock delete time:" + (lockDeleteTime - criticalPutTime) + "|";
-            criticalPutResult.setTimingInfo(timingInfo);
-            return criticalPutResult;
-        } else {
+
+        if (!lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
             logger.info(EELFLoggerDelegate.applicationLogger,"unable to acquire lock, id " + lockReference);
             voluntaryReleaseLock(fullyQualifiedKey,lockReference);
             return lockAcqResult;
         }
+
+        logger.info(EELFLoggerDelegate.applicationLogger,"acquired lock with id " + lockReference);
+        ReturnType criticalPutResult = criticalPut(keyspaceName, tableName, primaryKey,
+                        queryObject, lockReference, conditionInfo);
+        long criticalPutTime = System.currentTimeMillis();
+        voluntaryReleaseLock(fullyQualifiedKey,lockReference);
+        long lockDeleteTime = System.currentTimeMillis();
+        String timingInfo = "|lock creation time:" + (lockCreationTime - start)
+                        + "|lock accquire time:" + (lockAcqTime - lockCreationTime)
+                        + "|critical put time:" + (criticalPutTime - lockAcqTime)
+                        + "|lock delete time:" + (lockDeleteTime - criticalPutTime) + "|";
+        criticalPutResult.setTimingInfo(timingInfo);
+        return criticalPutResult;
     }
     
 
@@ -789,38 +796,11 @@ public class MusicCore {
         resultMap.put("keyspace",keyspace);
         return resultMap;
     }
-    
-    
-	/**
-	 * Given the time of write for an update in a critical section, this method provides a transformed timestamp
-	 * that ensures that a previous lock holder who is still alive can never corrupt a later critical section.
-	 * The main idea is to us the lock reference to clearly demarcate the timestamps across critical sections. 
-	 * @param the UUID lock reference associated with the write. 
-	 * @param the long timeOfWrite which is the actual time at which the write took place 
-	 * @throws MusicServiceException
-	 * @throws MusicQueryException
-	 */	
-	private static long v2sTimeStampInMicroseconds(String lockReference, long timeOfWrite) throws MusicServiceException, MusicQueryException{
-        long lockEpochMillis = Long.parseLong(lockReference);
 
-        long lockEternityMillis = lockEpochMillis - MusicUtil.MusicEternityEpochMillis;
 
-        long ts = lockEternityMillis * MusicUtil.MaxCriticalSectionDurationMillis
-                + (timeOfWrite - lockEpochMillis);
-
-        return ts;
-
-//		long test = (lockReferenceUUID.timestamp()-MusicUtil.MusicEternityEpochMillis);
-//		long timeStamp = (lockReferenceUUID.timestamp()-MusicUtil.MusicEternityEpochMillis)*MusicUtil.MaxCriticalSectionDurationMillis
-//				+timeOfWrite;
-//		return timeStamp;
-
-//		return timeOfWrite*1000;
-	}
-
-	public static void main(String[] args) {
-		String x = "axe top";
-		x = x.replaceFirst("top", "sword");
-		System.out.print(x); //returns sword pickaxe
-	}
+//    public static void main(String[] args) {
+//		String x = "axe top";
+//		x = x.replaceFirst("top", "sword");
+//		System.out.print(x); //returns sword pickaxe
+//	}
 }
