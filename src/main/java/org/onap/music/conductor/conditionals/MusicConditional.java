@@ -122,7 +122,7 @@ public class MusicConditional {
 	        ReturnType lockAcqResult = MusicCore.acquireLock(fullyQualifiedKey, lockId);
 	        if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
 				try {
-					results = MusicCore.getDSHandle().executeCriticalGet(queryBank.get(MusicUtil.SELECT));
+					results = MusicCore.getDSHandle().executeQuorumConsistencyGet(queryBank.get(MusicUtil.SELECT));
 				} catch (Exception e) {
 					return new ReturnType(ResultType.FAILURE, e.getMessage());
 				}
@@ -178,7 +178,7 @@ public class MusicConditional {
 		try {
 			ReturnType lockAcqResult = MusicCore.acquireLockWithLease(key, lockId, leasePeriod);
 			if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
-				Row row  = MusicCore.getDSHandle().executeCriticalGet(queryBank.get(MusicUtil.SELECT)).one();
+				Row row  = MusicCore.getDSHandle().executeQuorumConsistencyGet(queryBank.get(MusicUtil.SELECT)).one();
 				
 				if(row != null) {
 					Map<String, String> updatedValues = cascadeColumnUpdateSpecific(row, cascadeColumnValues, casscadeColumnName, planId);

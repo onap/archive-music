@@ -1,16 +1,13 @@
 package org.onap.music.datastore;
 
 import java.util.List;
-import java.util.UUID;
 
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
-import org.onap.music.main.MusicUtil;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
-import com.datastax.driver.core.utils.UUIDs;
 
 /*
  * This is the lock store that is built on top of Cassandra that is used by MUSIC to maintain lock state. 
@@ -57,8 +54,7 @@ public class CassaLockStore {
 		String tabQuery = "CREATE TABLE IF NOT EXISTS "+keyspace+"."+table
 				+ " ( key text, lockReference bigint, createTime text, acquireTime text, guard bigint static, PRIMARY KEY ((key), lockReference) ) "
 				+ "WITH CLUSTERING ORDER BY (lockReference ASC);";
-		System.out.println(tabQuery);
-		PreparedQueryObject queryObject = new PreparedQueryObject(); 
+		PreparedQueryObject queryObject = new PreparedQueryObject();
 		
 		queryObject.appendQueryString(tabQuery);
 		boolean result;
@@ -86,7 +82,7 @@ public class CassaLockStore {
 
 		queryObject.addValue(lockName);
 		queryObject.appendQueryString(selectQuery);
-		ResultSet gqResult = dsHandle.executeEventualGet(queryObject);
+		ResultSet gqResult = dsHandle.executeOneConsistencyGet(queryObject);
 		List<Row> latestGuardRow = gqResult.all();
 
 		long prevGuard = 0;
@@ -140,7 +136,7 @@ public class CassaLockStore {
 		String selectQuery = "select * from "+keyspace+"."+table+" where key='"+key+"' LIMIT 1;";	
         PreparedQueryObject queryObject = new PreparedQueryObject();
         queryObject.appendQueryString(selectQuery);
-		ResultSet results = dsHandle.executeEventualGet(queryObject);
+		ResultSet results = dsHandle.executeOneConsistencyGet(queryObject);
 		Row row = results.one();
 		String lockReference = "" + row.getLong("lockReference");
 		String createTime = row.getString("createTime");

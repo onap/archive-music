@@ -3,8 +3,6 @@ package org.onap.music.unittests;
 import static org.junit.Assert.assertEquals;
 
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import org.junit.AfterClass;
@@ -68,7 +66,7 @@ public class TestMusicCore {
         queryObject = new PreparedQueryObject();
         String systemQuery = "SELECT keyspace_name FROM system_schema.keyspaces where keyspace_name='"+keyspace.toLowerCase()+"';";
         queryObject.appendQueryString(systemQuery);
-        ResultSet rs = dataStore.executeEventualGet(queryObject);     
+        ResultSet rs = dataStore.executeOneConsistencyGet(queryObject);
         assert rs.all().size()> 0;
     }
     
@@ -84,7 +82,7 @@ public class TestMusicCore {
         queryObject = new PreparedQueryObject();
         String systemQuery = "SELECT table_name FROM system_schema.tables where keyspace_name='"+keyspace.toLowerCase()+"' and table_name='"+table.toLowerCase()+"';";
         queryObject.appendQueryString(systemQuery);
-        ResultSet rs = dataStore.executeEventualGet(queryObject);
+        ResultSet rs = dataStore.executeOneConsistencyGet(queryObject);
         assert rs.all().size()> 0;
     }
 
