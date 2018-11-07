@@ -101,15 +101,16 @@ public class TestVotingApp
         tva.updateVoteCount("Popeye",5);
         tva.updateVoteCount("Judy",9);
         tva.updateVoteCount("Mickey",8);
-       tva.updateVoteCount("Flash",1);
-       tva.updateVoteCount("Flash",2);
+        tva.updateVoteCount("Flash",1);
+        tva.updateVoteCount("Flash",2);
+        tva.updateVoteCount("Flash",3);
 
-        HashMap<String, Integer> voteCount = tva.readAllVotes();
+           HashMap<String, Integer> voteCount = tva.readAllVotes();
         System.out.println(voteCount);
 		assert(voteCount.get("Popeye") == 5);
 		assert(voteCount.get("Judy") == 9);
 		assert(voteCount.get("Mickey") == 8);
-		assert(voteCount.get("Flash") == 2);
+		assert(voteCount.get("Flash") == 3);
     }
  
 }
