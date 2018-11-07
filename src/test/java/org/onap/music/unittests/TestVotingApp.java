@@ -72,14 +72,14 @@ public class TestVotingApp
                 "INSERT INTO " + keyspaceName + "." + tableName + " (name, count) "
                             + "VALUES ('"+candidateName+"', 0);");
               
-              MusicCore.nonKeyRelatedPut(queryObject, "eventual");
+              MusicCore.eventualPut(queryObject);
        }
  
        
        private void updateVoteCount(String candidateName, int numVotes) throws MusicLockingException, MusicQueryException, MusicServiceException {
               PreparedQueryObject queryObject = new PreparedQueryObject();
               queryObject.appendQueryString(
-                "UPDATE " + keyspaceName + "." + tableName + " SET count="+numVotes + " where name='"+candidateName+"';");
+                "UPDATE " + keyspaceName + "." + tableName + " SET count=" +numVotes + " where name='" + candidateName + "';");
               MusicCore.atomicPut(keyspaceName, tableName, candidateName, queryObject, null);
        }
  
@@ -105,12 +105,14 @@ public class TestVotingApp
         tva.updateVoteCount("Flash",2);
         tva.updateVoteCount("Flash",3);
 
-           HashMap<String, Integer> voteCount = tva.readAllVotes();
+        HashMap<String, Integer> voteCount = tva.readAllVotes();
         System.out.println(voteCount);
+
 		assert(voteCount.get("Popeye") == 5);
 		assert(voteCount.get("Judy") == 9);
 		assert(voteCount.get("Mickey") == 8);
 		assert(voteCount.get("Flash") == 3);
+		System.exit(0);
     }
  
 }
