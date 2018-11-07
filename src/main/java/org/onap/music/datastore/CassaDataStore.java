@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 
+import com.datastax.driver.core.*;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
@@ -39,18 +40,7 @@ import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.MusicUtil;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.ColumnDefinitions;
 import com.datastax.driver.core.ColumnDefinitions.Definition;
-import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.DataType;
-import com.datastax.driver.core.KeyspaceMetadata;
-import com.datastax.driver.core.Metadata;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
@@ -373,7 +363,6 @@ public class CassaDataStore {
         try {
         	
 				preparedInsert = session.prepare(queryObject.getQuery());
-			
         } catch(InvalidQueryException iqe) {
         	logger.error(EELFLoggerDelegate.errorLogger, iqe.getMessage(),AppMessages.QUERYERROR, ErrorSeverity.CRITICAL, ErrorTypes.QUERYERROR);
         	throw new MusicQueryException(iqe.getMessage());
@@ -391,9 +380,11 @@ public class CassaDataStore {
                 preparedInsert.setConsistencyLevel(ConsistencyLevel.ONE);
             }
 
-            ResultSet rs = session.execute(preparedInsert.bind(queryObject.getValues().toArray()));
-            result = rs.wasApplied();
+            BoundStatement boundStatement = preparedInsert.bind(queryObject.getValues().toArray());
+            boundStatement.setDefaultTimestamp(MusicUtil.v2sTimeStampInMicroseconds(0, System.currentTimeMillis()));
 
+            ResultSet rs = session.execute(boundStatement);
+            result = rs.wasApplied();
         }
         catch (AlreadyExistsException ae) {
             logger.error(EELFLoggerDelegate.errorLogger, ae.getMessage(),AppMessages.SESSIONFAILED+ " [" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);

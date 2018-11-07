@@ -1,5 +1,6 @@
 package org.onap.music.datastore;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
@@ -77,31 +78,41 @@ public class CassaLockStore {
 	public String genLockRefandEnQueue(String keyspace, String table, String lockName) throws MusicServiceException, MusicQueryException {
         logger.info(EELFLoggerDelegate.applicationLogger,
                 "Create lock reference for " +  keyspace + "." + table + "." + lockName);
-		table = "lockQ_" + table;
-		long lockEpochMillis = System.currentTimeMillis();
-		long lockRef = lockEpochMillis;
+        table = "lockQ_" + table;
 
+
+		PreparedQueryObject queryObject = new PreparedQueryObject();
+		String selectQuery = "SELECT guard FROM " + keyspace + "." + table + " WHERE key=?;";
+
+		queryObject.addValue(lockName);
+		queryObject.appendQueryString(selectQuery);
+		ResultSet gqResult = dsHandle.executeEventualGet(queryObject);
+		List<Row> latestGuardRow = gqResult.all();
+
+		long prevGuard = 0;
+		long lockRef = 1;
+        if (latestGuardRow.size() > 0) {
+        	prevGuard = latestGuardRow.get(0).getLong(0);
+        	lockRef = prevGuard + 1;
+		}
+
+        long lockEpochMillis = System.currentTimeMillis();
+
+//        System.out.println("guard(" + lockName + "): " + prevGuard + "->" + lockRef);
 		logger.info(EELFLoggerDelegate.applicationLogger,
 				"Created lock reference for " +  keyspace + "." + table + "." + lockName + ":" + lockRef);
 
-        PreparedQueryObject queryObject = new PreparedQueryObject();
-        String defaultQuery = " UPDATE " + keyspace + "." + table + " SET guard=-1 WHERE key=? IF guard = NULL;";
-
-        queryObject.addValue(lockName);
-        queryObject.appendQueryString(defaultQuery);
-        boolean dqResult = dsHandle.executePut(queryObject, "critical");
-//        System.out.println("dqResult: " + dqResult);
-
-
         queryObject = new PreparedQueryObject();
 		String insQuery = "BEGIN BATCH" +
-                " UPDATE " + keyspace + "." + table + " SET guard=? WHERE key=? IF guard < ?;" +
+                " UPDATE " + keyspace + "." + table +
+				" SET guard=? WHERE key=? IF guard = " + (prevGuard == 0 ? "NULL" : "?") +";" +
                 " INSERT INTO " + keyspace + "." + table +
 				"(key, lockReference, createTime, acquireTime) VALUES (?,?,?,?) IF NOT EXISTS; APPLY BATCH;";
 
         queryObject.addValue(lockRef);
         queryObject.addValue(lockName);
-        queryObject.addValue(lockRef);
+        if (prevGuard != 0)
+        	queryObject.addValue(prevGuard);
 
         queryObject.addValue(lockName);
         queryObject.addValue(lockRef);
@@ -109,7 +120,6 @@ public class CassaLockStore {
         queryObject.addValue("0");
         queryObject.appendQueryString(insQuery);
         boolean pResult = dsHandle.executePut(queryObject, "critical");
-//        System.out.println("pResult: " + pResult);
 		return String.valueOf(lockRef);
 	}
 	

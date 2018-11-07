@@ -46,6 +46,8 @@ import org.onap.music.eelf.logging.EELFLoggerDelegate;
 
 import com.datastax.driver.core.DataType;
 import com.sun.jersey.core.util.Base64;
+import org.onap.music.exceptions.MusicQueryException;
+import org.onap.music.exceptions.MusicServiceException;
 
 /**
  * @author nelson24
@@ -99,6 +101,8 @@ public class MusicUtil {
     public static ConcurrentMap<String, Long> zkNodeMap = new ConcurrentHashMap<>();
     
     public static final long MusicEternityEpochMillis = 1533081600000L; // Wednesday, August 1, 2018 12:00:00 AM
+
+    public static final long MaxLockReferenceTimePart = 1000000000000L; // millis after eternity (eq sometime in 2050)
     
     public static final long MaxCriticalSectionDurationMillis = 1L * 24 * 60 * 60 * 1000; // 1 day
 
@@ -596,4 +600,19 @@ public class MusicUtil {
 		    MusicUtil.setCassPwd(prop.getProperty("cassandra.password"));
 	}
 
+    /**
+     * Given the time of write for an update in a critical section, this method provides a transformed timestamp
+     * that ensures that a previous lock holder who is still alive can never corrupt a later critical section.
+     * The main idea is to us the lock reference to clearly demarcate the timestamps across critical sections.
+     * @param the UUID lock reference associated with the write.
+     * @param the long timeOfWrite which is the actual time at which the write took place
+     * @throws MusicServiceException
+     * @throws MusicQueryException
+     */
+    public static long v2sTimeStampInMicroseconds(long ordinal, long timeOfWrite) throws MusicServiceException, MusicQueryException {
+        // TODO: use acquire time instead of music eternity epoch
+        long ts = ordinal * MaxLockReferenceTimePart + (timeOfWrite - MusicEternityEpochMillis);
+
+        return ts;
+    }
 }
