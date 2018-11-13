@@ -41,6 +41,8 @@ import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicServiceException;
+import org.onap.music.service.MusicCoreService;
+import org.onap.music.service.impl.MusicCassaCore;
 
 import com.att.eelf.configuration.EELFLogger;
 import com.datastax.driver.core.DataType;
@@ -67,6 +69,7 @@ public class CachingUtil implements Runnable {
     private static CacheAccess<String, Map<String, String>> musicValidateCache = JCS.getInstance("musicValidateCache");
     private static Map<String, Number> userAttempts = new HashMap<>();
     private static Map<String, Calendar> lastFailedTime = new HashMap<>();
+    private static MusicCoreService musicCore = MusicCassaCore.getInstance();
 
     public boolean isCacheRefreshNeeded() {
         if (aafCache.get("initBlankMap") == null)
@@ -91,7 +94,7 @@ public class CachingUtil implements Runnable {
             logger.error(EELFLoggerDelegate.errorLogger, e1.getMessage(),AppMessages.CACHEERROR, ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
             e1.printStackTrace();
         }
-        ResultSet rs = MusicCore.get(pQuery);
+        ResultSet rs = musicCore.get(pQuery);
         Iterator<Row> it = rs.iterator();
         Map<String, String> map = null;
         while (it.hasNext()) {
@@ -245,7 +248,7 @@ public class CachingUtil implements Runnable {
                                             + namespace + "' allow filtering");
             Row rs = null;
             try {
-                rs = MusicCore.get(pQuery).one();
+                rs = musicCore.get(pQuery).one();
             } catch(InvalidQueryException e) {
                 logger.error(EELFLoggerDelegate.errorLogger,"Exception admin keyspace not configured."+e.getMessage());
                 throw new MusicServiceException("Please make sure admin.keyspace_master table is configured.");
@@ -269,7 +272,7 @@ public class CachingUtil implements Runnable {
             pQuery.appendQueryString(
                             "SELECT uuid from admin.keyspace_master where keyspace_name = '"
                                             + keyspace + "' allow filtering");
-            Row rs = MusicCore.get(pQuery).one();
+            Row rs = musicCore.get(pQuery).one();
             try {
                 uuid = rs.getUUID("uuid").toString();
             } catch (Exception e) {
@@ -286,7 +289,7 @@ public class CachingUtil implements Runnable {
         pQuery.appendQueryString(
                         "SELECT application_name from admin.keyspace_master where keyspace_name = '"
                                         + keyspace + "' allow filtering");
-        Row rs = MusicCore.get(pQuery).one();
+        Row rs = musicCore.get(pQuery).one();
         try {
             appName = rs.getString("application_name");
         } catch (Exception e) {
@@ -335,7 +338,7 @@ public class CachingUtil implements Runnable {
         }
         Row rs = null;
 		try {
-			rs = MusicCore.get(queryObject).one();
+			rs = musicCore.get(queryObject).one();
 		} catch (MusicServiceException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -386,7 +389,7 @@ public class CachingUtil implements Runnable {
         }
         Row rs = null;
         try {
-            rs = MusicCore.get(queryObject).one();
+            rs = musicCore.get(queryObject).one();
         } catch (MusicServiceException e) {
             e.printStackTrace();
             resultMap.put("Exception", "Unable to process operation. Error is "+e.getMessage());

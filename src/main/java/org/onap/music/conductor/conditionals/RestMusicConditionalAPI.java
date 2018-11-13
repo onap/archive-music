@@ -38,17 +38,19 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
 import org.codehaus.jettison.json.JSONObject;
+import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
-import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
 import org.onap.music.response.jsonobjects.JsonResponse;
 import org.onap.music.rest.RestMusicAdminAPI;
+import org.onap.music.service.impl.MusicCassaCore;
+import org.onap.music.authentication.MusicAuthentication;
 import org.onap.music.conductor.*;
 
 
@@ -103,7 +105,7 @@ public class RestMusicConditionalAPI {
 
 		Map<String, Object> authMap = null;
 		try {
-			authMap = MusicCore.authenticate(ns, userId, password, keyspace, aid, "insertIntoTable");
+			authMap = MusicAuthentication.authenticate(ns, userId, password, keyspace, aid, "insertIntoTable");
 		} catch (Exception e) {
 			logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGINFO, ErrorSeverity.CRITICAL,
 					ErrorTypes.AUTHENTICATIONERROR);
@@ -174,7 +176,7 @@ public class RestMusicConditionalAPI {
 
 		Map<String, Object> authMap = null;
 		try {
-			authMap = MusicCore.authenticate(ns, userId, password, keyspace, aid, "updateTable");
+			authMap = MusicAuthentication.authenticate(ns, userId, password, keyspace, aid, "updateTable");
 		} catch (Exception e) {
 			logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGINFO, ErrorSeverity.CRITICAL,
 					ErrorTypes.AUTHENTICATIONERROR);
@@ -194,7 +196,7 @@ public class RestMusicConditionalAPI {
 		String planId = casscadeColumnData.get("key").toString();
 		Map<String,String> casscadeColumnValueMap = (Map<String, String>) casscadeColumnData.get("value");
 		TableMetadata tableInfo = null;
-		tableInfo = MusicCore.returnColumnMetadata(keyspace, tablename);
+		tableInfo = MusicDataStoreHandle.returnColumnMetadata(keyspace, tablename);
 		DataType primaryIdType = tableInfo.getPrimaryKey().get(0).getType();
 		String primaryId = tableInfo.getPrimaryKey().get(0).getName();
 		

@@ -2,15 +2,17 @@ package org.onap.music.unittests;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
-import org.onap.music.datastore.CassaLockStore;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
-import org.onap.music.main.MusicCore;
+import org.onap.music.lockingservice.cassandra.CassaLockStore;
+import org.onap.music.service.MusicCoreService;
+import org.onap.music.service.impl.MusicCassaCore;
 
 public class TestCassaLockStore {
+	
+	static MusicCoreService musicCore  = MusicCassaCore.getInstance();
 	
 	
 	public static void main(String[] args) {
@@ -27,12 +29,12 @@ public class TestCassaLockStore {
             
             PreparedQueryObject queryObject = new PreparedQueryObject();
             queryObject.appendQueryString("CREATE KEYSPACE " + keyspace + " WITH REPLICATION = " + replicationInfo.toString().replaceAll("=", ":"));
-            MusicCore.nonKeyRelatedPut(queryObject, "eventual");
+            musicCore.nonKeyRelatedPut(queryObject, "eventual");
 
             
             queryObject = new PreparedQueryObject();
             queryObject.appendQueryString("CREATE TABLE " + keyspace + "." + table + " (name text PRIMARY KEY, count varint);");
-            MusicCore.createTable(keyspace, table, queryObject, "eventual");              
+            musicCore.createTable(keyspace, table, queryObject, "eventual");              
 
 			
 			lockStore.createLockQueue(keyspace, table);

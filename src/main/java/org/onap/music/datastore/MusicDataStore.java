@@ -89,7 +89,7 @@ import com.sun.jersey.core.util.Base64;
  * @author bharathb
  *
  */
-public class CassaDataStore {
+public class MusicDataStore {
 
     private Session session;
     private Cluster cluster;
@@ -119,12 +119,12 @@ public class CassaDataStore {
 
 
 
-    private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(CassaDataStore.class);
+    private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicDataStore.class);
 
     /**
      * 
      */
-    public CassaDataStore() {
+    public MusicDataStore() {
         connectToCassaCluster();
     }
 
@@ -133,7 +133,7 @@ public class CassaDataStore {
      * @param cluster
      * @param session
      */
-    public CassaDataStore(Cluster cluster, Session session) {
+    public MusicDataStore(Cluster cluster, Session session) {
         this.session = session;
         this.cluster = cluster;
     }
@@ -143,7 +143,7 @@ public class CassaDataStore {
      * @param remoteIp
      * @throws MusicServiceException
      */
-    public CassaDataStore(String remoteIp) {
+    public MusicDataStore(String remoteIp) {
         try {
             connectToCassaCluster(remoteIp);
         } catch (MusicServiceException e) {

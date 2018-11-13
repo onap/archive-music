@@ -48,6 +48,7 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mindrot.jbcrypt.BCrypt;
+import org.onap.music.authentication.MusicAuthentication;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
@@ -62,12 +63,14 @@ import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.CachingUtil;
-import org.onap.music.main.MusicCore;
-import org.onap.music.main.MusicCore.Condition;
+import org.onap.music.datastore.Condition;
+import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
 import org.onap.music.response.jsonobjects.JsonResponse;
+import org.onap.music.service.MusicCoreService;
+import org.onap.music.service.impl.MusicCassaCore;
 
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
@@ -111,6 +114,7 @@ public class RestMusicDataAPI {
     private static final String XPATCHVERSION = "X-patchVersion";
     private static final String NS = "ns";
     private static final String VERSION = "v2";
+    private static MusicCoreService musicCore = MusicCassaCore.getInstance();
     
     private class RowIdentifier {
         public String primarKeyValue;
@@ -170,7 +174,7 @@ public class RestMusicDataAPI {
 
 
         try {
-            authMap = MusicCore.authenticate(ns, userId, password, keyspaceName, aid,
+            authMap = MusicAuthentication.authenticate(ns, userId, password, keyspaceName, aid,
                             "createKeySpace");
         } catch (Exception e) {
             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
@@ -215,7 +219,7 @@ public class RestMusicDataAPI {
 
         ResultType result = ResultType.FAILURE;
         try {
-            result = MusicCore.nonKeyRelatedPut(queryObject, consistency);
+            result = musicCore.nonKeyRelatedPut(queryObject, consistency);
             logger.info(EELFLoggerDelegate.applicationLogger, "result = " + result);
         } catch ( MusicServiceException ex) {
             logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
@@ -226,12 +230,12 @@ public class RestMusicDataAPI {
             queryObject = new PreparedQueryObject();
             queryObject.appendQueryString("CREATE ROLE IF NOT EXISTS '" + userId
                             + "' WITH PASSWORD = '" + password + "' AND LOGIN = true;");
-            MusicCore.nonKeyRelatedPut(queryObject, consistency);
+            musicCore.nonKeyRelatedPut(queryObject, consistency);
             queryObject = new PreparedQueryObject();
             queryObject.appendQueryString("GRANT ALL PERMISSIONS on KEYSPACE " + keyspaceName
                                 + " to '" + userId + "'");
             queryObject.appendQueryString(";");
-            MusicCore.nonKeyRelatedPut(queryObject, consistency);
+            musicCore.nonKeyRelatedPut(queryObject, consistency);
         } catch (Exception e) {
             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
         }
@@ -252,7 +256,7 @@ public class RestMusicDataAPI {
             queryObject.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), isAAF));
             CachingUtil.updateMusicCache(keyspaceName, ns);
             CachingUtil.updateMusicValidateCache(ns, userId, hashedpwd);
-            MusicCore.eventualPut(queryObject);
+            musicCore.eventualPut(queryObject);
         } catch (Exception e) {
             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
             return response.status(Response.Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
@@ -286,7 +290,7 @@ public class RestMusicDataAPI {
 		Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
 		String userId = userCredentials.get(MusicUtil.USERID);
 		String password = userCredentials.get(MusicUtil.PASSWORD);
-        Map<String, Object> authMap = MusicCore.authenticate(ns, userId, password,keyspaceName, aid, "dropKeySpace");
+        Map<String, Object> authMap = MusicAuthentication.authenticate(ns, userId, password,keyspaceName, aid, "dropKeySpace");
         if (authMap.containsKey("aid"))
             authMap.remove("aid");
         if (!authMap.isEmpty()) {
@@ -302,7 +306,7 @@ public class RestMusicDataAPI {
         pQuery.appendQueryString(
                         "select  count(*) as count from admin.keyspace_master where application_name=? allow filtering;");
         pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), appName));
-        Row row = MusicCore.get(pQuery).one();
+        Row row = musicCore.get(pQuery).one();
         long count = row.getLong(0);
 
         if (count == 0) {
@@ -316,17 +320,17 @@ public class RestMusicDataAPI {
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(),
                     MusicUtil.DEFAULTKEYSPACENAME));
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), uuid));
-            MusicCore.nonKeyRelatedPut(pQuery, consistency);
+            musicCore.nonKeyRelatedPut(pQuery, consistency);
         } else {
             pQuery = new PreparedQueryObject();
             pQuery.appendQueryString("delete from admin.keyspace_master where uuid = ?");
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), uuid));
-            MusicCore.nonKeyRelatedPut(pQuery, consistency);
+            musicCore.nonKeyRelatedPut(pQuery, consistency);
         }
 
         PreparedQueryObject queryObject = new PreparedQueryObject();
         queryObject.appendQueryString("DROP KEYSPACE " + keyspaceName + ";");
-        ResultType result = MusicCore.nonKeyRelatedPut(queryObject, consistency);
+        ResultType result = musicCore.nonKeyRelatedPut(queryObject, consistency);
         if ( result.equals(ResultType.FAILURE) ) {
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(result).setError("Error Deleteing Keyspace " + keyspaceName).toMap()).build();
         }
@@ -363,7 +367,7 @@ public class RestMusicDataAPI {
 		Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
 		String userId = userCredentials.get(MusicUtil.USERID);
 		String password = userCredentials.get(MusicUtil.PASSWORD);
-        Map<String, Object> authMap = MusicCore.authenticate(ns, userId, password, keyspace,
+        Map<String, Object> authMap = MusicAuthentication.authenticate(ns, userId, password, keyspace,
                         aid, "createTable");
         if (authMap.containsKey("aid"))
             authMap.remove("aid");
@@ -549,7 +553,7 @@ public class RestMusicDataAPI {
         ResultType result = ResultType.FAILURE;
         try {
           //logger.info("cjc query="+queryObject.getQuery());
-            result = MusicCore.createTable(keyspace, tablename, queryObject, consistency);
+            result = musicCore.createTable(keyspace, tablename, queryObject, consistency);
         } catch (MusicServiceException ex) {
             logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.MUSICSERVICEERROR);
             response.status(Status.BAD_REQUEST);
@@ -589,7 +593,7 @@ public class RestMusicDataAPI {
 		Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
 		String userId = userCredentials.get(MusicUtil.USERID);
 		String password = userCredentials.get(MusicUtil.PASSWORD);
-        Map<String, Object> authMap = MusicCore.authenticate(ns, userId, password, keyspace,aid, "createIndex");
+        Map<String, Object> authMap = MusicAuthentication.authenticate(ns, userId, password, keyspace,aid, "createIndex");
         if (authMap.containsKey("aid"))
             authMap.remove("aid");
         if (!authMap.isEmpty()) {
@@ -607,7 +611,7 @@ public class RestMusicDataAPI {
         
         ResultType result = ResultType.FAILURE;
         try {
-            result = MusicCore.nonKeyRelatedPut(query, "eventual");
+            result = musicCore.nonKeyRelatedPut(query, "eventual");
         } catch (MusicServiceException ex) {
             logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
             response.status(Status.BAD_REQUEST);
@@ -653,7 +657,7 @@ public class RestMusicDataAPI {
         Map<String, Object> authMap = null;
         
         try {
-            authMap = MusicCore.authenticate(ns, userId, password, keyspace,
+            authMap = MusicAuthentication.authenticate(ns, userId, password, keyspace,
                           aid, "insertIntoTable");
         } catch (Exception e) {
           logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
@@ -670,7 +674,7 @@ public class RestMusicDataAPI {
         PreparedQueryObject queryObject = new PreparedQueryObject();
         TableMetadata tableInfo = null;
         try {
-            tableInfo = MusicCore.returnColumnMetadata(keyspace, tablename);
+            tableInfo = MusicDataStoreHandle.returnColumnMetadata(keyspace, tablename);
             if(tableInfo == null) {
                 return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Table name doesn't exists. Please check the table name.").toMap()).build();
             }
@@ -795,7 +799,7 @@ public class RestMusicDataAPI {
         String consistency = insObj.getConsistencyInfo().get("type");
         try {
             if (consistency.equalsIgnoreCase(MusicUtil.EVENTUAL)) {
-                result = MusicCore.eventualPut(queryObject);
+                result = musicCore.eventualPut(queryObject);
             } else if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
                 String lockId = insObj.getConsistencyInfo().get("lockId");
                 if(lockId == null) {
@@ -804,9 +808,9 @@ public class RestMusicDataAPI {
                     return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("LockId cannot be null. Create lock "
                             + "and acquire lock or use ATOMIC instead of CRITICAL").toMap()).build();
                 }
-                result = MusicCore.criticalPut(keyspace, tablename, primaryKey, queryObject, lockId,null);
+                result = musicCore.criticalPut(keyspace, tablename, primaryKey, queryObject, lockId,null);
             } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
-                result = MusicCore.atomicPut(keyspace, tablename, primaryKey, queryObject, null);
+                result = musicCore.atomicPut(keyspace, tablename, primaryKey, queryObject, null);
 
             }
         } catch (Exception ex) {
@@ -859,7 +863,7 @@ public class RestMusicDataAPI {
 		String password = userCredentials.get(MusicUtil.PASSWORD);
         Map<String, Object> authMap;
         try {
-            authMap = MusicCore.authenticate(ns, userId, password, keyspace,
+            authMap = MusicAuthentication.authenticate(ns, userId, password, keyspace,
                           aid, "updateTable");
         } catch (Exception e) {
               logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
@@ -884,7 +888,7 @@ public class RestMusicDataAPI {
 
         TableMetadata tableInfo;
         try {
-            tableInfo = MusicCore.returnColumnMetadata(keyspace, tablename);
+            tableInfo = MusicDataStoreHandle.returnColumnMetadata(keyspace, tablename);
         } catch (MusicServiceException e) {
             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
               return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
@@ -970,14 +974,14 @@ public class RestMusicDataAPI {
             selectQuery.appendQueryString("SELECT *  FROM " + keyspace + "." + tablename + " WHERE "
                             + rowId.rowIdString + ";");
             selectQuery.addValue(rowId.primarKeyValue);
-            conditionInfo = new MusicCore.Condition(updateObj.getConditions(), selectQuery);
+            conditionInfo = new Condition(updateObj.getConditions(), selectQuery);
         }
 
         ReturnType operationResult = null;
         long jsonParseCompletionTime = System.currentTimeMillis();
 
         if (consistency.equalsIgnoreCase(MusicUtil.EVENTUAL))
-            operationResult = MusicCore.eventualPut(queryObject);
+            operationResult = musicCore.eventualPut(queryObject);
         else if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
             String lockId = updateObj.getConsistencyInfo().get("lockId");
             if(lockId == null) {
@@ -986,11 +990,11 @@ public class RestMusicDataAPI {
                 return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("LockId cannot be null. Create lock "
                         + "and acquire lock or use ATOMIC instead of CRITICAL").toMap()).build();
             }
-            operationResult = MusicCore.criticalPut(keyspace, tablename, rowId.primarKeyValue,
+            operationResult = musicCore.criticalPut(keyspace, tablename, rowId.primarKeyValue,
                             queryObject, lockId, conditionInfo);
         } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
             try {
-              operationResult = MusicCore.atomicPut(keyspace, tablename, rowId.primarKeyValue,
+              operationResult = musicCore.atomicPut(keyspace, tablename, rowId.primarKeyValue,
                               queryObject, conditionInfo);
             } catch (MusicLockingException | MusicQueryException | MusicServiceException e) {
                 logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
@@ -1063,7 +1067,7 @@ public class RestMusicDataAPI {
 		String password = userCredentials.get(MusicUtil.PASSWORD);
         Map<String, Object> authMap = null;
         try {
-            authMap = MusicCore.authenticate(ns, userId, password, keyspace,
+            authMap = MusicAuthentication.authenticate(ns, userId, password, keyspace,
                             aid, "deleteFromTable");
         } catch (Exception e) {
             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
@@ -1127,7 +1131,7 @@ public class RestMusicDataAPI {
             selectQuery.appendQueryString("SELECT *  FROM " + keyspace + "." + tablename + " WHERE "
                             + rowId.rowIdString + ";");
             selectQuery.addValue(rowId.primarKeyValue);
-            conditionInfo = new MusicCore.Condition(delObj.getConditions(), selectQuery);
+            conditionInfo = new Condition(delObj.getConditions(), selectQuery);
         }
 
         String consistency = delObj.getConsistencyInfo().get("type");
@@ -1135,7 +1139,7 @@ public class RestMusicDataAPI {
         ReturnType operationResult = null;
         try {
             if (consistency.equalsIgnoreCase(MusicUtil.EVENTUAL))
-                operationResult = MusicCore.eventualPut(queryObject);
+                operationResult = musicCore.eventualPut(queryObject);
             else if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
                 String lockId = delObj.getConsistencyInfo().get("lockId");
                 if(lockId == null) {
@@ -1144,10 +1148,10 @@ public class RestMusicDataAPI {
                     return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("LockId cannot be null. Create lock "
                             + "and acquire lock or use ATOMIC instead of CRITICAL").toMap()).build();
                 }
-                operationResult = MusicCore.criticalPut(keyspace, tablename, rowId.primarKeyValue,
+                operationResult = musicCore.criticalPut(keyspace, tablename, rowId.primarKeyValue,
                                 queryObject, lockId, conditionInfo);
             } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
-                    operationResult = MusicCore.atomicPut(keyspace, tablename, rowId.primarKeyValue,
+                    operationResult = musicCore.atomicPut(keyspace, tablename, rowId.primarKeyValue,
                                     queryObject, conditionInfo);
             }
         } catch (MusicLockingException | MusicQueryException | MusicServiceException e) {
@@ -1199,7 +1203,7 @@ public class RestMusicDataAPI {
 		String userId = userCredentials.get(MusicUtil.USERID);
 		String password = userCredentials.get(MusicUtil.PASSWORD);
         Map<String, Object> authMap =
-                        MusicCore.authenticate(ns, userId, password, keyspace, aid, "dropTable");
+                        MusicAuthentication.authenticate(ns, userId, password, keyspace, aid, "dropTable");
         if (authMap.containsKey("aid"))
             authMap.remove("aid");
         if (!authMap.isEmpty()) {
@@ -1211,7 +1215,7 @@ public class RestMusicDataAPI {
         PreparedQueryObject query = new PreparedQueryObject();
         query.appendQueryString("DROP TABLE  " + keyspace + "." + tablename + ";");
         try {
-            return response.status(Status.OK).entity(new JsonResponse(MusicCore.nonKeyRelatedPut(query, consistency)).toMap()).build();
+            return response.status(Status.OK).entity(new JsonResponse(musicCore.nonKeyRelatedPut(query, consistency)).toMap()).build();
         } catch (MusicServiceException ex) {
             logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
@@ -1254,7 +1258,7 @@ public class RestMusicDataAPI {
 		Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
 		String userId = userCredentials.get(MusicUtil.USERID);
 		String password = userCredentials.get(MusicUtil.PASSWORD);
-        Map<String, Object> authMap = MusicCore.authenticate(ns, userId, password, keyspace,aid, "selectCritical");
+        Map<String, Object> authMap = MusicAuthentication.authenticate(ns, userId, password, keyspace,aid, "selectCritical");
         if (authMap.containsKey("aid"))
             authMap.remove("aid");
         if (!authMap.isEmpty()) {
@@ -1286,13 +1290,13 @@ public class RestMusicDataAPI {
                 return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("LockId cannot be null. Create lock "
                         + "and acquire lock or use ATOMIC instead of CRITICAL").toMap()).build();
             }
-            results = MusicCore.criticalGet(keyspace, tablename, rowId.primarKeyValue, queryObject,
+            results = musicCore.criticalGet(keyspace, tablename, rowId.primarKeyValue, queryObject,
                             lockId);
         } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
-            results = MusicCore.atomicGet(keyspace, tablename, rowId.primarKeyValue, queryObject);
+            results = musicCore.atomicGet(keyspace, tablename, rowId.primarKeyValue, queryObject);
         }
         if(results!=null && results.getAvailableWithoutFetching() >0) {
-        	return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setDataResult(MusicCore.marshallResults(results)).toMap()).build();
+        	return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setDataResult(MusicDataStoreHandle.marshallResults(results)).toMap()).build();
         }
         return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setError("No data found").toMap()).build();
 
@@ -1333,7 +1337,7 @@ public class RestMusicDataAPI {
 		String userId = userCredentials.get(MusicUtil.USERID);
 		String password = userCredentials.get(MusicUtil.PASSWORD);
         Map<String, Object> authMap =
-                        MusicCore.authenticate(ns, userId, password, keyspace, aid, "select");
+                        MusicAuthentication.authenticate(ns, userId, password, keyspace, aid, "select");
         if (authMap.containsKey("aid"))
             authMap.remove("aid");
         if (!authMap.isEmpty()) {
@@ -1356,9 +1360,9 @@ public class RestMusicDataAPI {
         }
 
         try {
-            ResultSet results = MusicCore.get(queryObject);
+            ResultSet results = musicCore.get(queryObject);
             if(results.getAvailableWithoutFetching() >0) {
-            	return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setDataResult(MusicCore.marshallResults(results)).toMap()).build();
+            	return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setDataResult(MusicDataStoreHandle.marshallResults(results)).toMap()).build();
             }
             return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setError("No data found").toMap()).build();
         } catch (MusicServiceException ex) {
@@ -1412,7 +1416,7 @@ public class RestMusicDataAPI {
                     throws MusicServiceException {
         StringBuilder rowSpec = new StringBuilder();
         int counter = 0;
-        TableMetadata tableInfo = MusicCore.returnColumnMetadata(keyspace, tablename);
+        TableMetadata tableInfo = MusicDataStoreHandle.returnColumnMetadata(keyspace, tablename);
         if (tableInfo == null) {
             logger.error(EELFLoggerDelegate.errorLogger,
                             "Table information not found. Please check input for table name= "

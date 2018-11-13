@@ -7,7 +7,8 @@ import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
-import org.onap.music.main.MusicCore;
+import org.onap.music.service.MusicCoreService;
+import org.onap.music.service.impl.MusicCassaCore;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -19,6 +20,7 @@ public class VotingAppJar
 {
 	String keyspaceName;
 	String tableName;
+	private static MusicCoreService musicCore = MusicCassaCore.getInstance();
 	
 	public VotingAppJar() throws MusicServiceException {
 		keyspaceName = "VotingAppForMusic";
@@ -47,7 +49,7 @@ public class VotingAppJar
                 "CREATE KEYSPACE " + keyspaceName + " WITH REPLICATION = " + replicationInfo.toString().replaceAll("=", ":"));
 		
 		try {
-			MusicCore.nonKeyRelatedPut(queryObject, "eventual");
+			musicCore.nonKeyRelatedPut(queryObject, "eventual");
 		} catch (MusicServiceException e) {
 			if (e.getMessage().equals("Keyspace votingappformusic already exists")) {
 				// ignore
@@ -63,7 +65,7 @@ public class VotingAppJar
                 "CREATE TABLE " + keyspaceName + "." + tableName + " (name text PRIMARY KEY, count varint);");
 		
 		try {
-			MusicCore.createTable(keyspaceName, tableName, queryObject, "eventual");		
+			musicCore.createTable(keyspaceName, tableName, queryObject, "eventual");		
 		} catch (MusicServiceException e) {
 			if (e.getMessage().equals("Table votingappformusic.votevount already exists")) {
 				//ignore
@@ -79,7 +81,7 @@ public class VotingAppJar
                 "INSERT INTO " + keyspaceName + "." + tableName + " (name, count) "
                 		+ "VALUES ('"+candidateName+"', 0);");
 		
-		MusicCore.nonKeyRelatedPut(queryObject, "eventual");
+		musicCore.nonKeyRelatedPut(queryObject, "eventual");
 	}
 
 	public void vote() throws MusicLockingException, MusicQueryException, MusicServiceException {
@@ -94,13 +96,13 @@ public class VotingAppJar
 		queryObject.appendQueryString(
                 "INSERT INTO " + keyspaceName + "." + tableName + " (name, count) "
                 		+ "VALUES ('"+candidateName+"', "+numVotes+");");
-		MusicCore.atomicPut(keyspaceName, tableName, candidateName, queryObject, null);
+		musicCore.atomicPut(keyspaceName, tableName, candidateName, queryObject, null);
 	}
 
 	private void readAllVotes() throws MusicServiceException {
 		PreparedQueryObject queryObject = new PreparedQueryObject();
 		queryObject.appendQueryString("SELECT * FROM " + keyspaceName + "." + tableName);
-		ResultSet rs = MusicCore.get(queryObject);
+		ResultSet rs = musicCore.get(queryObject);
 		for(Row candidate : rs.all()) {
 			System.out.println(candidate.getString("name") + " - " + candidate.getVarint("count"));
 		}

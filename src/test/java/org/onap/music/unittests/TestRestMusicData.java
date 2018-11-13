@@ -21,15 +21,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-import java.io.File;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+
 import org.apache.curator.test.TestingServer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -44,7 +46,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.onap.music.datastore.CassaLockStore;
+import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
@@ -53,13 +55,16 @@ import org.onap.music.datastore.jsonobjects.JsonOnboard;
 import org.onap.music.datastore.jsonobjects.JsonSelect;
 import org.onap.music.datastore.jsonobjects.JsonTable;
 import org.onap.music.datastore.jsonobjects.JsonUpdate;
+import org.onap.music.lockingservice.cassandra.CassaLockStore;
 import org.onap.music.main.CachingUtil;
-import org.onap.music.main.MusicCore;
+import org.onap.music.service.impl.*;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 import org.onap.music.rest.RestMusicAdminAPI;
 import org.onap.music.rest.RestMusicDataAPI;
 import org.onap.music.rest.RestMusicLocksAPI;
+import org.onap.music.service.impl.MusicCassaCore;
+
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -87,7 +92,7 @@ public class TestRestMusicData {
     CachingUtil cachUtilMock;
     
     @InjectMocks
-      private MusicCore mCore;
+      private static MusicCassaCore MusicCore =MusicCassaCore.getInstance();
     //*/
     
     static String appName = "TestApp";
@@ -109,8 +114,8 @@ public class TestRestMusicData {
     @BeforeClass
     public static void init() throws Exception {
        try {
-            MusicCore.mDstoreHandle = CassandraCQL.connectToEmbeddedCassandra();
-            MusicCore.mLockHandle = new CassaLockStore(MusicCore.mDstoreHandle);
+            MusicDataStoreHandle.mDstoreHandle = CassandraCQLQueries.connectToEmbeddedCassandra();
+            MusicCore.mLockHandle = new CassaLockStore(MusicDataStoreHandle.mDstoreHandle);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -124,8 +129,8 @@ public class TestRestMusicData {
         testObject = new PreparedQueryObject();
         testObject.appendQueryString("DROP KEYSPACE IF EXISTS admin");
         MusicCore.eventualPut(testObject);
-        if(MusicCore.mDstoreHandle!=null)
-        	MusicCore.mDstoreHandle.close();
+        if(MusicDataStoreHandle.mDstoreHandle!=null)
+        	MusicDataStoreHandle.mDstoreHandle.close();
         if(zkServer!=null)
         	zkServer.stop();
     }
