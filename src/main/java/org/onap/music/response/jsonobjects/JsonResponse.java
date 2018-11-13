@@ -26,12 +26,7 @@ import java.util.Map;
 
 import org.onap.music.lockingservice.MusicLockState.LockStatus;
 import org.onap.music.main.ResultType;
-import org.powermock.core.spi.testresult.Result;
 
-import com.datastax.driver.core.ColumnDefinitions;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.ColumnDefinitions.Definition;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -231,10 +226,16 @@ public class JsonResponse {
     public Map<String, Object> toMap() {
         Map<String, Object> fullMap = new HashMap<>();
         fullMap.put("status", status);
-        if (error!=null) {fullMap.put("error", error);}
-        if (message!=null) {fullMap.put("message", message);}
+        if (error!=null) {
+            fullMap.put("error", error);
+        }
+        if (message!=null) {
+            fullMap.put("message", message);
+        }
         
-        if (musicVersion!=null) {fullMap.put("version", musicVersion);}
+        if (musicVersion!=null) {
+            fullMap.put("version", musicVersion);
+        }
         
         if (dataResult!=null) {
         	fullMap.put("result", dataResult);
@@ -242,10 +243,18 @@ public class JsonResponse {
         
         if (lock!=null) {
 	        Map<String, Object> lockMap = new HashMap<>();
-	        if (lock!=null) {lockMap.put("lock", lock);}
-	        if (lockStatus!=null) {lockMap.put("lock-status", lockStatus);}
-	        if (lockHolder!=null) {lockMap.put("lock-holder", lockHolder);}
-	        if (lockLease!=null) {lockMap.put("lock-lease", lockLease);}
+	        if (lock!=null) {
+	            lockMap.put("lock", lock);
+	        }
+	        if (lockStatus!=null) {
+	            lockMap.put("lock-status", lockStatus);
+	        }
+	        if (lockHolder!=null) {
+	            lockMap.put("lock-holder", lockHolder);
+	        }
+	        if (lockLease!=null) {
+	            lockMap.put("lock-lease", lockLease);
+	        }
 	        fullMap.put("lock", lockMap);
         }
 
