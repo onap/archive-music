@@ -32,26 +32,6 @@ public class MusicServiceException extends Exception {
     private int errorCode;
     private String errorMessage;
 
-    public int getErrorCode() {
-        return errorCode;
-    }
-
-
-    public void setErrorCode(int errorCode) {
-        this.errorCode = errorCode;
-    }
-
-
-    public String getErrorMessage() {
-        return errorMessage;
-    }
-
-
-    public void setErrorMessage(String errorMessage) {
-        this.errorMessage = errorMessage;
-    }
-
-
     public MusicServiceException() {
         super();
     }
@@ -76,9 +56,28 @@ public class MusicServiceException extends Exception {
 
 
     public MusicServiceException(String message, Throwable cause, boolean enableSuppression,
-                    boolean writableStackTrace) {
+                                 boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
 
+    }
+
+    public int getErrorCode() {
+        return errorCode;
+    }
+
+
+    public void setErrorCode(int errorCode) {
+        this.errorCode = errorCode;
+    }
+
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
     }
 
 }

@@ -28,6 +28,8 @@ public class ReturnType {
     private ResultType result;
     private String message;
 
+    private String timingInfo;
+
     public ReturnType(ResultType result, String message) {
         super();
         this.result = result;
@@ -41,8 +43,6 @@ public class ReturnType {
     public void setTimingInfo(String timingInfo) {
         this.timingInfo = timingInfo;
     }
-
-    private String timingInfo;
 
     public ResultType getResult() {
         return result;
