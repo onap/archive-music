@@ -52,16 +52,14 @@ public class MusicLockingService implements Watcher {
             connectedSignal.await();
             zkLockHandle = new ZkStatelessLockService(zk);
         } catch (IOException e) {
+            logger.error("Error", e);
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.IOERROR, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
             throw new MusicServiceException("IO Error has occured" + e.getMessage());
         } catch (InterruptedException e) {
+            logger.error("Error", e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
             throw new MusicServiceException("Exception Occured " + e.getMessage());
         }
-    }
-
-    public ZkStatelessLockService getzkLockHandle() {
-        return zkLockHandle;
     }
 
     public MusicLockingService(String lockServer) {
@@ -70,12 +68,19 @@ public class MusicLockingService implements Watcher {
             connectedSignal.await();
             zkLockHandle = new ZkStatelessLockService(zk);
         } catch (IOException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.IOERROR, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
+            logger.error("Error", e);
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.IOERROR, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
         }catch( InterruptedException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
-		}catch(Exception e) {
-			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
-		}
+            logger.error("Error", e);
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+        }catch(Exception e) {
+            logger.error("Error", e);
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+        }
+    }
+
+    public ZkStatelessLockService getzkLockHandle() {
+        return zkLockHandle;
     }
 
     public void createLockaIfItDoesNotExist(String lockName) {
@@ -98,6 +103,7 @@ public class MusicLockingService implements Watcher {
         try{
         	data = zkLockHandle.getNodeData(lockName);
         }catch (Exception ex){
+            logger.error("Error", ex);
         	logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
         if(data !=null)
@@ -120,10 +126,13 @@ public class MusicLockingService implements Watcher {
         try {
             return zkLockHandle.lock(lockName, lockId);
         } catch (KeeperException e) {
+            logger.error("Error", e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.LOCKINGERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }catch( InterruptedException e) {
+            logger.error("Error", e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
 		}catch(Exception e) {
+            logger.error("Error", e);
 			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
 		}
         return false;
