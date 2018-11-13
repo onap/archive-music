@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9adffdf1_0d9fe460",
+        "filename": "src/main/java/org/onap/music/lockingservice/MusicLockingService.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2018-11-13T14:27:34Z",
+      "side": 1,
+      "message": "There is no need to duplicate error logging messages here. The next line handles this error message. Please fix this and similar issues",
+      "revId": "458f4be403cea7ae9091cd4ba9bd432c2c941ed8",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
