@@ -1,25 +1,41 @@
 #! /bin/bash
+if [ -z "$TIMEOUT" ]; then
+    TIMEOUT=10;
+fi
+if [ -z "$DELAY" ]; then
+    DELAY=60;
+fi
+TO="--request-timeout=$TIMEOUT"
+
 if [ $CASS_HOSTNAME ]; then
-    echo "#############################################"
-    echo "############## Let run cql's ################"
-    echo "#############################################"
-    echo "Current Variales in play"
-    echo "Default User"
-    echo "DEF_USER="$DEF_USER
-    echo "DEF_PASS=***********"
-    echo "New User"
-    echo "USERNAME="$USERNAME
-    echo "PASSWORD=***********"
-    if cqlsh -u cassandra -p cassandra -e "describe keyspaces;";
+    echo "Sleeping for $DELAY seconds before running cql";
+    sleep $DELAY;
+    >&2 echo "#############################################"
+    >&2 echo "############## Let run cql's ################"
+    >&2 echo "#############################################"
+    >&2 echo "Current Variables in play"
+    >&2 echo "Default User"
+    >&2 echo "DEF_USER="$DEF_USER
+    >&2 echo "DEF_PASS=***********"
+    >&2 echo "New User"
+    >&2 echo "USERNAME="$USERNAME
+    >&2 echo "PASSWORD=***********"
+    >&2 echo "TIMEOUT="$TIMEOUT
+    >&2 echo "Running cqlsh $TO -u cassandra -p cassandra -e \"describe keyspaces;\" ${CASS_HOSTNAME} ${PORT};"
+    if cqlsh $TO -u cassandra -p cassandra -e "describe keyspaces;" ${CASS_HOSTNAME} ${PORT};
     then
         >&2 echo "Cassandra user still avalable, will continue as usual";
     else
-        if cqlsh -u $USERNAME -p $PASSWORD -e "describe keyspaces;";
+        CASSFAIL=true
+        >&2 echo "$DEF_USER failed, trying with $USERNAME"
+        if cqlsh $TO -u $USERNAME -p $PASSWORD -e "describe keyspaces;" ${CASS_HOSTNAME} ${PORT};
         then
             >&2 echo "Password $USERNAME in play, update Variables"
             DEF_USER=$USERNAME
             DEF_PASS=$PASSWORD
-            if cqlsh -u $USERNAME -p $PASSWORD -e "describe keyspaces;" | grep admin1;
+            >&2 echo "DEF_USER="$DEF_USER
+            >&2 echo "DEF_PASS=***********"
+            if cqlsh $TO -u $USERNAME -p $PASSWORD -e "describe keyspaces;" ${CASS_HOSTNAME} ${PORT} | grep admin;
             then
                 >&2 echo "Admin table exists, everything looks good"
                 exit 0;
@@ -28,25 +44,28 @@ if [ $CASS_HOSTNAME ]; then
                 >&2 echo "DEF_USER=" $DEF_USER
             fi
         else
-            >&2 echo "Continue and as usual"
+            if [ $CASSFAIL ]; then
+                >&2 echo "$DEF_USER and $USERNAME fail. DB might need to be initialized again. This shouldn't have happend."
+                exit 1;
+            else
+                >&2 echo "Continue and as usual"
+            fi
         fi
     fi
-    echo "admin.cql file:"
-    cat /cql/admin.cql
+    >&2 echo "Running admin.cql file:"
     >&2 echo "Running cqlsh -u $DEF_USER -p $DEF_PASS -f /cql/admin.cql ${CASS_HOSTNAME} ${PORT}"
     sleep 1;
-    if cqlsh -u $DEF_USER -p $DEF_PASS -f /cql/admin.cql ${CASS_HOSTNAME} ${PORT};
+    if cqlsh $TO -u $DEF_USER -p $DEF_PASS -f /cql/admin.cql ${CASS_HOSTNAME} ${PORT};
     then
         >&2 echo "Success - admin.cql - Admin keyspace created";
     else
         >&2 echo "Failure - admin.cql";
         exit 0;
     fi
-    echo "admin_pw.cql file:"
-    cat /cql/admin_pw.cql
+    >&2 echo "Running admin_pw.cql file:"
     >&2 echo "Running cqlsh -u $DEF_USER -p $DEF_PASS -f /cql/admin_pw.cql ${CASS_HOSTNAME} ${PORT}"
     sleep 1;
-    if cqlsh -u $DEF_USER -p $DEF_PASS -f /cql/admin_pw.cql ${CASS_HOSTNAME} ${PORT};
+    if cqlsh $TO -u $DEF_USER -p $DEF_PASS -f /cql/admin_pw.cql ${CASS_HOSTNAME} ${PORT};
     then
         >&2 echo "Success - admin_pw.cql - Password Changed";
     else
@@ -54,16 +73,17 @@ if [ $CASS_HOSTNAME ]; then
         exit 0;
     fi
 
-    for f in /cql/extra/*; do
-        case "$f" in
-            *.cql)
-                echo "$0: running $f" && cqlsh -u ${USERNAME} -p ${PASSWORD} -f "$f" ${CASS_HOSTNAME} ${PORT};
-                ;;
-            *)
-                echo "$0: ignoring $f"
-                ;;
-        esac
-    done
+    >&2 echo "Running Test - look for admin keyspace:"
+    >&2 echo "Running cqlsh -u $USERNAME -p $PASSWORD -e "select * from system_auth.roles;" ${CASS_HOSTNAME} ${PORT}"
+    sleep 1;
+    if cqlsh $TO -u $USERNAME -p $PASSWORD -e "select * from system_auth.roles;" ${CASS_HOSTNAME} ${PORT}
+    then
+        >&2 echo "Success - running test";
+    else
+        >&2 echo "Failure - running test";
+        exit 0;
+    fi
+
 else
     >&2 echo "Missing CASS_HOSTNAME";
     exit 0;

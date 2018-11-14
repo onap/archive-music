@@ -157,13 +157,14 @@ public class RestMusicDataAPI {
 		String password = userCredentials.get(MusicUtil.PASSWORD);
         Map<String, Object> authMap = CachingUtil.verifyOnboarding(ns, userId, password);
         if (!authMap.isEmpty()) {
-            logger.error(EELFLoggerDelegate.errorLogger,"authMap has an error. verifyOnboarding may have failed silently", AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
             response.status(Status.UNAUTHORIZED);
-            return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Exception"))).toMap()).build();
+            return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Error"))).toMap()).build();
         }
         if(kspObject == null || kspObject.getReplicationInfo() == null) {
+            authMap.put(ResultType.EXCEPTION.getResult(), ResultType.BODYMISSING.getResult());
             response.status(Status.BAD_REQUEST);
-            return response.entity(new JsonResponse(ResultType.FAILURE).setError(ResultType.BODYMISSING.getResult()).toMap()).build();
+            return response.entity(authMap).build();
         }
 
 
@@ -182,7 +183,7 @@ public class RestMusicDataAPI {
             } else {
                 logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
                 response.status(Status.UNAUTHORIZED);
-                return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Exception"))).toMap()).build();
+                return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Error"))).toMap()).build();
             }
         }
 
@@ -367,7 +368,7 @@ public class RestMusicDataAPI {
             authMap.remove("aid");
         if (!authMap.isEmpty()) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
-            return response.status(Status.UNAUTHORIZED).entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Exception"))).toMap()).build();
+            return response.status(Status.UNAUTHORIZED).entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Error"))).toMap()).build();
         }
         String consistency = MusicUtil.EVENTUAL;
         // for now this needs only eventual consistency
@@ -593,7 +594,7 @@ public class RestMusicDataAPI {
         if (!authMap.isEmpty()) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
             response.status(Status.UNAUTHORIZED);
-            return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Exception"))).toMap()).build();
+            return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Error"))).toMap()).build();
         }
         MultivaluedMap<String, String> rowParams = info.getQueryParameters();
         String indexName = "";
@@ -661,7 +662,7 @@ public class RestMusicDataAPI {
             authMap.remove("aid");
         if (!authMap.isEmpty()) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
-            return response.status(Status.UNAUTHORIZED).entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Exception"))).toMap()).build();
+            return response.status(Status.UNAUTHORIZED).entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Error"))).toMap()).build();
         }
 
         Map<String, Object> valuesMap = insObj.getValues();
@@ -871,7 +872,7 @@ public class RestMusicDataAPI {
             authMap.remove("aid");
         if (!authMap.isEmpty()) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
-              return response.status(Status.UNAUTHORIZED).entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Exception"))).toMap()).build();
+              return response.status(Status.UNAUTHORIZED).entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Error"))).toMap()).build();
         }
         long startTime = System.currentTimeMillis();
         String operationId = UUID.randomUUID().toString();// just for infoging
@@ -1084,7 +1085,7 @@ public class RestMusicDataAPI {
             authMap.remove("aid");
         if (!authMap.isEmpty()) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
-              return response.status(Status.UNAUTHORIZED).entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Exception"))).toMap()).build();
+              return response.status(Status.UNAUTHORIZED).entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Error"))).toMap()).build();
         }
         if(delObj == null) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGDATA  ,ErrorSeverity.WARN, ErrorTypes.DATAERROR);
@@ -1219,7 +1220,7 @@ public class RestMusicDataAPI {
             authMap.remove("aid");
         if (!authMap.isEmpty()) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
-            return response.status(Status.UNAUTHORIZED).entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Exception"))).toMap()).build();
+            return response.status(Status.UNAUTHORIZED).entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Error"))).toMap()).build();
         }
         String consistency = "eventual";// for now this needs only eventual
                                         // consistency
@@ -1274,7 +1275,7 @@ public class RestMusicDataAPI {
             authMap.remove("aid");
         if (!authMap.isEmpty()) {
             logger.error(EELFLoggerDelegate.errorLogger,"Error while authentication... ", AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
-              return response.status(Status.UNAUTHORIZED).entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Exception"))).toMap()).build();
+              return response.status(Status.UNAUTHORIZED).entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Error"))).toMap()).build();
         }
         String lockId = selObj.getConsistencyInfo().get("lockId");
 
@@ -1357,7 +1358,7 @@ public class RestMusicDataAPI {
             authMap.remove("aid");
         if (!authMap.isEmpty()) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.AUTHENTICATIONERROR  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
-            return response.status(Status.UNAUTHORIZED).entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Exception"))).toMap()).build();
+            return response.status(Status.UNAUTHORIZED).entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Error"))).toMap()).build();
         }
         PreparedQueryObject queryObject = new PreparedQueryObject();
 
