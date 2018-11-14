@@ -111,28 +111,10 @@ public class RestMusicHealthCheckAPI {
 		}
 	}
 	
-	@GET
-	@Path("/musicHealthCheck")
-	@ApiOperation(value = "Get Health Status", response = Map.class)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response musicHealthCheck() {
-		logger.info(EELFLoggerDelegate.applicationLogger,"Replying to request for Health Check status for MUSIC");
-		Map<String, Object> resultMap = new HashMap<>();
-		MusicHealthCheck healthCheck = new MusicHealthCheck();
-		String status = healthCheck.getZookeeperStatus();
-		if(status.equals("ACTIVE")) {
-			resultMap.put("ZooKeeper", "Active");
-		}else {
-			resultMap.put("ZooKeeper", "Inactive");
-		}
-		status = healthCheck.getCassandraStatus(ConsistencyLevel.ANY.toString());
-		if(status.equals("ACTIVE")) {
-			resultMap.put("Cassandra", "Active");
-		} else {
-			resultMap.put("Cassandra", "Inactive");
-		}
-		resultMap.put("MUSIC", "Active");
-		return Response.status(Status.OK).entity(resultMap).build();
-	}
+	
+	
+	
+	
+	
 
 }
