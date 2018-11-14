@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2018 IBM
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -30,6 +32,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
@@ -37,6 +40,7 @@ import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.MusicUtil;
+
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ColumnDefinitions;
 import com.datastax.driver.core.ColumnDefinitions.Definition;
@@ -54,7 +58,6 @@ import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
-import com.sun.jersey.core.util.Base64;
 
 /**
  * @author nelson24
@@ -127,7 +130,7 @@ public class MusicDataStore {
      * @return
      */
     private ArrayList<String> getAllPossibleLocalIps() {
-        ArrayList<String> allPossibleIps = new ArrayList<String>();
+        ArrayList<String> allPossibleIps = new ArrayList<>();
         try {
             Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
             while (en.hasMoreElements()) {
@@ -329,13 +332,13 @@ public class MusicDataStore {
      */
     public Map<String, HashMap<String, Object>> marshalData(ResultSet results) {
         Map<String, HashMap<String, Object>> resultMap =
-                        new HashMap<String, HashMap<String, Object>>();
+                        new HashMap<>();
         int counter = 0;
         for (Row row : results) {
             ColumnDefinitions colInfo = row.getColumnDefinitions();
-            HashMap<String, Object> resultOutput = new HashMap<String, Object>();
+            HashMap<String, Object> resultOutput = new HashMap<>();
             for (Definition definition : colInfo) {
-                if (!definition.getName().equals("vector_ts")) {
+                if (!("vector_ts").equals(definition.getName())) {
                 	if(definition.getType().toString().toLowerCase().contains("blob")) {
                 		resultOutput.put(definition.getName(),
                                 getBlobValue(row, definition.getName(), definition.getType()));
