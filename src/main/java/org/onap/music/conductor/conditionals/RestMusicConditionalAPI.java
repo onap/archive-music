@@ -37,7 +37,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
-import org.codehaus.jettison.json.JSONObject;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
@@ -49,8 +48,6 @@ import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
 import org.onap.music.response.jsonobjects.JsonResponse;
 import org.onap.music.rest.RestMusicAdminAPI;
-import org.onap.music.conductor.*;
-
 
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.TableMetadata;
@@ -126,8 +123,8 @@ public class RestMusicConditionalAPI {
 		}
 
 		Map<String, String> status = new HashMap<>();
-		status.put("exists", conditions.get("exists").get("status").toString());
-		status.put("nonexists", conditions.get("nonexists").get("status").toString());
+		status.put("exists", conditions.get("exists").get("status"));
+		status.put("nonexists", conditions.get("nonexists").get("status"));
 		ReturnType out = null;
 
 		out = MusicConditional.conditionalInsert(keyspace, tablename, casscadeColumnName, casscadeColumnData,
