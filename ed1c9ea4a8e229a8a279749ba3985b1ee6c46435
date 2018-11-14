@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9adffdf1_fd6ec9c8",
+        "filename": "src/main/java/org/onap/music/conductor/conditionals/RestMusicConditionalAPI.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 128,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2018-11-14T14:12:35Z",
+      "side": 1,
+      "message": "I guess this works. I don\u0027t like it as it adds unnecessary code",
+      "revId": "ed1c9ea4a8e229a8a279749ba3985b1ee6c46435",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
