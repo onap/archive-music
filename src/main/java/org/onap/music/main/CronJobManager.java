@@ -34,8 +34,6 @@ import javax.servlet.annotation.WebListener;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicServiceException;
-import org.onap.music.service.MusicCoreService;
-import org.onap.music.service.impl.MusicCassaCore;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -44,7 +42,6 @@ import com.datastax.driver.core.Row;
 public class CronJobManager implements ServletContextListener {
 
     private ScheduledExecutorService scheduler;
-    private static MusicCoreService musicCore = MusicCassaCore.getInstance();
 
     @Override
     public void contextInitialized(ServletContextEvent event) {
@@ -54,7 +51,7 @@ public class CronJobManager implements ServletContextListener {
         String consistency = MusicUtil.EVENTUAL;
         pQuery.appendQueryString("CREATE TABLE IF NOT EXISTS admin.locks ( lock_id text PRIMARY KEY, ctime text)");
         try {
-            ResultType result = musicCore.nonKeyRelatedPut(pQuery, consistency);
+            ResultType result = MusicCore.nonKeyRelatedPut(pQuery, consistency);
         } catch (MusicServiceException e1) {
             e1.printStackTrace();
         }
@@ -63,7 +60,7 @@ public class CronJobManager implements ServletContextListener {
         pQuery.appendQueryString(
                         "select * from admin.locks");
             try {
-                ResultSet rs = musicCore.get(pQuery);
+                ResultSet rs = MusicCore.get(pQuery);
                 Iterator<Row> it = rs.iterator();
                 StringBuilder deleteKeys = new StringBuilder();
                 Boolean expiredKeys = false;
@@ -74,7 +71,7 @@ public class CronJobManager implements ServletContextListener {
                     if(System.currentTimeMillis() >= ctime + 24 * 60 * 60 * 1000) {
                         expiredKeys = true;
                         String new_id = id.substring(1);
-                        musicCore.deleteLock(new_id);
+                        MusicCore.deleteLock(new_id);
                         deleteKeys.append(id).append(",");
                     }
                     else {
@@ -106,7 +103,7 @@ public class CronJobManager implements ServletContextListener {
                            expiredKeys = true;
                            String id = pair.getKey();
                            deleteKeys.append("'").append(id).append("'").append(",");
-                           musicCore.deleteLock(id.substring(1));
+                           MusicCore.deleteLock(id.substring(1));
                            MusicUtil.zkNodeMap.remove(id);
                            
                        } catch (MusicLockingException e) {
@@ -132,7 +129,7 @@ public class CronJobManager implements ServletContextListener {
         pQuery.appendQueryString(
                         "DELETE FROM admin.locks WHERE lock_id IN ("+deleteKeys+")");
         try {
-        	musicCore.nonKeyRelatedPut(pQuery, "eventual");
+            MusicCore.nonKeyRelatedPut(pQuery, "eventual");
         } catch (Exception e) {
               e.printStackTrace();
         }

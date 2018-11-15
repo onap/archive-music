@@ -47,11 +47,9 @@ import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.main.CachingUtil;
+import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
-import org.onap.music.service.MusicCoreService;
-import org.onap.music.service.impl.MusicCassaCore;
-
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -65,7 +63,6 @@ import io.swagger.annotations.ApiOperation;
 public class RestMusicAdminAPI {
     private static EELFLoggerDelegate logger =
                     EELFLoggerDelegate.getLogger(RestMusicAdminAPI.class);
-    private static MusicCoreService musicCore = MusicCassaCore.getInstance();
 
     /*
      * API to onboard an application with MUSIC. This is the mandatory first step.
@@ -96,7 +93,7 @@ public class RestMusicAdminAPI {
         pQuery.appendQueryString(
                         "select uuid from admin.keyspace_master where application_name = ? allow filtering");
         pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), appName));
-        ResultSet rs = musicCore.get(pQuery);
+        ResultSet rs = MusicCore.get(pQuery);
         if (!rs.all().isEmpty()) {
             resultMap.put("Exception", "Application " + appName
                             + " has already been onboarded. Please contact admin.");
@@ -117,7 +114,7 @@ public class RestMusicAdminAPI {
         pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
         pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), isAAF));
 
-        String returnStr = musicCore.eventualPut(pQuery).toString();
+        String returnStr = MusicCore.eventualPut(pQuery).toString();
         if (returnStr.contains("Failure")) {
             resultMap.put("Exception",
                             "Oops. Something wrong with onboarding process. Please retry later or contact admin.");
@@ -173,7 +170,7 @@ public class RestMusicAdminAPI {
         if (isAAF != null)
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(),
                             Boolean.parseBoolean(isAAF)));
-        ResultSet rs = musicCore.get(pQuery);
+        ResultSet rs = MusicCore.get(pQuery);
         Iterator<Row> it = rs.iterator();
         while (it.hasNext()) {
             Row row = (Row) it.next();
@@ -218,20 +215,20 @@ public class RestMusicAdminAPI {
                             "SELECT keyspace_name FROM admin.keyspace_master WHERE uuid = ?");
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.uuid(),
                             UUID.fromString(aid)));
-            Row row = musicCore.get(pQuery).one();
+            Row row = MusicCore.get(pQuery).one();
             if (row != null) {
                 String ks = row.getString("keyspace_name");
                 if (!ks.equals(MusicUtil.DEFAULTKEYSPACENAME)) {
                     PreparedQueryObject queryObject = new PreparedQueryObject();
                     queryObject.appendQueryString("DROP KEYSPACE IF EXISTS " + ks + ";");
-                    musicCore.nonKeyRelatedPut(queryObject, consistency);
+                    MusicCore.nonKeyRelatedPut(queryObject, consistency);
                 }
             }
             pQuery = new PreparedQueryObject();
             pQuery.appendQueryString("delete from admin.keyspace_master where uuid = ? IF EXISTS");
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.uuid(),
                             UUID.fromString(aid)));
-            ResultType result = musicCore.nonKeyRelatedPut(pQuery, consistency);
+            ResultType result = MusicCore.nonKeyRelatedPut(pQuery, consistency);
             if (result == ResultType.SUCCESS) {
                 resultMap.put("Success", "Your application has been deleted successfully");
             } else {
@@ -248,7 +245,7 @@ public class RestMusicAdminAPI {
         pQuery.appendQueryString(
                         "select uuid from admin.keyspace_master where application_name = ? allow filtering");
         pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), appName));
-        ResultSet rs = musicCore.get(pQuery);
+        ResultSet rs = MusicCore.get(pQuery);
         List<Row> rows = rs.all();
         String uuid = null;
         if (rows.size() == 0) {
@@ -264,19 +261,19 @@ public class RestMusicAdminAPI {
                             "SELECT keyspace_name FROM admin.keyspace_master WHERE uuid = ?");
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.uuid(),
                             UUID.fromString(uuid)));
-            Row row = musicCore.get(pQuery).one();
+            Row row = MusicCore.get(pQuery).one();
             String ks = row.getString("keyspace_name");
             if (!ks.equals(MusicUtil.DEFAULTKEYSPACENAME)) {
                 PreparedQueryObject queryObject = new PreparedQueryObject();
                 queryObject.appendQueryString("DROP KEYSPACE " + ks + ";");
-                musicCore.nonKeyRelatedPut(queryObject, consistency);
+                MusicCore.nonKeyRelatedPut(queryObject, consistency);
             }
 
             pQuery = new PreparedQueryObject();
             pQuery.appendQueryString("delete from admin.keyspace_master where uuid = ?");
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.uuid(),
                             UUID.fromString(uuid)));
-            musicCore.eventualPut(pQuery);
+            MusicCore.eventualPut(pQuery);
             resultMap.put("Success", "Your application " + appName + " has been deleted.");
             return Response.status(Status.OK).entity(resultMap).build();
         } else {
@@ -326,7 +323,7 @@ public class RestMusicAdminAPI {
             pQuery.appendQueryString(
                             "select uuid from admin.keyspace_master where application_name = ? allow filtering");
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), appName));
-            ResultSet rs = musicCore.get(pQuery);
+            ResultSet rs = MusicCore.get(pQuery);
             if (!rs.all().isEmpty()) {
                 resultMap.put("Exception", "Application " + appName
                                 + " has already been onboarded. Please contact admin.");
@@ -359,7 +356,7 @@ public class RestMusicAdminAPI {
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), isAAF));
 
         pQuery.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), UUID.fromString(aid)));
-        ResultType result = musicCore.nonKeyRelatedPut(pQuery, consistency);
+        ResultType result = MusicCore.nonKeyRelatedPut(pQuery, consistency);
 
         if (result == ResultType.SUCCESS) {
             resultMap.put("Success", "Your application has been updated successfully");

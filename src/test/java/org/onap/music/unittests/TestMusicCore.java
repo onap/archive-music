@@ -1,6 +1,10 @@
 package org.onap.music.unittests;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.AfterClass;
@@ -9,14 +13,12 @@ import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
-import org.onap.music.datastore.MusicDataStore;
-import org.onap.music.datastore.MusicDataStoreHandle;
+import org.onap.music.datastore.CassaDataStore;
+import org.onap.music.datastore.CassaLockStore;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
-import org.onap.music.lockingservice.cassandra.CassaLockStore;
-import org.onap.music.service.MusicCoreService;
-import org.onap.music.service.impl.MusicCassaCore;
+import org.onap.music.main.MusicCore;
 
 import com.datastax.driver.core.ResultSet;
 
@@ -25,17 +27,16 @@ import com.datastax.driver.core.ResultSet;
 public class TestMusicCore {
 	
 	static PreparedQueryObject testObject;
-    static MusicDataStore dataStore;
+    static CassaDataStore dataStore;
     String keyspace = "MusicCoreUnitTestKp";
     String table = "SampleTable";
-    static MusicCoreService musicCore = MusicCassaCore.getInstance();
 
     @BeforeClass
     public static void init() {
     	System.out.println("TestMusicCore Init");
         try {
-            MusicDataStoreHandle.mDstoreHandle = CassandraCQLQueries.connectToEmbeddedCassandra();
-            CassaLockStore mLockHandle = new CassaLockStore(MusicDataStoreHandle.mDstoreHandle);
+            MusicCore.mDstoreHandle = CassandraCQL.connectToEmbeddedCassandra();
+            MusicCore.mLockHandle = new CassaLockStore(MusicCore.mDstoreHandle);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -45,9 +46,9 @@ public class TestMusicCore {
     public static void close() throws MusicServiceException, MusicQueryException {
     	System.out.println("After class TestMusicCore");
         testObject = new PreparedQueryObject();
-        testObject.appendQueryString(CassandraCQLQueries.dropKeyspace);
-        musicCore.eventualPut(testObject);
-        MusicDataStoreHandle.mDstoreHandle.close();
+        testObject.appendQueryString(CassandraCQL.dropKeyspace);
+        MusicCore.eventualPut(testObject);
+        MusicCore.mDstoreHandle.close();
     }
 
     @Test
@@ -60,7 +61,7 @@ public class TestMusicCore {
         PreparedQueryObject queryObject = new PreparedQueryObject();
         queryObject.appendQueryString(
           "CREATE KEYSPACE " + keyspace + " WITH REPLICATION = " + replicationInfo.toString().replaceAll("=", ":"));
-        musicCore.nonKeyRelatedPut(queryObject, "eventual");
+        MusicCore.nonKeyRelatedPut(queryObject, "eventual");
         
         
         //check with the system table in cassandra
@@ -76,7 +77,7 @@ public class TestMusicCore {
     		PreparedQueryObject queryObject = new PreparedQueryObject();
         queryObject.appendQueryString(
           "CREATE TABLE " + keyspace + "." + table + " (name text PRIMARY KEY, count varint);");
-        musicCore.createTable(keyspace, table, queryObject, "eventual");              
+        MusicCore.createTable(keyspace, table, queryObject, "eventual");              
 
         
         //check with the system table in cassandra

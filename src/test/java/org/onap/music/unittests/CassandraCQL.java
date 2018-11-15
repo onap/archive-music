@@ -45,10 +45,10 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.thrift.transport.TTransportException;
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
-import org.onap.music.datastore.MusicDataStore;
+import org.onap.music.datastore.CassaDataStore;
 import org.onap.music.datastore.PreparedQueryObject;
 
-public class CassandraCQLQueries {
+public class CassandraCQL {
 
     public static final String createKeySpace =
                     "CREATE KEYSPACE IF NOT EXISTS testCassa WITH replication = "
@@ -222,7 +222,7 @@ public class CassandraCQLQueries {
         return allPossibleIps;
     }
 
-    public static MusicDataStore connectToEmbeddedCassandra() {
+    public static CassaDataStore connectToEmbeddedCassandra() {
         Iterator<String> it = getAllPossibleLocalIps().iterator();
         String address = "localhost";
 
@@ -249,7 +249,7 @@ public class CassandraCQLQueries {
 
             }
         }
-        return new MusicDataStore(cluster, session);
+        return new CassaDataStore(cluster, session);
 
     }
 

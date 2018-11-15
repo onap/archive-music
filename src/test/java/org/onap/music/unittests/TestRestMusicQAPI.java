@@ -47,8 +47,7 @@ import org.mindrot.jbcrypt.BCrypt;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.onap.music.lockingservice.cassandra.CassaLockStore;
-import org.onap.music.datastore.MusicDataStoreHandle;
+import org.onap.music.datastore.CassaLockStore;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
@@ -58,12 +57,12 @@ import org.onap.music.datastore.jsonobjects.JsonKeySpace;
 import org.onap.music.datastore.jsonobjects.JsonSelect;
 import org.onap.music.datastore.jsonobjects.JsonTable;
 import org.onap.music.datastore.jsonobjects.JsonUpdate;
+import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 //import org.onap.music.main.ResultType;
 import org.onap.music.rest.RestMusicAdminAPI;
 import org.onap.music.rest.RestMusicDataAPI;
 import org.onap.music.rest.RestMusicQAPI;
-import org.onap.music.service.impl.MusicCassaCore;
 import org.onap.music.rest.RestMusicLocksAPI;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
@@ -120,13 +119,12 @@ public class TestRestMusicQAPI {
     static JsonKeySpace kspObject=null;
     static RestMusicDataAPI data = new RestMusicDataAPI();
     static Response resp;
-    static MusicCassaCore MusicCore = MusicCassaCore.getInstance();
     
     @BeforeClass
     public static void init() throws Exception {
         try {
-            MusicDataStoreHandle.mDstoreHandle = CassandraCQLQueries.connectToEmbeddedCassandra();
-            MusicCassaCore.mLockHandle = new CassaLockStore(MusicDataStoreHandle.mDstoreHandle);
+            MusicCore.mDstoreHandle = CassandraCQL.connectToEmbeddedCassandra();
+            MusicCore.mLockHandle = new CassaLockStore(MusicCore.mDstoreHandle);
 
            // System.out.println("before class keysp");
             //resp=data.createKeySpace(majorV,minorV,patchV,aid,appName,userId,password,kspObject,keyspaceName);
@@ -213,8 +211,8 @@ public class TestRestMusicQAPI {
         testObject = new PreparedQueryObject();
         testObject.appendQueryString("DROP KEYSPACE IF EXISTS admin");
         MusicCore.eventualPut(testObject);
-        if (MusicDataStoreHandle.mDstoreHandle!=null)
-        	MusicDataStoreHandle.mDstoreHandle.close();
+        if (MusicCore.mDstoreHandle!=null)
+        	MusicCore.mDstoreHandle.close();
         if (zkServer!=null)
         	zkServer.stop();
     }

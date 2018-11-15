@@ -26,10 +26,9 @@ import java.util.UUID;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.exceptions.MusicServiceException;
+import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
-import org.onap.music.service.MusicCoreService;
-import org.onap.music.service.impl.MusicCassaCore;
 
 import com.datastax.driver.core.ConsistencyLevel;
 
@@ -40,7 +39,6 @@ import com.datastax.driver.core.ConsistencyLevel;
 public class MusicHealthCheck {
 
 	private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicUtil.class);
-	private static MusicCoreService musicCore = MusicCassaCore.getInstance();
 
 	private String cassandrHost;
 	private String zookeeperHost;
@@ -80,7 +78,7 @@ public class MusicHealthCheck {
 		PreparedQueryObject pQuery = new PreparedQueryObject();
 		pQuery.appendQueryString("insert into admin.healthcheck (id) values (?)");
 		pQuery.addValue(UUID.randomUUID());
-			ResultType rs = musicCore.nonKeyRelatedPut(pQuery, consistency);
+			ResultType rs = MusicCore.nonKeyRelatedPut(pQuery, consistency);
 			System.out.println(rs);
 			if (rs != null) {
 				return Boolean.TRUE;
@@ -96,7 +94,7 @@ public class MusicHealthCheck {
 		pQuery.appendQueryString("CREATE TABLE admin.healthcheck (id uuid PRIMARY KEY)");
 		ResultType rs = null ;
 		try {
-			rs = musicCore.nonKeyRelatedPut(pQuery, ConsistencyLevel.ONE.toString());
+			rs = MusicCore.nonKeyRelatedPut(pQuery, ConsistencyLevel.ONE.toString());
 		} catch (MusicServiceException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -2,12 +2,12 @@ package org.onap.music.unittests;
 
 import java.util.HashMap;
 import java.util.Map;
-
+ 
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
-import org.onap.music.service.impl.MusicCassaCore;
+import org.onap.music.main.MusicCore;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -19,7 +19,6 @@ public class TestVotingApp
 {
     String keyspaceName;
     String tableName;
-    static MusicCassaCore MusicCore = MusicCassaCore.getInstance();
        
     public TestVotingApp() throws MusicServiceException {
         keyspaceName = "VotingAppForMusic"+System.currentTimeMillis();

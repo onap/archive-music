@@ -45,17 +45,14 @@ import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.apache.commons.lang3.StringUtils;
-import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import com.datastax.driver.core.ResultSet;
 import org.onap.music.exceptions.MusicServiceException;
+import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 // cjc import org.onap.music.main.ReturnType;
 import org.onap.music.response.jsonobjects.JsonResponse;
-import org.onap.music.service.MusicCoreService;
-import org.onap.music.service.impl.MusicCassaCore;
-
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -67,7 +64,6 @@ import io.swagger.annotations.ApiParam;
 public class RestMusicQAPI {
 
   private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(RestMusicQAPI.class);
-  private static MusicCoreService musicCore = MusicCassaCore.getInstance();
   // private static String xLatestVersion = "X-latestVersion";
   /*
    * private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(RestMusicDataAPI.class);
@@ -416,9 +412,9 @@ public class RestMusicQAPI {
     }
 
     try {
-      ResultSet results = musicCore.get(queryObject);
+      ResultSet results = MusicCore.get(queryObject);
       return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS)
-              .setDataResult(MusicDataStoreHandle.marshallResults(results)).toMap()).build();
+              .setDataResult(MusicCore.marshallResults(results)).toMap()).build();
     } catch (MusicServiceException ex) {
       logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.UNKNOWNERROR,
               ErrorSeverity.ERROR, ErrorTypes.MUSICSERVICEERROR);

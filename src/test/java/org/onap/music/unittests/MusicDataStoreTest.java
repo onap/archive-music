@@ -33,7 +33,7 @@ import org.mockito.Mock;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 
-import org.onap.music.datastore.MusicDataStore;
+import org.onap.music.datastore.CassaDataStore;
 import org.onap.music.datastore.PreparedQueryObject;
 
 import com.datastax.driver.core.DataType;
@@ -44,12 +44,12 @@ import com.datastax.driver.core.TableMetadata;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class MusicDataStoreTest {
 
-    static MusicDataStore dataStore;
+    static CassaDataStore dataStore;
     static PreparedQueryObject testObject;
 
     @BeforeClass
     public static void init() {
-        dataStore = CassandraCQLQueries.connectToEmbeddedCassandra();
+        dataStore = CassandraCQL.connectToEmbeddedCassandra();
 
     }
 
@@ -57,7 +57,7 @@ public class MusicDataStoreTest {
     public static void close() throws MusicServiceException, MusicQueryException {
  
         testObject = new PreparedQueryObject();
-        testObject.appendQueryString(CassandraCQLQueries.dropKeyspace);
+        testObject.appendQueryString(CassandraCQL.dropKeyspace);
         dataStore.executePut(testObject, "eventual");
         dataStore.close();
 
@@ -67,10 +67,10 @@ public class MusicDataStoreTest {
     public void Test1_SetUp() throws MusicServiceException, MusicQueryException {
         boolean result = false;
         testObject = new PreparedQueryObject();
-        testObject.appendQueryString(CassandraCQLQueries.createKeySpace);
+        testObject.appendQueryString(CassandraCQL.createKeySpace);
         result = dataStore.executePut(testObject, "eventual");;
         testObject = new PreparedQueryObject();
-        testObject.appendQueryString(CassandraCQLQueries.createTableEmployees);
+        testObject.appendQueryString(CassandraCQL.createTableEmployees);
         result = dataStore.executePut(testObject, "eventual");
         assertEquals(true, result);
 
@@ -78,21 +78,21 @@ public class MusicDataStoreTest {
 
     @Test
     public void Test2_ExecutePut_eventual_insert() throws MusicServiceException, MusicQueryException {
-        testObject = CassandraCQLQueries.setPreparedInsertQueryObject1();
+        testObject = CassandraCQL.setPreparedInsertQueryObject1();
         boolean result = dataStore.executePut(testObject, "eventual");
         assertEquals(true, result);
     }
 
     @Test
     public void Test3_ExecutePut_critical_insert() throws MusicServiceException, MusicQueryException {
-        testObject = CassandraCQLQueries.setPreparedInsertQueryObject2();
+        testObject = CassandraCQL.setPreparedInsertQueryObject2();
         boolean result = dataStore.executePut(testObject, "Critical");
         assertEquals(true, result);
     }
 
     @Test
     public void Test4_ExecutePut_eventual_update() throws MusicServiceException, MusicQueryException {
-        testObject = CassandraCQLQueries.setPreparedUpdateQueryObject();
+        testObject = CassandraCQL.setPreparedUpdateQueryObject();
         boolean result = false;
         result = dataStore.executePut(testObject, "eventual");
         assertEquals(true, result);
@@ -101,7 +101,7 @@ public class MusicDataStoreTest {
     @Test
     public void Test5_ExecuteEventualGet() throws MusicServiceException, MusicQueryException {
         testObject = new PreparedQueryObject();
-        testObject.appendQueryString(CassandraCQLQueries.selectALL);
+        testObject.appendQueryString(CassandraCQL.selectALL);
         boolean result = false;
         int count = 0;
         ResultSet output = null;
@@ -120,7 +120,7 @@ public class MusicDataStoreTest {
 
     @Test
     public void Test6_ExecuteCriticalGet() throws MusicServiceException, MusicQueryException {
-        testObject = CassandraCQLQueries.setPreparedGetQuery();
+        testObject = CassandraCQL.setPreparedGetQuery();
         boolean result = false;
         int count = 0;
         ResultSet output = null;

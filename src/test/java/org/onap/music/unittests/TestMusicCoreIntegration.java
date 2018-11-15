@@ -19,29 +19,26 @@ package org.onap.music.unittests;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-
+import static org.junit.Assert.assertTrue;
+import java.io.File;
 import java.util.List;
-
+import org.apache.curator.test.TestingServer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
-import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
-import org.onap.music.lockingservice.cassandra.CassaLockStore;
-import org.onap.music.lockingservice.cassandra.MusicLockState;
-import org.onap.music.lockingservice.cassandra.MusicLockState.LockStatus;
-import org.onap.music.service.MusicCoreService;
-import org.onap.music.service.impl.*;
+import org.onap.music.datastore.CassaLockStore;
+import org.onap.music.datastore.MusicLockState;
+import org.onap.music.datastore.MusicLockState.LockStatus;
+import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
-import org.onap.music.service.impl.MusicCassaCore;
-
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 
@@ -52,13 +49,12 @@ public class TestMusicCoreIntegration {
     static PreparedQueryObject testObject;
     static String lockId = null;
     static String lockName = "ks1.tb1.pk1";
-    static MusicCassaCore musicCore = MusicCassaCore.getInstance();
 
     @BeforeClass
     public static void init() throws Exception {
         try {
-            MusicDataStoreHandle.mDstoreHandle = CassandraCQLQueries.connectToEmbeddedCassandra();
-            MusicCassaCore.mLockHandle = new CassaLockStore(MusicDataStoreHandle.mDstoreHandle);
+            MusicCore.mDstoreHandle = CassandraCQL.connectToEmbeddedCassandra();
+            MusicCore.mLockHandle = new CassaLockStore(MusicCore.mDstoreHandle);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -68,31 +64,31 @@ public class TestMusicCoreIntegration {
     public static void tearDownAfterClass() throws Exception {
         System.out.println("After class");
         testObject = new PreparedQueryObject();
-        testObject.appendQueryString(CassandraCQLQueries.dropKeyspace);
-        musicCore.eventualPut(testObject);
-        musicCore.deleteLock(lockName);
-        MusicDataStoreHandle.mDstoreHandle.close();
+        testObject.appendQueryString(CassandraCQL.dropKeyspace);
+        MusicCore.eventualPut(testObject);
+        MusicCore.deleteLock(lockName);
+        MusicCore.mDstoreHandle.close();
     }
 
     @Test
     public void Test1_SetUp() throws MusicServiceException, MusicQueryException {
-        MusicDataStoreHandle.mDstoreHandle = CassandraCQLQueries.connectToEmbeddedCassandra();
-        MusicCassaCore.mLockHandle = new CassaLockStore(MusicDataStoreHandle.mDstoreHandle);
+        MusicCore.mDstoreHandle = CassandraCQL.connectToEmbeddedCassandra();
+        MusicCore.mLockHandle = new CassaLockStore(MusicCore.mDstoreHandle);
         ResultType result = ResultType.FAILURE;
         testObject = new PreparedQueryObject();
-        testObject.appendQueryString(CassandraCQLQueries.createKeySpace);
-        musicCore.eventualPut(testObject);
+        testObject.appendQueryString(CassandraCQL.createKeySpace);
+        MusicCore.eventualPut(testObject);
         testObject = new PreparedQueryObject();
-        testObject.appendQueryString(CassandraCQLQueries.createTableEmployees);
-        result = musicCore.nonKeyRelatedPut(testObject, MusicUtil.EVENTUAL);
+        testObject.appendQueryString(CassandraCQL.createTableEmployees);
+        result = MusicCore.nonKeyRelatedPut(testObject, MusicUtil.EVENTUAL);
         assertEquals(ResultType.SUCCESS, result);
     }
 
     @Test
     public void Test2_atomicPut() throws Exception {
         testObject = new PreparedQueryObject();
-        testObject = CassandraCQLQueries.setPreparedInsertQueryObject1();
-        ReturnType returnType = musicCore.atomicPut("testCassa", "employees", "Mr Test one",
+        testObject = CassandraCQL.setPreparedInsertQueryObject1();
+        ReturnType returnType = MusicCore.atomicPut("testCassa", "employees", "Mr Test one",
                         testObject, null);
         assertEquals(ResultType.SUCCESS, returnType.getResult());
     }
@@ -101,28 +97,28 @@ public class TestMusicCoreIntegration {
     @Test
     public void Test5_atomicGet() throws Exception {
         testObject = new PreparedQueryObject();
-        testObject = CassandraCQLQueries.setPreparedGetQuery();
+        testObject = CassandraCQL.setPreparedGetQuery();
         ResultSet resultSet =
-                        musicCore.atomicGet("testCassa", "employees", "Mr Test two", testObject);
+                        MusicCore.atomicGet("testCassa", "employees", "Mr Test two", testObject);
         List<Row> rows = resultSet.all();
         assertEquals(1, rows.size());
     }
 
     @Test
     public void Test6_createLockReference() throws Exception {
-        lockId = musicCore.createLockReference(lockName);
+        lockId = MusicCore.createLockReference(lockName);
         assertNotNull(lockId);
     }
 
     @Test
     public void Test7_acquireLockwithLease() throws Exception {
-        ReturnType lockLeaseStatus = musicCore.acquireLockWithLease(lockName, lockId, 1000);
+        ReturnType lockLeaseStatus = MusicCore.acquireLockWithLease(lockName, lockId, 1000);
         assertEquals(ResultType.SUCCESS, lockLeaseStatus.getResult());
     }
 
     @Test
     public void Test8_acquireLock() throws Exception {
-        ReturnType lockStatus = musicCore.acquireLock(lockName, lockId);
+        ReturnType lockStatus = MusicCore.acquireLock(lockName, lockId);
         assertEquals(ResultType.SUCCESS, lockStatus.getResult());
     }
 
@@ -130,9 +126,9 @@ public class TestMusicCoreIntegration {
     public void Test9_release() throws Exception {
         MusicLockState musicLockState = new MusicLockState(LockStatus.LOCKED, "id1");
         MusicLockState musicLockState1 = new MusicLockState(LockStatus.UNLOCKED, "id1");
-        musicCore.whoseTurnIsIt(lockName);
-        MusicLockState mls = musicCore.getMusicLockState(lockName);
-        MusicLockState mls1 = musicCore.voluntaryReleaseLock(lockName,lockId);
+        MusicCore.whoseTurnIsIt(lockName);
+        MusicLockState mls = MusicCore.getMusicLockState(lockName);
+        MusicLockState mls1 = MusicCore.voluntaryReleaseLock(lockName,lockId);
         assertEquals(musicLockState.getLockStatus(), mls.getLockStatus());
         assertEquals(musicLockState1.getLockStatus(), mls1.getLockStatus());
     }
