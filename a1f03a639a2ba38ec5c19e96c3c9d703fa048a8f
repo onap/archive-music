@@ -1,0 +1,8 @@
+Verified+1: ONAP Jobbuilder <onap-jobbuilder@jenkins.onap.org>
+Code-Review+1: srupane kondreddy <sk5300@research.att.com>
+Code-Review+2: Thomas Nelson <nelson24@att.com>
+Submitted-by: Thomas Nelson <nelson24@att.com>
+Submitted-at: Thu, 15 Nov 2018 16:36:49 +0000
+Reviewed-on: https://gerrit.onap.org/r/72792
+Project: music
+Branch: refs/heads/dev-cassandra-only
