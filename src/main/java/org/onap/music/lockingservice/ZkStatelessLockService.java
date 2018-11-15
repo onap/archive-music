@@ -1,7 +1,10 @@
 /*
  * ============LICENSE_START========================================== org.onap.music
- * =================================================================== Copyright (c) 2017 AT&T
- * Intellectual Property ===================================================================
+ * ===================================================================
+ * Copyright (c) 2017 AT&T Intellectual Property 
+ * ===================================================================
+ * Modifications Copyright (c) 2018 IBM. 
+ * ===================================================================
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
  * 
@@ -72,6 +75,7 @@ public class ZkStatelessLockService extends ProtocolSupport {
         }
     }
 
+    @Override
     public void close() {
         try {
             zookeeper.close();
@@ -198,7 +202,7 @@ public class ZkStatelessLockService extends ProtocolSupport {
                 names = zookeeper.getChildren(id, false);
                 if (names.isEmpty())
                     return "";
-                SortedSet<ZNodeName> sortedNames = new TreeSet<ZNodeName>();
+                SortedSet<ZNodeName> sortedNames = new TreeSet<>();
                 for (String name : names) {
                     sortedNames.add(new ZNodeName(id + "/" + name));
                 }
@@ -328,7 +332,7 @@ public class ZkStatelessLockService extends ProtocolSupport {
                         // lets sort them explicitly (though they do seem to come back in order
                         // ususally :)
                         ZNodeName idName = new ZNodeName(id);
-                        SortedSet<ZNodeName> sortedNames = new TreeSet<ZNodeName>();
+                        SortedSet<ZNodeName> sortedNames = new TreeSet<>();
                         for (String name : names) {
                             sortedNames.add(new ZNodeName(dir + "/" + name));
                         }
