@@ -16,6 +16,24 @@
       "revId": "458f4be403cea7ae9091cd4ba9bd432c2c941ed8",
       "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9adffdf1_cbabf287",
+        "filename": "src/main/java/org/onap/music/lockingservice/MusicLockingService.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 1827
+      },
+      "writtenOn": "2018-11-19T15:56:11Z",
+      "side": 1,
+      "message": "I think the issue according to Sonar is that we are just logging the message and not the entire error. \nAccording to the sonar explanation, e is lost if we just print the message.",
+      "parentUuid": "9adffdf1_0d9fe460",
+      "revId": "458f4be403cea7ae9091cd4ba9bd432c2c941ed8",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
     }
   ]
 }
