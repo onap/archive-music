@@ -2,6 +2,29 @@
   "comments": [
     {
       "key": {
+        "uuid": "9adffdf1_0b901a42",
+        "filename": "src/main/java/org/onap/music/lockingservice/MusicLockingService.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 1827
+      },
+      "writtenOn": "2018-11-19T15:58:45Z",
+      "side": 1,
+      "message": "Please update all the loggers to print to the proper error logger delegate. The line below is a good example.",
+      "range": {
+        "startLine": 55,
+        "startChar": 12,
+        "endLine": 55,
+        "endChar": 18
+      },
+      "revId": "458f4be403cea7ae9091cd4ba9bd432c2c941ed8",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "9adffdf1_0d9fe460",
         "filename": "src/main/java/org/onap/music/lockingservice/MusicLockingService.java",
         "patchSetId": 1
