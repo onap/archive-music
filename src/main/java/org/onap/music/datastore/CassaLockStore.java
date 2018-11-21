@@ -169,7 +169,7 @@ public class CassaLockStore {
 		table = "lockQ_"+table; 
         PreparedQueryObject queryObject = new PreparedQueryObject();
         Long lockReferenceL = Long.parseLong(lockReference);
-        String updateQuery = "update "+keyspace+"."+table+" set acquireTime='"+ System.currentTimeMillis()+"' where key='"+key+"' AND lockReference = "+lockReferenceL+" IF EXISTS;";
+        String updateQuery = "update "+keyspace+"."+table+" set acquireTime='"+ System.currentTimeMillis()+"' where key='"+key+"' AND lockReference = "+lockReferenceL+";";
         queryObject.appendQueryString(updateQuery);
 		dsHandle.executePut(queryObject, "eventual");	
 
