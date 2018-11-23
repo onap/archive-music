@@ -29,13 +29,13 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<jersey1.version>1.19</jersey1.version>
-		<jersey2.version>2.25.1</jersey2.version>
-		<jaxrs.version>2.0.1</jaxrs.version>
-		<cassandra.version>3.4.0</cassandra.version>
-		<zookeeper.version>3.4.11</zookeeper.version>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <jersey1.version>1.19</jersey1.version>
+        <jersey2.version>2.25.1</jersey2.version>
+        <jaxrs.version>2.0.1</jaxrs.version>
+        <cassandra.version>3.6.0</cassandra.version>
+        <zookeeper.version>3.4.11</zookeeper.version>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -104,8 +104,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.5.1</version>
 				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
+					<source>1.8</source>
+					<target>1.8</target>
 					<excludes>
 						<exclude>jar/**</exclude>
 					</excludes>
@@ -348,7 +348,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>18.0</version>
+			<version>27.0-jre</version>
 		</dependency>
 		<dependency>
 			<groupId>org.mindrot</groupId>
@@ -503,7 +503,4 @@
 			<url>dav:${nexusproxy}${sitePath}</url>
 		</site>
 	</distributionManagement>
-
-
-
 </project>
