@@ -939,7 +939,7 @@ public class RestMusicAdminAPI {
 	        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), notifyOn));
 	        MusicCore.nonKeyRelatedPut(pQuery, MusicUtil.EVENTUAL);
         } catch(Exception e) {
-        	e.printStackTrace();
+        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
         	return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setMessage("Callback api registration failed").toMap()).build();
         }
     	return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setMessage("Callback api successfully deleted").toMap()).build();
