@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ * Modifications Copyright (C) 2018 IBM.
+ * ================================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -939,7 +941,7 @@ public class RestMusicAdminAPI {
 	        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), notifyOn));
 	        MusicCore.nonKeyRelatedPut(pQuery, MusicUtil.EVENTUAL);
         } catch(Exception e) {
-        	e.printStackTrace();
+        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
         	return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setMessage("Callback api registration failed").toMap()).build();
         }
     	return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setMessage("Callback api successfully deleted").toMap()).build();
