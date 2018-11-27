@@ -25,3 +25,5 @@
 /.nb-gradle/
 src/main/webapp/WEB-INF/classes/
 debug-logs/
+
+.toDelete
