@@ -1,4 +1,4 @@
-package org.onap.music.unittests;
+package org.onap.music.testruns;
 
 import java.util.HashMap;
 import java.util.Map;
