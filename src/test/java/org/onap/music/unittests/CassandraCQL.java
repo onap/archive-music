@@ -50,32 +50,36 @@ import org.onap.music.datastore.PreparedQueryObject;
 
 public class CassandraCQL {
 
+	public static final String keyspace = "testCassa";
+	
+	public static final String table = "employees";
+	
     public static final String createKeySpace =
-                    "CREATE KEYSPACE IF NOT EXISTS testCassa WITH replication = "
+                    "CREATE KEYSPACE IF NOT EXISTS " + keyspace + " WITH replication = "
                     +"{'class':'SimpleStrategy','replication_factor':1} AND durable_writes = true;";
 
-    public static final String dropKeyspace = "DROP KEYSPACE IF EXISTS testCassa";
+    public static final String dropKeyspace = "DROP KEYSPACE IF EXISTS " + keyspace;
 
     public static final String createTableEmployees =
-                    "CREATE TABLE IF NOT EXISTS testCassa.employees "
+                    "CREATE TABLE IF NOT EXISTS " + keyspace + "." + table + " "
                     + "(vector_ts text,empId uuid,empName text,empSalary varint,address Map<text,text>,PRIMARY KEY (empName)) "
                     + "WITH comment='Financial Info of employees' "
                     + "AND compression={'sstable_compression':'DeflateCompressor','chunk_length_kb':64} "
                     + "AND compaction={'class':'SizeTieredCompactionStrategy','min_threshold':6};";
 
     public static final String insertIntoTablePrepared1 =
-                    "INSERT INTO testCassa.employees (vector_ts,empId,empName,empSalary) VALUES (?,?,?,?); ";
+                    "INSERT INTO " + keyspace + "." + table + " (vector_ts,empId,empName,empSalary) VALUES (?,?,?,?); ";
 
     public static final String insertIntoTablePrepared2 =
-                    "INSERT INTO testCassa.employees (vector_ts,empId,empName,empSalary,address) VALUES (?,?,?,?,?);";
+                    "INSERT INTO " + keyspace + "." + table + " (vector_ts,empId,empName,empSalary,address) VALUES (?,?,?,?,?);";
 
-    public static final String selectALL = "SELECT *  FROM testCassa.employees;";
+    public static final String selectALL = "SELECT *  FROM " + keyspace + "." + table + ";";
 
     public static final String selectSpecific =
-                    "SELECT *  FROM testCassa.employees WHERE empName= ?;";
+                    "SELECT *  FROM " + keyspace + "." + table + " WHERE empName= ?;";
 
     public static final String updatePreparedQuery =
-                    "UPDATE testCassa.employees  SET vector_ts=?,address= ? WHERE empName= ?;";
+                    "UPDATE " + keyspace + "." + table + "  SET vector_ts=?,address= ? WHERE empName= ?;";
 
     public static final String deleteFromTable = " ";
 
