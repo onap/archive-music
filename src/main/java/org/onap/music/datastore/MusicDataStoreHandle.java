@@ -36,22 +36,22 @@ public class MusicDataStoreHandle {
 	
 	 public static MusicDataStore mDstoreHandle = null;
 	 private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicDataStoreHandle.class);
-	
+
     /**
-     * 
-     * @param remoteIp
+     *
+     * @param remoteAddress
      * @return
      */
-    public static MusicDataStore getDSHandle(String remoteIp) {
+    public static MusicDataStore getDSHandle(String remoteAddress) {
         logger.info(EELFLoggerDelegate.applicationLogger,"Acquiring data store handle");
         long start = System.currentTimeMillis();
         if (mDstoreHandle == null) {
-        	try {
-    			MusicUtil.loadProperties();
-    		} catch (Exception e) {
-    			logger.error(EELFLoggerDelegate.errorLogger, "No properties file defined. Falling back to default.");
-    		}
-            mDstoreHandle = new MusicDataStore(remoteIp);
+            try {
+                MusicUtil.loadProperties();
+            } catch (Exception e) {
+                logger.error(EELFLoggerDelegate.errorLogger, "No properties file defined. Falling back to default.");
+            }
+            mDstoreHandle = new MusicDataStore(remoteAddress);
         }
         long end = System.currentTimeMillis();
         logger.info(EELFLoggerDelegate.applicationLogger,"Time taken to acquire data store handle:" + (end - start) + " ms");
@@ -74,10 +74,10 @@ public class MusicDataStoreHandle {
     			logger.error(EELFLoggerDelegate.errorLogger, "No properties file defined. Falling back to default.");
     		}
             // Quick Fix - Best to put this into every call to getDSHandle?
-            if (! MusicUtil.getMyCassaHost().equals("localhost") ) {
-                mDstoreHandle = new MusicDataStore(MusicUtil.getMyCassaHost());
-            } else {
+            if (MusicUtil.getMyCassaHost().equals("localhost")) {
                 mDstoreHandle = new MusicDataStore();
+            } else {
+                mDstoreHandle = new MusicDataStore(MusicUtil.getMyCassaHost());
             }
         }
         if(mDstoreHandle.getSession() == null) {

@@ -7,6 +7,7 @@ import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.MusicCore;
+import org.onap.music.main.MusicUtil;
 import org.onap.music.util.SamplerHistogramTimeMeasure;
 import org.onap.music.util.TimeMeasure;
 import org.onap.music.util.TimeMeasureInstance;
@@ -234,8 +235,11 @@ public class ComparisonPoints1
         }
     }
 
-       public static void main( String[] args ) throws Exception {
+       public static void main(String[] args) throws Exception {
            TimeMeasureInstance.setInstance(new SamplerHistogramTimeMeasure());
+           if (args.length > 0) {
+               MusicUtil.setMyCassaHost(args[0]);
+           }
            ComparisonPoints1 cp1 = new ComparisonPoints1();
            cp1.initialize();
            Thread.sleep(2000);
