@@ -24,6 +24,8 @@ package org.onap.music.unittests;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.util.ArrayList;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
@@ -32,7 +34,7 @@ import org.junit.runners.MethodSorters;
 import org.mockito.Mock;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
-
+import org.onap.music.main.MusicCore;
 import org.onap.music.datastore.CassaDataStore;
 import org.onap.music.datastore.CassaLockStore;
 import org.onap.music.datastore.PreparedQueryObject;
@@ -50,10 +52,20 @@ public class MusicLockStoreTest {
     static PreparedQueryObject testObject;
 
     @BeforeClass
-    public static void init() {
+    public static void init() throws MusicServiceException, MusicQueryException {
         dataStore = CassandraCQL.connectToEmbeddedCassandra();
         lockStore = new CassaLockStore(dataStore);
 
+        boolean result = false;
+        testObject = new PreparedQueryObject();
+        testObject.appendQueryString(CassandraCQL.createKeySpace);
+        result = dataStore.executePut(testObject, "eventual");
+        testObject = new PreparedQueryObject();
+        /*
+        testObject.appendQueryString(CassandraCQL.createTableEmployees);
+        MusicCore.createTable(CassandraCQL.keyspace, CassandraCQL.table, testObject, "eventual");
+        assertEquals(true, result);
+        */
     }
 
     @AfterClass
@@ -65,106 +77,36 @@ public class MusicLockStoreTest {
 
     }
 
-    @Test
-    public void Test1_SetUp() throws MusicServiceException, MusicQueryException {
-        boolean result = false;
-        testObject = new PreparedQueryObject();
-        testObject.appendQueryString(CassandraCQL.createKeySpace);
-        result = dataStore.executePut(testObject, "eventual");;
-        testObject = new PreparedQueryObject();
-        testObject.appendQueryString(CassandraCQL.createTableEmployees);
-        result = dataStore.executePut(testObject, "eventual");
-        assertEquals(true, result);
-
-    }
-
     
     @Test
     public void Test_createLockQueue() throws MusicServiceException, MusicQueryException {
-    		String keyspace = "testCassa";
-    		String table = "employees";
-    		/*
-    		 * above two hard coded since this depends on the keyspace and table created in the 
-    		 * CassandraCQL class. Need to change this..
-    		 */
-    		boolean result = lockStore.createLockQueue(keyspace,table);
+     	boolean result = lockStore.createLockQueue(CassandraCQL.keyspace,CassandraCQL.table);
         assertEquals(true, result);
-    }
-
-    @Test
-    public void Test3_ExecutePut_critical_insert() throws MusicServiceException, MusicQueryException {
-        testObject = CassandraCQL.setPreparedInsertQueryObject2();
-        boolean result = dataStore.executePut(testObject, "Critical");
-        assertEquals(true, result);
-    }
-
-    @Test
-    public void Test4_ExecutePut_eventual_update() throws MusicServiceException, MusicQueryException {
-        testObject = CassandraCQL.setPreparedUpdateQueryObject();
-        boolean result = false;
-        result = dataStore.executePut(testObject, "eventual");
-        assertEquals(true, result);
-    }
-
-    @Test
-    public void Test5_ExecuteEventualGet() throws MusicServiceException, MusicQueryException {
-        testObject = new PreparedQueryObject();
-        testObject.appendQueryString(CassandraCQL.selectALL);
-        boolean result = false;
-        int count = 0;
-        ResultSet output = null;
-        output = dataStore.executeEventualGet(testObject);
-        System.out.println(output);
-        ;
-        for (Row row : output) {
-            count++;
-            System.out.println(row.toString());
-        }
-        if (count == 2) {
-            result = true;
-        }
-        assertEquals(true, result);
-    }
-
-    @Test
-    public void Test6_ExecuteCriticalGet() throws MusicServiceException, MusicQueryException {
-        testObject = CassandraCQL.setPreparedGetQuery();
-        boolean result = false;
-        int count = 0;
-        ResultSet output = null;
-        output = dataStore.executeCriticalGet(testObject);
-        System.out.println(output);
-        ;
-        for (Row row : output) {
-            count++;
-            System.out.println(row.toString());
-        }
-        if (count == 1) {
-            result = true;
-        }
-        assertEquals(true, result);
-    }
-
-    @Test(expected = NullPointerException.class)
-    public void Test7_exception() {
-        PreparedQueryObject queryObject = null;
-        try {
-            dataStore.executePut(queryObject, "critical");
-        } catch (MusicQueryException | MusicServiceException e) {
-            System.out.println(e.getMessage());
-        }
     }
     
     @Test
-    public void Test8_columnDataType() {
-        DataType data = dataStore.returnColumnDataType("testCassa", "employees", "empName");
-        String datatype = data.toString();
-        assertEquals("text",datatype);
-    }
-    
-    @Test
-    public void Test8_columnMetdaData() {
-        TableMetadata data = dataStore.returnColumnMetadata("testCassa", "employees");
-        assertNotNull(data);
+    public void Test_testGetLockQueue() throws MusicServiceException, MusicQueryException {
+    	lockStore.createLockQueue(CassandraCQL.keyspace, CassandraCQL.table);
+    	String lockRef = lockStore.genLockRefandEnQueue(CassandraCQL.keyspace,  CassandraCQL.table, "test");
+    	ResultSet rs = lockStore.getLockQueue(CassandraCQL.keyspace, CassandraCQL.table, "test");
+    	ArrayList<Object> queue = new ArrayList<>();
+    	for (Row row: rs) {
+    		System.out.println(row);
+    		queue.add(row);   		
+    	}
+        assertEquals(1, queue.size());
+        
+        //add more locks
+        for (int i=0; i<20; i++) {
+        	lockStore.genLockRefandEnQueue(CassandraCQL.keyspace,  CassandraCQL.table, "test");
+	    	for (int j=0; j<10; j++) {
+	    		rs = lockStore.getLockQueue(CassandraCQL.keyspace, CassandraCQL.table, "test");
+	    		queue = new ArrayList<>();
+	    		for (Row row: rs) {
+	    			queue.add(row);
+	    		}
+	    	}
+        }
+    	assertEquals(21, queue.size());
     }
 }

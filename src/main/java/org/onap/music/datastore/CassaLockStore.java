@@ -1,5 +1,7 @@
 package org.onap.music.datastore;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
@@ -7,8 +9,10 @@ import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.MusicUtil;
 
+import com.datastax.driver.core.ColumnDefinitions;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
+import com.datastax.driver.core.ColumnDefinitions.Definition;
 import com.datastax.driver.core.utils.UUIDs;
 
 /*
@@ -17,6 +21,7 @@ import com.datastax.driver.core.utils.UUIDs;
 
 public class CassaLockStore {
 	
+	private static final String table_prepend_name = "lockQ_";
 	private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(CassaLockStore.class);
 	
 	public class LockObject{
@@ -52,7 +57,7 @@ public class CassaLockStore {
 	public boolean createLockQueue(String keyspace, String table) throws MusicServiceException, MusicQueryException {
         logger.info(EELFLoggerDelegate.applicationLogger,
                 "Create lock queue/table for " +  keyspace+"."+table);
-		table = "lockQ_"+table; 
+		table = table_prepend_name+table; 
 		String tabQuery = "CREATE TABLE IF NOT EXISTS "+keyspace+"."+table
 				+ " ( key text, lockReference bigint, createTime text, acquireTime text, guard bigint static, PRIMARY KEY ((key), lockReference) ) "
 				+ "WITH CLUSTERING ORDER BY (lockReference ASC);";
@@ -77,7 +82,7 @@ public class CassaLockStore {
 	public String genLockRefandEnQueue(String keyspace, String table, String lockName) throws MusicServiceException, MusicQueryException {
         logger.info(EELFLoggerDelegate.applicationLogger,
                 "Create lock reference for " +  keyspace + "." + table + "." + lockName);
-		table = "lockQ_" + table;
+		table = table_prepend_name + table;
 		long lockEpochMillis = System.currentTimeMillis();
 		long lockRef = lockEpochMillis;
 
@@ -113,6 +118,25 @@ public class CassaLockStore {
 		return String.valueOf(lockRef);
 	}
 	
+	/**
+	 * Returns a result set containing the list of clients waiting for a particular lock
+	 * @param keyspace
+	 * @param table
+	 * @param key
+	 * @return
+	 * @throws MusicServiceException
+	 * @throws MusicQueryException
+	 */
+	public ResultSet getLockQueue(String keyspace, String table, String key)
+			throws MusicServiceException, MusicQueryException {
+		logger.info(EELFLoggerDelegate.applicationLogger,
+                "Getting the queue for " +  keyspace+"."+table+"."+key);
+		table = table_prepend_name+table;
+		String selectQuery = "select * from " + keyspace + "." + table + " where key='" + key + "';";
+		PreparedQueryObject queryObject = new PreparedQueryObject();
+        queryObject.appendQueryString(selectQuery);
+		return dsHandle.executeEventualGet(queryObject);
+	}
 	
 	/**
 	 * This method returns the top of lock table/queue for the key. 
@@ -126,7 +150,7 @@ public class CassaLockStore {
 	public LockObject peekLockQueue(String keyspace, String table, String key) throws MusicServiceException, MusicQueryException{
         logger.info(EELFLoggerDelegate.applicationLogger,
                 "Peek in lock table for " +  keyspace+"."+table+"."+key);
-		table = "lockQ_"+table; 
+		table = table_prepend_name+table; 
 		String selectQuery = "select * from "+keyspace+"."+table+" where key='"+key+"' LIMIT 1;";	
         PreparedQueryObject queryObject = new PreparedQueryObject();
         queryObject.appendQueryString(selectQuery);
@@ -150,7 +174,7 @@ public class CassaLockStore {
 	 * @throws MusicQueryException
 	 */	
 	public void deQueueLockRef(String keyspace, String table, String key, String lockReference) throws MusicServiceException, MusicQueryException{
-		table = "lockQ_"+table; 
+		table = table_prepend_name+table; 
         PreparedQueryObject queryObject = new PreparedQueryObject();
         Long lockReferenceL = Long.parseLong(lockReference);
         String deleteQuery = "delete from "+keyspace+"."+table+" where key='"+key+"' AND lockReference ="+lockReferenceL+" IF EXISTS;";
@@ -160,7 +184,7 @@ public class CassaLockStore {
 	
 
 	public void updateLockAcquireTime(String keyspace, String table, String key, String lockReference) throws MusicServiceException, MusicQueryException{
-		table = "lockQ_"+table; 
+		table = table_prepend_name+table; 
         PreparedQueryObject queryObject = new PreparedQueryObject();
         Long lockReferenceL = Long.parseLong(lockReference);
         String updateQuery = "update "+keyspace+"."+table+" set acquireTime='"+ System.currentTimeMillis()+"' where key='"+key+"' AND lockReference = "+lockReferenceL+" IF EXISTS;";
@@ -168,6 +192,5 @@ public class CassaLockStore {
 		dsHandle.executePut(queryObject, "eventual");	
 
 	}
-	
 
 }
