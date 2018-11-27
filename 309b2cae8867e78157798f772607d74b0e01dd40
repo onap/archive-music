@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9adffdf1_62af7195",
+        "filename": "src/test/java/org/onap/music/unittests/ComparisonPoints1.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2018-11-27T02:13:04Z",
+      "side": 1,
+      "message": "Can you create a new package: e.g. org.onap.music.benchmarks and put this file there?",
+      "revId": "309b2cae8867e78157798f772607d74b0e01dd40",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
