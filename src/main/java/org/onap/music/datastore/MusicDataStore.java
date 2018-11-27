@@ -28,7 +28,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import com.datastax.driver.core.*;
@@ -46,78 +45,32 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 /**
  * @author nelson24
- *
- */
-/**
  * @author bharathb
- *
- */
-/**
- * @author bharathb
- *
- */
-/**
- * @author bharathb
- *
- */
-/**
- * @author bharathb
- *
- */
-/**
- * @author bharathb
- *
- */
-/**
- * @author bharathb
- *
- */
-/**
- * @author bharathb
- *
  */
 public class MusicDataStore {
 
     public static final String CONSISTENCY_LEVEL_ONE = "ONE";
     public static final String CONSISTENCY_LEVEL_QUORUM = "QUORUM";
 
+    private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicDataStore.class);
+
     private Session session;
     private Cluster cluster;
 
-    /**
-     * @param session
-     */
-    public void setSession(Session session) {
-        this.session = session;
-    }
-    
-    /**
-     * @param
-     */
     public Session getSession() {
         return session;
     }
 
-    /**
-     * @param cluster
-     */
-    public void setCluster(Cluster cluster) {
-        this.cluster = cluster;
-    }
-
-
-
-    private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicDataStore.class);
 
     /**
-     * 
+     * Constructs DataStore by connecting to local Cassandra
      */
     public MusicDataStore() {
-        connectToCassaCluster();
+        connectToLocalCassandraCluster();
     }
 
-
     /**
+     * Constructs DataStore by providing existing cluster and session
      * @param cluster
      * @param session
      */
@@ -127,20 +80,30 @@ public class MusicDataStore {
     }
 
     /**
-     * 
-     * @param remoteIp
+     * Constructs DataStore by connecting to provided remote Cassandra
+     * @param remoteAddress
      * @throws MusicServiceException
      */
-    public MusicDataStore(String remoteIp) {
+    public MusicDataStore(String remoteAddress) {
         try {
-            connectToCassaCluster(remoteIp);
+            connectToRemoteCassandraCluster(remoteAddress);
         } catch (MusicServiceException e) {
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
         }
     }
 
+    private void createCassandraSession(String address) throws NoHostAvailableException {
+        cluster = Cluster.builder().withPort(9042)
+                .withCredentials(MusicUtil.getCassName(), MusicUtil.getCassPwd())
+                .addContactPoint(address).build();
+        Metadata metadata = cluster.getMetadata();
+        logger.info(EELFLoggerDelegate.applicationLogger, "Connected to cassa cluster "
+                + metadata.getClusterName() + " at " + address);
+        session = cluster.connect();
+    }
+
     /**
-     * 
+     *
      * @return
      */
     private ArrayList<String> getAllPossibleLocalIps() {
@@ -158,44 +121,28 @@ public class MusicDataStore {
         } catch (SocketException e) {
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), AppMessages.CONNCECTIVITYERROR, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
         }catch(Exception e) {
-        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), ErrorSeverity.ERROR, ErrorTypes.GENERALSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), ErrorSeverity.ERROR, ErrorTypes.GENERALSERVICEERROR);
         }
         return allPossibleIps;
     }
 
     /**
-     * This method iterates through all available IP addresses and connects to multiple cassandra
-     * clusters.
+     * This method iterates through all available local IP addresses and tries to connect to first successful one
      */
-    private void connectToCassaCluster() {
-        Iterator<String> it = getAllPossibleLocalIps().iterator();
-        String address = "localhost";
+    private void connectToLocalCassandraCluster() {
+        ArrayList<String> localAddrs = getAllPossibleLocalIps();
+        localAddrs.add(0, "localhost");
         logger.info(EELFLoggerDelegate.applicationLogger,
                         "Connecting to cassa cluster: Iterating through possible ips:"
                                         + getAllPossibleLocalIps());
-        while (it.hasNext()) {
+        for (String address: localAddrs) {
             try {
-                cluster = Cluster.builder().withPort(9042)
-                                .withCredentials(MusicUtil.getCassName(), MusicUtil.getCassPwd())
-                                .addContactPoint(address).build();
-                Metadata metadata = cluster.getMetadata();
-                logger.info(EELFLoggerDelegate.applicationLogger, "Connected to cassa cluster "
-                                + metadata.getClusterName() + " at " + address);
-                session = cluster.connect();
-
+                createCassandraSession(address);
                 break;
             } catch (NoHostAvailableException e) {
-                address = it.next();
                 logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.HOSTUNAVAILABLE, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
             }
         }
-    }
-
-    /**
-     * 
-     */
-    public void close() {
-        session.close();
     }
 
     /**
@@ -203,20 +150,21 @@ public class MusicDataStore {
      * 
      * @param address
      */
-    private void connectToCassaCluster(String address) throws MusicServiceException {
-        cluster = Cluster.builder().withPort(9042)
-                        .withCredentials(MusicUtil.getCassName(), MusicUtil.getCassPwd())
-                        .addContactPoint(address).build();
-        Metadata metadata = cluster.getMetadata();
-        logger.info(EELFLoggerDelegate.applicationLogger, "Connected to cassa cluster "
-                        + metadata.getClusterName() + " at " + address);
+    private void connectToRemoteCassandraCluster(String address) throws MusicServiceException {
         try {
-            session = cluster.connect();
+            createCassandraSession(address);
         } catch (Exception ex) {
             logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.CASSANDRACONNECTIVITY, ErrorSeverity.ERROR, ErrorTypes.SERVICEUNAVAILABLE);
             throw new MusicServiceException(
                             "Error while connecting to Cassandra cluster.. " + ex.getMessage());
         }
+    }
+
+    /**
+     *
+     */
+    public void close() {
+        session.close();
     }
 
     /**

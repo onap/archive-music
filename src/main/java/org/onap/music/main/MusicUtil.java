@@ -604,8 +604,8 @@ public class MusicUtil {
      * Given the time of write for an update in a critical section, this method provides a transformed timestamp
      * that ensures that a previous lock holder who is still alive can never corrupt a later critical section.
      * The main idea is to us the lock reference to clearly demarcate the timestamps across critical sections.
-     * @param the UUID lock reference associated with the write.
-     * @param the long timeOfWrite which is the actual time at which the write took place
+     * @param ordinal lock reference/ordinal associated with the write.
+     * @param timeOfWrite timestamp which is the actual time at which the write took place
      * @throws MusicServiceException
      * @throws MusicQueryException
      */
