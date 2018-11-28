@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (C) 2018 IBM.
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -29,8 +31,8 @@ package org.onap.music.exceptions;
 public class MusicServiceException extends Exception {
 
 
-    private int errorCode;
-    private String errorMessage;
+    private final int errorCode;
+    private final String errorMessage;
 
     public MusicServiceException() {
         super();
@@ -41,8 +43,18 @@ public class MusicServiceException extends Exception {
         super(message);
 
     }
-
-
+  
+    public MusicServiceException(String message, int errorCode) {
+        super(message);
+        this.errorCode=errorCode;
+    }
+  
+    public MusicServiceException(String message, int errorCode, String errorMessage) {
+        super(message);
+        this.errorCode=errorCode;
+        this.errorMessage=errorMessage;
+    }
+  
     public MusicServiceException(Throwable cause) {
         super(cause);
 
@@ -65,19 +77,7 @@ public class MusicServiceException extends Exception {
         return errorCode;
     }
 
-
-    public void setErrorCode(int errorCode) {
-        this.errorCode = errorCode;
-    }
-
-
     public String getErrorMessage() {
         return errorMessage;
     }
-
-
-    public void setErrorMessage(String errorMessage) {
-        this.errorMessage = errorMessage;
-    }
-
 }
