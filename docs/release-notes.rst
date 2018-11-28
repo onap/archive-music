@@ -4,32 +4,39 @@
 
 Release Notes
 =============
-Initial Release for Beijing
+Initial Release for Casablanca
 
-Version: 2.5.4
---------------
+Version: 3.0.24
+---------------
 
-:Release Date: 2018-06-07
+:Release Date: 2018-11-28
 
 **New Features**
 
-MUSIC provides a service with recipes that individual ONAP components and microservice can use for 
-    - state replication across multiple geo-distributed sites
-    - flexible fine-grained consistency management of state
-    - policy driven state-ownership across replicas of the service 
+- MUSIC as a Service: while MUSIC was consumed internally by components in the Beijing release, in Cassablanca MUSIC can be deployed as an independent multi-site clustered service
+
+- Designed MUSIC to be a fully sharded, scale out system, where as many ONAP sites/component replicas can be added as required for performance
+
+- Automated failure detection and consistent failover across sites for ONAP components using MUSIC through the PROM recipe
+
+- Continued adherence to ONAP S3P requirements
 
 
 **Bug Fixes**
 
-	- `MUSIC-33 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-33>`_ CriticalPut is causing HTTP Status 500 – Internal Server Error
+	- `MUSIC-176 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-176>`_ nc: bad address
 
-	- `MUSIC-34 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-34>`_ CreateTable,InsertIntoTable,UpdateTable,DeleteFromTable,DropTable don't check resource existence
+	- `MUSIC-154 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-154>`_ Helm charts using latest tag name
 
-	- `MUSIC-35 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-35>`_ Onboarding issues
+	- `MUSIC-152 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-152>`_ MUSIC tomcat returning HTTP 401
 
-	- `MUSIC-36 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-36>`_ Test Case failing
+	- `MUSIC-147 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-147>`_ Cassandra-job is failing
 
-	- `MUSIC-37 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-37>`_ Acquire lock to return more information
+	- `MUSIC-143 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-143>`_ Translator Service not picking records from controller
+
+	- `MUSIC-78 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-78>`_ Build failed to find artifact org.onap.music:MUSIC:jar:2.5.5
+
+
 
 **Known Issues**
 N/A
@@ -41,8 +48,9 @@ MUSIC code has been formally scanned during build time using NexusIQ and all Cri
 Quick Links:
 
 - `MUSIC project page <https://wiki.onap.org/display/DW/MUSIC+Project>`_
+- `MUSIC Casablanca Release <https://wiki.onap.org/display/DW/MUSIC+Casablanca+Release>`_
 - `Passing Badge information for MUSIC <https://bestpractices.coreinfrastructure.org/en/projects/1722>`_
-- `Project Vulnerability Review Table for MUSIC <https://wiki.onap.org/pages/viewpage.action?pageId=25439359>`_
+- `MUSIC Architecture Page <https://onap.readthedocs.io/en/casablanca/submodules/music.git/docs/architecture.html>`_
 
 **Upgrade Notes**
 
