@@ -50,8 +50,10 @@ class ZNodeName implements Comparable<ZNodeName> {
                 // If an exception occurred we misdetected a sequence suffix,
                 // so return -1.
             } catch (NumberFormatException e) {
+                logger.error("Exception", e);
             	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),"Number format exception "+idx, ErrorSeverity.ERROR, ErrorTypes.GENERALSERVICEERROR);
             } catch (ArrayIndexOutOfBoundsException e) {
+                logger.error("Exception", e);
             	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),"Array out of bounds for  "+idx, ErrorSeverity.ERROR, ErrorTypes.GENERALSERVICEERROR);
             }
         }
@@ -59,7 +61,7 @@ class ZNodeName implements Comparable<ZNodeName> {
 
     @Override
     public String toString() {
-        return name.toString();
+        return name;
     }
 
     @Override
