@@ -45,7 +45,7 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import org.apache.cassandra.exceptions.ConfigurationException;
 import org.apache.thrift.transport.TTransportException;
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
-import org.onap.music.datastore.CassaDataStore;
+import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.PreparedQueryObject;
 
 public class CassandraCQL {
@@ -226,7 +226,7 @@ public class CassandraCQL {
         return allPossibleIps;
     }
 
-    public static CassaDataStore connectToEmbeddedCassandra() {
+    public static MusicDataStore connectToEmbeddedCassandra() {
         Iterator<String> it = getAllPossibleLocalIps().iterator();
         String address = "localhost";
 
@@ -253,7 +253,7 @@ public class CassandraCQL {
 
             }
         }
-        return new CassaDataStore(cluster, session);
+        return new MusicDataStore(cluster, session);
 
     }
 

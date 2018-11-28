@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.codehaus.jettison.json.JSONObject;
+import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
@@ -53,7 +54,7 @@ public class MusicConditional {
 
 		Map<String, PreparedQueryObject> queryBank = new HashMap<>();
 		TableMetadata tableInfo = null;
-		tableInfo = MusicCore.returnColumnMetadata(keyspace, tablename);
+		tableInfo = MusicDataStoreHandle.returnColumnMetadata(keyspace, tablename);
 		DataType primaryIdType = tableInfo.getPrimaryKey().get(0).getType();
 		String primaryId = tableInfo.getPrimaryKey().get(0).getName();
 		DataType casscadeColumnType = tableInfo.getColumn(casscadeColumnName).getType();
@@ -122,15 +123,15 @@ public class MusicConditional {
 	        ReturnType lockAcqResult = MusicCore.acquireLock(fullyQualifiedKey, lockId);
 	        if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
 				try {
-					results = MusicCore.getDSHandle().executeQuorumConsistencyGet(queryBank.get(MusicUtil.SELECT));
+					results = MusicDataStoreHandle.getDSHandle().executeQuorumConsistencyGet(queryBank.get(MusicUtil.SELECT));
 				} catch (Exception e) {
 					return new ReturnType(ResultType.FAILURE, e.getMessage());
 				}
 				if (results.all().isEmpty()) {
-					MusicCore.getDSHandle().executePut(queryBank.get(MusicUtil.INSERT), "critical");
+					MusicDataStoreHandle.getDSHandle().executePut(queryBank.get(MusicUtil.INSERT), "critical");
 					return new ReturnType(ResultType.SUCCESS, "insert");
 				} else {
-					MusicCore.getDSHandle().executePut(queryBank.get(MusicUtil.UPDATE), "critical");
+					MusicDataStoreHandle.getDSHandle().executePut(queryBank.get(MusicUtil.UPDATE), "critical");
 					return new ReturnType(ResultType.SUCCESS, "update");
 				}
 			} else {
@@ -178,7 +179,7 @@ public class MusicConditional {
 		try {
 			ReturnType lockAcqResult = MusicCore.acquireLockWithLease(key, lockId, leasePeriod);
 			if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
-				Row row  = MusicCore.getDSHandle().executeQuorumConsistencyGet(queryBank.get(MusicUtil.SELECT)).one();
+				Row row  = MusicDataStoreHandle.getDSHandle().executeQuorumConsistencyGet(queryBank.get(MusicUtil.SELECT)).one();
 				
 				if(row != null) {
 					Map<String, String> updatedValues = cascadeColumnUpdateSpecific(row, cascadeColumnValues, casscadeColumnName, planId);
@@ -191,14 +192,14 @@ public class MusicConditional {
 					update.addValue(MusicUtil.convertToActualDataType(DataType.text(), vector_ts));
 					update.addValue(MusicUtil.convertToActualDataType(DataType.text(), primaryKeyValue));
 					try {
-						MusicCore.getDSHandle().executePut(update, "critical");
+						MusicDataStoreHandle.getDSHandle().executePut(update, "critical");
 					} catch (Exception ex) {
 						return new ReturnType(ResultType.FAILURE, ex.getMessage());
 					}
 				}else {
 					return new ReturnType(ResultType.FAILURE,"Cannot find data related to key: "+primaryKey);
 				}
-				MusicCore.getDSHandle().executePut(queryBank.get(MusicUtil.UPSERT), "critical");
+				MusicDataStoreHandle.getDSHandle().executePut(queryBank.get(MusicUtil.UPSERT), "critical");
 				return new ReturnType(ResultType.SUCCESS, "update success");
 
 			} else {

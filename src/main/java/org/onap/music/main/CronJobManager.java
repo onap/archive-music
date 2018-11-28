@@ -71,7 +71,7 @@ public class CronJobManager implements ServletContextListener {
                     if(System.currentTimeMillis() >= ctime + 24 * 60 * 60 * 1000) {
                         expiredKeys = true;
                         String new_id = id.substring(1);
-                        MusicCore.deleteLock(new_id);
+                        MusicCore.destroyLockRef(id, new_id);
                         deleteKeys.append(id).append(",");
                     }
                     else {
@@ -84,9 +84,7 @@ public class CronJobManager implements ServletContextListener {
                }
             } catch (MusicServiceException e) {
                 e.printStackTrace();
-            } catch (MusicLockingException e) {
-                e.printStackTrace();
-       }
+            }
        
       //Zookeeper cleanup
         scheduler.scheduleAtFixedRate(new Runnable() {
@@ -99,16 +97,11 @@ public class CronJobManager implements ServletContextListener {
                     Map.Entry<String, Long> pair = (Map.Entry<String, Long>)it.next();
                     long ctime = pair.getValue();
                    if (System.currentTimeMillis() >= ctime + 24 * 60 * 60 * 1000) {
-                       try {
-                           expiredKeys = true;
-                           String id = pair.getKey();
-                           deleteKeys.append("'").append(id).append("'").append(",");
-                           MusicCore.deleteLock(id.substring(1));
-                           MusicUtil.zkNodeMap.remove(id);
-                           
-                       } catch (MusicLockingException e) {
-                          e.printStackTrace();
-                       }
+                       expiredKeys = true;
+					   String id = pair.getKey();
+					   deleteKeys.append("'").append(id).append("'").append(",");
+					   //MusicCore.deleteLock(id.substring(1));
+					   MusicUtil.zkNodeMap.remove(id);
                    }
                 }
                 if(expiredKeys) {

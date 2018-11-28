@@ -102,8 +102,8 @@ public class CachingUtil implements Runnable {
             String keySpace = row.getString("application_name");
             try {
                 userAttempts.put(nameSpace, 0);
-                AAFResponse responseObj = triggerAAF(nameSpace, userId, password);
-                if (responseObj.getNs().size() > 0) {
+                boolean responseObj = triggerAAF(nameSpace, userId, password);
+                if (responseObj) {
                     map = new HashMap<>();
                     map.put(userId, password);
                     aafCache.put(nameSpace, map);
@@ -164,12 +164,13 @@ public class CachingUtil implements Runnable {
             }
         }
 
-        AAFResponse responseObj = triggerAAF(nameSpace, userId, password);
-        if (responseObj.getNs().size() > 0) {
+        boolean responseObj = triggerAAF(nameSpace, userId, password);
+        if (responseObj) {
             //if (responseObj.getNs().get(0).getAdmin().contains(userId)) {
-            	//Map<String, String> map = new HashMap<>();
-                //map.put(userId, password);
-                //aafCache.put(nameSpace, map);
+            	Map<String, String> map = new HashMap<>();
+                map.put(userId, password);
+                aafCache.put(nameSpace, map);
+                musicCache.put(keySpace, nameSpace);
             	return true;
             //}
         }
@@ -177,7 +178,7 @@ public class CachingUtil implements Runnable {
         return false;
     }
 
-    private static AAFResponse triggerAAF(String nameSpace, String userId, String password)
+    private static boolean triggerAAF(String nameSpace, String userId, String password)
                     throws Exception {
         if (MusicUtil.getAafEndpointUrl() == null) {
         	logger.error(EELFLoggerDelegate.errorLogger,"",AppMessages.UNKNOWNERROR,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
@@ -210,14 +211,7 @@ public class CachingUtil implements Runnable {
             // TODO Allow for 2-3 times and forbid any attempt to trigger AAF with invalid values
             // for specific time.
         }
-        response.getHeaders().put(HttpHeaders.CONTENT_TYPE,
-                        Arrays.asList(MediaType.APPLICATION_JSON));
-        // AAFResponse output = response.getEntity(AAFResponse.class);
-        response.bufferEntity();
-        String x = response.getEntity(String.class);
-        AAFResponse responseObj = new ObjectMapper().readValue(x, AAFResponse.class);
-        
-        return responseObj;
+        return true;
     }
 
     public static void updateMusicCache(String keyspace, String nameSpace) {

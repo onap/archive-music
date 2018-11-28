@@ -32,7 +32,7 @@ import org.junit.runners.MethodSorters;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 
-import org.onap.music.datastore.CassaDataStore;
+import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.PreparedQueryObject;
 
 import com.datastax.driver.core.DataType;
@@ -43,7 +43,7 @@ import com.datastax.driver.core.TableMetadata;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class MusicDataStoreTest {
 
-    static CassaDataStore dataStore;
+    static MusicDataStore dataStore;
     static PreparedQueryObject testObject;
 
     @BeforeClass
