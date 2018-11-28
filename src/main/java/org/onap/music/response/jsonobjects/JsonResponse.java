@@ -24,7 +24,7 @@ package org.onap.music.response.jsonobjects;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.onap.music.datastore.MusicLockState.LockStatus;
+import org.onap.music.lockingservice.cassandra.MusicLockState.LockStatus;
 import org.onap.music.main.ResultType;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;

@@ -29,16 +29,19 @@ import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
+import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
-import org.onap.music.datastore.CassaLockStore;
-import org.onap.music.datastore.MusicLockState;
-import org.onap.music.datastore.MusicLockState.LockStatus;
+import org.onap.music.lockingservice.cassandra.CassaLockStore;
+import org.onap.music.lockingservice.cassandra.MusicLockState;
+import org.onap.music.lockingservice.cassandra.MusicLockState.LockStatus;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
+import org.onap.music.service.impl.MusicCassaCore;
+
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 
@@ -53,8 +56,8 @@ public class TestMusicCoreIntegration {
     @BeforeClass
     public static void init() throws Exception {
         try {
-            MusicCore.mDstoreHandle = CassandraCQL.connectToEmbeddedCassandra();
-            MusicCore.mLockHandle = new CassaLockStore(MusicCore.mDstoreHandle);
+        	MusicDataStoreHandle.mDstoreHandle = CassandraCQL.connectToEmbeddedCassandra();
+            MusicCore.mLockHandle = new CassaLockStore(MusicDataStoreHandle.mDstoreHandle);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -66,14 +69,13 @@ public class TestMusicCoreIntegration {
         testObject = new PreparedQueryObject();
         testObject.appendQueryString(CassandraCQL.dropKeyspace);
         MusicCore.eventualPut(testObject);
-        MusicCore.deleteLock(lockName);
-        MusicCore.mDstoreHandle.close();
+        MusicDataStoreHandle.mDstoreHandle.close();
     }
 
     @Test
     public void Test1_SetUp() throws MusicServiceException, MusicQueryException {
-        MusicCore.mDstoreHandle = CassandraCQL.connectToEmbeddedCassandra();
-        MusicCore.mLockHandle = new CassaLockStore(MusicCore.mDstoreHandle);
+    	MusicDataStoreHandle.mDstoreHandle = CassandraCQL.connectToEmbeddedCassandra();
+        MusicCore.mLockHandle = new CassaLockStore(MusicDataStoreHandle.mDstoreHandle);
         ResultType result = ResultType.FAILURE;
         testObject = new PreparedQueryObject();
         testObject.appendQueryString(CassandraCQL.createKeySpace);
@@ -127,7 +129,7 @@ public class TestMusicCoreIntegration {
         MusicLockState musicLockState = new MusicLockState(LockStatus.LOCKED, "id1");
         MusicLockState musicLockState1 = new MusicLockState(LockStatus.UNLOCKED, "id1");
         MusicCore.whoseTurnIsIt(lockName);
-        MusicLockState mls = MusicCore.getMusicLockState(lockName);
+        MusicLockState mls = MusicCassaCore.getMusicLockState(lockName);
         MusicLockState mls1 = MusicCore.voluntaryReleaseLock(lockName,lockId);
         assertEquals(musicLockState.getLockStatus(), mls.getLockStatus());
         assertEquals(musicLockState1.getLockStatus(), mls1.getLockStatus());

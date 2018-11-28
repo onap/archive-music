@@ -11,11 +11,12 @@ import org.junit.FixMethodOrder;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
-import org.onap.music.datastore.CassaDataStore;
-import org.onap.music.datastore.CassaLockStore;
+import org.onap.music.datastore.MusicDataStore;
+import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
+import org.onap.music.lockingservice.cassandra.CassaLockStore;
 import org.onap.music.main.MusicCore;
 
 import com.datastax.driver.core.ResultSet;
@@ -25,7 +26,7 @@ import com.datastax.driver.core.ResultSet;
 public class TestMusicCore {
 	
 	static PreparedQueryObject testObject;
-    static CassaDataStore dataStore;
+    static MusicDataStore dataStore;
     String keyspace = "MusicCoreUnitTestKp";
     String table = "SampleTable";
 
@@ -33,8 +34,8 @@ public class TestMusicCore {
     public static void init() {
     	System.out.println("TestMusicCore Init");
         try {
-            MusicCore.mDstoreHandle = CassandraCQL.connectToEmbeddedCassandra();
-            MusicCore.mLockHandle = new CassaLockStore(MusicCore.mDstoreHandle);
+            MusicDataStoreHandle.mDstoreHandle = CassandraCQL.connectToEmbeddedCassandra();
+            MusicCore.mLockHandle = new CassaLockStore(MusicDataStoreHandle.mDstoreHandle);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -46,7 +47,7 @@ public class TestMusicCore {
         testObject = new PreparedQueryObject();
         testObject.appendQueryString(CassandraCQL.dropKeyspace);
         MusicCore.eventualPut(testObject);
-        MusicCore.mDstoreHandle.close();
+        MusicDataStoreHandle.mDstoreHandle.close();
     }
 
     @Test

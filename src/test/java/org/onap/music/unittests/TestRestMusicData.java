@@ -44,7 +44,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
-import org.onap.music.datastore.CassaLockStore;
+import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
@@ -53,6 +53,7 @@ import org.onap.music.datastore.jsonobjects.JsonOnboard;
 import org.onap.music.datastore.jsonobjects.JsonSelect;
 import org.onap.music.datastore.jsonobjects.JsonTable;
 import org.onap.music.datastore.jsonobjects.JsonUpdate;
+import org.onap.music.lockingservice.cassandra.CassaLockStore;
 import org.onap.music.main.CachingUtil;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
@@ -109,8 +110,8 @@ public class TestRestMusicData {
     @BeforeClass
     public static void init() throws Exception {
        try {
-            MusicCore.mDstoreHandle = CassandraCQL.connectToEmbeddedCassandra();
-            MusicCore.mLockHandle = new CassaLockStore(MusicCore.mDstoreHandle);
+            MusicDataStoreHandle.mDstoreHandle = CassandraCQL.connectToEmbeddedCassandra();
+            MusicCore.mLockHandle = new CassaLockStore(MusicDataStoreHandle.mDstoreHandle);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -124,8 +125,8 @@ public class TestRestMusicData {
         testObject = new PreparedQueryObject();
         testObject.appendQueryString("DROP KEYSPACE IF EXISTS admin");
         MusicCore.eventualPut(testObject);
-        if(MusicCore.mDstoreHandle!=null)
-        	MusicCore.mDstoreHandle.close();
+        if(MusicDataStoreHandle.mDstoreHandle!=null)
+        	MusicDataStoreHandle.mDstoreHandle.close();
         if(zkServer!=null)
         	zkServer.stop();
     }

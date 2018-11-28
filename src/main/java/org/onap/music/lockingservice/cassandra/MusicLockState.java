@@ -1,4 +1,4 @@
-package org.onap.music.datastore;
+package org.onap.music.lockingservice.cassandra;
 public class MusicLockState {
     public enum LockStatus {
         UNLOCKED, BEING_LOCKED, LOCKED

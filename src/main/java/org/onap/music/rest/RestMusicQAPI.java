@@ -45,6 +45,7 @@ import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.apache.commons.lang3.StringUtils;
+import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import com.datastax.driver.core.ResultSet;
 import org.onap.music.exceptions.MusicServiceException;
@@ -414,7 +415,7 @@ public class RestMusicQAPI {
     try {
       ResultSet results = MusicCore.get(queryObject);
       return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS)
-              .setDataResult(MusicCore.marshallResults(results)).toMap()).build();
+              .setDataResult(MusicDataStoreHandle.marshallResults(results)).toMap()).build();
     } catch (MusicServiceException ex) {
       logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.UNKNOWNERROR,
               ErrorSeverity.ERROR, ErrorTypes.MUSICSERVICEERROR);

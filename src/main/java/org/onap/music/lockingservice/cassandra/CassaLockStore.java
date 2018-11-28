@@ -1,8 +1,10 @@
-package org.onap.music.datastore;
+package org.onap.music.lockingservice.cassandra;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.onap.music.datastore.MusicDataStore;
+import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
@@ -30,12 +32,12 @@ public class CassaLockStore {
 			
 		}
 	}
-	CassaDataStore dsHandle;
+	MusicDataStore dsHandle;
 	public CassaLockStore() {
-		dsHandle = new CassaDataStore();
+		dsHandle = new MusicDataStore();
 	}
 	
-	public CassaLockStore(CassaDataStore dsHandle) {
+	public CassaLockStore(MusicDataStore dsHandle) {
 		this.dsHandle=dsHandle;
 	}
 

@@ -35,17 +35,20 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
+
+import org.onap.music.authentication.MusicAuthentication;
 import org.onap.music.datastore.jsonobjects.JsonLeasedLock;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
-import org.onap.music.datastore.MusicLockState;
+import org.onap.music.lockingservice.cassandra.MusicLockState;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
 import org.onap.music.response.jsonobjects.JsonResponse;
+import org.onap.music.service.impl.MusicCassaCore;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -86,7 +89,7 @@ public class RestMusicLocksAPI {
             @ApiParam(value = "Application namespace",
                             required = true) @HeaderParam("ns") String ns) throws Exception{
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        Map<String, Object> resultMap = MusicCore.validateLock(lockName);
+        Map<String, Object> resultMap = MusicCassaCore.validateLock(lockName);
         if (resultMap.containsKey("Exception")) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(resultMap).build();
@@ -96,7 +99,7 @@ public class RestMusicLocksAPI {
 		String password = userCredentials.get(MusicUtil.PASSWORD);
         String keyspaceName = (String) resultMap.get("keyspace");
         resultMap.remove("keyspace");
-        resultMap = MusicCore.authenticate(ns, userId, password, keyspaceName, aid,
+        resultMap = MusicAuthentication.authenticate(ns, userId, password, keyspaceName, aid,
                 "createLockReference");
         if (resultMap.containsKey("aid"))
             resultMap.remove("aid");
@@ -138,7 +141,7 @@ public class RestMusicLocksAPI {
             @ApiParam(value = "Application namespace",
                             required = true) @HeaderParam("ns") String ns) throws Exception{
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        Map<String, Object> resultMap = MusicCore.validateLock(lockId);
+        Map<String, Object> resultMap = MusicCassaCore.validateLock(lockId);
         if (resultMap.containsKey("Exception")) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(resultMap).build();
@@ -148,7 +151,7 @@ public class RestMusicLocksAPI {
 		String password = userCredentials.get(MusicUtil.PASSWORD);
         String keyspaceName = (String) resultMap.get("keyspace");
         resultMap.remove("keyspace");
-        resultMap = MusicCore.authenticate(ns, userId, password, keyspaceName, aid,
+        resultMap = MusicAuthentication.authenticate(ns, userId, password, keyspaceName, aid,
                 "accquireLock");
         if (resultMap.containsKey("aid"))
             resultMap.remove("aid");
@@ -188,7 +191,7 @@ public class RestMusicLocksAPI {
             @ApiParam(value = "Application namespace",
                             required = true) @HeaderParam("ns") String ns) throws Exception{
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        Map<String, Object> resultMap = MusicCore.validateLock(lockId);
+        Map<String, Object> resultMap = MusicCassaCore.validateLock(lockId);
         if (resultMap.containsKey("Exception")) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(resultMap).build();
@@ -198,7 +201,7 @@ public class RestMusicLocksAPI {
 		String password = userCredentials.get(MusicUtil.PASSWORD);
         String keyspaceName = (String) resultMap.get("keyspace");
         resultMap.remove("keyspace");
-        resultMap = MusicCore.authenticate(ns, userId, password, keyspaceName, aid,
+        resultMap = MusicAuthentication.authenticate(ns, userId, password, keyspaceName, aid,
                 "accquireLockWithLease");
 
         if (resultMap.containsKey("aid"))
@@ -235,7 +238,7 @@ public class RestMusicLocksAPI {
             @ApiParam(value = "Application namespace",
                             required = true) @HeaderParam("ns") String ns) throws Exception{
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        Map<String, Object> resultMap = MusicCore.validateLock(lockName);
+        Map<String, Object> resultMap = MusicCassaCore.validateLock(lockName);
         if (resultMap.containsKey("Exception")) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(resultMap).build();
@@ -245,7 +248,7 @@ public class RestMusicLocksAPI {
 		String password = userCredentials.get(MusicUtil.PASSWORD);
         String keyspaceName = (String) resultMap.get("keyspace");
         resultMap.remove("keyspace");
-        resultMap = MusicCore.authenticate(ns, userId, password, keyspaceName, aid,
+        resultMap = MusicAuthentication.authenticate(ns, userId, password, keyspaceName, aid,
                 "currentLockHolder");
         if (resultMap.containsKey("aid"))
             resultMap.remove("aid");
@@ -284,14 +287,14 @@ public class RestMusicLocksAPI {
             @ApiParam(value = "Password",
                             required = true) @HeaderParam("password") String password) throws Exception{
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        Map<String, Object> resultMap = MusicCore.validateLock(lockName);
+        Map<String, Object> resultMap = MusicCassaCore.validateLock(lockName);
         if (resultMap.containsKey("Exception")) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
         String keyspaceName = (String) resultMap.get("keyspace");
         resultMap.remove("keyspace");
-        resultMap = MusicCore.authenticate(ns, userId, password, keyspaceName, aid,
+        resultMap = MusicAuthentication.authenticate(ns, userId, password, keyspaceName, aid,
                 "currentLockState");
         
         if (resultMap.containsKey("aid"))
@@ -301,7 +304,7 @@ public class RestMusicLocksAPI {
             return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
         
-        org.onap.music.datastore.MusicLockState mls = MusicCore.getMusicLockState(lockName);
+        org.onap.music.lockingservice.cassandra.MusicLockState mls = MusicCassaCore.getMusicLockState(lockName);
         Map<String,Object> returnMap = null;
         JsonResponse jsonResponse = new JsonResponse(ResultType.FAILURE).setLock(lockName);
         if(mls == null) {
@@ -338,7 +341,7 @@ public class RestMusicLocksAPI {
             @ApiParam(value = "Application namespace",
                             required = true) @HeaderParam("ns") String ns) throws Exception{
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        Map<String, Object> resultMap = MusicCore.validateLock(lockId);
+        Map<String, Object> resultMap = MusicCassaCore.validateLock(lockId);
         if (resultMap.containsKey("Exception")) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(resultMap).build();
@@ -348,7 +351,7 @@ public class RestMusicLocksAPI {
 		String password = userCredentials.get(MusicUtil.PASSWORD);
         String keyspaceName = (String) resultMap.get("keyspace");
         resultMap.remove("keyspace");
-        resultMap = MusicCore.authenticate(ns, userId, password, keyspaceName, aid,
+        resultMap = MusicAuthentication.authenticate(ns, userId, password, keyspaceName, aid,
                 "unLock");
         if (resultMap.containsKey("aid"))
             resultMap.remove("aid");
@@ -396,7 +399,7 @@ public class RestMusicLocksAPI {
             @ApiParam(value = "Application namespace",
                             required = true) @HeaderParam("ns") String ns) throws Exception{
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        Map<String, Object> resultMap = MusicCore.validateLock(lockName);
+        Map<String, Object> resultMap = MusicCassaCore.validateLock(lockName);
         if (resultMap.containsKey("Exception")) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.UNKNOWNERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(resultMap).build();
@@ -406,7 +409,7 @@ public class RestMusicLocksAPI {
 		String password = userCredentials.get(MusicUtil.PASSWORD);
         String keyspaceName = (String) resultMap.get("keyspace");
         resultMap.remove("keyspace");
-        resultMap = MusicCore.authenticate(ns, userId, password, keyspaceName, aid,
+        resultMap = MusicAuthentication.authenticate(ns, userId, password, keyspaceName, aid,
                 "deleteLock");
         if (resultMap.containsKey("aid"))
             resultMap.remove("aid");
@@ -415,7 +418,7 @@ public class RestMusicLocksAPI {
             return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
         try{
-        	MusicCore.deleteLock(lockName);
+        	MusicCore.destroyLockRef(null,lockName);
         }catch (Exception e) {
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
 		}

@@ -35,9 +35,8 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
-
-import org.onap.music.datastore.CassaDataStore;
-import org.onap.music.datastore.CassaLockStore;
+import org.onap.music.lockingservice.cassandra.CassaLockStore;
+import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.PreparedQueryObject;
 
 import com.datastax.driver.core.DataType;
@@ -48,7 +47,7 @@ import com.datastax.driver.core.TableMetadata;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class MusicLockStoreTest {
 
-	static CassaDataStore dataStore;
+	static MusicDataStore dataStore;
     static CassaLockStore lockStore;
     static PreparedQueryObject testObject;
 
