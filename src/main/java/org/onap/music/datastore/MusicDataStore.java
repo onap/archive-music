@@ -42,6 +42,7 @@ import com.datastax.driver.core.ColumnDefinitions.Definition;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import org.onap.music.util.TimeMeasureInstance;
 
 /**
  * @author nelson24
@@ -308,58 +309,60 @@ public class MusicDataStore {
      */
     public boolean executePut(PreparedQueryObject queryObject, String consistencyLevel, long timeSlot)
             throws MusicServiceException, MusicQueryException {
-
-        boolean result = false;
-        long timeOfWrite = System.currentTimeMillis();
-
-        if (!MusicUtil.isValidQueryObject(!queryObject.getValues().isEmpty(), queryObject)) {
-        	logger.error(EELFLoggerDelegate.errorLogger, queryObject.getQuery(),AppMessages.QUERYERROR, ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
-            throw new MusicQueryException("Ill formed queryObject for the request = " + "["
-                            + queryObject.getQuery() + "]");
-        }
-        logger.info(EELFLoggerDelegate.applicationLogger,
-                        "In preprared Execute Put: the actual insert query:"
-                                        + queryObject.getQuery() + "; the values"
-                                        + queryObject.getValues());
-        SimpleStatement statement;
+        TimeMeasureInstance.instance().enter("executePut");
         try {
+            boolean result;
+            long timeOfWrite = System.currentTimeMillis();
 
-             statement = new SimpleStatement(queryObject.getQuery(), queryObject.getValues().toArray());
-        } catch(InvalidQueryException iqe) {
-        	logger.error(EELFLoggerDelegate.errorLogger, iqe.getMessage(),AppMessages.QUERYERROR, ErrorSeverity.CRITICAL, ErrorTypes.QUERYERROR);
-        	throw new MusicQueryException(iqe.getMessage());
-        }catch(Exception e) {
-        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.QUERYERROR, ErrorSeverity.CRITICAL, ErrorTypes.QUERYERROR);
-        	throw new MusicQueryException(e.getMessage());
-        }
-        
-        try {
-            if (consistencyLevel.equalsIgnoreCase(MusicUtil.CRITICAL)) {
-                logger.info(EELFLoggerDelegate.applicationLogger, "Executing critical put query");
-                statement.setConsistencyLevel(ConsistencyLevel.QUORUM);
-            } else if (consistencyLevel.equalsIgnoreCase(MusicUtil.EVENTUAL)) {
-                logger.info(EELFLoggerDelegate.applicationLogger, "Executing simple put query");
-                statement.setConsistencyLevel(ConsistencyLevel.ONE);
+            if (!MusicUtil.isValidQueryObject(!queryObject.getValues().isEmpty(), queryObject)) {
+                logger.error(EELFLoggerDelegate.errorLogger, queryObject.getQuery(), AppMessages.QUERYERROR, ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
+                throw new MusicQueryException("Ill formed queryObject for the request = " + "["
+                        + queryObject.getQuery() + "]");
+            }
+            logger.info(EELFLoggerDelegate.applicationLogger,
+                    "In preprared Execute Put: the actual insert query:"
+                            + queryObject.getQuery() + "; the values"
+                            + queryObject.getValues());
+            SimpleStatement statement;
+            try {
+
+                statement = new SimpleStatement(queryObject.getQuery(), queryObject.getValues().toArray());
+            } catch (InvalidQueryException iqe) {
+                logger.error(EELFLoggerDelegate.errorLogger, iqe.getMessage(), AppMessages.QUERYERROR, ErrorSeverity.CRITICAL, ErrorTypes.QUERYERROR);
+                throw new MusicQueryException(iqe.getMessage());
+            } catch (Exception e) {
+                logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), AppMessages.QUERYERROR, ErrorSeverity.CRITICAL, ErrorTypes.QUERYERROR);
+                throw new MusicQueryException(e.getMessage());
             }
 
-            long timestamp = MusicUtil.v2sTimeStampInMicroseconds(timeSlot, timeOfWrite);
-            statement.setDefaultTimestamp(timestamp);
+            try {
+                if (consistencyLevel.equalsIgnoreCase(MusicUtil.CRITICAL)) {
+                    logger.info(EELFLoggerDelegate.applicationLogger, "Executing critical put query");
+                    statement.setConsistencyLevel(ConsistencyLevel.QUORUM);
+                } else if (consistencyLevel.equalsIgnoreCase(MusicUtil.EVENTUAL)) {
+                    logger.info(EELFLoggerDelegate.applicationLogger, "Executing simple put query");
+                    statement.setConsistencyLevel(ConsistencyLevel.ONE);
+                }
 
-            ResultSet rs = session.execute(statement);
-            result = rs.wasApplied();
-        }
-        catch (AlreadyExistsException ae) {
-            logger.error(EELFLoggerDelegate.errorLogger, ae.getMessage(),AppMessages.SESSIONFAILED+ " [" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
-        	throw new MusicServiceException(ae.getMessage());
-        }
-        catch (Exception e) {
-        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.SESSIONFAILED+ " [" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
-        	throw new MusicQueryException("Executing Session Failure for Request = " + "["
-                            + queryObject.getQuery() + "]" + " Reason = " + e.getMessage());
-        }
+                long timestamp = MusicUtil.v2sTimeStampInMicroseconds(timeSlot, timeOfWrite);
+                statement.setDefaultTimestamp(timestamp);
 
+                ResultSet rs = session.execute(statement);
+                result = rs.wasApplied();
+            } catch (AlreadyExistsException ae) {
+                logger.error(EELFLoggerDelegate.errorLogger, ae.getMessage(), AppMessages.SESSIONFAILED + " [" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
+                throw new MusicServiceException(ae.getMessage());
+            } catch (Exception e) {
+                logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), AppMessages.SESSIONFAILED + " [" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
+                throw new MusicQueryException("Executing Session Failure for Request = " + "["
+                        + queryObject.getQuery() + "]" + " Reason = " + e.getMessage());
+            }
 
-        return result;
+            return result;
+        }
+        finally {
+            TimeMeasureInstance.instance().exit();
+        }
     }
 
     /**
@@ -405,7 +408,13 @@ public class MusicDataStore {
      */
     public ResultSet executeOneConsistencyGet(PreparedQueryObject queryObject)
                     throws MusicServiceException, MusicQueryException {
-        return executeGet(queryObject, CONSISTENCY_LEVEL_ONE);
+        TimeMeasureInstance.instance().enter("executeOneConsistencyGet");
+        try {
+            return executeGet(queryObject, CONSISTENCY_LEVEL_ONE);
+        }
+        finally {
+            TimeMeasureInstance.instance().exit();
+        }
     }
 
     /**
@@ -416,7 +425,13 @@ public class MusicDataStore {
      */
     public ResultSet executeQuorumConsistencyGet(PreparedQueryObject queryObject)
                     throws MusicServiceException, MusicQueryException {
-        return executeGet(queryObject, CONSISTENCY_LEVEL_QUORUM);
+        TimeMeasureInstance.instance().enter("executeQuorumConsistencyGet");
+        try {
+            return executeGet(queryObject, CONSISTENCY_LEVEL_QUORUM);
+        }
+        finally {
+            TimeMeasureInstance.instance().exit();
+        }
     }
 }
 
