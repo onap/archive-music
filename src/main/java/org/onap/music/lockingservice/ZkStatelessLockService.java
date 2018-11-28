@@ -69,8 +69,10 @@ public class ZkStatelessLockService extends ProtocolSupport {
                 }
             });
         }catch (InterruptedException e) {
+            logger.error("Exception", e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }catch (KeeperException e) {
+            logger.error("Exception", e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
     }
@@ -80,6 +82,7 @@ public class ZkStatelessLockService extends ProtocolSupport {
         try {
             zookeeper.close();
         }catch (InterruptedException e) {
+            logger.error("Exception", e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
     }
@@ -94,8 +97,10 @@ public class ZkStatelessLockService extends ProtocolSupport {
                 }
             });
         }catch (InterruptedException e) {
+            logger.error("Exception", e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }catch (KeeperException e) {
+            logger.error("Exception", e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
 
@@ -109,8 +114,10 @@ public class ZkStatelessLockService extends ProtocolSupport {
                 return null;
 
         }catch (InterruptedException e) {
+            logger.error("Exception", e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }catch (KeeperException e) {
+            logger.error("Exception", e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
         return null;
@@ -124,8 +131,10 @@ public class ZkStatelessLockService extends ProtocolSupport {
                 result = true;
             }
         }catch (InterruptedException e) {
+            logger.error("Exception", e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }catch (KeeperException e) {
+            logger.error("Exception", e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
         return result;
@@ -141,8 +150,10 @@ public class ZkStatelessLockService extends ProtocolSupport {
         try {
             retryOperation(zop);
         }catch (InterruptedException e) {
+            logger.error("Exception", e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }catch (KeeperException e) {
+            logger.error("Exception", e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
         return zop.getId();
@@ -185,6 +196,7 @@ public class ZkStatelessLockService extends ProtocolSupport {
                 // set that we have been interrupted.
                 Thread.currentThread().interrupt();
             } catch (KeeperException.NoNodeException e) {
+                logger.error("Exception", e);
                 // do nothing
             	throw new KeeperException.NoNodeException("Lock doesn't exists. Release lock operation failed.");
             } catch (KeeperException e) {
@@ -212,6 +224,7 @@ public class ZkStatelessLockService extends ProtocolSupport {
                 // set that we have been interrupted.
                 Thread.currentThread().interrupt();
             } catch (KeeperException.NoNodeException e) {
+                logger.error("Exception", e);
                 // do nothing
             } catch (KeeperException e) {
             	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
@@ -241,6 +254,7 @@ public class ZkStatelessLockService extends ProtocolSupport {
                 // set that we have been interrupted.
                 Thread.currentThread().interrupt();
             } catch (KeeperException.NoNodeException e) {
+                logger.error("Exception", e);
             	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
                 // do nothing
             } catch (KeeperException e) {
@@ -268,10 +282,6 @@ public class ZkStatelessLockService extends ProtocolSupport {
         private String dir;
         private String id = null;
 
-        public String getId() {
-            return id;
-        }
-
         public LockZooKeeperOperation(String dir) {
             this.dir = dir;
         }
@@ -279,6 +289,10 @@ public class ZkStatelessLockService extends ProtocolSupport {
         public LockZooKeeperOperation(String dir, String id) {
             this.dir = dir;
             this.id = id;
+        }
+
+        public String getId() {
+            return id;
         }
 
         /**
@@ -302,9 +316,14 @@ public class ZkStatelessLockService extends ProtocolSupport {
                         try {
                             stat = zookeeper.exists(id, false);
                         } catch (KeeperException | InterruptedException e1) {
+                            logger.error("Exception", e1);
                             logger.error(EELFLoggerDelegate.errorLogger, "Error in execute: " + e1);
                         }
-                        Long ctime = stat.getCtime();
+                      
+			Long ctime;
+                        if(stat != null) {
+                            ctime = stat.getCtime();
+                        }
                         MusicUtil.zkNodeMap.put(id, ctime);
                         PreparedQueryObject pQuery = new PreparedQueryObject();
                         pQuery.appendQueryString(
