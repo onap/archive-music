@@ -268,7 +268,7 @@ public class ComparisonPoints1
            Map<String, ArrayList<Double>> e = tm.percentiles();
            Map<String, Pair<Double, Double>> m = tm.stats();
            DecimalFormat df = new DecimalFormat("000.000000");
-           e.forEach((k,v) -> System.out.println("" + k + "\t\t: " + Arrays.toString(v.stream().map(w -> "" + df.format(w)).toArray())));
+//           e.forEach((k,v) -> System.out.println("" + k + "\t\t: " + Arrays.toString(v.stream().map(w -> "" + df.format(w)).toArray())));
            m.forEach((k,v) -> System.out.println("" + k + "\t\t: " + df.format(v.getLeft()) + " (" + df.format(v.getRight()) + ")"));
 
            System.exit(0);
