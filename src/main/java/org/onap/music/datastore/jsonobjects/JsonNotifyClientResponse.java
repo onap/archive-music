@@ -3,6 +3,7 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *  Modifications Copyright (C) 2018 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,6 +25,8 @@ package org.onap.music.datastore.jsonobjects;
 import java.io.Serializable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.swagger.annotations.ApiModel;
 
@@ -32,7 +35,8 @@ import io.swagger.annotations.ApiModel;
 public class JsonNotifyClientResponse implements Serializable {
 	private String message;
     private String status;
-    
+	private Logger logger = LoggerFactory.getLogger(JsonNotifyClientResponse.class);
+
 	public String getMessage() {
 		return message;
 	}
@@ -51,6 +55,7 @@ public class JsonNotifyClientResponse implements Serializable {
 		try {
 	        return new com.fasterxml.jackson.databind.ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(this);
 	    } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+			logger.error(e.getMessage());
 			return message+ " : "+status;
 	    }
 
