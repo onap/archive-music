@@ -3,6 +3,7 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *  Modifications Copyright (C) 2018 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,15 +25,19 @@ package org.onap.music.datastore.jsonobjects;
 import java.io.Serializable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
+import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.eelf.logging.format.AppMessages;
+import org.onap.music.eelf.logging.format.ErrorSeverity;
+import org.onap.music.eelf.logging.format.ErrorTypes;
 import io.swagger.annotations.ApiModel;
 
 @ApiModel(value = "JsonNotifyClientResponse", description = "Json model for callback")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonNotifyClientResponse implements Serializable {
 	private String message;
-    private String status;
-    
+        private String status;
+	private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(JsonNotifyClientResponse.class);
+
 	public String getMessage() {
 		return message;
 	}
@@ -51,6 +56,7 @@ public class JsonNotifyClientResponse implements Serializable {
 		try {
 	        return new com.fasterxml.jackson.databind.ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(this);
 	    } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+			EELFLoggerDelegate.errorLogger, e,AppMessages.EXECUTIONINTERRUPTED,ErrorSeverity.ERROR, ErrorTypes.GENERALSERVICEERROR);
 			return message+ " : "+status;
 	    }
 
