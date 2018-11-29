@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9adffdf1_6cae7b87",
+        "filename": "docs/release-notes.rst",
+        "patchSetId": 1
+      },
+      "lineNbr": 12,
+      "author": {
+        "id": 219
+      },
+      "writtenOn": "2018-11-29T02:07:33Z",
+      "side": 1,
+      "message": "Release date is 30 not 28",
+      "range": {
+        "startLine": 12,
+        "startChar": 23,
+        "endLine": 12,
+        "endChar": 25
+      },
+      "revId": "995248c07d2927d43c034b7ebf0bffc8a4ed888c",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9adffdf1_8ca95f7d",
+        "filename": "docs/release-notes.rst",
+        "patchSetId": 1
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 219
+      },
+      "writtenOn": "2018-11-29T02:07:33Z",
+      "side": 1,
+      "message": "Do not use that link but rather this one https://wiki.onap.org/pages/viewpage.action?pageId\u003d45285410",
+      "range": {
+        "startLine": 46,
+        "startChar": 332,
+        "endLine": 46,
+        "endChar": 391
+      },
+      "revId": "995248c07d2927d43c034b7ebf0bffc8a4ed888c",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9adffdf1_2cb873c7",
+        "filename": "docs/release-notes.rst",
+        "patchSetId": 1
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 219
+      },
+      "writtenOn": "2018-11-29T02:07:33Z",
+      "side": 1,
+      "message": "add - `Project Vulnerability Review Table for MUSIC \u003chttps://wiki.onap.org/pages/viewpage.action?pageId\u003d45285410\u003e",
+      "revId": "995248c07d2927d43c034b7ebf0bffc8a4ed888c",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
