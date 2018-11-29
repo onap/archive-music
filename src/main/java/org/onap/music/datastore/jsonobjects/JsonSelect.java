@@ -3,6 +3,7 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *  Modifications Copyright (C) 2018 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -51,8 +52,7 @@ public class JsonSelect implements Serializable {
             out.writeObject(this);
         } catch (IOException e) {
             // TODO Auto-generated catch block
-        	logger.error("Error", e);
-            e.printStackTrace();
+        	logger.error("Error", e.getMessage());
         }
         return bos.toByteArray();
     }
