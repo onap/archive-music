@@ -3,6 +3,7 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *  Modifications Copyright (C) 2018 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,6 +34,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @ApiModel(value = "JsonTable", description = "Json model for table update")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonUpdate implements Serializable {
@@ -43,7 +47,8 @@ public class JsonUpdate implements Serializable {
     private String timestamp;
     private Map<String, String> consistencyInfo;
     private transient Map<String, Object> conditions;
-    private transient Map<String, Object> row_specification;
+    private transient Map<String, Object> rowSpecification;
+    private Logger logger = LoggerFactory.getLogger(JsonUpdate.class);
 
     @ApiModelProperty(value = "Conditions")
     public Map<String, Object> getConditions() {
@@ -56,11 +61,11 @@ public class JsonUpdate implements Serializable {
 
     @ApiModelProperty(value = "Information for selecting sepcific rows")
     public Map<String, Object> getRow_specification() {
-        return row_specification;
+        return rowSpecification;
     }
 
-    public void setRow_specification(Map<String, Object> row_specification) {
-        this.row_specification = row_specification;
+    public void setRow_specification(Map<String, Object> rowSpecification) {
+        this.rowSpecification = rowSpecification;
     }
 
 
@@ -125,7 +130,7 @@ public class JsonUpdate implements Serializable {
             out = new ObjectOutputStream(bos);
             out.writeObject(this);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         return bos.toByteArray();
     }
