@@ -167,16 +167,14 @@ public class CassaLockStore {
 		PreparedQueryObject queryObject = new PreparedQueryObject();
         queryObject.appendQueryString(selectQuery);
 		ResultSet rs = dsHandle.executeOneConsistencyGet(queryObject);
-		System.err.println(rs);
-		
 		return rs.one().getLong("count");
 	}
-	
-	
+
+
 	/**
-	 * This method returns the top of lock table/queue for the key. 
-	 * @param keyspace of the application. 
-	 * @param table of the application. 
+	 * This method returns the top of lock table/queue for the key.
+	 * @param keyspace of the application.
+	 * @param table of the application.
 	 * @param key is the primary key of the application table
 	 * @return the UUID lock reference.
 	 * @throws MusicServiceException

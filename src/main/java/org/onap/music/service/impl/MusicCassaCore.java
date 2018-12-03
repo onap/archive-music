@@ -327,7 +327,7 @@ public class MusicCassaCore implements MusicCoreService {
         String table = splitString[1];
         String primaryKeyValue = splitString[2];
         try {
-            return getLockingServiceHandle().peekLockQueue(keyspace, table, primaryKeyValue)+"";
+            return getLockingServiceHandle().peekLockQueue(keyspace, table, primaryKeyValue).lockRef;
         } catch (MusicLockingException | MusicServiceException | MusicQueryException e) {
          	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.LOCKINGERROR+fullyQualifiedKey ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         }
