@@ -166,9 +166,7 @@ public class CassaLockStore {
 		String selectQuery = "select count(*) from " + keyspace + "." + table + " where key='" + key + "';";
 		PreparedQueryObject queryObject = new PreparedQueryObject();
         queryObject.appendQueryString(selectQuery);
-		ResultSet rs = dsHandle.executeOneConsistencyGet(queryObject);
-		System.err.println(rs);
-		
+		ResultSet rs = dsHandle.executeOneConsistencyGet(queryObject);		
 		return rs.one().getLong("count");
 	}
 	
