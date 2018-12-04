@@ -47,6 +47,7 @@ public class MusicHealthCheck {
 
 	private String cassandrHost;
 	private String zookeeperHost;
+	private String error = "Error";
 
 	public String getCassandraStatus(String consistency) {
 		logger.info(EELFLoggerDelegate.applicationLogger, "Getting Status for Cassandra");
@@ -56,19 +57,17 @@ public class MusicHealthCheck {
 			result = getAdminKeySpace(consistency);
 		} catch(Exception e) {
 			if(e.getMessage().toLowerCase().contains("unconfigured table healthcheck")) {
-				logger.error("Error", e);
+				logger.error(error, e);
 				logger.debug("Creating table....");
 				boolean ksresult = createKeyspace();
 				if(ksresult)
 					try {
 						result = getAdminKeySpace(consistency);
 					} catch (MusicServiceException e1) {
-						// TODO Auto-generated catch block
-						logger.error("Error", e);
-						e1.printStackTrace();
+						logger.error(error, e1);
 					}
 			} else {
-				logger.error("Error", e);
+				logger.error(error, e);
 				return "One or more nodes are down or not responding.";
 			}
 		}
@@ -104,9 +103,7 @@ public class MusicHealthCheck {
 		try {
 			rs = MusicCore.nonKeyRelatedPut(pQuery, ConsistencyLevel.ONE.toString());
 		} catch (MusicServiceException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			logger.error("Error", e);
+			logger.error(error, e);
 		}
 		if(rs != null && rs.getResult().toLowerCase().contains("success"))
 			return true;
@@ -122,6 +119,7 @@ public class MusicHealthCheck {
 			MusicLockingService lockingService = MusicCore.getLockingServiceHandle();
 			// additionally need to call the ZK to create,aquire and delete lock
 		} catch (MusicLockingException e) {
+			logger.error("Locking Error has occured", e);
 			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), AppMessages.LOCKINGERROR,
 					ErrorTypes.CONNECTIONERROR, ErrorSeverity.CRITICAL);
 			return "INACTIVE";
