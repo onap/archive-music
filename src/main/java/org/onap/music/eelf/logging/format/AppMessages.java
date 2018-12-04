@@ -88,9 +88,9 @@ public enum AppMessages {
 	 * 1000-1099 Reserved - do not use
 	 * 
 	 */
-	
-	
-	
+
+
+
 	
 	MISSINGINFO("[ERR100E]", "Missing Information ","Details: NA", "Please check application credentials and/or headers"),
 	AUTHENTICATIONERROR("[ERR101E]", "Authentication error occured ","Details: NA", "Please verify application credentials"),
@@ -122,16 +122,17 @@ public enum AppMessages {
 	CACHEERROR("[ERR600E]"," Error initializing the cache",""," Error initializing the cache"),
 	
 	UNKNOWNERROR("[ERR900E]"," Unexpected error occured",""," Please check logs for details");
-	
-	
-		
-	ErrorTypes eType;
-	ErrorSeverity alarmSeverity;
-	ErrorSeverity errorSeverity;
-	String errorCode;
-	String errorDescription;
-	String details;
-	String resolution;
+
+
+
+
+    private ErrorTypes eType;
+    private ErrorSeverity alarmSeverity;
+    private ErrorSeverity errorSeverity;
+	private String errorCode;
+	private String errorDescription;
+	private String details;
+	private String resolution;
 
 
 	AppMessages(String errorCode, String errorDescription, String details,String resolution) {
@@ -157,18 +158,36 @@ public enum AppMessages {
 		this.details = details;
 		this.resolution = resolution;
 	}
+    public ErrorTypes getEType() {
+        return eType;
+    }
+
+    public ErrorSeverity getAlarmSeverity() {
+        return alarmSeverity;
+    }
+    public ErrorSeverity getErrorSeverity() {
+        return errorSeverity;
+    }
+    
+	public void setDetails(String details){ this.details=details; }
 
 	public String getDetails() {
 		return this.details;
 	}
 
+	public void setResolution(String resolution){ this.resolution=resolution; }
+
 	public String getResolution() {
 		return this.resolution;
 	}
 
+	public void setErrorCode(String errorCode){ this.errorCode=errorCode; }
+
 	public String getErrorCode() {
 		return this.errorCode;
 	}
+
+	public void setErrorDescription(String errorDescription){ this.errorDescription=errorDescription; }
 
 	public String getErrorDescription() {
 		return this.errorDescription;
