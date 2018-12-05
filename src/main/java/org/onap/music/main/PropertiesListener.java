@@ -3,6 +3,7 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *  Modifications Copyright (C) 2018 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -37,7 +38,7 @@ import org.onap.music.eelf.logging.format.ErrorTypes;
 
 public class PropertiesListener implements ServletContextListener {
     private Properties prop;
-
+    private static final String MUSIC_PROPERTIES="music.properties";
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(PropertiesListener.class);
 
     @Override
@@ -51,8 +52,8 @@ public class PropertiesListener implements ServletContextListener {
         try {
             InputStream musicProps = null;
             projectProp.load(new FileInputStream(musicPropertiesFilePath));
-            if (projectProp.containsKey("music.properties")) {
-                musicProps = new FileInputStream(projectProp.getProperty("music.properties"));
+            if (projectProp.containsKey(MUSIC_PROPERTIES)) {
+                musicProps = new FileInputStream(projectProp.getProperty(MUSIC_PROPERTIES));
             } else {
                 musicProps = new FileInputStream(MusicUtil.getMusicPropertiesFilePath());
             }
@@ -84,7 +85,7 @@ public class PropertiesListener implements ServletContextListener {
                         case "music.rest.ip":
                             MusicUtil.setMusicRestIp(prop.getProperty(key));
                             break;
-                        case "music.properties":
+                        case MUSIC_PROPERTIES:
                             MusicUtil.setMusicPropertiesFilePath(prop.getProperty(key));
                             break;
                         case "lock.lease.period":
