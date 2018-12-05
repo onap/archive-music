@@ -2,7 +2,9 @@
  * ============LICENSE_START==========================================
  * org.onap.music
  * ===================================================================
- *  Copyright (c) 2017 AT&T Intellectual Property
+ * Copyright (c) 2017 AT&T Intellectual Property
+ * ===================================================================
+ * Modifications Copyright (c) 2018 IBM
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,21 +23,22 @@
  */
 package org.onap.music.datastore.jsonobjects;
 
-import java.util.ArrayList;
+import java.util.List;
+
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 @ApiModel(value = "JsonTable", description = "Reponse class for AAF request")
 public class AAFResponse {
 
-    private ArrayList<NameSpace> ns = null;
+    private List<NameSpace> ns = null;
 
     @ApiModelProperty(value = "Namespace value")
-    public ArrayList<NameSpace> getNs() {
+    public List<NameSpace> getNs() {
         return ns;
     }
 
-    public void setNs(ArrayList<NameSpace> ns) {
+    public void setNs(List<NameSpace> ns) {
         this.ns = ns;
     }
 
