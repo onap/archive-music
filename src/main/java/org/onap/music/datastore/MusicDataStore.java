@@ -134,10 +134,10 @@ public class MusicDataStore {
         try {
             Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
             while (en.hasMoreElements()) {
-                NetworkInterface ni = (NetworkInterface) en.nextElement();
+                NetworkInterface ni =  en.nextElement();
                 Enumeration<InetAddress> ee = ni.getInetAddresses();
                 while (ee.hasMoreElements()) {
-                    InetAddress ia = (InetAddress) ee.nextElement();
+                    InetAddress ia =  ee.nextElement();
                     allPossibleIps.add(ia.getHostAddress());
                 }
             }
