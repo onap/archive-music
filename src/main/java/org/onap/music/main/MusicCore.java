@@ -60,6 +60,7 @@ public class MusicCore {
     public static MusicLockingService mLockHandle = null;
     public static MusicDataStore mDstoreHandle = null;
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicCore.class);
+    public static final String ERR512E="[ERR512E] Failed to get ZK Lock Handle ";
 
     public static class Condition {
         Map<String, Object> conditions;
@@ -292,7 +293,10 @@ public class MusicCore {
         try {
             currentMls = getMusicLockState(key);
             String currentLockHolder = null;
-            if(currentMls != null) { currentLockHolder = currentMls.getLockHolder(); };
+            if(currentMls != null)
+            {
+                currentLockHolder = currentMls.getLockHolder();
+            }
             if (lockId.equals(currentLockHolder)) {
                 logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: You already have the lock!");
                 return new ReturnType(ResultType.SUCCESS, "You already have the lock!");
@@ -559,7 +563,7 @@ public class MusicCore {
         try {
             getLockingServiceHandle().getzkLockHandle().createNode(nodeName);
         } catch (MusicLockingException e) {
-         	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), "[ERR512E] Failed to get ZK Lock Handle "  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+         	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), ERR512E  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         }
     }
 
@@ -574,7 +578,7 @@ public class MusicCore {
         try {
             getLockingServiceHandle().getzkLockHandle().setNodeData(nodeName, data);
         } catch (MusicLockingException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), "[ERR512E] Failed to get ZK Lock Handle "  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), ERR512E  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         }
         logger.info(EELFLoggerDelegate.applicationLogger,"Performed zookeeper write to " + nodeName);
         long end = System.currentTimeMillis();
@@ -592,7 +596,7 @@ public class MusicCore {
         try {
             data = getLockingServiceHandle().getzkLockHandle().getNodeData(nodeName);
         } catch (MusicLockingException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), "[ERR512E] Failed to get ZK Lock Handle "  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), ERR512E  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         }
         long end = System.currentTimeMillis();
         logger.info(EELFLoggerDelegate.applicationLogger,"Time taken for the actual zk put:" + (end - start) + " ms");
@@ -617,7 +621,7 @@ public class MusicCore {
         try {
             result = getDSHandle().executePut(queryObject, MusicUtil.EVENTUAL);
         } catch (MusicServiceException | MusicQueryException ex) {
-        	logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), "[ERR512E] Failed to get ZK Lock Handle "  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
+        	logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), ERR512E  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
             logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage() + "  " + ex.getCause() + " " + ex);
             return new ReturnType(ResultType.FAILURE, ex.getMessage());
         }
@@ -644,13 +648,14 @@ public class MusicCore {
         try {
             MusicLockState mls = getLockingServiceHandle()
                             .getLockState(keyspaceName + "." + tableName + "." + primaryKey);
-            if (mls.getLockHolder().equals(lockId) == true) {
+            if (mls.getLockHolder().equals(lockId)) {
                 if (conditionInfo != null)
                   try {
                     if (conditionInfo.testCondition() == false)
                         return new ReturnType(ResultType.FAILURE,
                                         "Lock acquired but the condition is not true");
                   } catch (Exception e) {
+                    logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
                     return new ReturnType(ResultType.FAILURE,
                             "Exception thrown while doing the critical put, check sanctity of the row/conditions:\n"
                                             + e.getMessage());
@@ -668,6 +673,7 @@ public class MusicCore {
                             "Exception thrown while doing the critical put, check sanctity of the row/conditions:\n"
                                             + e.getMessage());
         }catch(MusicLockingException ex){
+            logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage());
             return new ReturnType(ResultType.FAILURE,ex.getMessage());
         }
 
