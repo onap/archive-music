@@ -2,7 +2,9 @@
  * ============LICENSE_START==========================================
  * org.onap.music
  * ===================================================================
- *  Copyright (c) 2017 AT&T Intellectual Property
+ * Copyright (c) 2017 AT&T Intellectual Property
+ * ===================================================================
+ * Modifications Copyright (c) 2018 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -47,6 +49,8 @@ public class MusicHealthCheck {
 
 	private String cassandrHost;
 	private String zookeeperHost;
+	
+	private static final String ERROR="Error";
 
 	public String getCassandraStatus(String consistency) {
 		logger.info(EELFLoggerDelegate.applicationLogger, "Getting Status for Cassandra");
@@ -56,7 +60,7 @@ public class MusicHealthCheck {
 			result = getAdminKeySpace(consistency);
 		} catch(Exception e) {
 			if(e.getMessage().toLowerCase().contains("unconfigured table healthcheck")) {
-				logger.error("Error", e);
+				logger.error(ERROR, e);
 				logger.debug("Creating table....");
 				boolean ksresult = createKeyspace();
 				if(ksresult)
@@ -64,11 +68,11 @@ public class MusicHealthCheck {
 						result = getAdminKeySpace(consistency);
 					} catch (MusicServiceException e1) {
 						// TODO Auto-generated catch block
-						logger.error("Error", e);
+						logger.error(ERROR, e);
 						e1.printStackTrace();
 					}
 			} else {
-				logger.error("Error", e);
+				logger.error(ERROR, e);
 				return "One or more nodes are down or not responding.";
 			}
 		}
@@ -87,7 +91,6 @@ public class MusicHealthCheck {
 		pQuery.appendQueryString("insert into admin.healthcheck (id) values (?)");
 		pQuery.addValue(UUID.randomUUID());
 			ResultType rs = MusicCore.nonKeyRelatedPut(pQuery, consistency);
-			System.out.println(rs);
 			if (rs != null) {
 				return Boolean.TRUE;
 			} else {
@@ -106,7 +109,7 @@ public class MusicHealthCheck {
 		} catch (MusicServiceException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			logger.error("Error", e);
+			logger.error(ERROR, e);
 		}
 		if(rs != null && rs.getResult().toLowerCase().contains("success"))
 			return true;
