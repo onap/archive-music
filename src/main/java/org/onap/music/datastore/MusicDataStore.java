@@ -70,6 +70,41 @@ public class MusicDataStore {
 
 
 
+    private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicDataStore.class);
+
+    /**
+     *
+     */
+    public MusicDataStore() {
+        connectToCassaCluster();
+    }
+
+
+    /**
+     * @param cluster
+     * @param session
+     */
+    public MusicDataStore(Cluster cluster, Session session) {
+        this.session = session;
+        this.cluster = cluster;
+    }
+
+    /**
+     *
+     * @param remoteIp
+     * @throws MusicServiceException
+     */
+    public MusicDataStore(String remoteIp) {
+        try {
+            connectToCassaCluster(remoteIp);
+        } catch (MusicServiceException e) {
+            logger.error("Exception", e);
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
+        }
+    }
+
+
+
     /**
      * @param session
      */
@@ -91,40 +126,6 @@ public class MusicDataStore {
         this.cluster = cluster;
     }
 
-
-
-    private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicDataStore.class);
-
-    /**
-     * 
-     */
-    public MusicDataStore() {
-        connectToCassaCluster();
-    }
-
-
-    /**
-     * @param cluster
-     * @param session
-     */
-    public MusicDataStore(Cluster cluster, Session session) {
-        this.session = session;
-        this.cluster = cluster;
-    }
-
-    /**
-     * 
-     * @param remoteIp
-     * @throws MusicServiceException
-     */
-    public MusicDataStore(String remoteIp) {
-        try {
-            connectToCassaCluster(remoteIp);
-        } catch (MusicServiceException e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
-        }
-    }
-
     /**
      * 
      * @return
@@ -134,16 +135,18 @@ public class MusicDataStore {
         try {
             Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
             while (en.hasMoreElements()) {
-                NetworkInterface ni = (NetworkInterface) en.nextElement();
+                NetworkInterface ni = en.nextElement();
                 Enumeration<InetAddress> ee = ni.getInetAddresses();
                 while (ee.hasMoreElements()) {
-                    InetAddress ia = (InetAddress) ee.nextElement();
+                    InetAddress ia = ee.nextElement();
                     allPossibleIps.add(ia.getHostAddress());
                 }
             }
         } catch (SocketException e) {
+            logger.error("Exception", e);
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), AppMessages.CONNCECTIVITYERROR, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
         }catch(Exception e) {
+            logger.error("Exception", e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), ErrorSeverity.ERROR, ErrorTypes.GENERALSERVICEERROR);
         }
         return allPossibleIps;
@@ -190,6 +193,7 @@ public class MusicDataStore {
 
                 break;
             } catch (NoHostAvailableException e) {
+                logger.error("Exception", e);
                 address = it.next();
                 logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.HOSTUNAVAILABLE, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
             }
@@ -236,6 +240,7 @@ public class MusicDataStore {
         try {
             session = cluster.connect();
         } catch (Exception ex) {
+            logger.error("Exception", ex);
             logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.CASSANDRACONNECTIVITY, ErrorSeverity.ERROR, ErrorTypes.SERVICEUNAVAILABLE);
             throw new MusicServiceException(
                             "Error while connecting to Cassandra cluster.. " + ex.getMessage());
@@ -306,8 +311,7 @@ public class MusicDataStore {
     
     public byte[] getBlobValue(Row row, String colName, DataType colType) {
     	ByteBuffer bb = row.getBytes(colName);
-    	byte[] data = bb.array();
-    	return data;
+    	return bb.array();
     }
 
     public boolean doesRowSatisfyCondition(Row row, Map<String, Object> condition) throws Exception {
@@ -338,7 +342,7 @@ public class MusicDataStore {
             ColumnDefinitions colInfo = row.getColumnDefinitions();
             HashMap<String, Object> resultOutput = new HashMap<>();
             for (Definition definition : colInfo) {
-                if (!definition.getName().equals("vector_ts")) {
+                if (!(("vector_ts").equals(definition.getName()))) {
                 	if(definition.getType().toString().toLowerCase().contains("blob")) {
                 		resultOutput.put(definition.getName(),
                                 getBlobValue(row, definition.getName(), definition.getType()));
@@ -386,9 +390,11 @@ public class MusicDataStore {
 				preparedInsert = session.prepare(queryObject.getQuery());
 			
         } catch(InvalidQueryException iqe) {
+            logger.error("Exception", iqe);
         	logger.error(EELFLoggerDelegate.errorLogger, iqe.getMessage(),AppMessages.QUERYERROR, ErrorSeverity.CRITICAL, ErrorTypes.QUERYERROR);
         	throw new MusicQueryException(iqe.getMessage());
         }catch(Exception e) {
+            logger.error("Exception", e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.QUERYERROR, ErrorSeverity.CRITICAL, ErrorTypes.QUERYERROR);
         	throw new MusicQueryException(e.getMessage());
         }
@@ -407,10 +413,12 @@ public class MusicDataStore {
 
         }
         catch (AlreadyExistsException ae) {
+            logger.error("Exception", ae);
             logger.error(EELFLoggerDelegate.errorLogger, ae.getMessage(),AppMessages.SESSIONFAILED+ " [" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
         	throw new MusicServiceException(ae.getMessage());
         }
         catch (Exception e) {
+            logger.error("Exception", e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.SESSIONFAILED+ " [" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
         	throw new MusicQueryException("Executing Session Failure for Request = " + "["
                             + queryObject.getQuery() + "]" + " Reason = " + e.getMessage());
@@ -446,6 +454,7 @@ public class MusicDataStore {
              results = session.execute(preparedEventualGet.bind(queryObject.getValues().toArray()));
 
         } catch (Exception ex) {
+            logger.error("Exception", ex);
         	logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.UNKNOWNERROR+ "[" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
         	throw new MusicServiceException(ex.getMessage());
         }
@@ -476,6 +485,7 @@ public class MusicDataStore {
         try {
             results = session.execute(preparedEventualGet.bind(queryObject.getValues().toArray()));
         } catch (Exception ex) {
+            logger.error("Exception", ex);
         	logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.UNKNOWNERROR+ "[" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
         	throw new MusicServiceException(ex.getMessage());
         }
