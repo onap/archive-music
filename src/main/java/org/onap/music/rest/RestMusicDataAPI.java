@@ -3,6 +3,7 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *  Modifications Copyright (C) 2018 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -38,7 +38,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -171,7 +170,7 @@ public class RestMusicDataAPI {
             authMap = MusicCore.autheticateUser(ns, userId, password, keyspaceName, aid,
                             "createKeySpace");
         } catch (Exception e) {
-            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
             response.status(Status.BAD_REQUEST);
             return response.entity(new JsonResponse(ResultType.FAILURE).setError("Unable to authenticate.").toMap()).build();
         }
@@ -196,7 +195,7 @@ public class RestMusicDataAPI {
         try {
             repString = "{" + MusicUtil.jsonMaptoSqlString(replicationInfo, ",") + "}";
         } catch (Exception e) {
-            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
             
         }
         queryObject.appendQueryString(
@@ -216,7 +215,7 @@ public class RestMusicDataAPI {
             result = MusicCore.nonKeyRelatedPut(queryObject, consistency);
             logger.info(EELFLoggerDelegate.applicationLogger, "result = " + result);
         } catch ( MusicServiceException ex) {
-            logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("err:" + ex.getMessage()).toMap()).build();
         }
         
@@ -231,7 +230,7 @@ public class RestMusicDataAPI {
             queryObject.appendQueryString(";");
             MusicCore.nonKeyRelatedPut(queryObject, consistency);
         } catch (Exception e) {
-            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
         }
         
         try {
@@ -252,7 +251,7 @@ public class RestMusicDataAPI {
             CachingUtil.updateMusicValidateCache(ns, userId, hashedpwd);
             MusicCore.eventualPut(queryObject);
         } catch (Exception e) {
-            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
             return response.status(Response.Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
         }
         
@@ -387,20 +386,25 @@ public class RestMusicDataAPI {
         StringBuilder fieldsString = new StringBuilder("(vector_ts text,");
         int counter = 0;
         for (Map.Entry<String, String> entry : fields.entrySet()) {
-            if (entry.getKey().equals("PRIMARY KEY")) {
+            if (("PRIMARY KEY").equals(entry.getKey())) {
                 primaryKey = entry.getValue(); // replaces primaryKey
                 primaryKey.trim();
             } else {
-                  if (counter == 0 )  fieldsString.append("" + entry.getKey() + " " + entry.getValue() + "");
-                  else fieldsString.append("," + entry.getKey() + " " + entry.getValue() + "");             
+                  if (counter == 0 ) {
+                      fieldsString.append("" + entry.getKey() + " " + entry.getValue() + "");
+                  }
+                  else
+                  {
+                      fieldsString.append("," + entry.getKey() + " " + entry.getValue() + "");
+                  }
             }
 
       	   if (counter != (fields.size() - 1) ) {
         	  
-        	  //logger.info("cjc2 field="+entry.getValue()+"counter=" + counter+"fieldsize-1="+(fields.size() -1) + ",");
+
         	  counter = counter + 1; 
       	   } else {
-         //logger.info("cjc3 field="+entry.getValue()+"counter=" + counter+"fieldsize="+fields.size() + ",");
+
                if((primaryKey != null) && (partitionKey == null)) {
                   primaryKey.trim();
                   int count1 = StringUtils.countMatches(primaryKey, ')');
@@ -432,9 +436,14 @@ public class RestMusicDataAPI {
                		clusterKey=clusterKey.replaceAll("[\\(]+","");
                		clusterKey=clusterKey.replaceAll("[\\)]+","");
                		clusterKey.trim();
-               		if (clusterKey.indexOf(",") == 0) clusterKey=clusterKey.substring(1);
-               		   clusterKey.trim();
-               		if (clusterKey.equals(",") ) clusterKey=""; // print error if needed    ( ... ),)
+               		if (clusterKey.indexOf(",") == 0) {
+                        clusterKey = clusterKey.substring(1);
+                        clusterKey.trim();
+                    }
+               		if (clusterKey.equals(",") ) {
+               		    clusterKey="";
+               		    // print error if needed    ( ... ),)
+                    }
 
               } 
 
@@ -549,7 +558,7 @@ public class RestMusicDataAPI {
           //logger.info("cjc query="+queryObject.getQuery());
             result = MusicCore.nonKeyRelatedPut(queryObject, consistency);
         } catch (MusicServiceException ex) {
-            logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.MUSICSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.MUSICSERVICEERROR);
             response.status(Status.BAD_REQUEST);
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
         }
@@ -607,7 +616,7 @@ public class RestMusicDataAPI {
         try {
             result = MusicCore.nonKeyRelatedPut(query, "eventual");
         } catch (MusicServiceException ex) {
-            logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
             response.status(Status.BAD_REQUEST);
             return response.entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
         }
@@ -673,7 +682,7 @@ public class RestMusicDataAPI {
                 return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Table name doesn't exists. Please check the table name.").toMap()).build();
             }
         } catch (MusicServiceException e) {
-            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
         }
         String primaryKeyName = tableInfo.getPrimaryKey().get(0).getName();
@@ -696,7 +705,7 @@ public class RestMusicDataAPI {
             try {
                 colType = tableInfo.getColumn(entry.getKey()).getType();
             } catch(NullPointerException ex) {
-                logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage() +" Invalid column name : "+entry.getKey(), AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
+                logger.error(EELFLoggerDelegate.errorLogger,ex +" Invalid column name : "+entry.getKey(), AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
                 return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Invalid column name : "+entry.getKey()).toMap()).build();
             }
 
@@ -704,7 +713,7 @@ public class RestMusicDataAPI {
             try {
               formattedValue = MusicUtil.convertToActualDataType(colType, valueObj);
             } catch (Exception e) {
-              logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
+              logger.error(EELFLoggerDelegate.errorLogger,e);
           }
             valueString.append("?");
             
@@ -745,13 +754,9 @@ public class RestMusicDataAPI {
             
             queryObject.addValue(formattedValue);
             counter = counter + 1;
-            /*if (counter == valuesMap.size() - 1) {
-                fieldsString.append(")");
-                valueString.append(")");
-            } else {*/
-                fieldsString.append(",");
-                valueString.append(",");
-            //}
+            fieldsString.append(",");
+            valueString.append(",");
+
         } }
         
         if(primaryKey == null || primaryKey.length() <= 0) {
@@ -812,7 +817,7 @@ public class RestMusicDataAPI {
 
             }
         } catch (Exception ex) {
-            logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
         }
         
@@ -864,7 +869,7 @@ public class RestMusicDataAPI {
             authMap = MusicCore.autheticateUser(ns, userId, password, keyspace,
                           aid, "updateTable");
         } catch (Exception e) {
-              logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
+              logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
               return response.status(Status.UNAUTHORIZED).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
         }
         if (authMap.containsKey("aid"))
@@ -888,7 +893,7 @@ public class RestMusicDataAPI {
         try {
             tableInfo = MusicCore.returnColumnMetadata(keyspace, tablename);
         } catch (MusicServiceException e) {
-            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
               return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
         }
         if (tableInfo == null) {
@@ -915,7 +920,7 @@ public class RestMusicDataAPI {
             try {
               valueString = MusicUtil.convertToActualDataType(colType, valueObj);
             } catch (Exception e) {
-              logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
+              logger.error(EELFLoggerDelegate.errorLogger,e);
             }
             fieldValueString.append(entry.getKey() + "= ?");
             queryObject.addValue(valueString);
@@ -955,7 +960,7 @@ public class RestMusicDataAPI {
                         .setError("Mandatory WHERE clause is missing. Please check the input request.").toMap()).build();
             }
         } catch (MusicServiceException ex) {
-            logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
               return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
         }
 
@@ -990,13 +995,13 @@ public class RestMusicDataAPI {
             }
             operationResult = MusicCore.criticalPut(keyspace, tablename, rowId.primarKeyValue,
                             queryObject, lockId, conditionInfo);
-        } else if (consistency.equalsIgnoreCase("atomic_delete_lock")) {
+        } else if (("atomic_delete_lock").equalsIgnoreCase(consistency)) {
             // this function is mainly for the benchmarks
             try {
               operationResult = MusicCore.atomicPutWithDeleteLock(keyspace, tablename,
                               rowId.primarKeyValue, queryObject, conditionInfo);
             } catch (MusicLockingException e) {
-                logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
+                logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
                   return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
             }
         } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
@@ -1004,7 +1009,7 @@ public class RestMusicDataAPI {
               operationResult = MusicCore.atomicPut(keyspace, tablename, rowId.primarKeyValue,
                               queryObject, conditionInfo);
             } catch (MusicLockingException e) {
-                logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
+                logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
                 return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
             }
         }
@@ -1077,7 +1082,7 @@ public class RestMusicDataAPI {
             authMap = MusicCore.autheticateUser(ns, userId, password, keyspace,
                             aid, "deleteFromTable");
         } catch (Exception e) {
-            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
             return response.status(Status.UNAUTHORIZED).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
         }
         if (authMap.containsKey("aid"))
@@ -1109,7 +1114,7 @@ public class RestMusicDataAPI {
         try {
             rowId = getRowIdentifier(keyspace, tablename, info.getQueryParameters(), queryObject);
         } catch (MusicServiceException ex) {
-            logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
               return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
         }
         String rowSpec = rowId.rowIdString.toString();
@@ -1166,7 +1171,7 @@ public class RestMusicDataAPI {
                                     queryObject, conditionInfo);
             }
         } catch (MusicLockingException e) {
-            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
               return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
                     .setError("Unable to perform Delete operation. Exception from music").toMap()).build();
         }
@@ -1228,7 +1233,7 @@ public class RestMusicDataAPI {
         try {
             return response.status(Status.OK).entity(new JsonResponse(MusicCore.nonKeyRelatedPut(query, consistency)).toMap()).build();
         } catch (MusicServiceException ex) {
-            logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
         }
 
@@ -1284,7 +1289,7 @@ public class RestMusicDataAPI {
         try {
             rowId = getRowIdentifier(keyspace, tablename, info.getQueryParameters(), queryObject);
         } catch (MusicServiceException ex) {
-            logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
               return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
         }
         queryObject.appendQueryString(
@@ -1451,7 +1456,7 @@ public class RestMusicDataAPI {
               colType = tableInfo.getColumn(entry.getKey()).getType();
               formattedValue = MusicUtil.convertToActualDataType(colType, indValue);
             } catch (Exception e) {
-              logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
+              logger.error(EELFLoggerDelegate.errorLogger,e);
             }
             if(tableInfo.getPrimaryKey().get(0).getName().equals(entry.getKey()))
             primaryKey.append(indValue);
