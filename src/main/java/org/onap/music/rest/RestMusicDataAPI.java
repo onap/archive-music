@@ -3,6 +3,7 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *  Modifications Copyright (C) 2018 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -38,7 +38,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -387,20 +386,25 @@ public class RestMusicDataAPI {
         StringBuilder fieldsString = new StringBuilder("(vector_ts text,");
         int counter = 0;
         for (Map.Entry<String, String> entry : fields.entrySet()) {
-            if (entry.getKey().equals("PRIMARY KEY")) {
+            if (("PRIMARY KEY").equals(entry.getKey())) {
                 primaryKey = entry.getValue(); // replaces primaryKey
                 primaryKey.trim();
             } else {
-                  if (counter == 0 )  fieldsString.append("" + entry.getKey() + " " + entry.getValue() + "");
-                  else fieldsString.append("," + entry.getKey() + " " + entry.getValue() + "");             
+                  if (counter == 0 ) {
+                      fieldsString.append("" + entry.getKey() + " " + entry.getValue() + "");
+                  }
+                  else
+                  {
+                      fieldsString.append("," + entry.getKey() + " " + entry.getValue() + "");
+                  }
             }
 
       	   if (counter != (fields.size() - 1) ) {
         	  
-        	  //logger.info("cjc2 field="+entry.getValue()+"counter=" + counter+"fieldsize-1="+(fields.size() -1) + ",");
+
         	  counter = counter + 1; 
       	   } else {
-         //logger.info("cjc3 field="+entry.getValue()+"counter=" + counter+"fieldsize="+fields.size() + ",");
+
                if((primaryKey != null) && (partitionKey == null)) {
                   primaryKey.trim();
                   int count1 = StringUtils.countMatches(primaryKey, ')');
@@ -432,9 +436,14 @@ public class RestMusicDataAPI {
                		clusterKey=clusterKey.replaceAll("[\\(]+","");
                		clusterKey=clusterKey.replaceAll("[\\)]+","");
                		clusterKey.trim();
-               		if (clusterKey.indexOf(",") == 0) clusterKey=clusterKey.substring(1);
-               		   clusterKey.trim();
-               		if (clusterKey.equals(",") ) clusterKey=""; // print error if needed    ( ... ),)
+               		if (clusterKey.indexOf(",") == 0) {
+                        clusterKey = clusterKey.substring(1);
+                        clusterKey.trim();
+                    }
+               		if (clusterKey.equals(",") ) {
+               		    clusterKey="";
+               		    // print error if needed    ( ... ),)
+                    }
 
               } 
 
@@ -745,13 +754,9 @@ public class RestMusicDataAPI {
             
             queryObject.addValue(formattedValue);
             counter = counter + 1;
-            /*if (counter == valuesMap.size() - 1) {
-                fieldsString.append(")");
-                valueString.append(")");
-            } else {*/
-                fieldsString.append(",");
-                valueString.append(",");
-            //}
+            fieldsString.append(",");
+            valueString.append(",");
+
         } }
         
         if(primaryKey == null || primaryKey.length() <= 0) {
@@ -990,7 +995,7 @@ public class RestMusicDataAPI {
             }
             operationResult = MusicCore.criticalPut(keyspace, tablename, rowId.primarKeyValue,
                             queryObject, lockId, conditionInfo);
-        } else if (consistency.equalsIgnoreCase("atomic_delete_lock")) {
+        } else if (("atomic_delete_lock").equalsIgnoreCase(consistency)) {
             // this function is mainly for the benchmarks
             try {
               operationResult = MusicCore.atomicPutWithDeleteLock(keyspace, tablename,
