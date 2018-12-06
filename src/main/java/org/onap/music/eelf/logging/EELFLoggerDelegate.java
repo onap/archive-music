@@ -228,9 +228,22 @@ public class EELFLoggerDelegate extends SLF4jWrapper implements EELFLogger {
      * 
      * @param logger
      * @param msg
+     * 
+     * @deprecated use {@link #error(EELF, Exception)} instead
      */
+    @Deprecated
     public void error(EELFLogger logger, String msg) {
         logger.error(className+ " - " + msg);
+    }
+    
+    /**
+     * Logs a message at error level.
+     * 
+     * @param logger
+     * @param msg
+     */
+    public void error(EELFLogger logger, Exception e) {
+        logger.error(className+ " - ", e);
     }
 
     /**
@@ -239,9 +252,23 @@ public class EELFLoggerDelegate extends SLF4jWrapper implements EELFLogger {
      * @param logger
      * @param msg
      * @param arguments
+     * 
+     * @deprecated use {@link #error(EELF, Exception, Object...)} instead
      */
+    @Deprecated
     public void error(EELFLogger logger, String msg, Object... arguments) {
-        logger.warn(msg, arguments);
+        logger.error(msg, arguments);
+    }
+    
+    /**
+     * Logs a message with parameters at error level.
+     * 
+     * @param logger
+     * @param msg
+     * @param arguments
+     */
+    public void error(EELFLogger logger, Exception e, Object... arguments) {
+        logger.error("Exception", e, arguments);
     }
 
     /**
@@ -252,7 +279,7 @@ public class EELFLoggerDelegate extends SLF4jWrapper implements EELFLogger {
      * @param th
      */
     public void error(EELFLogger logger, String msg, Throwable th) {
-        logger.warn(msg, th);
+        logger.error(msg, th);
     }
 
     /**
@@ -261,7 +288,9 @@ public class EELFLoggerDelegate extends SLF4jWrapper implements EELFLogger {
      * @param logger
      * @param msg
      * @param severtiy
+     * @deprecated use {@link #error(EELF, Exception)} instead
      */
+    @Deprecated
     public void error(EELFLogger logger, String msg, Object /* AlarmSeverityEnum */ severtiy) {
         logger.error(msg);
     }
