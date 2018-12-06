@@ -189,7 +189,7 @@ public class MusicCore {
             logger.info(EELFLoggerDelegate.applicationLogger,"Time taken to get lock state:" + (end - start) + " ms");
             return mls;
         } catch (NullPointerException | MusicLockingException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.INVALIDLOCK,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+        	logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.INVALIDLOCK,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         }
         return null;
     }
@@ -213,9 +213,9 @@ public class MusicCore {
                         mls = releaseLock(currentLockHolder, voluntaryRelease);
                     }
                 }
-            } else
+            } else {
             	logger.error(EELFLoggerDelegate.errorLogger,key, AppMessages.INVALIDLOCK,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
-          
+            }
             /*
              * call the traditional acquire lock now and if the result returned is true, set the
              * begin time-stamp and lease period

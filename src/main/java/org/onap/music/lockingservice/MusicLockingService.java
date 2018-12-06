@@ -103,8 +103,7 @@ public class MusicLockingService implements Watcher {
         try{
         	data = zkLockHandle.getNodeData(lockName);
         }catch (Exception ex){
-            logger.error("Error", ex);
-        	logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+        	logger.error(EELFLoggerDelegate.errorLogger, ex,AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
         if(data !=null)
         return MusicLockState.deSerialize(data);
