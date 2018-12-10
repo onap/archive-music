@@ -3,6 +3,7 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *  Modifications Copyright (C) 2018 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,6 +29,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
+import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.eelf.logging.format.AppMessages;
+import org.onap.music.eelf.logging.format.ErrorSeverity;
+import org.onap.music.eelf.logging.format.ErrorTypes;
+
 import io.swagger.annotations.ApiModel;
 
 @ApiModel(value = "JsonNotification", description = "Json model for callback")
@@ -45,6 +51,7 @@ public class JsonNotification implements Serializable {
     private String operation_type;
     private String triggerName;
     private Map<String, String> response_body;
+	private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(JsonNotification.class);
     
 	public String getNotify_field() {
 		return notify_field;
@@ -111,6 +118,7 @@ public class JsonNotification implements Serializable {
 		try {
 	        return new com.fasterxml.jackson.databind.ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(this);
 	    } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+			logger.error(EELFLoggerDelegate.errorLogger, ex,AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.GENERALSERVICEERROR);
 			return notify_field+ " : "+endpoint+ " : "+username+ " : "+password+ " : "+response_body;
 	    }
 
