@@ -3,6 +3,7 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *  Modifications Copyright (C) 2018 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -33,6 +34,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
+import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.eelf.logging.format.AppMessages;
+import org.onap.music.eelf.logging.format.ErrorSeverity;
+import org.onap.music.eelf.logging.format.ErrorTypes;
+
 @ApiModel(value = "JsonTable", description = "Json model for table vlaues insert")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonInsert implements Serializable {
@@ -41,10 +47,11 @@ public class JsonInsert implements Serializable {
     private transient Map<String, Object> values;
     private String ttl;
     private String timestamp;
-    private transient Map<String, Object> row_specification;
+    private transient Map<String, Object> rowSpecification;
     private Map<String, String> consistencyInfo;
     private Map<String, byte[]> objectMap;
-    
+    private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(JsonInsert.class);
+
     @ApiModelProperty(value = "objectMap")
     public Map<String, byte[]> getObjectMap() {
 		return objectMap;
@@ -110,11 +117,11 @@ public class JsonInsert implements Serializable {
 
     @ApiModelProperty(value = "Information for selecting specific rows for insert")
     public Map<String, Object> getRow_specification() {
-        return row_specification;
+        return rowSpecification;
     }
 
-    public void setRow_specification(Map<String, Object> row_specification) {
-        this.row_specification = row_specification;
+    public void setRow_specification(Map<String, Object> rowSpecification) {
+        this.rowSpecification = rowSpecification;
     }
 
     public byte[] serialize() {
@@ -124,7 +131,7 @@ public class JsonInsert implements Serializable {
             out = new ObjectOutputStream(bos);
             out.writeObject(this);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(EELFLoggerDelegate.errorLogger, ex,AppMessages.IOERROR, ErrorSeverity.ERROR, ErrorTypes.DATAERROR);
         }
         return bos.toByteArray();
     }
