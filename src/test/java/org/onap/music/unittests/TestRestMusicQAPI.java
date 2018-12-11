@@ -35,6 +35,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import org.apache.curator.test.TestingServer;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
@@ -46,7 +47,7 @@ import org.mindrot.jbcrypt.BCrypt;
 //cjcimport org.mindrot.jbcrypt.BCrypt;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
@@ -264,7 +265,7 @@ public class TestRestMusicQAPI {
         jsonTable.setTableName(tableName);
         jsonTable.setFields(fields);
         //System.out.println("cjc before print version, xLatestVersion="+xLatestVersion);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = qData.createQ(majorV, minorV,patchV,
                         aid, appName, authorization,
                         jsonTable, keyspaceName, tableName);
@@ -374,7 +375,7 @@ public class TestRestMusicQAPI {
         jsonTable.setClusteringOrder("emp_id DESC");
         jsonTable.setFields(fields);
         //System.out.println("cjc before print version, xLatestVersion="+xLatestVersion);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = qData.createQ(majorV, minorV,patchV,
                         aid, appName, authorization,
                         jsonTable, keyspaceName, tableNameC);
@@ -463,7 +464,7 @@ public class TestRestMusicQAPI {
         jsonTable.setClusteringOrder("emp_id DESCx");
         jsonTable.setFields(fields);
         //System.out.println("cjc before print version, xLatestVersion="+xLatestVersion);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = qData.createQ(majorV, minorV,patchV,
                         aid, appName, authorization,
                         jsonTable, keyspaceName, tableNameC);
@@ -491,7 +492,7 @@ public class TestRestMusicQAPI {
         String tableNameDup=tableName+"X";
         jsonTable.setTableName(tableNameDup);
         jsonTable.setFields(fields);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = qData.createQ(majorV, minorV,patchV,
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         jsonTable, keyspaceName, tableNameDup);
@@ -530,7 +531,7 @@ public class TestRestMusicQAPI {
         jsonTable.setTableName(tableName);
         jsonTable.setClusteringOrder("uuid DESC");
         jsonTable.setFields(fields);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = qData.createQ(majorV, minorV,patchV,
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, wrongAuthorization,
                         jsonTable, keyspaceName, tableName);
@@ -557,7 +558,7 @@ public class TestRestMusicQAPI {
         jsonTable.setClusteringKey("emp_salary");
         jsonTable.setClusteringOrder("emp_salary DESC");
         jsonTable.setFields(fields);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = qData.createQ(majorV, minorV,patchV,
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         jsonTable, "wrong", tableName);
@@ -603,7 +604,7 @@ public class TestRestMusicQAPI {
         jsonInsert.setKeyspaceName(keyspaceName);
         jsonInsert.setTableName(tableName);
         jsonInsert.setValues(values);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = qData.insertIntoQ(majorV, minorV,patchV, "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
                 appName, authorization, jsonInsert, keyspaceName, tableName);
         assertNotEquals(200, response.getStatus());
@@ -643,7 +644,7 @@ public class TestRestMusicQAPI {
         jsonInsert.setKeyspaceName(keyspaceName);
         jsonInsert.setTableName(tableName);
         jsonInsert.setValues(values);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = qData.insertIntoQ(majorV, minorV,patchV,
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, wrongAuthorization,
                         jsonInsert, keyspaceName, tableName);
@@ -664,7 +665,7 @@ public class TestRestMusicQAPI {
         jsonInsert.setKeyspaceName(keyspaceName);
         jsonInsert.setTableName(tableName);
         jsonInsert.setValues(values);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = qData.insertIntoQ(majorV, minorV,patchV,
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         jsonInsert, keyspaceName, "wrong");
@@ -705,8 +706,8 @@ public class TestRestMusicQAPI {
       jsonUpdate.setKeyspaceName(keyspaceName);
       jsonUpdate.setTableName(tableName);
       jsonUpdate.setValues(values);
-      Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-      Mockito.when(info.getQueryParameters()).thenReturn(row);
+      //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+      //Mockito.when(info.getQueryParameters()).thenReturn(row);
       Response response = qData.updateQ(majorV, minorV,patchV, "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
               authorization, jsonUpdate, keyspaceName, tableName, info);
       assertNotEquals(200, response.getStatus());
@@ -797,7 +798,7 @@ public class TestRestMusicQAPI {
         MultivaluedMap<String, String> row = new MultivaluedMapImpl();
         consistencyInfo.put("type", "atomic");
         jsonDelete.setConsistencyInfo(consistencyInfo);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = qData.deleteFromQ(majorV, minorV,patchV,
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
@@ -814,8 +815,8 @@ public class TestRestMusicQAPI {
         row.add("emp_name", "test1");
         consistencyInfo.put("type", "atomic");
         jsonDelete.setConsistencyInfo(consistencyInfo);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Mockito.when(info.getQueryParameters()).thenReturn(row);
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = qData.deleteFromQ(majorV, minorV,patchV,
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         null, keyspaceName, tableName, info);
@@ -857,7 +858,7 @@ public class TestRestMusicQAPI {
         jsonTable.setClusteringKey("emp_id");
         jsonTable.setClusteringOrder("emp_id DESC");
         jsonTable.setTableName(tableNameC);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = qData.createQ(majorV, minorV,patchV,
                         aid, appName, authorization,
                         jsonTable, keyspaceName, tableNameC);
@@ -884,7 +885,7 @@ public class TestRestMusicQAPI {
         jsonTable.setClusteringOrder("emp_id DESC");
         jsonTable.setTableName(tableNameC);
         jsonTable.setFields(fields);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = qData.createQ(majorV, minorV,patchV,
                         aid, appName, authorization,
                         jsonTable, keyspaceName, tableNameC);
@@ -911,7 +912,7 @@ public class TestRestMusicQAPI {
         jsonTable.setClusteringOrder("emp_id DESC");
         jsonTable.setTableName(tableNameC);
         jsonTable.setFields(fields);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = qData.createQ(majorV, minorV,patchV,
                         aid, appName, authorization,
                         jsonTable, keyspaceName, tableNameC);
@@ -938,7 +939,7 @@ public class TestRestMusicQAPI {
         jsonTable.setClusteringKey("emp_id");
         jsonTable.setTableName(tableNameC);
         jsonTable.setFields(fields);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = qData.createQ(majorV, minorV,patchV,
                         aid, appName, authorization,
                         jsonTable, keyspaceName, tableNameC);
@@ -966,7 +967,7 @@ public class TestRestMusicQAPI {
         jsonTable.setClusteringOrder("emp_id ASC");
         jsonTable.setTableName(tableNameC);
         jsonTable.setFields(fields);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = qData.createQ(majorV, minorV,patchV,
                         aid, appName, authorization,
                         jsonTable, keyspaceName, tableNameC);
@@ -993,13 +994,14 @@ public class TestRestMusicQAPI {
         jsonTable.setTableName(tableNameC);
         jsonTable.setFields(fields);
         jsonTable.setClusteringOrder("emp_id ASC");
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = qData.createQ(majorV, minorV,patchV,
                         aid, appName, authorization,
                         jsonTable, keyspaceName, tableNameC);
         System.out.println("#######status is " + response.getStatus()+"table namec="+tableNameC);
         System.out.println("Entity" + response.getEntity());
         assertEquals(400, response.getStatus());
+        
     }
 
     //Primary key with no partition key
@@ -1020,7 +1022,8 @@ public class TestRestMusicQAPI {
         jsonTable.setTableName(tableNameC);
         jsonTable.setFields(fields);
         jsonTable.setClusteringOrder("emp_id ASC");
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = qData.createQ(majorV, minorV,patchV,
                         aid, appName, authorization,
                         jsonTable, keyspaceName, tableNameC);
