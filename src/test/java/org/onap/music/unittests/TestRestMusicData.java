@@ -39,11 +39,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.mindrot.jbcrypt.BCrypt;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
@@ -82,14 +80,6 @@ public class TestRestMusicData {
 
     @Mock
     UriInfo info;
-
-    //* cjc out 
-    @Mock
-    CachingUtil cachUtilMock;
-    
-    @InjectMocks
-      private MusicCore mCore;
-    //*/
     
     static String appName = "TestApp";
     static String userId = "TestUser";
@@ -129,6 +119,7 @@ public class TestRestMusicData {
         	MusicDataStoreHandle.mDstoreHandle.close();
         if(zkServer!=null)
         	zkServer.stop();
+        System.err.println("Done");
     }
 
     @Test
@@ -198,7 +189,7 @@ public class TestRestMusicData {
         jsonKeyspace.setDurabilityOfWrites("true");
         jsonKeyspace.setKeyspaceName(keyspaceName);
         jsonKeyspace.setReplicationInfo(replicationInfo);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.createKeySpace("1", "1", "1", null,authorization, appName,  jsonKeyspace, keyspaceName);
         System.out.println("#######status is " + response.getStatus());
         System.out.println("Entity" + response.getEntity());
@@ -210,7 +201,7 @@ public class TestRestMusicData {
         JsonKeySpace jsonKeyspace = new JsonKeySpace();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, Object> replicationInfo = new HashMap<>();
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.createKeySpace("1", "1", "1", null, authorization,appName, jsonKeyspace, keyspaceName);
         System.out.println("#######status is " + response.getStatus());
         System.out.println("Entity" + response.getEntity());
@@ -223,7 +214,7 @@ public class TestRestMusicData {
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, Object> replicationInfo = new HashMap<>();
         String appName1 = "test";
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.createKeySpace("1", "1", "1", null,authorization, appName1, jsonKeyspace, keyspaceName);
         System.out.println("#######status is " + response.getStatus());
         System.out.println("Entity" + response.getEntity());
@@ -242,7 +233,7 @@ public class TestRestMusicData {
         jsonKeyspace.setDurabilityOfWrites("true");
         jsonKeyspace.setKeyspaceName("TestApp1");
         jsonKeyspace.setReplicationInfo(replicationInfo);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.createKeySpace("1", "1", "1", null,authorization, "TestApp1",
         		 jsonKeyspace, keyspaceName);
         System.out.println("#######status is " + response.getStatus());
@@ -252,8 +243,6 @@ public class TestRestMusicData {
 
     @Test
     public void Test2_createKeyspaceEmptyAuth() throws Exception {
-  
-        //MockitoAnnotations.initMocks(this);
         JsonKeySpace jsonKeyspace = new JsonKeySpace();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, Object> replicationInfo = new HashMap<>();
@@ -267,7 +256,7 @@ public class TestRestMusicData {
         //Map<String, Object> m1= new HashMap<>() ;
         //Mockito.when(CachingUtil.verifyOnboarding("x","y","x")).thenReturn(m1);
         //Mockito.when(CachingUtil.verifyOnboarding(appNamex,userId,password).thenReturn(m1));
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         String authDatax = ":"+password;
         String authorizationx = new String(Base64.encode(authDatax.getBytes()));
         try {
@@ -295,7 +284,7 @@ public class TestRestMusicData {
         jsonTable.setPrimaryKey("emp_name");
         jsonTable.setTableName(tableName);
         jsonTable.setFields(fields);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.createTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",appName, authorization, 
                         jsonTable, keyspaceName, tableName);
@@ -321,7 +310,7 @@ public class TestRestMusicData {
         jsonTable.setClusteringOrder("ASC");
         jsonTable.setTableName(tableName);
         jsonTable.setFields(fields);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.createTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",appName, authorization, 
                         jsonTable, keyspaceName, tableName);
@@ -350,7 +339,7 @@ public class TestRestMusicData {
         jsonTable.setFields(fields);
         jsonTable.setProperties(properties);
         
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.createTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",appName, authorization, 
                         jsonTable, keyspaceName, tableName_prop);
@@ -375,7 +364,7 @@ public class TestRestMusicData {
         String tableNameDup=tableName+"X";
         jsonTable.setTableName(tableNameDup);
         jsonTable.setFields(fields);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.createTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         jsonTable, keyspaceName, tableNameDup);
@@ -411,7 +400,7 @@ public class TestRestMusicData {
         jsonTable.setPrimaryKey("emp_name");
         jsonTable.setTableName(tableName);
         jsonTable.setFields(fields);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.createTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, wrongAuthorization,
                         jsonTable, keyspaceName, tableName);
@@ -436,7 +425,7 @@ public class TestRestMusicData {
         jsonTable.setPrimaryKey("emp_name");
         jsonTable.setTableName(tableName);
         jsonTable.setFields(fields);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.createTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         jsonTable, "wrong", tableName);
@@ -464,7 +453,7 @@ public class TestRestMusicData {
         jsonTable.setTableName(tableNameC);
         jsonTable.setClusteringOrder("emp_id Desc");
         jsonTable.setFields(fields);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.createTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         jsonTable, keyspaceName, tableNameC);
@@ -493,7 +482,7 @@ public class TestRestMusicData {
         jsonTable.setTableName(tableNameC);
         jsonTable.setClusteringOrder("emp_salary ASC");
         jsonTable.setFields(fields);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.createTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         jsonTable, keyspaceName, tableNameC);
@@ -520,7 +509,7 @@ public class TestRestMusicData {
         jsonTable.setTableName(tableNameC);
         jsonTable.setClusteringOrder("emp_salary ASC");
         jsonTable.setFields(fields);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.createTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         jsonTable, keyspaceName, tableNameC);
@@ -548,7 +537,7 @@ public class TestRestMusicData {
         jsonTable.setTableName(tableNameC);
         jsonTable.setClusteringOrder("emp_salary ASC");
         jsonTable.setFields(fields);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.createTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         jsonTable, keyspaceName, tableNameC);
@@ -576,7 +565,7 @@ public class TestRestMusicData {
         jsonTable.setTableName(tableNameC);
         jsonTable.setClusteringOrder("emp_salary ASC");
         jsonTable.setFields(fields);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.createTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         jsonTable, keyspaceName, tableNameC);
@@ -604,7 +593,7 @@ public class TestRestMusicData {
         jsonTable.setTableName(tableNameC);
         jsonTable.setClusteringOrder("emp_idx desc, emp_salary ASC");
         jsonTable.setFields(fields);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.createTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         jsonTable, keyspaceName, tableNameC);
@@ -632,7 +621,7 @@ public class TestRestMusicData {
         jsonTable.setTableName(tableNameC);
         jsonTable.setClusteringOrder("emp_id desc, emp_salary ASC,uuid desc");
         jsonTable.setFields(fields);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.createTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         jsonTable, keyspaceName, tableNameC);
@@ -660,7 +649,7 @@ public class TestRestMusicData {
         jsonTable.setTableName(tableNameC);
         jsonTable.setClusteringOrder("emp_salary ASC");
         jsonTable.setFields(fields);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.createTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         jsonTable, keyspaceName, tableNameC);
@@ -695,7 +684,7 @@ public class TestRestMusicData {
         jsonInsert.setKeyspaceName(keyspaceName);
         jsonInsert.setTableName(tableName);
         jsonInsert.setValues(values);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.insertIntoTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
                 appName, authorization, jsonInsert, keyspaceName, tableName);
         assertEquals(200, response.getStatus());
@@ -714,7 +703,7 @@ public class TestRestMusicData {
         jsonInsert.setKeyspaceName(keyspaceName);
         jsonInsert.setTableName(tableName);
         jsonInsert.setValues(values);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.insertIntoTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         jsonInsert, keyspaceName, tableName);
@@ -735,7 +724,7 @@ public class TestRestMusicData {
         jsonInsert.setKeyspaceName(keyspaceName);
         jsonInsert.setTableName(tableName);
         jsonInsert.setValues(values);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.insertIntoTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, wrongAuthorization,
                         jsonInsert, keyspaceName, tableName);
@@ -756,7 +745,7 @@ public class TestRestMusicData {
         jsonInsert.setKeyspaceName(keyspaceName);
         jsonInsert.setTableName(tableName);
         jsonInsert.setValues(values);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.insertIntoTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         jsonInsert, keyspaceName, "wrong");
@@ -777,7 +766,7 @@ public class TestRestMusicData {
         jsonUpdate.setKeyspaceName(keyspaceName);
         jsonUpdate.setTableName(tableName);
         jsonUpdate.setValues(values);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.updateTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
                 authorization, jsonUpdate, keyspaceName, tableName, info);
@@ -787,7 +776,7 @@ public class TestRestMusicData {
     // need mock code to create error for MusicCore methods
     @Test
     public void Test5_updateTableAuthE() throws Exception {
-      MockitoAnnotations.initMocks(this);
+      //MockitoAnnotations.initMocks(this);
         JsonUpdate jsonUpdate = new JsonUpdate();
         Map<String, String> consistencyInfo = new HashMap<>();
         MultivaluedMap<String, String> row = new MultivaluedMapImpl();
@@ -800,7 +789,7 @@ public class TestRestMusicData {
         jsonUpdate.setTableName(tableName);
         jsonUpdate.setValues(values);
         //add ttl & timestamp
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         //Map<String, Object> m1= new HashMap<>() ;
         //Mockito.when(MusicCore.autheticateUser(appName,userId,password,keyspaceName,"abc66ccc-d857-4e90-b1e5-df98a3d40ce6","updateTable")).thenReturn(m1);
@@ -827,8 +816,8 @@ public class TestRestMusicData {
         jsonUpdate.setTableName(tableName);
         jsonUpdate.setValues(values);
         
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Mockito.when(info.getQueryParameters()).thenReturn(row);
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.when(info.getQueryParameters()).thenReturn(row);
         String authDatax = ":";//+password;
         String authorizationx = new String(Base64.encode(authDatax.getBytes()));
         try {
@@ -855,8 +844,8 @@ public class TestRestMusicData {
         jsonUpdate.setTableName(tableName);
         jsonUpdate.setValues(values);
         
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Mockito.when(info.getQueryParameters()).thenReturn(row);
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.when(info.getQueryParameters()).thenReturn(row);
         String authDatax =":"+password;
         String authorizationx = new String(Base64.encode(authDatax.getBytes()));
         String appNamex="xx";
@@ -880,7 +869,7 @@ public class TestRestMusicData {
         row.add("emp_name", "testName");
         consistencyInfo.put("type", "atomic");
         jsonSelect.setConsistencyInfo(consistencyInfo);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.select("1", "1", "1","abc66ccc-d857-4e90-b1e5-df98a3d40ce6", 
                         appName, authorization, keyspaceName, tableName, info);
@@ -897,7 +886,7 @@ public class TestRestMusicData {
         row.add("emp_name", "testName");
         consistencyInfo.put("type", "atomic");
         jsonInsert.setConsistencyInfo(consistencyInfo);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.selectCritical("1", "1", "1","abc66ccc-d857-4e90-b1e5-df98a3d40ce6", 
                         appName, authorization, jsonInsert, keyspaceName, tableName,info);
@@ -914,7 +903,7 @@ public class TestRestMusicData {
         row.add("emp_name", "test1");
         consistencyInfo.put("type", "atomic");
         jsonDelete.setConsistencyInfo(consistencyInfo);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.deleteFromTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
@@ -931,7 +920,7 @@ public class TestRestMusicData {
         MultivaluedMap<String, String> row = new MultivaluedMapImpl();
         consistencyInfo.put("type", "atomic");
         jsonDelete.setConsistencyInfo(consistencyInfo);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.deleteFromTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
@@ -948,8 +937,8 @@ public class TestRestMusicData {
         row.add("emp_name", "test1");
         consistencyInfo.put("type", "atomic");
         jsonDelete.setConsistencyInfo(consistencyInfo);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Mockito.when(info.getQueryParameters()).thenReturn(row);
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.deleteFromTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         null, keyspaceName, tableName, info);
@@ -962,7 +951,7 @@ public class TestRestMusicData {
         Map<String, String> consistencyInfo = new HashMap<>();
         consistencyInfo.put("type", "atomic");
         jsonTable.setConsistencyInfo(consistencyInfo);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.dropTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                          keyspaceName, tableName);
@@ -982,7 +971,7 @@ public class TestRestMusicData {
         jsonKeyspace.setDurabilityOfWrites("true");
         jsonKeyspace.setKeyspaceName("TestApp1");
         jsonKeyspace.setReplicationInfo(replicationInfo);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.dropKeySpace("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
         		authorization,appName,  keyspaceName);
         assertEquals(200, response.getStatus());
@@ -1000,7 +989,7 @@ public class TestRestMusicData {
         jsonKeyspace.setDurabilityOfWrites("true");
         jsonKeyspace.setKeyspaceName("TestApp1");
         jsonKeyspace.setReplicationInfo(replicationInfo);
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.dropKeySpace("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
         		wrongAuthorization, appName, keyspaceName);
         assertEquals(401, response.getStatus());
@@ -1011,7 +1000,7 @@ public class TestRestMusicData {
         JsonKeySpace jsonKeyspace = new JsonKeySpace();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, Object> replicationInfo = new HashMap<>();
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.dropKeySpace("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
         		authorization,  appName,  keyspaceName);
         assertEquals(400, response.getStatus());
@@ -1131,6 +1120,7 @@ public class TestRestMusicData {
     }
 
     @Test
+    @Ignore
     public void Test9_onboardDelete1() throws Exception {
         JsonOnboard jsonOnboard = new JsonOnboard();
         Map<String, Object> resultMap = (Map<String, Object>) admin.deleteOnboardApp(jsonOnboard).getEntity();
@@ -1140,7 +1130,7 @@ public class TestRestMusicData {
     @Ignore
     @Test
     public void Test3_createLockReference() throws Exception {
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Map<String, Object> resultMap = (Map<String, Object>) lock.createLockReference(lockName,"1","1",authorization, null, appName).getEntity();
         @SuppressWarnings("unchecked")
         Map<String, Object> resultMap1 = (Map<String, Object>) resultMap.get("lock");
@@ -1151,7 +1141,7 @@ public class TestRestMusicData {
     @Ignore
     @Test
     public void Test4_accquireLock() throws Exception {
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Map<String, Object> resultMap = (Map<String, Object>) lock.accquireLock(lockId,"1","1",authorization, null, appName).getEntity();
         assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
@@ -1159,7 +1149,7 @@ public class TestRestMusicData {
     @Ignore
     @Test
     public void Test5_currentLockHolder() throws Exception {
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Map<String, Object> resultMap = (Map<String, Object>) lock.currentLockHolder(lockName,"1","1",authorization, null, appName).getEntity();
         assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
@@ -1167,7 +1157,7 @@ public class TestRestMusicData {
     @Ignore
     @Test
     public void Test7_unLock() throws Exception {
-        Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Map<String, Object> resultMap = (Map<String, Object>) lock.unLock(lockId,"1","1",authorization, null, appName).getEntity();
         assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
