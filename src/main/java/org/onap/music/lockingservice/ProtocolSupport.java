@@ -3,6 +3,7 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *  Modifications Copyright (C) 2018 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -140,7 +141,13 @@ class ProtocolSupport {
                 retryDelay(i);
             }
         }
-        throw exception;
+        if(exception == null)
+            {
+              throw new NullPointerException();
+            }
+        else{
+            throw exception;
+            }
     }
 
     /**
@@ -148,7 +155,7 @@ class ProtocolSupport {
      * 
      * @param path the lock path
      */
-    protected void ensurePathExists(String path) {
+    protected void ensurePathExists(String path) throws InterruptedException {
         ensureExists(path, null, acl, CreateMode.PERSISTENT);
     }
 
@@ -161,7 +168,7 @@ class ProtocolSupport {
      * @param flags create mode flags
      */
     protected void ensureExists(final String path, final byte[] data, final List<ACL> acl,
-                    final CreateMode flags) {
+                    final CreateMode flags) throws InterruptedException {
         try {
             retryOperation(new ZooKeeperOperation() {
                 public boolean execute() throws KeeperException, InterruptedException {
@@ -174,11 +181,10 @@ class ProtocolSupport {
                 }
             });
         } catch (KeeperException e) {
-        	logger.error("Error", e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         } catch (InterruptedException e) {
-        	logger.error("Error", e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+        	throw e;
         }
     }
 
