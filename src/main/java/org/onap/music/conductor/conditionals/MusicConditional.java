@@ -128,6 +128,7 @@ public class MusicConditional {
 				try {
 					results = MusicCore.getDSHandle().executeCriticalGet(queryBank.get(MusicUtil.SELECT));
 				} catch (Exception e) {
+					logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED);
 					return new ReturnType(ResultType.FAILURE, e.getMessage());
 				}
 				if (results.all().isEmpty()) {
@@ -192,15 +193,16 @@ public class MusicConditional {
 					Map<String, String> updatedValues = cascadeColumnUpdateSpecific(row, cascadeColumnValues, casscadeColumnName, planId);
 					JSONObject json = new JSONObject(updatedValues);
 					PreparedQueryObject update = new PreparedQueryObject();
-					String vector_ts = String.valueOf(Thread.currentThread().getId() + System.currentTimeMillis());
+					String vectorTs = String.valueOf(Thread.currentThread().getId() + System.currentTimeMillis());
 					update.appendQueryString("UPDATE " + keyspace + "." + tableName + " SET " + casscadeColumnName + "['" + planId
 							+ "'] = ?, vector_ts = ? WHERE " + primaryKey + " = ?");
 					update.addValue(MusicUtil.convertToActualDataType(DataType.text(), json.toString()));
-					update.addValue(MusicUtil.convertToActualDataType(DataType.text(), vector_ts));
+					update.addValue(MusicUtil.convertToActualDataType(DataType.text(), vectorTs));
 					update.addValue(MusicUtil.convertToActualDataType(DataType.text(), primaryKeyValue));
 					try {
 						MusicCore.getDSHandle().executePut(update, CRITICAL);
 					} catch (Exception ex) {
+						logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
 						return new ReturnType(ResultType.FAILURE, ex.getMessage());
 					}
 				}else {
