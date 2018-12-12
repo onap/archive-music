@@ -27,20 +27,20 @@ import java.util.Map;
 
 public class JSONCallbackResponse {
 
-	private String full_table;
+	private String fullTable;
 	private String keyspace;
 	private Map<String, String> changeValue;
 	private String operation;
-	private String table_name;
-	private String primary_key;
+	private String tableName;
+	private String primaryKey;
 	private Object miscObjects;
 	private List<String> updateList;
 	
 	public String getFull_table() {
-		return full_table;
+		return fullTable;
 	}
-	public void setFull_table(String full_table) {
-		this.full_table = full_table;
+	public void setFull_table(String fullTable) {
+		this.fullTable = fullTable;
 	}
 	public String getKeyspace() {
 		return keyspace;
@@ -55,16 +55,16 @@ public class JSONCallbackResponse {
 		this.operation = operation;
 	}
 	public String getTable_name() {
-		return table_name;
+		return tableName;
 	}
-	public void setTable_name(String table_name) {
-		this.table_name = table_name;
+	public void setTable_name(String tableName) {
+		this.tableName = tableName;
 	}
 	public String getPrimary_key() {
-		return primary_key;
+		return primaryKey;
 	}
-	public void setPrimary_key(String primary_key) {
-		this.primary_key = primary_key;
+	public void setPrimary_key(String primaryKey) {
+		this.primaryKey = primaryKey;
 	}
 	public Object getMiscObjects() {
 		return miscObjects;
