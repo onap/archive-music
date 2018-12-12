@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9adffdf1_19810bc4",
+        "filename": "pom.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2018-12-12T19:23:18Z",
+      "side": 1,
+      "message": "Also, ONAP uses a specific coding style. Please adhere to it while developing:\nhttps://wiki.onap.org/display/DW/Java+code+style\n\nInstructions on how to incorporate that in eclipse can be found here:\nhttp://www.practicesofmastery.com/post/eclipse-google-java-style-guide/",
+      "revId": "8d5f3caaf3348771a36a63a7e1be57ab6b73537e",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
