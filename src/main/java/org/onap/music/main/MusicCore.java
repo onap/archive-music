@@ -79,6 +79,10 @@ private static MusicCoreService musicCore = MusicCassaCore.getInstance();
 		return musicCore.createLockReference(fullyQualifiedKey);
 	}
 	
+	public static String createLockReference(String fullyQualifiedKey, boolean isWriteLock) {
+	    return musicCore.createLockReference(fullyQualifiedKey, isWriteLock);
+	}
+	
 	public static MusicLockState  forciblyReleaseLock(String fullyQualifiedKey, String lockReference) throws MusicLockingException, MusicServiceException, MusicQueryException{
 		return musicCore.forciblyReleaseLock(fullyQualifiedKey, lockReference);
 	}

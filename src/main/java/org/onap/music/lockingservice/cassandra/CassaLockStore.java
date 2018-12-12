@@ -56,7 +56,7 @@ public class CassaLockStore {
                 "Create lock queue/table for " +  keyspace+"."+table);
         table = table_prepend_name+table;
 		String tabQuery = "CREATE TABLE IF NOT EXISTS "+keyspace+"."+table
-				+ " ( key text, lockReference bigint, createTime text, acquireTime text, guard bigint static, PRIMARY KEY ((key), lockReference) ) "
+				+ " ( key text, lockReference bigint, createTime text, acquireTime text, guard bigint static, writeLock boolean, PRIMARY KEY ((key), lockReference) ) "
 				+ "WITH CLUSTERING ORDER BY (lockReference ASC);";
 		PreparedQueryObject queryObject = new PreparedQueryObject();
 		
@@ -75,7 +75,24 @@ public class CassaLockStore {
 	 * @throws MusicServiceException
 	 * @throws MusicQueryException
 	 */
-	public String genLockRefandEnQueue(String keyspace, String table, String lockName) throws MusicServiceException, MusicQueryException {
+	public String genLockRefandEnQueue(String keyspace, String table, String lockName)
+			throws MusicServiceException, MusicQueryException {
+		return genLockRefandEnQueue(keyspace, table, lockName, true);
+	}
+
+	
+	/**
+	 * This method creates a lock reference for each invocation. The lock references are monotonically increasing timestamps.
+	 * @param keyspace of the locks.
+	 * @param table of the locks.
+	 * @param lockName is the primary key of the lock table
+	 * @param isWriteLock true if this lock needs to be a write lock
+	 * @return the UUID lock reference.
+	 * @throws MusicServiceException
+	 * @throws MusicQueryException
+	 */
+	public String genLockRefandEnQueue(String keyspace, String table, String lockName, boolean isWriteLock)
+			throws MusicServiceException, MusicQueryException {
         logger.info(EELFLoggerDelegate.applicationLogger,
                 "Create lock reference for " +  keyspace + "." + table + "." + lockName);
         table = table_prepend_name+table;
@@ -107,7 +124,7 @@ public class CassaLockStore {
                 " UPDATE " + keyspace + "." + table +
 				" SET guard=? WHERE key=? IF guard = " + (prevGuard == 0 ? "NULL" : "?") +";" +
                 " INSERT INTO " + keyspace + "." + table +
-				"(key, lockReference, createTime, acquireTime) VALUES (?,?,?,?) IF NOT EXISTS; APPLY BATCH;";
+				"(key, lockReference, createTime, acquireTime, writeLock) VALUES (?,?,?,?,?) IF NOT EXISTS; APPLY BATCH;";
 
         queryObject.addValue(lockRef);
         queryObject.addValue(lockName);
@@ -118,6 +135,7 @@ public class CassaLockStore {
         queryObject.addValue(lockRef);
         queryObject.addValue(String.valueOf(lockEpochMillis));
         queryObject.addValue("0");
+        queryObject.addValue(isWriteLock);
         queryObject.appendQueryString(insQuery);
         boolean pResult = dsHandle.executePut(queryObject, "critical");
 		return String.valueOf(lockRef);
@@ -180,7 +198,8 @@ public class CassaLockStore {
 	 * @throws MusicServiceException
 	 * @throws MusicQueryException
 	 */
-	public LockObject peekLockQueue(String keyspace, String table, String key) throws MusicServiceException, MusicQueryException{
+	public LockObject peekLockQueue(String keyspace, String table, String key)
+			throws MusicServiceException, MusicQueryException {
         logger.info(EELFLoggerDelegate.applicationLogger,
                 "Peek in lock table for " +  keyspace+"."+table+"."+key);
         table = table_prepend_name+table; 
@@ -196,6 +215,35 @@ public class CassaLockStore {
 		return new LockObject(lockReference, createTime,acquireTime);
 	}
 	
+    public boolean isTopOfLockQueue(String keyspace, String table, String key, String lockRef)
+            throws MusicServiceException, MusicQueryException {
+        logger.info(EELFLoggerDelegate.applicationLogger,
+                "Checking in lock table for " + keyspace + "." + table + "." + key);
+        table = table_prepend_name + table;
+        String selectQuery =
+                "select * from " + keyspace + "." + table + " where key='" + key + "';";
+        PreparedQueryObject queryObject = new PreparedQueryObject();
+        queryObject.appendQueryString(selectQuery);
+        ResultSet rs = dsHandle.executeOneConsistencyGet(queryObject);
+
+        boolean topOfQueue = true;
+        for (Row row : rs) {
+            if (row.getBool("writeLock")) {
+                if (topOfQueue && lockRef.equals("" + row.getLong("lockReference"))) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            if (lockRef.equals("" + row.getLong("lockReference"))) {
+                return true;
+            }
+            topOfQueue = false;
+        }
+        logger.info(EELFLoggerDelegate.applicationLogger, "Could not find " + lockRef
+                + " in the lock queue. It has expired and no longer exists.");
+        return false;
+    }
 	
 	/**
 	 * This method removes the lock ref from the lock table/queue for the key. 

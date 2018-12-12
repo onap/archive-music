@@ -72,6 +72,8 @@ public interface MusicCoreService {
 	// Core Music Locking Service Methods
 
 	public String createLockReference(String fullyQualifiedKey); // lock name
+	
+    public String createLockReference(String fullyQualifiedKey, boolean writeLock);
 
 	public ReturnType acquireLockWithLease(String key, String lockReference, long leasePeriod)
 			throws MusicLockingException, MusicQueryException, MusicServiceException; // key,lock id,time
@@ -100,4 +102,5 @@ public interface MusicCoreService {
 	
 	 public long getLockQueueSize(String fullyQualifiedKey)
 	    		throws MusicServiceException, MusicQueryException, MusicLockingException;
+
 }

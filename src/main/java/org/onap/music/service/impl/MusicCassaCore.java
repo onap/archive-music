@@ -97,8 +97,11 @@ public class MusicCassaCore implements MusicCoreService {
     }
 
 
-
     public  String createLockReference(String fullyQualifiedKey) {
+        return createLockReference(fullyQualifiedKey, true);
+    }
+
+    public  String createLockReference(String fullyQualifiedKey, boolean isWriteLock) {
         String[] splitString = fullyQualifiedKey.split("\\.");
         String keyspace = splitString[0];
         String table = splitString[1];
@@ -108,7 +111,7 @@ public class MusicCassaCore implements MusicCoreService {
         long start = System.currentTimeMillis();
         String lockReference = null;
         try {
-			lockReference = "" + getLockingServiceHandle().genLockRefandEnQueue(keyspace, table, lockName);
+			lockReference = "" + getLockingServiceHandle().genLockRefandEnQueue(keyspace, table, lockName, isWriteLock);
 		} catch (MusicLockingException | MusicServiceException | MusicQueryException e) {
 			e.printStackTrace();
 		}
@@ -142,25 +145,37 @@ public class MusicCassaCore implements MusicCoreService {
 		}    	
     }
     
-    private static ReturnType isTopOfLockStore(String keyspace, String table, String primaryKeyValue, String lockReference) throws MusicLockingException, MusicQueryException, MusicServiceException {
-        
-        //return failure to lock holders too early or already evicted from the lock store
-        String topOfLockStoreS = getLockingServiceHandle().peekLockQueue(keyspace, table, primaryKeyValue).lockRef;
+    private static ReturnType isTopOfLockStore(String keyspace, String table,
+            String primaryKeyValue, String lockReference)
+            throws MusicLockingException, MusicQueryException, MusicServiceException {
+
+        // return failure to lock holders too early or already evicted from the lock store
+        String topOfLockStoreS =
+                getLockingServiceHandle().peekLockQueue(keyspace, table, primaryKeyValue).lockRef;
         long topOfLockStoreL = Long.parseLong(topOfLockStoreS);
         long lockReferenceL = Long.parseLong(lockReference);
 
-        if(lockReferenceL > topOfLockStoreL) {
-            logger.info(EELFLoggerDelegate.applicationLogger, lockReference+" is not the lock holder yet");
-            return new ReturnType(ResultType.FAILURE, lockReference+" is not the lock holder yet");
+        if (lockReferenceL > topOfLockStoreL) {
+            // only need to check if this is a read lock....
+            if (getLockingServiceHandle().isTopOfLockQueue(keyspace, table, primaryKeyValue,
+                    lockReference)) {
+                return new ReturnType(ResultType.SUCCESS, lockReference + " can read the values");
+            }
+            logger.info(EELFLoggerDelegate.applicationLogger,
+                    lockReference + " is not the lock holder yet");
+            return new ReturnType(ResultType.FAILURE,
+                    lockReference + " is not the lock holder yet");
         }
-    			
 
-        if(lockReferenceL < topOfLockStoreL) {
-            logger.info(EELFLoggerDelegate.applicationLogger, lockReference+" is no longer/or was never in the lock store queue");
-            return new ReturnType(ResultType.FAILURE, lockReference+" is no longer/or was never in the lock store queue");
-       	}
-    		
-       	return new ReturnType(ResultType.SUCCESS, lockReference+" is top of lock store");
+
+        if (lockReferenceL < topOfLockStoreL) {
+            logger.info(EELFLoggerDelegate.applicationLogger,
+                    lockReference + " is no longer/or was never in the lock store queue");
+            return new ReturnType(ResultType.FAILURE,
+                    lockReference + " is no longer/or was never in the lock store queue");
+        }
+
+        return new ReturnType(ResultType.SUCCESS, lockReference + " is top of lock store");
     }
     
     public  ReturnType acquireLock(String fullyQualifiedKey, String lockReference) throws MusicLockingException, MusicQueryException, MusicServiceException {

@@ -22,7 +22,9 @@
 package org.onap.music.unittests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 
@@ -124,5 +126,44 @@ public class MusicLockStoreTest {
         	lockStore.genLockRefandEnQueue(CassandraCQL.keyspace,  CassandraCQL.table, "test");
         }
         assertEquals(21, lockStore.getLockQueueSize(CassandraCQL.keyspace, CassandraCQL.table, "test"));
+    }
+    
+    @Test
+    public void Test_testCreateReadLock() throws MusicServiceException, MusicQueryException {
+        lockStore.createLockQueue(CassandraCQL.keyspace, CassandraCQL.table);
+        String readLockRef1 = lockStore.genLockRefandEnQueue(CassandraCQL.keyspace,
+                CassandraCQL.table, "test", false);
+        assertEquals(readLockRef1,
+                lockStore.peekLockQueue(CassandraCQL.keyspace, CassandraCQL.table, "test").lockRef);
+        assertTrue(lockStore.isTopOfLockQueue(CassandraCQL.keyspace, CassandraCQL.table, "test",
+                readLockRef1));
+
+        String readLockRef2 = lockStore.genLockRefandEnQueue(CassandraCQL.keyspace,
+                CassandraCQL.table, "test", false);
+        assertTrue(lockStore.isTopOfLockQueue(CassandraCQL.keyspace, CassandraCQL.table, "test",
+                readLockRef2));
+
+        String writelockRef3 =
+                lockStore.genLockRefandEnQueue(CassandraCQL.keyspace, CassandraCQL.table, "test");
+        String writelockRef4 =
+                lockStore.genLockRefandEnQueue(CassandraCQL.keyspace, CassandraCQL.table, "test");
+        assertFalse(lockStore.isTopOfLockQueue(CassandraCQL.keyspace, CassandraCQL.table, "test",
+                writelockRef3));
+
+        lockStore.deQueueLockRef(CassandraCQL.keyspace, CassandraCQL.table, "test", readLockRef1);
+        assertTrue(lockStore.isTopOfLockQueue(CassandraCQL.keyspace, CassandraCQL.table, "test",
+                readLockRef2));
+
+        lockStore.deQueueLockRef(CassandraCQL.keyspace, CassandraCQL.table, "test", readLockRef2);
+        assertTrue(lockStore.isTopOfLockQueue(CassandraCQL.keyspace, CassandraCQL.table, "test",
+                writelockRef3));
+        assertFalse(lockStore.isTopOfLockQueue(CassandraCQL.keyspace, CassandraCQL.table, "test",
+                writelockRef4));
+
+        lockStore.deQueueLockRef(CassandraCQL.keyspace, CassandraCQL.table, "test", writelockRef3);
+        assertTrue(lockStore.isTopOfLockQueue(CassandraCQL.keyspace, CassandraCQL.table, "test",
+                writelockRef4));
+        assertFalse(lockStore.isTopOfLockQueue(CassandraCQL.keyspace, CassandraCQL.table, "test",
+                readLockRef1));
     }
 }
