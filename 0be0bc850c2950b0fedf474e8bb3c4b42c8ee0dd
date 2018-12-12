@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9adffdf1_0e52233b",
+        "filename": "src/main/java/org/onap/music/lockingservice/ProtocolSupport.java",
+        "patchSetId": 4
+      },
+      "lineNbr": 184,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2018-12-12T14:53:08Z",
+      "side": 1,
+      "message": "While you\u0027re in this file, can you update its logger statements to include the latest interface? I think it\u0027s just replacing e.getMessage() with e.\n\nDo this for similar statements in this file",
+      "revId": "0be0bc850c2950b0fedf474e8bb3c4b42c8ee0dd",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
