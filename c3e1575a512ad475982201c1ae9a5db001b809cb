@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9adffdf1_48d9fe20",
+        "filename": "src/main/java/org/onap/music/lockingservice/ZkStatelessLockService.java",
+        "patchSetId": 4
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2018-12-13T14:57:13Z",
+      "side": 1,
+      "message": "I don\u0027t like having to loggers for the same error, can you remove these lines",
+      "revId": "c3e1575a512ad475982201c1ae9a5db001b809cb",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9adffdf1_68d642f3",
+        "filename": "src/main/java/org/onap/music/lockingservice/ZkStatelessLockService.java",
+        "patchSetId": 4
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2018-12-13T14:57:13Z",
+      "side": 1,
+      "message": "To solve this, we have updated our logger\u0027s interface.\nPlease rebase these changes and log just e (not e.getMessage()).\n\nPlease do so for the rest of this file",
+      "revId": "c3e1575a512ad475982201c1ae9a5db001b809cb",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
