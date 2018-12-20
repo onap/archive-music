@@ -1,31 +1,27 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
+/target/
+!.mvn/wrapper/maven-wrapper.jar
 
-# ignore all bin directories
-# matches "bin" in any subfolder
-bin/
-
-# ignore all target directories
-target/
-src/main/webapp
-# ignore all files ending with ~
-*~ 
-
-.DS_Store
-
-._*
-
-.metadata
-# Eclipse stuff
-.settings/
+### STS ###
+.apt_generated
 .classpath
+.factorypath
 .project
-# Idea
-.idea
-debug-logs/
-.README.md.html
+.settings
+.springBeans
+.sts4-cache
 
-docs/Makefile
-docs/_build
-docs/conf.py
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/build/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+src/main/webapp/WEB-INF/classes/
+debug-logs/
