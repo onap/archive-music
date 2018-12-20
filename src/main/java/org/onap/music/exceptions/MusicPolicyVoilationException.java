@@ -2,7 +2,9 @@
  * ============LICENSE_START==========================================
  * org.onap.music
  * ===================================================================
- *  Copyright (c) 2017 AT&T Intellectual Property
+ * Copyright (c) 2017 AT&T Intellectual Property
+ * ===================================================================
+ * Modifications Copyright (c) 2018 IBM
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,7 +38,7 @@ public class MusicPolicyVoilationException extends Exception {
      * 
      */
     public MusicPolicyVoilationException() {
-        // TODO Auto-generated constructor stub
+        
     }
 
     /**
@@ -44,7 +46,7 @@ public class MusicPolicyVoilationException extends Exception {
      */
     public MusicPolicyVoilationException(String message) {
         super(message);
-        // TODO Auto-generated constructor stub
+        
     }
 
     /**
@@ -52,7 +54,7 @@ public class MusicPolicyVoilationException extends Exception {
      */
     public MusicPolicyVoilationException(Throwable cause) {
         super(cause);
-        // TODO Auto-generated constructor stub
+       
     }
 
     /**
@@ -61,7 +63,7 @@ public class MusicPolicyVoilationException extends Exception {
      */
     public MusicPolicyVoilationException(String message, Throwable cause) {
         super(message, cause);
-        // TODO Auto-generated constructor stub
+       
     }
 
     /**
@@ -73,7 +75,7 @@ public class MusicPolicyVoilationException extends Exception {
     public MusicPolicyVoilationException(String message, Throwable cause, boolean enableSuppression,
                     boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
-        // TODO Auto-generated constructor stub
+       
     }
 
 }
