@@ -52,6 +52,7 @@ public class MusicDataStore {
 
     public static final String CONSISTENCY_LEVEL_ONE = "ONE";
     public static final String CONSISTENCY_LEVEL_QUORUM = "QUORUM";
+    public static final String CONSISTENCY_LEVEL_SERIAL = "SERIAL";
 
     private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicDataStore.class);
 
@@ -391,6 +392,9 @@ public class MusicDataStore {
             else if (consistencyLevel.equalsIgnoreCase(CONSISTENCY_LEVEL_QUORUM)) {
                 statement.setConsistencyLevel(ConsistencyLevel.QUORUM);
             }
+            else if (consistencyLevel.equalsIgnoreCase(CONSISTENCY_LEVEL_SERIAL)) {
+                statement.setConsistencyLevel(ConsistencyLevel.SERIAL);
+            }
 
             results = session.execute(statement);
 
@@ -403,14 +407,30 @@ public class MusicDataStore {
 
     /**
      * This method performs DDL operations on Cassandra using consistency level ONE.
-     * 
+     *
      * @param queryObject Object containing cassandra prepared query and values.
      */
     public ResultSet executeOneConsistencyGet(PreparedQueryObject queryObject)
-                    throws MusicServiceException, MusicQueryException {
+            throws MusicServiceException, MusicQueryException {
         TimeMeasureInstance.instance().enter("executeOneConsistencyGet");
         try {
             return executeGet(queryObject, CONSISTENCY_LEVEL_ONE);
+        }
+        finally {
+            TimeMeasureInstance.instance().exit();
+        }
+    }
+
+    /**
+     * This method performs DDL operations on Cassandra using consistency level ONE.
+     *
+     * @param queryObject Object containing cassandra prepared query and values.
+     */
+    public ResultSet executeSerialConsistencyGet(PreparedQueryObject queryObject)
+            throws MusicServiceException, MusicQueryException {
+        TimeMeasureInstance.instance().enter("executeOneConsistencyGet");
+        try {
+            return executeGet(queryObject, CONSISTENCY_LEVEL_SERIAL);
         }
         finally {
             TimeMeasureInstance.instance().exit();

@@ -201,7 +201,7 @@ public class CassaLockStore {
 	 * @param keyspace of the application.
 	 * @param table of the application.
 	 * @param key is the primary key of the application table
-	 * @return the UUID lock reference.
+	 * @return the lock reference.
 	 * @throws MusicServiceException
 	 * @throws MusicQueryException
 	 */
@@ -217,11 +217,13 @@ public class CassaLockStore {
 			queryObject.appendQueryString(selectQuery);
 			ResultSet results = dsHandle.executeOneConsistencyGet(queryObject);
 			Row row = results.one();
+			if (row == null)
+			    return null;
 			String lockReference = "" + row.getLong("lockReference");
 			String createTime = row.getString("createTime");
 			String acquireTime = row.getString("acquireTime");
 
-			return new LockObject(lockReference, createTime,acquireTime);
+			return new LockObject(lockReference, createTime, acquireTime);
 		}
 		finally {
 			TimeMeasureInstance.instance().exit();
