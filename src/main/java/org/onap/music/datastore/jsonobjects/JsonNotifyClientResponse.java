@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ * Modifications Copyright (C) 2018 IBM.
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -22,6 +24,10 @@
 package org.onap.music.datastore.jsonobjects;
 
 import java.io.Serializable;
+import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.eelf.logging.format.AppMessages;
+import org.onap.music.eelf.logging.format.ErrorSeverity;
+import org.onap.music.eelf.logging.format.ErrorTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -32,7 +38,7 @@ import io.swagger.annotations.ApiModel;
 public class JsonNotifyClientResponse implements Serializable {
 	private String message;
     private String status;
-    
+	private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(JsonNotifyClientResponse.class);
 	public String getMessage() {
 		return message;
 	}
@@ -51,6 +57,7 @@ public class JsonNotifyClientResponse implements Serializable {
 		try {
 	        return new com.fasterxml.jackson.databind.ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(this);
 	    } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+			logger.error(EELFLoggerDelegate.errorLogger, e, AppMessages.IOERROR, ErrorSeverity.ERROR, ErrorTypes.GENERALSERVICEERROR);
 			return message+ " : "+status;
 	    }
 
