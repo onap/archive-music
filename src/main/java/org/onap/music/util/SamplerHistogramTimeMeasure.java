@@ -95,9 +95,9 @@ public class SamplerHistogramTimeMeasure implements TimeMeasure
                         entry -> {
                             Stats s = Stats.of(entry.getValue().getSamples());
                             if (s.count() <= SAMPLER_SIZE)
-                                return new ImmutablePair<>(s.mean(), s.populationStandardDeviation() / s.count());
+                                return new ImmutablePair<>(s.mean(), s.populationStandardDeviation() / 1);
                             else
-                                return new ImmutablePair<>(s.mean(), s.sampleStandardDeviation() / s.count());
+                                return new ImmutablePair<>(s.mean(), s.sampleStandardDeviation() / 1);
 
                         }
                 ));
