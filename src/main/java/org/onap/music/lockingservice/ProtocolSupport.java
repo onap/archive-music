@@ -128,19 +128,24 @@ class ProtocolSupport {
             try {
                 return operation.execute();
             } catch (KeeperException.SessionExpiredException e) {
-            	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.SESSIONEXPIRED+" for: " + zookeeper + " so reconnecting due to: " + e, ErrorSeverity.ERROR, ErrorTypes.SESSIONEXPIRED);
+            	logger.error(EELFLoggerDelegate.errorLogger, e,AppMessages.SESSIONEXPIRED+" for: " + zookeeper + " so reconnecting due to: " + e, ErrorSeverity.ERROR, ErrorTypes.SESSIONEXPIRED);
                 throw e;
             } catch (KeeperException.ConnectionLossException e) {
                 if (exception == null) {
                     exception = e;
                 }
-                logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.CONNCECTIVITYERROR, ErrorSeverity.ERROR, ErrorTypes.SESSIONEXPIRED);
-                logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),"Attempt " + i + " failed with connection loss so attempting to reconnect: " + e);
+                logger.error(EELFLoggerDelegate.errorLogger, e,AppMessages.CONNCECTIVITYERROR, ErrorSeverity.ERROR, ErrorTypes.SESSIONEXPIRED);
+                logger.error(EELFLoggerDelegate.errorLogger, e,"Attempt " + i + " failed with connection loss so attempting to reconnect: " + e);
                 
                 retryDelay(i);
             }
         }
-        throw exception;
+        if (exception == null) {
+            throw new NullPointerException();
+        }
+        else{
+            throw exception;
+        }
     }
 
     /**
@@ -174,11 +179,9 @@ class ProtocolSupport {
                 }
             });
         } catch (KeeperException e) {
-        	logger.error("Error", e);
-        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+        	logger.error(EELFLoggerDelegate.errorLogger, e,AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         } catch (InterruptedException e) {
-        	logger.error("Error", e);
-        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+        	logger.error(EELFLoggerDelegate.errorLogger, e,AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
     }
 
@@ -201,8 +204,8 @@ class ProtocolSupport {
             try {
                 Thread.sleep(attemptCount * retryDelay);
             } catch (InterruptedException e) {
-            	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.GENERALSERVICEERROR);
-            	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),"Thread failed to sleep: " + e);
+            	logger.error(EELFLoggerDelegate.errorLogger, e,AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.GENERALSERVICEERROR);
+            	logger.error(EELFLoggerDelegate.errorLogger, e,"Thread failed to sleep: " + e);
                 Thread.currentThread().interrupt();
             }
         }
