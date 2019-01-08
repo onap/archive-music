@@ -1,7 +1,10 @@
 /*
  * ============LICENSE_START========================================== org.onap.music
- * =================================================================== Copyright (c) 2017 AT&T
- * Intellectual Property ===================================================================
+ * ===================================================================
+ * Copyright (c) 2017 AT&T Intellectual Property.
+ *
+ * Modifications Copyright (C) 2018 IBM.
+ * ===================================================================
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
  * 
@@ -45,6 +48,7 @@ public class MusicLockingService implements Watcher {
     private CountDownLatch connectedSignal = new CountDownLatch(1);
     private static EELFLoggerDelegate logger =
                     EELFLoggerDelegate.getLogger(MusicLockingService.class);
+    private static final String errorMessage = "Error";
 
     public MusicLockingService() throws MusicServiceException {
         try {
@@ -52,11 +56,11 @@ public class MusicLockingService implements Watcher {
             connectedSignal.await();
             zkLockHandle = new ZkStatelessLockService(zk);
         } catch (IOException e) {
-            logger.error("Error", e);
+            logger.error(errorMessage, e);
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.IOERROR, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
             throw new MusicServiceException("IO Error has occured" + e.getMessage());
         } catch (InterruptedException e) {
-            logger.error("Error", e);
+            logger.error(errorMessage, e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
             throw new MusicServiceException("Exception Occured " + e.getMessage());
         }
@@ -68,13 +72,13 @@ public class MusicLockingService implements Watcher {
             connectedSignal.await();
             zkLockHandle = new ZkStatelessLockService(zk);
         } catch (IOException e) {
-            logger.error("Error", e);
+            logger.error(errorMessage, e);
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.IOERROR, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
         }catch( InterruptedException e) {
-            logger.error("Error", e);
+            logger.error(errorMessage, e);
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }catch(Exception e) {
-            logger.error("Error", e);
+            logger.error(errorMessage, e);
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
     }
@@ -125,13 +129,13 @@ public class MusicLockingService implements Watcher {
         try {
             return zkLockHandle.lock(lockName, lockId);
         } catch (KeeperException e) {
-            logger.error("Error", e);
+            logger.error(errorMessage, e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.LOCKINGERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }catch( InterruptedException e) {
-            logger.error("Error", e);
+            logger.error(errorMessage, e);
         	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
 		}catch(Exception e) {
-            logger.error("Error", e);
+            logger.error(errorMessage, e);
 			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
 		}
         return false;
