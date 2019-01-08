@@ -2,7 +2,9 @@
  * ============LICENSE_START==========================================
  * org.onap.music
  * ===================================================================
- *  Copyright (c) 2017 AT&T Intellectual Property
+ * Copyright (c) 2017 AT&T Intellectual Property
+ * ===================================================================
+ * Modifications Copyright (c) 2018 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -27,13 +29,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import javax.ws.rs.Consumes;
+
 import javax.ws.rs.DELETE;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
@@ -46,93 +45,52 @@ import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
-import org.onap.music.main.CachingUtil;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
+import org.onap.music.rest.service.RestMusicAdminService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
-@Path("/v2/admin")
+@Controller
+@RequestMapping("/v2/admin")
 // @Path("/v{version: [0-9]+}/admin")
 // @Path("/admin")
 @Api(value = "Admin Api", hidden = true)
 public class RestMusicAdminAPI {
     private static EELFLoggerDelegate logger =
                     EELFLoggerDelegate.getLogger(RestMusicAdminAPI.class);
+    @Autowired
+    private RestMusicAdminService service1;
+    
 
     /*
      * API to onboard an application with MUSIC. This is the mandatory first step.
      * 
      */
     @POST
-    @Path("/onboardAppWithMusic")
+    @RequestMapping("/onboardAppWithMusic")
     @ApiOperation(value = "Onboard application", response = String.class)
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response onboardAppWithMusic(JsonOnboard jsonObj) throws Exception {
-        ResponseBuilder response =
-                        Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
-        Map<String, Object> resultMap = new HashMap<>();
-        String appName = jsonObj.getAppname();
-        String userId = jsonObj.getUserId();
-        String isAAF = jsonObj.getIsAAF();
-        String password = jsonObj.getPassword();
-        if (appName == null || userId == null || isAAF == null || password == null) {
-            logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGINFO,
-                            ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
-            resultMap.put("Exception",
-                            "Unauthorized: Please check the request parameters. Some of the required values appName(ns), userId, password, isAAF are missing.");
-            return Response.status(Status.UNAUTHORIZED).entity(resultMap).build();
-        }
-
-        PreparedQueryObject pQuery = new PreparedQueryObject();
-        pQuery.appendQueryString(
-                        "select uuid from admin.keyspace_master where application_name = ? allow filtering");
-        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), appName));
-        ResultSet rs = MusicCore.get(pQuery);
-        if (!rs.all().isEmpty()) {
-            resultMap.put("Exception", "Application " + appName
-                            + " has already been onboarded. Please contact admin.");
-            return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
-        }
-
-        pQuery = new PreparedQueryObject();
-        String uuid = CachingUtil.generateUUID();
-        pQuery.appendQueryString(
-                        "INSERT INTO admin.keyspace_master (uuid, keyspace_name, application_name, is_api, "
-                                        + "password, username, is_aaf) VALUES (?,?,?,?,?,?,?)");
-        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), uuid));
-        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(),
-                        MusicUtil.DEFAULTKEYSPACENAME));
-        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), appName));
-        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), "True"));
-        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), BCrypt.hashpw(password, BCrypt.gensalt())));
-        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
-        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), isAAF));
-
-        String returnStr = MusicCore.eventualPut(pQuery).toString();
-        if (returnStr.contains("Failure")) {
-            resultMap.put("Exception",
-                            "Oops. Something wrong with onboarding process. Please retry later or contact admin.");
-            return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
-        }
-        CachingUtil.updateisAAFCache(appName, isAAF);
-        resultMap.put("Success", "Your application " + appName + " has been onboarded with MUSIC.");
-        resultMap.put("Generated AID", uuid);
-        return Response.status(Status.OK).entity(resultMap).build();
+    public @ResponseBody Response onboardAppWithMusic(@RequestBody JsonOnboard jsonObj) throws Exception {
+        Response res= service1.onboardAppWithMusic(jsonObj);
+        return res;
     }
 
 
     @POST
-    @Path("/search")
+    @RequestMapping("/search")
     @ApiOperation(value = "Search Onboard application", response = String.class)
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getOnboardedInfoSearch(JsonOnboard jsonObj) throws Exception {
+    public @ResponseBody Response getOnboardedInfoSearch(@RequestBody JsonOnboard jsonObj) throws Exception {
         Map<String, Object> resultMap = new HashMap<>();
         ResponseBuilder response =
                         Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
@@ -192,11 +150,9 @@ public class RestMusicAdminAPI {
 
 
     @DELETE
-    @Path("/onboardAppWithMusic")
+    @RequestMapping("/deleteOnboardApp")
     @ApiOperation(value = "Delete Onboard application", response = String.class)
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response deleteOnboardApp(JsonOnboard jsonObj) throws Exception {
+    public @ResponseBody Response deleteOnboardApp(@RequestBody JsonOnboard jsonObj) throws Exception {
         Map<String, Object> resultMap = new HashMap<>();
         ResponseBuilder response =
                         Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
@@ -287,11 +243,9 @@ public class RestMusicAdminAPI {
 
 
     @PUT
-    @Path("/onboardAppWithMusic")
+    @RequestMapping("/updateOnboardApp")
     @ApiOperation(value = "Update Onboard application", response = String.class)
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response updateOnboardApp(JsonOnboard jsonObj) throws Exception {
+    public @ResponseBody Response updateOnboardApp(@RequestBody JsonOnboard jsonObj) throws Exception {
         Map<String, Object> resultMap = new HashMap<>();
         ResponseBuilder response =
                         Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
@@ -372,9 +326,7 @@ public class RestMusicAdminAPI {
     }
     
     @POST
-    @Path("/callbackOps")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
+    @RequestMapping("/callbackOps")
     public String callbackOps(JSONObject inputJsonObj) throws Exception {
        
        System.out.println("Input JSON: "+inputJsonObj.getData());

@@ -26,9 +26,11 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.data.cassandra.config.AbstractCassandraConfiguration;
+import org.springframework.data.cassandra.config.CassandraClusterFactoryBean;
 import org.springframework.data.cassandra.config.SchemaAction;
 import org.springframework.data.cassandra.core.cql.keyspace.CreateKeyspaceSpecification;
 
@@ -44,16 +46,26 @@ public class CassandraConfig extends AbstractCassandraConfiguration {
 		return SchemaAction.CREATE_IF_NOT_EXISTS;
 	}
 
-	@Override
 	protected List<CreateKeyspaceSpecification> getKeyspaceCreations() {
-		String keyspace = env.getProperty("keyspace.name") + System.currentTimeMillis();
+		String keyspace = env.getProperty("spring.data.cassandra.keyspace-name") ;
 		KEYSPACE=keyspace;
 		CreateKeyspaceSpecification specification = null;
 		specification = CreateKeyspaceSpecification.createKeyspace(KEYSPACE);
 		specification.ifNotExists(true);
-
+        
 		return Arrays.asList(specification);
 	}
+	
+	 @Bean
+	    public CassandraClusterFactoryBean cluster() {
+		    String contactPoints = env.getProperty("spring.data.cassandra.contact-points");
+		    int port= Integer.parseInt(env.getProperty("spring.data.cassandra.port"));
+	        CassandraClusterFactoryBean cluster = new CassandraClusterFactoryBean();
+	        cluster.setContactPoints(contactPoints);
+	        cluster.setPort(port);
+	        cluster.setKeyspaceCreations(getKeyspaceCreations());
+	        return cluster;
+	    }
 
 	@Override
 	public String[] getEntityBasePackages() {
@@ -61,7 +73,7 @@ public class CassandraConfig extends AbstractCassandraConfiguration {
 	}
 
 	@Override
-	protected String getKeyspaceName() {
+	public String getKeyspaceName() {
 		return KEYSPACE;
 	}
 }
