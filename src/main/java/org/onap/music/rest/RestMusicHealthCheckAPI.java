@@ -3,6 +3,8 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *
+ *  Modifications Copyright (C) 2018 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -35,20 +37,14 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
 
-import org.onap.music.response.jsonobjects.JsonResponse;
 import org.onap.music.eelf.healthcheck.MusicHealthCheck;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.main.MusicUtil;
-import org.onap.music.main.ResultType;
 
-import com.att.eelf.configuration.EELFLogger;
-import com.att.eelf.configuration.EELFManager;
 import com.datastax.driver.core.ConsistencyLevel;
 
 import io.swagger.annotations.Api;
@@ -64,7 +60,7 @@ public class RestMusicHealthCheckAPI {
 	
 	
 	private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicUtil.class);
-	
+	private static final String activeStatus = "ACTIVE";
 	
 	@GET
 	@Path("/pingCassandra/{consistency}")
@@ -81,8 +77,8 @@ public class RestMusicHealthCheckAPI {
 		}
 		MusicHealthCheck cassHealthCheck = new MusicHealthCheck();
 		String status = cassHealthCheck.getCassandraStatus(consistency);
-		if(status.equals("ACTIVE")) {
-			resultMap.put("ACTIVE", "Cassandra Running and Listening to requests");
+		if(status.equals(activeStatus)) {
+			resultMap.put(activeStatus, "Cassandra Running and Listening to requests");
 			return Response.status(Status.OK).entity(resultMap).build();
 		} else {
 			resultMap.put("INACTIVE", "One or more nodes in the Cluster is/are down or not responding.");
@@ -102,8 +98,8 @@ public class RestMusicHealthCheckAPI {
 		Map<String, Object> resultMap = new HashMap<>();
 		MusicHealthCheck ZKHealthCheck = new MusicHealthCheck();
 		String status = ZKHealthCheck.getZookeeperStatus();
-		if(status.equals("ACTIVE")) {
-			resultMap.put("ACTIVE", "Zookeeper is Active and Running");
+		if(status.equals(activeStatus)) {
+			resultMap.put(activeStatus, "Zookeeper is Active and Running");
 			return Response.status(Status.OK).entity(resultMap).build();
 		}else {
 			resultMap.put("INACTIVE", "Zookeeper is not responding");
@@ -120,13 +116,13 @@ public class RestMusicHealthCheckAPI {
 		Map<String, Object> resultMap = new HashMap<>();
 		MusicHealthCheck healthCheck = new MusicHealthCheck();
 		String status = healthCheck.getZookeeperStatus();
-		if(status.equals("ACTIVE")) {
+		if(status.equals(activeStatus)) {
 			resultMap.put("ZooKeeper", "Active");
 		}else {
 			resultMap.put("ZooKeeper", "Inactive");
 		}
 		status = healthCheck.getCassandraStatus(ConsistencyLevel.ANY.toString());
-		if(status.equals("ACTIVE")) {
+		if(status.equals(activeStatus)) {
 			resultMap.put("Cassandra", "Active");
 		} else {
 			resultMap.put("Cassandra", "Inactive");
