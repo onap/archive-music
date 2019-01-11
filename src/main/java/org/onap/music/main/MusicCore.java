@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2018 IBM.
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -60,6 +62,7 @@ public class MusicCore {
     public static MusicLockingService mLockHandle = null;
     public static MusicDataStore mDstoreHandle = null;
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicCore.class);
+    private static final String LOG_ERROR_MSG= "[ERR512E] Failed to get ZK Lock Handle ";
 
     public static class Condition {
         Map<String, Object> conditions;
@@ -559,7 +562,7 @@ public class MusicCore {
         try {
             getLockingServiceHandle().getzkLockHandle().createNode(nodeName);
         } catch (MusicLockingException e) {
-         	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), "[ERR512E] Failed to get ZK Lock Handle "  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+         	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), LOG_ERROR_MSG  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         }
     }
 
@@ -574,7 +577,7 @@ public class MusicCore {
         try {
             getLockingServiceHandle().getzkLockHandle().setNodeData(nodeName, data);
         } catch (MusicLockingException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), "[ERR512E] Failed to get ZK Lock Handle "  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), LOG_ERROR_MSG  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         }
         logger.info(EELFLoggerDelegate.applicationLogger,"Performed zookeeper write to " + nodeName);
         long end = System.currentTimeMillis();
@@ -592,7 +595,7 @@ public class MusicCore {
         try {
             data = getLockingServiceHandle().getzkLockHandle().getNodeData(nodeName);
         } catch (MusicLockingException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), "[ERR512E] Failed to get ZK Lock Handle "  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), LOG_ERROR_MSG  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         }
         long end = System.currentTimeMillis();
         logger.info(EELFLoggerDelegate.applicationLogger,"Time taken for the actual zk put:" + (end - start) + " ms");
@@ -617,7 +620,7 @@ public class MusicCore {
         try {
             result = getDSHandle().executePut(queryObject, MusicUtil.EVENTUAL);
         } catch (MusicServiceException | MusicQueryException ex) {
-        	logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), "[ERR512E] Failed to get ZK Lock Handle "  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
+        	logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), LOG_ERROR_MSG  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
             logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage() + "  " + ex.getCause() + " " + ex);
             return new ReturnType(ResultType.FAILURE, ex.getMessage());
         }
