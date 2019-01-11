@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9adffdf1_c1b840ca",
+        "filename": "src/main/java/org/onap/music/lockingservice/MusicLockingService.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-01-11T14:22:07Z",
+      "side": 1,
+      "message": "Instead of duplicating logging lines, can we use the new logging api call in the next line:\nlogger.error(EELFLoggerDelegate.errorLogger, e, ...\n\nThis should quiet sonar as well",
+      "revId": "8a2cdea94ab7f67713d0abccbf06ff4f0dcaff12",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
