@@ -397,10 +397,9 @@ public class RestMusicDataAPI {
 
       	   if (counter != (fields.size() - 1) ) {
         	  
-        	  //logger.info("cjc2 field="+entry.getValue()+"counter=" + counter+"fieldsize-1="+(fields.size() -1) + ",");
         	  counter = counter + 1; 
       	   } else {
-         //logger.info("cjc3 field="+entry.getValue()+"counter=" + counter+"fieldsize="+fields.size() + ",");
+        
                if((primaryKey != null) && (partitionKey == null)) {
                   primaryKey.trim();
                   int count1 = StringUtils.countMatches(primaryKey, ')');
@@ -454,7 +453,7 @@ public class RestMusicDataAPI {
             else  if (clusterKey.isEmpty() ) primaryKey=" (" + partitionKey  + ")";
             else  primaryKey=" (" + partitionKey + ")," + clusterKey;
 
-            //if (primaryKey != null) fieldsString.append("" + entry.getKey() + " (" + primaryKey + " )");
+            
             if (primaryKey != null) fieldsString.append(", PRIMARY KEY (" + primaryKey + " )");
 
       } // end of length > 0
@@ -473,7 +472,7 @@ public class RestMusicDataAPI {
                 else  if (clusterKey.isEmpty() ) primaryKey=" (" + partitionKey  + ")";
                 else  primaryKey=" (" + partitionKey + ")," + clusterKey;
 
-                //if (primaryKey != null) fieldsString.append("" + entry.getKey() + " (" + primaryKey + " )");
+                
                 if (primaryKey != null) fieldsString.append(", PRIMARY KEY (" + primaryKey + " )");
             }
       fieldsString.append(")");
@@ -515,9 +514,7 @@ public class RestMusicDataAPI {
            String[] clusterS = arrayClusterOrder[i].trim().split("[ ]+");
                 if ( (clusterS.length ==2)  && (clusterS[1].equalsIgnoreCase("ASC") || clusterS[1].equalsIgnoreCase("DESC"))) continue;
                 else {
-                  //logger.error("createTable/Clustering Order vlaue ERROR: valid clustering order is ASC or DESC or expecting colname  order; please correct clusteringOrder:\"+ clusteringOrder+\".\"", " valid clustering order is ASC or DESC; please correct clusteringOrder:"+ clusteringOrder+".");
-                    // logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA,
-                      //       ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
+                 
                              return response.status(Status.BAD_REQUEST)
                                      .entity(new JsonResponse(ResultType.FAILURE)
                                              .setError("createTable/Clustering Order vlaue ERROR: valid clustering order is ASC or DESC or expecting colname  order; please correct clusteringOrder:"+ clusteringOrder+".")
