@@ -1,7 +1,9 @@
 /*
  * ============LICENSE_START========================================== org.onap.music
  * =================================================================== Copyright (c) 2017 AT&T
- * Intellectual Property ===================================================================
+ * Intellectual Property
+ * Modifications Copyright (C) 2018 IBM.
+ * ===================================================================
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
  * 
@@ -41,8 +43,6 @@ import org.onap.music.datastore.PreparedQueryObject;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.TableMetadata;
 import io.swagger.annotations.Api;
-//import io.swagger.annotations.ApiOperation;
-//import io.swagger.annotations.ApiParam;
 
 /*
  * These are functions created purely for benchmarking purposes. Commented out Swagger - This should
@@ -54,7 +54,7 @@ import io.swagger.annotations.Api;
 public class RestMusicBmAPI {
 
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(RestMusicBmAPI.class);
-
+    public static final String UPDATE_CONST=" update-";
     // pure zk calls...
 
     /**
@@ -117,7 +117,7 @@ public class RestMusicBmAPI {
         String operationId = UUID.randomUUID().toString();// just for debugging purposes.
         String consistency = updateObj.getConsistencyInfo().get("type");
 
-        logger.info(EELFLoggerDelegate.applicationLogger,"--------------Zookeeper " + consistency + " update-" + operationId
+        logger.info(EELFLoggerDelegate.applicationLogger,"--------------Zookeeper " + consistency + UPDATE_CONST + operationId
                         + "-------------------------");
 
         byte[] data = updateObj.serialize();
@@ -130,16 +130,17 @@ public class RestMusicBmAPI {
         long leasePeriod = MusicUtil.getDefaultLockLeasePeriod();
         ReturnType lockAcqResult = MusicCore.acquireLockWithLease(lockname, lockId, leasePeriod);
         long lockAcqTime = System.currentTimeMillis();
-        long zkPutTime = 0, lockReleaseTime = 0;
+        long zkPutTime = 0;
+        long lockReleaseTime = 0;
 
         if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
             logger.info(EELFLoggerDelegate.applicationLogger,"acquired lock with id " + lockId);
             MusicCore.pureZkWrite(lockname, data);
             zkPutTime = System.currentTimeMillis();
             boolean voluntaryRelease = true;
-            if (consistency.equals("atomic"))
+            if (("atomic").equals(consistency))
                 MusicCore.releaseLock(lockId, voluntaryRelease);
-            else if (consistency.equals("atomic_delete_lock"))
+            else if (("atomic_delete_lock").equals(consistency))
                 MusicCore.deleteLock(lockname);
             lockReleaseTime = System.currentTimeMillis();
         } else {
@@ -155,12 +156,12 @@ public class RestMusicBmAPI {
                         + "|lock accquire time:" + (lockAcqTime - lockCreationTime)
                         + "|zk put time:" + (zkPutTime - lockAcqTime);
 
-        if (consistency.equals("atomic"))
+        if ("atomic".equals(consistency))
             lockingInfo = lockingInfo + "|lock release time:" + (lockReleaseTime - zkPutTime) + "|";
-        else if (consistency.equals("atomic_delete_lock"))
+        else if ("atomic_delete_lock".equals(consistency))
             lockingInfo = lockingInfo + "|lock delete time:" + (lockReleaseTime - zkPutTime) + "|";
 
-        String timingString = "Time taken in ms for Zookeeper " + consistency + " update-"
+        String timingString = "Time taken in ms for Zookeeper " + consistency + UPDATE_CONST
                         + operationId + ":" + "|total operation time:" + (endTime - startTime)
                         + "|json parsing time:" + (jsonParseCompletionTime - startTime)
                         + "|update time:" + (actualUpdateCompletionTime - jsonParseCompletionTime)
@@ -220,7 +221,7 @@ public class RestMusicBmAPI {
         long startTime = System.currentTimeMillis();
         String operationId = UUID.randomUUID().toString();// just for debugging purposes.
         String consistency = insObj.getConsistencyInfo().get("type");
-        logger.info(EELFLoggerDelegate.applicationLogger,"--------------Cassandra " + consistency + " update-" + operationId
+        logger.info(EELFLoggerDelegate.applicationLogger,"--------------Cassandra " + consistency + UPDATE_CONST + operationId
                         + "-------------------------");
         PreparedQueryObject queryObject = new PreparedQueryObject();
         Map<String, Object> valuesMap = insObj.getValues();
@@ -295,7 +296,7 @@ public class RestMusicBmAPI {
 
         long endTime = System.currentTimeMillis();
 
-        String timingString = "Time taken in ms for Cassandra " + consistency + " update-"
+        String timingString = "Time taken in ms for Cassandra " + consistency + UPDATE_CONST
                         + operationId + ":" + "|total operation time:" + (endTime - startTime)
                         + "|json parsing time:" + (jsonParseCompletionTime - startTime)
                         + "|update time:" + (actualUpdateCompletionTime - jsonParseCompletionTime)
