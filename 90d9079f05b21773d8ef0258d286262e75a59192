@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9adffdf1_e238e2f0",
+        "filename": "src/main/java/org/onap/music/rest/RestMusicAdminAPI.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-01-14T14:19:35Z",
+      "side": 1,
+      "message": "Looks like this isn\u0027t being properly linked to the implementation class, causing a null pointer exception. This cascades down through the junit tests",
+      "revId": "90d9079f05b21773d8ef0258d286262e75a59192",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
