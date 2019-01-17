@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2018 IBM
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -65,6 +67,9 @@ public class CachingUtil implements Runnable {
     private static CacheAccess<String, List<String>> callbackNotifyList = JCS.getInstance("callbackNotifyList");
     private static Map<String, Number> userAttempts = new HashMap<>();
     private static Map<String, Calendar> lastFailedTime = new HashMap<>();
+    
+    private static final String USERNAME="username";
+    private static final String PASSWORD="password";
 
     public boolean isCacheRefreshNeeded() {
         if (aafCache.get("initBlankMap") == null)
@@ -112,8 +117,8 @@ public class CachingUtil implements Runnable {
         while (it.hasNext()) {
             Row row = it.next();
             String nameSpace = row.getString("keyspace_name");
-            String userId = row.getString("username");
-            String password = row.getString("password");
+            String userId = row.getString(USERNAME);
+            String password = row.getString(PASSWORD);
             String keySpace = row.getString("application_name");
             try {
                 userAttempts.put(nameSpace, 0);
@@ -361,7 +366,7 @@ public class CachingUtil implements Runnable {
             logger.error(EELFLoggerDelegate.errorLogger,"Application is not onboarded. Please contact admin.");
             resultMap.put("Exception", "Application is not onboarded. Please contact admin.");
         } else {
-        	if(!(rs.getString("username").equals(userId)) || !(BCrypt.checkpw(password, rs.getString("password")))) {
+        	if(!(rs.getString(USERNAME).equals(userId)) || !(BCrypt.checkpw(password, rs.getString(PASSWORD)))) {
                 logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
                 logger.error(EELFLoggerDelegate.errorLogger,"Namespace, UserId and password doesn't match. namespace: "+ns+" and userId: "+userId);
                 resultMap.put("Exception", "Namespace, UserId and password doesn't match. namespace: "+ns+" and userId: "+userId);
@@ -407,8 +412,8 @@ public class CachingUtil implements Runnable {
             return resultMap;
         }
         else {
-            String user = rs.getString("username");
-            pwd = rs.getString("password");
+            String user = rs.getString(USERNAME);
+            pwd = rs.getString(PASSWORD);
             String ns = rs.getString("application_name");
             if(!ns.equals(nameSpace)) {
             resultMap.put("Exception", "Namespace and keyspace doesn't match");
