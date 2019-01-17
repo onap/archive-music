@@ -1,7 +1,8 @@
 /*
  * ============LICENSE_START========================================== org.onap.music
  * =================================================================== Copyright (c) 2017 AT&T
- * Intellectual Property ===================================================================
+ * Intellectual Property ===================================================================Modifications Copyright (c) 2018 IBM
+ * Intellectual Property =================================================================== * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
  * 
@@ -62,13 +63,7 @@ import io.swagger.annotations.ApiParam;
 public class RestMusicQAPI {
 
   private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(RestMusicQAPI.class);
-  /*
-   * private static final String XMINORVERSION = "X-minorVersion"; private static final String
-   * XPATCHVERSION = "X-patchVersion"; private static final String NS = "ns"; private static final
-   * String USERID = "userId"; private static final String PASSWORD = "password";
-   *    */
-  // private static final String VERSION = "v2";
-
+  
 
   /**
    * 
@@ -294,7 +289,6 @@ public class RestMusicQAPI {
           @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename,
           @Context UriInfo info) {
 
-    //logger.info(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA, ErrorSeverity.CRITICAL,
     ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
     if (updateObj.getValues().isEmpty()) {
       logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA,
@@ -447,14 +441,7 @@ public class RestMusicQAPI {
           @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
           @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename,
           @Context UriInfo info) throws Exception {
-    /*
-     * PreparedQueryObject query = new RestMusicDataAPI().selectSpecificQuery(version, minorVersion,
-     * patchVersion, aid, ns, userId, password, keyspace, tablename, info, limit); ResultSet results
-     */
-   /* Map<String ,String> auth = new HashMap<>();
-    String userId =auth.get(MusicUtil.USERID);
-    String password =auth.get(MusicUtil.PASSWORD);
-   */ 
+    
     return new RestMusicDataAPI().select(version, minorVersion, patchVersion, aid, ns, authorization, keyspace, tablename, info);// , limit)
     
   }
