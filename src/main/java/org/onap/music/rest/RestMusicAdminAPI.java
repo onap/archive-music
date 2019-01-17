@@ -287,7 +287,7 @@ public class RestMusicAdminAPI {
         ResultSet rs = MusicCore.get(pQuery);
         List<Row> rows = rs.all();
         String uuid = null;
-        if (rows.size() == 0) {
+        if (rows.isEmpty()) {
             resultMap.put("Exception",
                             "Application not found. Please make sure Application exists.");
             logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.INCORRECTDATA,
@@ -418,8 +418,7 @@ public class RestMusicAdminAPI {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
 	public Response callbackOps(final JSONObject inputJsonObj) {
-         // {"keyspace":"conductor","full_table":"conductor.plans","changeValue":{"conductor.plans.status":"Who??","position":"3"},"operation":"update","table_name":"plans","primary_key":"3"}
-    	Map<String, Object> resultMap = new HashMap<>();
+        Map<String, Object> resultMap = new HashMap<>();
     	new Thread(new Runnable() {
     	    public void run() {
     	        makeAsyncCall(inputJsonObj);
@@ -446,9 +445,7 @@ public class RestMusicAdminAPI {
 				return Response.status(Status.OK).entity(resultMap).build();
 			}
 			List<String> inputUpdateList = jsonResponse.getUpdateList();
-			/*String field_value = changeValueMap.get("field_value");
-			if(field_value == null)
-				field_value = jsonResponse.getFull_table();*/
+			
 			String field_value = null;
 			List<String> notifiyList = CachingUtil.getCallbackNotifyList();
 			if(notifiyList == null || notifiyList.isEmpty()) {
