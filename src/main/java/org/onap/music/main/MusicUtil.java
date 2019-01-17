@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ * Modifications Copyright (c) 2018 IBM.
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -578,7 +580,7 @@ public class MusicUtil {
     	authorization = authorization.replaceFirst("Basic", "");
     	String decoded = Base64.base64Decode(authorization);
     	StringTokenizer token = new StringTokenizer(decoded, ":");
-    	authValues.put(MusicUtil.USERID, token.nextToken().toString());
+    	authValues.put(MusicUtil.USERID, token.nextToken());
     	authValues.put(MusicUtil.PASSWORD,token.nextToken());
     	return authValues;
     	
