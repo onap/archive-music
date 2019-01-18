@@ -26,10 +26,10 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.onap.music</groupId>
     <artifactId>MUSIC</artifactId>
-    <packaging>war</packaging>
-    <version>3.0.24</version>
+    <packaging>jar</packaging>
+    <version>3.0.25</version>
     <description>
-            This is the MUSIC REST interface, packaged as a war file.
+            This is the MUSIC REST interface, packaged as a Springboot jar file.
     </description>
 
      <parent>
@@ -38,9 +38,30 @@
         <version>1.2.0</version>
         <relativePath/>
     </parent>
+    
+    <dependencyManagement>
+        <dependencies>
+            <!-- <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-data-jpa</artifactId>
+                <version>2.0.3.RELEASE</version>
+               </dependency> -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>2.1.1.RELEASE</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <properties>
+    	<start-class>org.onap.music.MusicApplication</start-class>
+    	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.version>1.8</java.version>
         <jersey1.version>1.19</jersey1.version>
         <jersey2.version>2.25.1</jersey2.version>
         <jaxrs.version>2.0.1</jaxrs.version>
@@ -95,6 +116,31 @@
             </resource>
         </resources>
         <plugins>
+        	<plugin>
+			  <groupId>org.apache.maven.plugins</groupId>
+			  <artifactId>maven-surefire-plugin</artifactId>
+			  <configuration>
+			    <forkCount>3</forkCount>
+			    <reuseForks>true</reuseForks>
+			    <argLine>-Xmx1024m -XX:MaxPermSize=256m</argLine>
+			  </configuration>
+			</plugin>
+        	<plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>org.onap.music.MusicApplication</mainClass>
+                    <outputDirectory>./distribution/music/</outputDirectory>
+                    <addResources>true</addResources>
+                 </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <artifactId>maven-eclipse-plugin</artifactId>
                 <version>2.9</version>
@@ -121,13 +167,13 @@
 				   	</excludes>
                 </configuration>
             </plugin>
-            <plugin>
+            <!-- <plugin>
                 <artifactId>maven-war-plugin</artifactId>
                 <version>2.4</version>
                 <configuration>
                     <warSourceDirectory>WebContent</warSourceDirectory>
                 </configuration>
-            </plugin>
+            </plugin> -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -141,8 +187,8 @@
                         </goals>
                         <configuration>
                             <excludes>
-                                <exclude>**/*.xml</exclude>
-                                <exclude>**/*.properties</exclude>
+                                <!--<exclude>**/*.xml</exclude>
+                                <exclude>**/*.properties</exclude>-->
                                 <exclude>**/Sample*</exclude>
                             </excludes>
                         </configuration>
@@ -173,6 +219,54 @@
     </build>
 
     <dependencies>
+    
+    	<!-- Springboot -->
+    	
+    	 <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-cassandra</artifactId>
+		</dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jersey</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-tomcat</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+		  <groupId>org.springframework.boot</groupId>
+		  <artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<dependency>
+		  <groupId>io.dropwizard.metrics</groupId>
+		  <artifactId>metrics-jmx</artifactId>
+		  <version>4.0.2</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.springframework/spring-webmvc -->
+		 <dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-aop</artifactId>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.aspectj</groupId>
+			<artifactId>aspectjweaver</artifactId>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
         <!-- Development -->
        
         <dependency>

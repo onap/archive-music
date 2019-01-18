@@ -179,10 +179,12 @@ public class MusicDataStore {
             		                   .withCredentials(MusicUtil.getCassName(), MusicUtil.getCassPwd())
             		                   //.withLoadBalancingPolicy(new RoundRobinPolicy())
             		                   .withPoolingOptions(poolingOptions)
+            		                   .withoutJMXReporting()
             		                   .addContactPoints(addresses).build();
             	}
             	else
             		cluster = Cluster.builder().withPort(MusicUtil.getCassandraPort())
+            				.withoutJMXReporting()
             		 					//.withLoadBalancingPolicy(new RoundRobinPolicy())
             		 					.addContactPoints(addresses).build();
                 
@@ -226,12 +228,14 @@ public class MusicDataStore {
 	                   .withCredentials(MusicUtil.getCassName(), MusicUtil.getCassPwd())
 	                   //.withLoadBalancingPolicy(new RoundRobinPolicy())
 	                   .withPoolingOptions(poolingOptions)
+	                   .withoutJMXReporting()
 	                   .addContactPoints(addresses).build();
         }
         else {
         	cluster = Cluster.builder().withPort(MusicUtil.getCassandraPort())
         				//.withLoadBalancingPolicy(new RoundRobinPolicy())
         				.withPoolingOptions(poolingOptions)
+        				.withoutJMXReporting()
         				.addContactPoints(addresses).build();
         }
         Metadata metadata = cluster.getMetadata();
