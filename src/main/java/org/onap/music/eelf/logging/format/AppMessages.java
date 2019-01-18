@@ -143,22 +143,8 @@ public enum AppMessages {
 		this.resolution = resolution;
 	}
 
-	
-	
-	
-	AppMessages(ErrorTypes eType, ErrorSeverity alarmSeverity,
-			ErrorSeverity errorSeverity, String errorCode, String errorDescription, String details,
-			String resolution) {
-	
-		this.eType = eType;
-		this.alarmSeverity = alarmSeverity;
-		this.errorSeverity = errorSeverity;
-		this.errorCode = errorCode;
-		this.errorDescription = errorDescription;
-		this.details = details;
-		this.resolution = resolution;
-	}
-    public ErrorTypes getEType() {
+
+	public ErrorTypes getEType() {
         return eType;
     }
 
