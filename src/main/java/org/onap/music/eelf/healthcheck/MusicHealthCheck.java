@@ -87,7 +87,7 @@ public class MusicHealthCheck {
 		pQuery.appendQueryString("insert into admin.healthcheck (id) values (?)");
 		pQuery.addValue(UUID.randomUUID());
 			ResultType rs = MusicCore.nonKeyRelatedPut(pQuery, consistency);
-			System.out.println(rs);
+			logger.info(rs.toString());
 			if (rs != null) {
 				return Boolean.TRUE;
 			} else {
@@ -119,7 +119,7 @@ public class MusicHealthCheck {
 		String host = MusicUtil.getMyZkHost();
 		logger.info(EELFLoggerDelegate.applicationLogger, "Getting Status for Zookeeper Host: " + host);
 		try {
-			MusicLockingService lockingService = MusicCore.getLockingServiceHandle();
+			MusicCore.getLockingServiceHandle();
 			// additionally need to call the ZK to create,aquire and delete lock
 		} catch (MusicLockingException e) {
 			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), AppMessages.LOCKINGERROR,
