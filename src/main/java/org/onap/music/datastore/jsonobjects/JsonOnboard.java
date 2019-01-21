@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2018-2019 IBM.
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -34,6 +36,18 @@ public class JsonOnboard {
     private String password;
     private String isAAF;
     private String aid;
+
+    public JsonOnboard() {
+    }
+
+    public JsonOnboard(String appname, String userId, String password, String isAAF, String aid) {
+        super();
+        this.appname = appname;
+        this.userId = userId;
+        this.password = password;
+        this.isAAF = isAAF;
+        this.aid = aid;
+    }
 
     @ApiModelProperty(value = "Application Password")
     public String getPassword() {
