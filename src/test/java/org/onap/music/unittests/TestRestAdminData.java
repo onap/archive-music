@@ -2,6 +2,8 @@
  * ============LICENSE_START========================================== org.onap.music
  * =================================================================== Copyright (c) 2017 AT&T
  * Intellectual Property ===================================================================
+ * Modifications Copyright (c) 2018-2019 IBM ============================================
+ * ==========================================================================================
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
  * 
@@ -88,6 +90,7 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
 public class TestRestAdminData {
 
     RestMusicDataAPI data = new RestMusicDataAPI();
+    
     RestMusicAdminAPI admin = new RestMusicAdminAPI();
     RestMusicLocksAPI lock = new RestMusicLocksAPI(); 
     static PreparedQueryObject testObject;
