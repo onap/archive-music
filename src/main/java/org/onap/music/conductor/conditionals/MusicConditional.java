@@ -67,7 +67,7 @@ public class MusicConditional {
 		queryBank.put(MusicUtil.SELECT, select);
 
 		PreparedQueryObject update = new PreparedQueryObject();
-		Map<String, String> updateColumnvalues = new HashMap<>(); //casscade column values
+		Map<String, String> updateColumnvalues; //casscade column values
 		updateColumnvalues = getValues(true, casscadeColumnData, status);
 		Object formatedValues = MusicUtil.convertToActualDataType(casscadeColumnType, updateColumnvalues);
 		update.appendQueryString("UPDATE " + keyspace + "." + tablename + " SET " + casscadeColumnName + " ="
@@ -78,7 +78,7 @@ public class MusicConditional {
 		queryBank.put(MusicUtil.UPDATE, update);
 
 
-		Map<String, String> insertColumnvalues = new HashMap<>();//casscade column values
+		Map<String, String> insertColumnvalues;//casscade column values
 		insertColumnvalues = getValues(false, casscadeColumnData, status);
 		formatedValues = MusicUtil.convertToActualDataType(casscadeColumnType, insertColumnvalues);
 		PreparedQueryObject insert = extractQuery(valuesMap, tableInfo, tablename, keyspace, primaryId, primaryKey,casscadeColumnName,formatedValues);
@@ -346,8 +346,9 @@ public class MusicConditional {
 			String[] elements = tempValueString.split(",");
 			for (String str : elements) {
 				String[] keyValue = str.split(":");
-				if ((changeOfStatus.keySet().contains(keyValue[0].replaceAll("\\s", ""))))
-				keyValue[1] = changeOfStatus.get(keyValue[0].replaceAll("\\s", ""));
+				if ((changeOfStatus.keySet().contains(keyValue[0].replaceAll("\\s", "")))) {
+					keyValue[1] = changeOfStatus.get(keyValue[0].replaceAll("\\s", ""));
+				}
 				finalValues.put(keyValue[0], keyValue[1]);
 			}
 		}
