@@ -22,10 +22,11 @@
 
 package org.onap.music.unittests.jsonobjects;
 
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
 import org.onap.music.datastore.jsonobjects.JsonNotifyClientResponse;
 
 public class JsonNotifyClientResponseTest {
@@ -42,5 +43,10 @@ public class JsonNotifyClientResponseTest {
         response.setStatus("success");
         Assert.assertEquals("message", response.getMessage());
         Assert.assertEquals("success", response.getStatus());
+    }
+    
+    @Test
+    public void testToString() {
+        assertTrue(response.toString() instanceof String);
     }
 }
