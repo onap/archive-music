@@ -3,6 +3,7 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *  Copyright (c) 2019 IBM Intellectual Property
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -143,22 +144,8 @@ public enum AppMessages {
 		this.resolution = resolution;
 	}
 
-	
-	
-	
-	AppMessages(ErrorTypes eType, ErrorSeverity alarmSeverity,
-			ErrorSeverity errorSeverity, String errorCode, String errorDescription, String details,
-			String resolution) {
-	
-		this.eType = eType;
-		this.alarmSeverity = alarmSeverity;
-		this.errorSeverity = errorSeverity;
-		this.errorCode = errorCode;
-		this.errorDescription = errorDescription;
-		this.details = details;
-		this.resolution = resolution;
-	}
-    public ErrorTypes getEType() {
+
+	public ErrorTypes getEType() {
         return eType;
     }
 
