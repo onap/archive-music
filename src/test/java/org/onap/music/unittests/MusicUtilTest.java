@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2018-2019 IBM.
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -202,6 +204,41 @@ public class MusicUtilTest {
         String result = MusicUtil.jsonMaptoSqlString(myMap,",");
         assertTrue(result.contains("name"));
         assertTrue(result.contains("value"));
+    }
+    
+    @Test
+    public void testCassandraPort()
+    {
+        MusicUtil.setCassandraPort(9042);
+        assertEquals(9042, MusicUtil.getCassandraPort());
+    }
+    
+    @Test
+    public void testPublicIp()
+    {
+        MusicUtil.setPublicIp("publicIp");
+        assertEquals("publicIp", MusicUtil.getPublicIp());
+    }
+    
+    @Test
+    public void testMyZkHost()
+    {
+        MusicUtil.setMyZkHost("MyZkHost");
+        assertEquals("MyZkHost", MusicUtil.getMyZkHost());
+    }
+    
+    @Test
+    public void testNotifyInterval()
+    {
+        MusicUtil.setNotifyInterval(20);
+        assertEquals(20, MusicUtil.getNotifyInterval());
+    }
+    
+    @Test
+    public void testNotifyTimeOut()
+    {
+        MusicUtil.setNotifyTimeOut(5);
+        assertEquals(5, MusicUtil.getNotifyTimeout());
     }
 
 }
