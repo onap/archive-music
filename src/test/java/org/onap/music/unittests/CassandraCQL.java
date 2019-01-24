@@ -238,7 +238,7 @@ public class CassandraCQL {
                     System.out.println(e.getMessage());
                 }
 
-                cluster = new Cluster.Builder().addContactPoint(address).withPort(9142).build();
+                cluster = new Cluster.Builder().addContactPoint(address).withoutMetrics().withoutJMXReporting().withPort(9142).build();
                 cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(20000);
                 session = cluster.connect();
 

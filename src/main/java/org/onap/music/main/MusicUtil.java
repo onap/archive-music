@@ -103,6 +103,12 @@ public class MusicUtil {
     private static String cassName = "cassandra";
     private static String cassPwd;
     private static String aafEndpointUrl = null;
+    private static String adminId = "username";
+    private static String adminPass= "password";
+    private static String aafAdminUrl= null;
+	private static String musicNamespace= "com.att.music.api";
+    private static String adminAafRole= "com.att.music.api.admin_api";
+    
     public static final ConcurrentMap<String, Long> zkNodeMap = new ConcurrentHashMap<>();
 
     private MusicUtil() {
@@ -631,5 +637,51 @@ public class MusicUtil {
 	public static int getNotifyTimeout() {
 		return MusicUtil.notifytimeout;
 		
+	}
+	public static String getAdminId() {
+		return adminId;
+	}
+
+
+	public static void setAdminId(String adminId) {
+		MusicUtil.adminId = adminId;
+	}
+
+
+	public static String getAdminPass() {
+		return adminPass;
+	}
+
+	public static void setAdminPass(String adminPass) {
+		MusicUtil.adminPass = adminPass;
+	}
+	
+	public static String getAafAdminUrl() {
+		return aafAdminUrl;
+	}
+
+
+	public static void setAafAdminUrl(String aafAdminUrl) {
+		MusicUtil.aafAdminUrl = aafAdminUrl;
+	}
+
+
+	public static String getMusicNamespace() {
+		return musicNamespace;
+	}
+
+
+	public static void setMusicNamespace(String musicNamespace) {
+		MusicUtil.musicNamespace = musicNamespace;
+	}
+
+
+	public static String getAdminAafRole() {
+		return adminAafRole;
+	}
+
+
+	public static void setAdminAafRole(String adminAafRole) {
+		MusicUtil.adminAafRole = adminAafRole;
 	}
 }
