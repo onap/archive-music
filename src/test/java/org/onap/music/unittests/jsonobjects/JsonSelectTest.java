@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2018-2019 IBM
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -21,9 +23,12 @@
  */
 package org.onap.music.unittests.jsonobjects;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.junit.Test;
 import org.onap.music.datastore.jsonobjects.JsonSelect;
 
@@ -35,7 +40,16 @@ public class JsonSelectTest {
         Map<String, String> mapSs = new HashMap<>();
         mapSs.put("k1", "one");
         js.setConsistencyInfo(mapSs);
-        assertEquals("one",js.getConsistencyInfo().get("k1"));
+        assertEquals("one", js.getConsistencyInfo().get("k1"));
+    }
+
+    @Test
+    public void testSerialize() throws IOException {
+        JsonSelect js = new JsonSelect();
+        Map<String, String> mapSs = new HashMap<>();
+        mapSs.put("Key", "Value");
+        js.setConsistencyInfo(mapSs);
+        js.serialize();
     }
 
 }
