@@ -70,7 +70,6 @@ import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
-//import org.onap.music.main.CacheAccess;
 import org.onap.music.main.CachingUtil;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
@@ -126,7 +125,7 @@ public class RestMusicAdminAPI {
                             ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
             resultMap.put("Exception",
                             "Unauthorized: Please check the request parameters. Some of the required values appName(ns), userId, password, isAAF are missing.");
-            return Response.status(Status.UNAUTHORIZED).entity(resultMap).build();
+            return response.status(Status.UNAUTHORIZED).entity(resultMap).build();
         }
 
         PreparedQueryObject pQuery = new PreparedQueryObject();
@@ -137,7 +136,7 @@ public class RestMusicAdminAPI {
         if (!rs.all().isEmpty()) {
             resultMap.put("Exception", "Application " + appName
                             + " has already been onboarded. Please contact admin.");
-            return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
+            return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
 
         pQuery = new PreparedQueryObject();
@@ -158,12 +157,12 @@ public class RestMusicAdminAPI {
         if (returnStr.contains("Failure")) {
             resultMap.put("Exception",
                             "Oops. Something wrong with onboarding process. Please retry later or contact admin.");
-            return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
+            return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
         CachingUtil.updateisAAFCache(appName, isAAF);
         resultMap.put("Success", "Your application " + appName + " has been onboarded with MUSIC.");
         resultMap.put("Generated AID", uuid);
-        return Response.status(Status.OK).entity(resultMap).build();
+        return response.status(Status.OK).entity(resultMap).build();
     }
 
 
@@ -173,9 +172,8 @@ public class RestMusicAdminAPI {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response getOnboardedInfoSearch(JsonOnboard jsonObj) throws Exception {
+        ResponseBuilder response = Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
         Map<String, Object> resultMap = new HashMap<>();
-        ResponseBuilder response =
-                        Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
         String appName = jsonObj.getAppname();
         String uuid = jsonObj.getAid();
         String isAAF = jsonObj.getIsAAF();
@@ -185,7 +183,7 @@ public class RestMusicAdminAPI {
                             ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
             resultMap.put("Exception",
                             "Unauthorized: Please check the request parameters. Enter atleast one of the following parameters: appName(ns), aid, isAAF.");
-            return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
+            return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
 
         PreparedQueryObject pQuery = new PreparedQueryObject();
@@ -212,21 +210,21 @@ public class RestMusicAdminAPI {
         ResultSet rs = MusicCore.get(pQuery);
         Iterator<Row> it = rs.iterator();
         while (it.hasNext()) {
-            Row row = (Row) it.next();
+            Row row = it.next();
             resultMap.put(row.getUUID("uuid").toString(), row.getString("keyspace_name"));
         }
         if (resultMap.isEmpty()) {
             if (uuid != null) {
                 resultMap.put("Exception",
                                 "Please make sure Aid is correct and application is onboarded.");
-                return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
+                return response.status(Status.BAD_REQUEST).entity(resultMap).build();
             } else {
                 resultMap.put("Exception",
                                 "Application is not onboarded. Please make sure all the information is correct.");
-                return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
+                return response.status(Status.BAD_REQUEST).entity(resultMap).build();
             }
         }
-        return Response.status(Status.OK).entity(resultMap).build();
+        return response.status(Status.OK).entity(resultMap).build();
     }
 
 
@@ -236,9 +234,8 @@ public class RestMusicAdminAPI {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteOnboardApp(JsonOnboard jsonObj) throws Exception {
+        ResponseBuilder response = Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
         Map<String, Object> resultMap = new HashMap<>();
-        ResponseBuilder response =
-                        Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
         String appName = jsonObj.getAppname();
         String aid = jsonObj.getAid();
         PreparedQueryObject pQuery = new PreparedQueryObject();
@@ -247,7 +244,7 @@ public class RestMusicAdminAPI {
             logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGINFO,
                             ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
             resultMap.put("Exception", "Please make sure either appName(ns) or Aid is present");
-            return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
+            return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
         if (aid != null) {
             pQuery.appendQueryString(
@@ -275,10 +272,10 @@ public class RestMusicAdminAPI {
                                 "Oops. Something went wrong. Please make sure Aid is correct or Application is onboarded");
                 logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.INCORRECTDATA,
                                 ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
-                return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
+                return response.status(Status.BAD_REQUEST).entity(resultMap).build();
 
             }
-            return Response.status(Status.OK).entity(resultMap).build();
+            return response.status(Status.OK).entity(resultMap).build();
         }
 
         pQuery.appendQueryString(
@@ -292,7 +289,7 @@ public class RestMusicAdminAPI {
                             "Application not found. Please make sure Application exists.");
             logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.INCORRECTDATA,
                             ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
-            return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
+            return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         } else if (rows.size() == 1) {
             uuid = rows.get(0).getUUID("uuid").toString();
             pQuery = new PreparedQueryObject();
@@ -314,13 +311,13 @@ public class RestMusicAdminAPI {
                             UUID.fromString(uuid)));
             MusicCore.eventualPut(pQuery);
             resultMap.put("Success", "Your application " + appName + " has been deleted.");
-            return Response.status(Status.OK).entity(resultMap).build();
+            return response.status(Status.OK).entity(resultMap).build();
         } else {
             resultMap.put("Failure",
                             "More than one Aid exists for this application, so please provide Aid.");
             logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MULTIPLERECORDS,
                             ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
-            return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
+            return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
     }
 
@@ -331,9 +328,8 @@ public class RestMusicAdminAPI {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateOnboardApp(JsonOnboard jsonObj) throws Exception {
+        ResponseBuilder response = Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
         Map<String, Object> resultMap = new HashMap<>();
-        ResponseBuilder response =
-                        Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
         String aid = jsonObj.getAid();
         String appName = jsonObj.getAppname();
         String userId = jsonObj.getUserId();
@@ -346,7 +342,7 @@ public class RestMusicAdminAPI {
             resultMap.put("Exception", "Please make sure Aid is present");
             logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA,
                             ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
-            return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
+            return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
 
         if (appName == null && userId == null && password == null && isAAF == null) {
@@ -354,7 +350,7 @@ public class RestMusicAdminAPI {
                             "No parameters found to update. Please update atleast one parameter.");
             logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA,
                             ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
-            return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
+            return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
 
         if (appName != null) {
@@ -368,7 +364,7 @@ public class RestMusicAdminAPI {
                                 + " has already been onboarded. Please contact admin.");
                 logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.ALREADYEXIST,
                                 ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
-                return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
+                return response.status(Status.BAD_REQUEST).entity(resultMap).build();
             }
         }
 
@@ -404,10 +400,10 @@ public class RestMusicAdminAPI {
                             "Oops. Something went wrong. Please make sure Aid is correct and application is onboarded");
             logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.INCORRECTDATA,
                             ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
-            return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
+            return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
 
-        return Response.status(Status.OK).entity(resultMap).build();
+        return response.status(Status.OK).entity(resultMap).build();
     }
 
     Client client = Client.create();
@@ -418,6 +414,7 @@ public class RestMusicAdminAPI {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
 	public Response callbackOps(final JSONObject inputJsonObj) {
+        ResponseBuilder response = Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
         Map<String, Object> resultMap = new HashMap<>();
     	new Thread(new Runnable() {
     	    public void run() {
@@ -425,11 +422,11 @@ public class RestMusicAdminAPI {
     	    }
     	}).start();
 	    
-		return Response.status(Status.OK).entity(resultMap).build();
+		return response.status(Status.OK).entity(resultMap).build();
 	}
     
     private Response makeAsyncCall(JSONObject inputJsonObj) {
-    	
+        ResponseBuilder response = Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
     	Map<String, Object> resultMap = new HashMap<>();
     	try {
     		logger.info(EELFLoggerDelegate.applicationLogger, "Got notification: " + inputJsonObj.getData());
@@ -438,11 +435,10 @@ public class RestMusicAdminAPI {
 			JSONCallbackResponse jsonResponse = mapper.readValue(dataStr, JSONCallbackResponse.class);
 			String operation = jsonResponse.getOperation();
 			Map<String, String> changeValueMap = jsonResponse.getChangeValue();
-			String primaryKey = jsonResponse.getPrimary_key();
-			String ksTableName = jsonResponse.getFull_table(); //conductor.plans
-			if(ksTableName.equals("admin.notification_master")) {
+            String ksTableName = jsonResponse.getFull_table(); //conductor.plans
+			if("admin.notification_master".equals(ksTableName)) {
 				CachingUtil.updateCallbackNotifyList(new ArrayList<String>());
-				return Response.status(Status.OK).entity(resultMap).build();
+				return response.status(Status.OK).entity(resultMap).build();
 			}
 			List<String> inputUpdateList = jsonResponse.getUpdateList();
 			
@@ -465,7 +461,6 @@ public class RestMusicAdminAPI {
 				}
 				
 				List<String> updateList = jsonResponse.getUpdateList();
-				//logger.info("update list from trigger: "+updateList);
 				for(String element : updateList) {
 					if(notifiyList.contains(element)) {
 						logger.info("Found the notifyOn property: "+element);
@@ -509,38 +504,32 @@ public class RestMusicAdminAPI {
 	                    "Oops. Something went wrong. Please make sure Callback properties are onboarded.");
 				logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.INCORRECTDATA,
 	                    ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
-				return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
+				return response.status(Status.BAD_REQUEST).entity(resultMap).build();
 			}
 			logger.info(EELFLoggerDelegate.applicationLogger, "Going through list: "+operation+ " && List: "+jsonResponse.getUpdateList());
 			
 			String key = "admin" + "." + "notification_master" + "." + baseRequestObj.getUuid();
 	        String lockId = MusicCore.createLockReference(key);
 	        ReturnType lockAcqResult = MusicCore.acquireLock(key, lockId);
-	        if(! lockAcqResult.getResult().toString().equals("SUCCESS")) {
+	        if(!"SUCCESS".equals(lockAcqResult.getResult().toString())) {
 	        	logger.error(EELFLoggerDelegate.errorLogger, "Some other node is notifying the caller..: ");
 	        }
 			
 	        logger.info(EELFLoggerDelegate.applicationLogger, operation+ ": Operation :: changeValue: "+changeValueMap);
-			if(operation.equals("update")) {
+			if("update".equals(operation)) {
 				String notifyWhenChangeIn = baseRequestObj.getNotifyWhenChangeIn(); // conductor.plans.status
-				if(null!=field_value) {
-					if(field_value.equals(notifyWhenChangeIn)) {
+				if(null!=field_value && field_value.equals(notifyWhenChangeIn)) {
 						notifyCallBackAppl(jsonResponse, baseRequestObj);
-					}
 				}
-			} else if(operation.equals("delete")) {
+			} else if("delete".equals(operation)) {
 				String notifyWhenDeletesIn = baseRequestObj.getNotifyWhenDeletesIn(); // conductor.plans.status
-				if(null!=field_value) {
-					if(field_value.equals(notifyWhenDeletesIn)) {
+				if(null!=field_value && field_value.equals(notifyWhenDeletesIn)) {
 						notifyCallBackAppl(jsonResponse, baseRequestObj);
-					}
 				}
-			} else if(operation.equals("insert")) {
+			} else if("insert".equals(operation)) {
 				String notifyWhenInsertsIn = baseRequestObj.getNotifyWhenInsertsIn(); // conductor.plans.status
-				if(null!=field_value) {
-					if(field_value.equals(notifyWhenInsertsIn)) {
+				if(null!=field_value && field_value.equals(notifyWhenInsertsIn)) {
 						notifyCallBackAppl(jsonResponse, baseRequestObj);
-					}
 				}
 			}
 			MusicCore.releaseLock(lockId, true);	
@@ -549,7 +538,7 @@ public class RestMusicAdminAPI {
             logger.error(EELFLoggerDelegate.errorLogger, "Exception while notifying...."+e.getMessage());
         }
     	logger.info(EELFLoggerDelegate.applicationLogger, "callback is completed. Notification was sent from Music...");
-    	return Response.status(Status.OK).entity(resultMap).build();
+    	return response.status(Status.OK).entity(resultMap).build();
     }
     
     private void notifyCallBackAppl(JSONCallbackResponse jsonResponse, JsonCallback baseRequestObj) throws Exception {
@@ -564,7 +553,7 @@ public class RestMusicAdminAPI {
         logger.info(EELFLoggerDelegate.applicationLogger, "Notification Response sending is: "+jsonNotification);
         logger.info("Notification Response sending is: "+jsonNotification);
         jsonNotification.setPassword(baseRequestObj.getApplicationPassword());
-        WebResource webResource = client.resource(endpoint);
+        client.resource(endpoint);
         String authData = username+":"+password;
         byte[] plainCredsBytes = authData.getBytes();
         byte[] base64CredsBytes = Base64.encode(plainCredsBytes);
@@ -588,7 +577,7 @@ public class RestMusicAdminAPI {
                 sc.init(null, trustAllCerts, new SecureRandom());
                 HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
             } catch (Exception e) {
-                ;
+                logger.error(e.getMessage(), e);
             }
 
         	try {
@@ -663,47 +652,6 @@ public class RestMusicAdminAPI {
         	logger.error("Exception while reading response from Caller");
         	logger.error(EELFLoggerDelegate.errorLogger, "Can NOT notify the caller as caller failed to respond..");
         }
-        
-        /*ClientResponse response = null;
-        try { 
-        	response = webResource.header("Authorization", "Basic " + base64Creds).accept("application/json").type("application/json")
-            .post(ClientResponse.class, jsonNotification);
-        } catch (com.sun.jersey.api.client.ClientHandlerException chf) {
-        	boolean ok = false;
-        	logger.info(EELFLoggerDelegate.applicationLogger, "Is Service down?");
-        	long now= System.currentTimeMillis();
-        	long end = now+notifytimeout;
-        	while(! ok) {
-        		logger.info(EELFLoggerDelegate.applicationLogger, "retrying since error in notifying callback..");
-        		try {
-        			response = webResource.header("Authorization", "Basic " + base64Creds).accept("application/json").type("application/json")
-        	            .post(ClientResponse.class, jsonNotification);
-        			if(response.getStatus() == 200) ok = true;
-        		}catch (Exception e) {
-        			logger.info(EELFLoggerDelegate.applicationLogger, "Retry until "+(end-System.currentTimeMillis()));
-        			if(response == null && System.currentTimeMillis() < end) ok = false;
-        			else ok = true;
-        			try{ Thread.sleep(notifyinterval); } catch(Exception e1) {}
-        		}
-        	}
-        }
-        if(response == null) {
-        	logger.error(EELFLoggerDelegate.errorLogger, "Can NOT notify the caller as caller failed to respond..");
-        	return;
-        }
-        JsonNotifyClientResponse responseStr = response.getEntity(JsonNotifyClientResponse.class);
-        logger.info(EELFLoggerDelegate.applicationLogger, "Response from Notified client: "+responseStr);
-        
-        if(response.getStatus() != 200){
-        	long now= System.currentTimeMillis();
-        	long end = now+30000;
-        	while(response.getStatus() != 200 && System.currentTimeMillis() < end) {
-        		logger.info(EELFLoggerDelegate.applicationLogger, "retrying since error in notifying callback..");
-        		response = webResource.header("Authorization", "Basic " + base64Creds).accept("application/json").type("application/json")
-        	            .post(ClientResponse.class, jsonNotification);
-        	}
-        	logger.info(EELFLoggerDelegate.applicationLogger, "Exception while notifying.. "+response.getStatus());
-        }*/
     }
     
     private JsonNotification constructJsonNotification(JSONCallbackResponse jsonResponse, JsonCallback baseRequestObj) {
@@ -777,6 +725,7 @@ public class RestMusicAdminAPI {
 	    	}
 	    	jsonNotification.setResponse_body(newMap);
     	} catch(Exception e) {
+    	    logger.error(e.getMessage(), e);
     		e.printStackTrace();
     	}
     	return jsonNotification;
@@ -792,8 +741,7 @@ public class RestMusicAdminAPI {
                 "select id, endpoint_userid, endpoint_password, notify_to_endpoint, notify_insert_on,"
                 + " notify_delete_on, notify_update_on, request, notifyon from admin.notification_master allow filtering";
         pQuery.appendQueryString(cql);
-        //pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), fullTable));
-        
+
         ResultSet rs = MusicCore.get(pQuery);
         Iterator<Row> it = rs.iterator();
         while (it.hasNext()) {
@@ -857,12 +805,6 @@ public class RestMusicAdminAPI {
         if(triggerName == null || triggerName.length() == 0)
         	triggerName = "MusicTrigger";
         
-        /*JsonCallback callBackCache = CachingUtil.getCallBackCache(notify_field);
-        if(callBackCache != null) {
-        	resultMap.put("Exception", "The notification property has already been onboarded.");
-            return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
-        }*/
-        
         String[] allFields = notify_field.split(":");
         String inserts = null;
         String updates = null;
@@ -908,17 +850,17 @@ public class RestMusicAdminAPI {
 	        CachingUtil.updateCallBackCache(notify_field, jsonCallback);
 	        pQuery = new PreparedQueryObject();
 	        pQuery.appendQueryString(cql);
-	        ResultType nonKeyRelatedPut = MusicCore.nonKeyRelatedPut(pQuery, MusicUtil.EVENTUAL);
+            MusicCore.nonKeyRelatedPut(pQuery, MusicUtil.EVENTUAL);
 	        logger.info(EELFLoggerDelegate.applicationLogger, "Created trigger");
-        //callBackCache.put(jsonCallback.getApplicationName(), jsonMap);
         } catch (InvalidQueryException e) {
             logger.error(EELFLoggerDelegate.errorLogger,"Exception callback_api table not configured."+e.getMessage());
             resultMap.put("Exception", "Please make sure admin.notification_master table is configured.");
-            return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
+            return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         } catch(Exception e) {
+            logger.error(e.getMessage(), e);
         	e.printStackTrace();
         	resultMap.put("Exception", "Exception Occured.");
-            return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
+            return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
        return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setMessage("Callback api successfully registered").toMap()).build();
     }
@@ -928,7 +870,6 @@ public class RestMusicAdminAPI {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response deleteCallbackProp(JsonNotification jsonNotification) {
-    	Map<String, Object> resultMap = new HashMap<>();
         ResponseBuilder response =
                         Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
         String notifyOn = jsonNotification.getNotify_field();
@@ -943,13 +884,4 @@ public class RestMusicAdminAPI {
         }
     	return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setMessage("Callback api successfully deleted").toMap()).build();
     }
-
-    /*public String encodePwd(String password) {
-    	return Base64.getEncoder().encodeToString(password.getBytes());
-    }
-    
-    public String decodePwd(String password) {
-    	byte[] bytes = Base64.getDecoder().decode(password); 
-    	return new String(bytes);
-    }*/
 }
