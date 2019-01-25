@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9adffdf1_58b3bf97",
+        "filename": "src/main/java/org/onap/music/rest/RestMusicAdminAPI.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 119,
+      "author": {
+        "id": 1827
+      },
+      "writtenOn": "2019-01-25T17:54:34Z",
+      "side": 0,
+      "message": "This is important. It looks like this was an oversight. The response object should be used in all responses. All the Response objects being returned need to be changed to response.",
+      "range": {
+        "startLine": 117,
+        "startChar": 8,
+        "endLine": 119,
+        "endChar": 8
+      },
+      "revId": "29056ff8d72d4f50073f6993ee6bd1b7ee7caf91",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
