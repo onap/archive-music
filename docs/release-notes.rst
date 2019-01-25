@@ -13,7 +13,7 @@ Version: 3.0.24
 
 **New Features**
 
-- MUSIC as a Service: while MUSIC was consumed internally by components in the Beijing release, in Cassablanca MUSIC can be deployed as an independent multi-site clustered service
+- MUSIC as a Service: while MUSIC was consumed internally by components in the Beijing release, in Casablanca MUSIC can be deployed as an independent multi-site clustered service
 
 - Designed MUSIC to be a fully sharded, scale out system, where as many ONAP sites/component replicas can be added as required for performance
 
