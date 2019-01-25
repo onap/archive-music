@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2018-2019 IBM.
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -23,8 +25,11 @@
 package org.onap.music.unittests;
 
 import static org.junit.Assert.*;
+
+import java.util.HashMap;
 import java.util.Map;
 import org.junit.Test;
+import org.onap.music.lockingservice.MusicLockState.LockStatus;
 import org.onap.music.main.ResultType;
 import org.onap.music.response.jsonobjects.JsonResponse;
 
@@ -80,4 +85,44 @@ public class JsonResponseTest {
         assertEquals(ResultType.FAILURE, myMap.get("status"));
     }
 
+    @Test
+    public void testMessage() {
+        result = new JsonResponse(ResultType.SUCCESS);
+        result.setMessage("message");
+        assertEquals("message", result.getMessage());
+        
+    }
+    
+    @Test
+    public void testDataResult() {
+        result = new JsonResponse(ResultType.SUCCESS);
+        Map<String, HashMap<String, Object>> dataResult= new HashMap<>();
+        result.setDataResult(dataResult);
+        assertEquals(dataResult, result.getDataResult());
+        
+    }
+    
+    @Test
+    public void testLock() {
+        result = new JsonResponse(ResultType.SUCCESS);
+        result.setLock("lock");
+        assertEquals("lock", result.getLock());
+        
+    }
+    
+    @Test
+    public void testLockStatus() {
+        result = new JsonResponse(ResultType.SUCCESS);
+        LockStatus status = LockStatus.LOCKED;
+        result.setLockStatus(status);
+        assertEquals(status, result.getLockStatus());
+        
+    }
+    
+    @Test
+    public void testToString() {
+        result = new JsonResponse(ResultType.SUCCESS);
+        assertTrue(result.toString() instanceof String);
+        
+    }
 }
