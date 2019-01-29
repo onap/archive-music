@@ -17,7 +17,7 @@
 	<groupId>org.onap.music</groupId>
 	<artifactId>dev-MUSIC-cassandra</artifactId>
 	<packaging>jar</packaging>
-	<version>3.2.1</version>
+	<version>3.2.2-SNAPSHOT</version>
 	<description>
             This is the MUSIC REST interface, packaged as a war file.
     </description>
