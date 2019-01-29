@@ -19,6 +19,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.datastore;
 
 import java.util.ArrayList;
@@ -34,8 +35,53 @@ public class PreparedQueryObject {
 
     private List<Object> values;
     private StringBuilder query;
+    private String consistency;
+    private String keyspaceName;
+    private String tableName;
+    private String operation;
+    private String primaryKeyValue;
 
 
+
+    public String getKeyspaceName() {
+        return keyspaceName;
+    }
+
+    public void setKeyspaceName(String keyspaceName) {
+        this.keyspaceName = keyspaceName;
+    }
+
+    public String getTableName() {
+        return tableName;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
+    }
+
+    public String getOperation() {
+        return operation;
+    }
+
+    public void setOperation(String operation) {
+        this.operation = operation;
+    }
+
+    public String getPrimaryKeyValue() {
+        return primaryKeyValue;
+    }
+
+    public void setPrimaryKeyValue(String primaryKeyValue) {
+        this.primaryKeyValue = primaryKeyValue;
+    }
+
+    public String getConsistency() {
+        return consistency;
+    }
+
+    public void setConsistency(String consistency) {
+        this.consistency = consistency;
+    }
 
     /**
      * 
@@ -65,6 +111,9 @@ public class PreparedQueryObject {
      */
     public void appendQueryString(String s) {
         this.query.append(s);
+    }
+    public void replaceQueryString(String s) {
+        this.query.replace(0, query.length(), s);
     }
 
     /**

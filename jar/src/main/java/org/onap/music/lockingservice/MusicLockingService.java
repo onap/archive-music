@@ -15,6 +15,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.lockingservice;
 
 
@@ -55,24 +56,24 @@ public class MusicLockingService implements Watcher {
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.IOERROR, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
             throw new MusicServiceException("IO Error has occured" + e.getMessage());
         } catch (InterruptedException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
             throw new MusicServiceException("Exception Occured " + e.getMessage());
         }
     }
 
     public MusicLockingService(int timeout) throws MusicServiceException { 
-    	CountDownLatch connectedSignal1 = new CountDownLatch(1); 
-    	try { 
+        CountDownLatch connectedSignal1 = new CountDownLatch(1); 
+        try { 
             ZooKeeper zk1 = new ZooKeeper(MusicUtil.getMyZkHost(), SESSION_TIMEOUT, this); 
             connectedSignal1.await(timeout, TimeUnit.SECONDS); 
             if(!zk1.getState().isConnected()) { 
-            	throw new MusicServiceException("Unable to Connect. Some nodes are down."); 
+                throw new MusicServiceException("Unable to Connect. Some nodes are down."); 
             } 
         } catch (IOException e ) { 
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.IOERROR, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR); 
             throw new MusicServiceException("IO Error has occured" + e.getMessage()); 
         } catch (InterruptedException e) { 
-        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR); 
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR); 
             throw new MusicServiceException("Exception Occured " + e.getMessage()); 
         } 
     }
@@ -87,12 +88,12 @@ public class MusicLockingService implements Watcher {
             connectedSignal.await();
             zkLockHandle = new ZkStatelessLockService(zk);
         } catch (IOException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.IOERROR, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.IOERROR, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
         }catch( InterruptedException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
-		}catch(Exception e) {
-			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
-		}
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+        }catch(Exception e) {
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+        }
     }
 
     public void createLockaIfItDoesNotExist(String lockName) {
@@ -111,17 +112,17 @@ public class MusicLockingService implements Watcher {
 
     public MusicLockState getLockState(String lockName) throws MusicLockingException {
 
-    	byte[] data = null;
+        byte[] data = null;
         try{
-        	data = zkLockHandle.getNodeData(lockName);
+            data = zkLockHandle.getNodeData(lockName);
         }catch (Exception ex){
-        	logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
         if(data !=null)
         return MusicLockState.deSerialize(data);
         else {
-        	logger.error(EELFLoggerDelegate.errorLogger,"",AppMessages.INVALIDLOCK, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
-        	throw new  MusicLockingException("Invalid lock or acquire failed");
+            logger.error(EELFLoggerDelegate.errorLogger,"",AppMessages.INVALIDLOCK, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+            throw new  MusicLockingException("Invalid lock or acquire failed");
         }
     }
 
@@ -137,12 +138,12 @@ public class MusicLockingService implements Watcher {
         try {
             return zkLockHandle.lock(lockName, lockId);
         } catch (KeeperException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.LOCKINGERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.LOCKINGERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }catch( InterruptedException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
-		}catch(Exception e) {
-			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
-		}
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+        }catch(Exception e) {
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+        }
         return false;
     }
 
@@ -152,11 +153,11 @@ public class MusicLockingService implements Watcher {
     }
 
     public void deleteLock(String lockName) throws MusicLockingException {
-    	if(lockIdExists(lockName))
-    		zkLockHandle.deleteLock(lockName);
-    	else{
-    		throw new MusicLockingException("Lock does not exist.Please check the lock: " + lockName + " and try again");
-    	}
+        if(lockIdExists(lockName))
+            zkLockHandle.deleteLock(lockName);
+        else{
+            throw new MusicLockingException("Lock does not exist.Please check the lock: " + lockName + " and try again");
+        }
     }
 
     public String whoseTurnIsIt(String lockName) {
@@ -176,9 +177,9 @@ public class MusicLockingService implements Watcher {
         zkLockHandle.close();
     }
 
-	public boolean lockIdExists(String lockIdWithDollar) {
-		String lockId = lockIdWithDollar.replace('$', '/');
-		return zkLockHandle.checkIfLockExists(lockId);
-	}
+    public boolean lockIdExists(String lockIdWithDollar) {
+        String lockId = lockIdWithDollar.replace('$', '/');
+        return zkLockHandle.checkIfLockExists(lockId);
+    }
 
 }

@@ -19,8 +19,11 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.main;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -31,48 +34,46 @@ import javax.servlet.annotation.WebListener;
 
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
+import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicServiceException;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 
-//@WebListener
-public class CronJobManager implements ServletContextListener {
+@Component
+public class CronJobManager {
 
-    private ScheduledExecutorService scheduler;
     private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(CronJobManager.class);
 
-    @Override
-    public void contextInitialized(ServletContextEvent event) {
-        scheduler = Executors.newSingleThreadScheduledExecutor();
-        scheduler.scheduleAtFixedRate(new CachingUtil(), 0, 24, TimeUnit.HOURS);
+    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+
+   
+    @Scheduled(cron = "0 0 0 * * ?")
+    public void scheduleTaskWithFixedRate() {
+        logger.info("Executing cronjob to cleanup locks..", dateTimeFormatter.format(LocalDateTime.now()) );
+        deleteLocksFromDB();
+    }
+    
+    public void deleteLocksFromDB() {
         PreparedQueryObject pQuery = new PreparedQueryObject();
         String consistency = MusicUtil.EVENTUAL;
         pQuery.appendQueryString("CREATE TABLE IF NOT EXISTS admin.locks ( lock_id text PRIMARY KEY, ctime text)");
         try {
             ResultType result = MusicCore.nonKeyRelatedPut(pQuery, consistency);
-        } catch (MusicServiceException e1) {
-        	logger.error(EELFLoggerDelegate.errorLogger, e1.getMessage(),ErrorSeverity.ERROR);
-        }
-
-      //Zookeeper cleanup
-        scheduler.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                deleteLocksFromDB();
+            if ( result.equals(ResultType.FAILURE)) {
+                logger.error(EELFLoggerDelegate.errorLogger,"Error creating Admin.locks table.",AppMessages.QUERYERROR,ErrorSeverity.CRITICAL, ErrorTypes.QUERYERROR);
             }
-        } , 0, 24, TimeUnit.HOURS);
-    }
-
-    @Override
-    public void contextDestroyed(ServletContextEvent event) {
-        scheduler.shutdownNow();
-    }
-
-    public void deleteLocksFromDB() {
-        PreparedQueryObject pQuery = new PreparedQueryObject();
+        } catch (MusicServiceException e1) {
+            logger.error(EELFLoggerDelegate.errorLogger,e1.getMessage(),AppMessages.QUERYERROR,ErrorSeverity.CRITICAL, ErrorTypes.QUERYERROR);
+            e1.printStackTrace();
+        }
+        
+        pQuery = new PreparedQueryObject();
         pQuery.appendQueryString(
                         "select * from admin.locks");
             try {
@@ -101,8 +102,8 @@ public class CronJobManager implements ServletContextListener {
                     CachingUtil.deleteKeysFromDB(deleteKeys.toString());
                }
             } catch (MusicServiceException e) {
-            	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),ErrorSeverity.ERROR);
+                logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(),AppMessages.CACHEERROR,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
+                e.printStackTrace();
             }
     }
-
 }

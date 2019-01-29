@@ -21,6 +21,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.unittests.jsonobjects;
 
 import static org.junit.Assert.assertEquals;

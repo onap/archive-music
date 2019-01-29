@@ -19,6 +19,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.main;
 
 import java.io.FileInputStream;
@@ -130,7 +131,7 @@ public class PropertiesListener implements ServletContextListener {
                 }
             }
         } catch (IOException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.IOERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.CONNECTIONERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.IOERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.CONNECTIONERROR);
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
         }
 

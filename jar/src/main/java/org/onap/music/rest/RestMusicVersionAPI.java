@@ -19,6 +19,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.rest;
 
 import java.util.Map;
@@ -46,18 +47,18 @@ import io.swagger.annotations.ApiOperation;
 @Api(value="Version Api")
 public class RestMusicVersionAPI {
 
-	private EELFLoggerDelegate logger =EELFLoggerDelegate.getLogger(RestMusicVersionAPI.class);
+    private EELFLoggerDelegate logger =EELFLoggerDelegate.getLogger(RestMusicVersionAPI.class);
 
-	/**
-	 * Get the version of MUSIC
-	 * @return
-	 */
-	@GET
-	@ApiOperation(value = "Get Version", response = Map.class)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Map<String,Object> version(@Context HttpServletResponse response) {
-		logger.info("Replying to request for MUSIC version with MUSIC:" + MusicUtil.getVersion());
-		response.addHeader("X-latestVersion",MusicUtil.getVersion());
-		return new JsonResponse(ResultType.SUCCESS).setMusicVersion("MUSIC:" + MusicUtil.getVersion()).toMap();
-	}
+    /**
+     * Get the version of MUSIC
+     * @return
+     */
+    @GET
+    @ApiOperation(value = "Get Version", response = Map.class)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Map<String,Object> version(@Context HttpServletResponse response) {
+        logger.info("Replying to request for MUSIC version with MUSIC:" + MusicUtil.getVersion());
+        response.addHeader("X-latestVersion",MusicUtil.getVersion());
+        return new JsonResponse(ResultType.SUCCESS).setMusicVersion("MUSIC:" + MusicUtil.getVersion()).toMap();
+    }
 }

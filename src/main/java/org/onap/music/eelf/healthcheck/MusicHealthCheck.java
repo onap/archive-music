@@ -19,6 +19,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.eelf.healthcheck;
 
 import java.util.UUID;
@@ -30,10 +31,11 @@ import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicServiceException;
-import org.onap.music.lockingservice.MusicLockingService;
-import org.onap.music.main.MusicCore;
+import org.onap.music.lockingservice.zookeeper.MusicLockingService;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
+import org.onap.music.service.impl.MusicZKCore;
+import org.onap.music.main.MusicCore;
 
 import com.datastax.driver.core.ConsistencyLevel;
 
@@ -43,109 +45,109 @@ import com.datastax.driver.core.ConsistencyLevel;
  */
 public class MusicHealthCheck {
 
-	private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicUtil.class);
+    private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicUtil.class);
 
-	private String cassandrHost;
-	private String zookeeperHost;
+    private String cassandrHost;
+    private String zookeeperHost;
 
-	public String getCassandraStatus(String consistency) {
-		logger.info(EELFLoggerDelegate.applicationLogger, "Getting Status for Cassandra");
-		
-		boolean result = false;
-		try {
-			result = getAdminKeySpace(consistency);
-		} catch(Exception e) {
-			if(e.getMessage().toLowerCase().contains("unconfigured table healthcheck")) {
-				logger.error("Error", e);
-				logger.debug("Creating table....");
-				boolean ksresult = createKeyspace();
-				if(ksresult)
-					try {
-						result = getAdminKeySpace(consistency);
-					} catch (MusicServiceException e1) {
-						// TODO Auto-generated catch block
-						logger.error("Error", e);
-						e1.printStackTrace();
-					}
-			} else {
-				logger.error("Error", e);
-				return "One or more nodes are down or not responding.";
-			}
-		}
-		if (result) {
-			return "ACTIVE";
-		} else {
-			logger.info(EELFLoggerDelegate.applicationLogger, "Cassandra Service is not responding");
-			return "INACTIVE";
-		}
-	}
+    public String getCassandraStatus(String consistency) {
+        logger.info(EELFLoggerDelegate.applicationLogger, "Getting Status for Cassandra");
+        
+        boolean result = false;
+        try {
+            result = getAdminKeySpace(consistency);
+        } catch(Exception e) {
+            if(e.getMessage().toLowerCase().contains("unconfigured table healthcheck")) {
+                logger.error("Error", e);
+                logger.debug("Creating table....");
+                boolean ksresult = createKeyspace();
+                if(ksresult)
+                    try {
+                        result = getAdminKeySpace(consistency);
+                    } catch (MusicServiceException e1) {
+                        // TODO Auto-generated catch block
+                        logger.error("Error", e);
+                        e1.printStackTrace();
+                    }
+            } else {
+                logger.error("Error", e);
+                return "One or more nodes are down or not responding.";
+            }
+        }
+        if (result) {
+            return "ACTIVE";
+        } else {
+            logger.info(EELFLoggerDelegate.applicationLogger, "Cassandra Service is not responding");
+            return "INACTIVE";
+        }
+    }
 
-	private Boolean getAdminKeySpace(String consistency) throws MusicServiceException {
-
-
-		PreparedQueryObject pQuery = new PreparedQueryObject();
-		pQuery.appendQueryString("insert into admin.healthcheck (id) values (?)");
-		pQuery.addValue(UUID.randomUUID());
-			ResultType rs = MusicCore.nonKeyRelatedPut(pQuery, consistency);
-			logger.info(rs.toString());
-			if (rs != null) {
-				return Boolean.TRUE;
-			} else {
-				return Boolean.FALSE;
-			}
+    private Boolean getAdminKeySpace(String consistency) throws MusicServiceException {
 
 
-	}
-	
-	private boolean createKeyspace() {
-		PreparedQueryObject pQuery = new PreparedQueryObject();
-		pQuery.appendQueryString("CREATE TABLE admin.healthcheck (id uuid PRIMARY KEY)");
-		ResultType rs = null ;
-		try {
-			rs = MusicCore.nonKeyRelatedPut(pQuery, ConsistencyLevel.ONE.toString());
-		} catch (MusicServiceException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			logger.error("Error", e);
-		}
-		if(rs != null && rs.getResult().toLowerCase().contains("success"))
-			return true;
-		else
-			return false;
-	}
+        PreparedQueryObject pQuery = new PreparedQueryObject();
+        pQuery.appendQueryString("insert into admin.healthcheck (id) values (?)");
+        pQuery.addValue(UUID.randomUUID());
+            ResultType rs = MusicCore.nonKeyRelatedPut(pQuery, consistency);
+            logger.info(rs.toString());
+            if (rs != null) {
+                return Boolean.TRUE;
+            } else {
+                return Boolean.FALSE;
+            }
 
-	public String getZookeeperStatus() {
 
-		String host = MusicUtil.getMyZkHost();
-		logger.info(EELFLoggerDelegate.applicationLogger, "Getting Status for Zookeeper Host: " + host);
-		try {
-			MusicCore.getLockingServiceHandle();
-			// additionally need to call the ZK to create,aquire and delete lock
-		} catch (MusicLockingException e) {
-			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), AppMessages.LOCKINGERROR,
-					ErrorTypes.CONNECTIONERROR, ErrorSeverity.CRITICAL);
-			return "INACTIVE";
-		}
+    }
+    
+    private boolean createKeyspace() {
+        PreparedQueryObject pQuery = new PreparedQueryObject();
+        pQuery.appendQueryString("CREATE TABLE admin.healthcheck (id uuid PRIMARY KEY)");
+        ResultType rs = null ;
+        try {
+            rs = MusicCore.nonKeyRelatedPut(pQuery, ConsistencyLevel.ONE.toString());
+        } catch (MusicServiceException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            logger.error("Error", e);
+        }
+        if(rs != null && rs.getResult().toLowerCase().contains("success"))
+            return true;
+        else
+            return false;
+    }
 
-		logger.info(EELFLoggerDelegate.applicationLogger, "Zookeeper is Active and Running");
-		return "ACTIVE";
+    public String getZookeeperStatus() {
 
-	}
+        String host = MusicUtil.getMyZkHost();
+        logger.info(EELFLoggerDelegate.applicationLogger, "Getting Status for Zookeeper Host: " + host);
+        try {
+            MusicLockingService lockingService = MusicZKCore.getLockingServiceHandle();
+            // additionally need to call the ZK to create,aquire and delete lock
+        } catch (MusicLockingException e) {
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), AppMessages.LOCKINGERROR,
+                    ErrorTypes.CONNECTIONERROR, ErrorSeverity.CRITICAL);
+            return "INACTIVE";
+        }
 
-	public String getCassandrHost() {
-		return cassandrHost;
-	}
+        logger.info(EELFLoggerDelegate.applicationLogger, "Zookeeper is Active and Running");
+        return "ACTIVE";
 
-	public void setCassandrHost(String cassandrHost) {
-		this.cassandrHost = cassandrHost;
-	}
+    }
 
-	public String getZookeeperHost() {
-		return zookeeperHost;
-	}
+    public String getCassandrHost() {
+        return cassandrHost;
+    }
 
-	public void setZookeeperHost(String zookeeperHost) {
-		this.zookeeperHost = zookeeperHost;
-	}
+    public void setCassandrHost(String cassandrHost) {
+        this.cassandrHost = cassandrHost;
+    }
+
+    public String getZookeeperHost() {
+        return zookeeperHost;
+    }
+
+    public void setZookeeperHost(String zookeeperHost) {
+        this.zookeeperHost = zookeeperHost;
+    }
 
 }

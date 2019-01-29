@@ -20,6 +20,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.datastore.jsonobjects;
 
 import java.io.ByteArrayOutputStream;
@@ -54,12 +55,12 @@ public class JsonInsert implements Serializable {
 
     @ApiModelProperty(value = "objectMap")
     public Map<String, byte[]> getObjectMap() {
-		return objectMap;
-	}
+        return objectMap;
+    }
     
     public void setObjectMap(Map<String, byte[]> objectMap) {
-		this.objectMap = objectMap;
-	}
+        this.objectMap = objectMap;
+    }
     
     @ApiModelProperty(value = "keyspace")
     public String getKeyspaceName() {

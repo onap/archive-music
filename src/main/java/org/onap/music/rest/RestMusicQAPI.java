@@ -1,21 +1,25 @@
 /*
- * ============LICENSE_START========================================== org.onap.music
- * =================================================================== Copyright (c) 2017 AT&T
- * Intellectual Property ===================================================================Modifications Copyright (c) 2018 IBM
- * Intellectual Property =================================================================== * 
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License. You may obtain a copy of the License at
+ * ============LICENSE_START==========================================
+ * org.onap.music
+ * ===================================================================
+ *  Copyright (c) 2017 AT&T Intellectual Property
+ * ===================================================================
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  * 
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  * 
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.rest;
 
 import java.util.HashMap;
@@ -45,6 +49,7 @@ import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.apache.commons.lang3.StringUtils;
+import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import com.datastax.driver.core.ResultSet;
 import org.onap.music.exceptions.MusicServiceException;
@@ -52,13 +57,15 @@ import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 import org.onap.music.response.jsonobjects.JsonResponse;
+import org.onap.music.service.impl.MusicZKCore;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 
-
+// import io.swagger.models.Response;
 // @Path("/v{version: [0-9]+}/priorityq/")
-@Path("{version}/priorityq/")
+@Path("/v2/priorityq/")
 @Api(value = "Q Api")
 public class RestMusicQAPI {
 
@@ -74,37 +81,29 @@ public class RestMusicQAPI {
    */
  
   @POST
-  @Path("/keyspaces/{keyspace}/{qname}") // is it same as tablename?down
+  @Path("/keyspaces/{keyspace}/{qname}") // qname same as tablename
   @ApiOperation(value = "Create Q", response = String.class)
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
-  
-  /* old
-  @POST
-  @Path("/keyspaces/{keyspace}/{qname}")
-  @ApiOperation(value = "", response = Void.class)
-  @Consumes(MediaType.APPLICATION_JSON)
-  */
   public Response createQ(
-  // public Map<String,Object> createQ(
           @ApiParam(value = "Major Version", required = true) @PathParam("version") String version,
           @ApiParam(value = "Minor Version",
                   required = false) @HeaderParam("X-minorVersion") String minorVersion,
           @ApiParam(value = "Patch Version",
                   required = false) @HeaderParam("X-patchVersion") String patchVersion,
-          @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+          @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
           @ApiParam(value = "Application namespace", required = true) @HeaderParam("ns") String ns,
           @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
           JsonTable tableObj, 
           @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
           @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename)
           throws Exception {
-    
+    //logger.info(logger, "cjc before start in q 1** major version=" + version);
 
     ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
 
     Map<String, String> fields = tableObj.getFields();
-    if (fields == null) {
+    if (fields == null) { // || (!fields.containsKey("order")) ){
       logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA,
               ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
       return response.status(Status.BAD_REQUEST)
@@ -151,19 +150,19 @@ public class RestMusicQAPI {
       }
 
     if ((primaryKey!=null) && (partitionKey == null)) {
-        primaryKey.trim();
-        int count1 = StringUtils.countMatches(primaryKey, ')');
-        int count2 = StringUtils.countMatches(primaryKey, '(');
+        primaryKey = primaryKey.trim();
+        int count1 = StringUtils.countMatches(primaryKey,')');
+        int count2 = StringUtils.countMatches(primaryKey,'(');
         if (count1 != count2) {
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
                       .setError("CreateQ Error: primary key '(' and ')' do not match, primary key=" + primaryKey)
                       .toMap()).build();
         }
 
-        if ( primaryKey.indexOf('(') == -1  || ( count2 == 1 && (primaryKey.lastIndexOf(")") +1) ==  primaryKey.length() ) )
+        if ( primaryKey.indexOf('(') == -1  || ( count2 == 1 && (primaryKey.lastIndexOf(')') +1) ==  primaryKey.length() ) )
         {
             if (primaryKey.contains(",") ) {
-                partitionKey= primaryKey.substring(0,primaryKey.indexOf(","));
+                partitionKey= primaryKey.substring(0,primaryKey.indexOf(','));
                 partitionKey=partitionKey.replaceAll("[\\(]+","");
                 clusteringKey=primaryKey.substring(primaryKey.indexOf(',')+1);  // make sure index
                 clusteringKey=clusteringKey.replaceAll("[)]+", "");
@@ -176,18 +175,14 @@ public class RestMusicQAPI {
       } else {
             partitionKey= primaryKey.substring(0,primaryKey.indexOf(')'));
             partitionKey=partitionKey.replaceAll("[\\(]+","");
-            partitionKey.trim();
+            partitionKey = partitionKey.trim();
             clusteringKey= primaryKey.substring(primaryKey.indexOf(')'));
             clusteringKey=clusteringKey.replaceAll("[\\(]+","");
             clusteringKey=clusteringKey.replaceAll("[\\)]+","");
-            clusteringKey.trim();
-            if (clusteringKey.indexOf(",") == 0) {
-                clusteringKey=clusteringKey.substring(1);
-            }
-            clusteringKey.trim();
-            if (",".equals(clusteringKey) ) {
-            	clusteringKey=""; // print error if needed    ( ... ),)
-            }
+            clusteringKey = clusteringKey.trim();
+            if (clusteringKey.indexOf(',') == 0) clusteringKey=clusteringKey.substring(1);
+            clusteringKey = clusteringKey.trim();
+            if (clusteringKey.equals(",") ) clusteringKey=""; // print error if needed    ( ... ),)
          }
     }
 
@@ -240,16 +235,13 @@ public class RestMusicQAPI {
                   required = false) @HeaderParam("X-minorVersion") String minorVersion,
           @ApiParam(value = "Patch Version",
                   required = false) @HeaderParam("X-patchVersion") String patchVersion,
-          @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+          @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
           @ApiParam(value = "Application namespace", required = true) @HeaderParam("ns") String ns,
           @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
           JsonInsert insObj,
           @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
           @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename)
           throws Exception {
-
-    // check valuesMap.isEmpty and proceed
-    // response.addHeader(xLatestVersion, MusicUtil.getVersion());
     ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
     if (insObj.getValues().isEmpty()) {
       logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA,
@@ -281,13 +273,13 @@ public class RestMusicQAPI {
                   required = false) @HeaderParam("X-minorVersion") String minorVersion,
           @ApiParam(value = "Patch Version",
                   required = false) @HeaderParam("X-patchVersion") String patchVersion,
-          @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+          @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
           @ApiParam(value = "Application namespace", required = true) @HeaderParam("ns") String ns,
           @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
           JsonUpdate updateObj,
           @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
           @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename,
-          @Context UriInfo info) {
+          @Context UriInfo info) throws Exception {
 
     ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
     if (updateObj.getValues().isEmpty()) {
@@ -327,15 +319,13 @@ public class RestMusicQAPI {
                   required = false) @HeaderParam("X-minorVersion") String minorVersion,
           @ApiParam(value = "Patch Version",
                   required = false) @HeaderParam("X-patchVersion") String patchVersion,
-          @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+          @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
           @ApiParam(value = "Application namespace", required = true) @HeaderParam("ns") String ns,
           @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-         // @ApiParam(value = "userId", required = true) @HeaderParam("userId") String userId,
-         // @ApiParam(value = "Password", required = true) @HeaderParam("password") String password,
           JsonDelete delObj,
           @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
           @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename,
-          @Context UriInfo info) {
+          @Context UriInfo info) throws Exception {
     // added checking as per RestMusicDataAPI
     ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
     if (delObj == null) {
@@ -368,7 +358,7 @@ public class RestMusicQAPI {
                   required = false) @HeaderParam("X-minorVersion") String minorVersion,
           @ApiParam(value = "Patch Version",
                   required = false) @HeaderParam("X-patchVersion") String patchVersion,
-          @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+          @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
           @ApiParam(value = "Application namespace", required = true) @HeaderParam("ns") String ns,
           @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
           @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
@@ -390,7 +380,6 @@ public class RestMusicQAPI {
         queryObject = new RestMusicDataAPI().selectSpecificQuery(version, minorVersion,
                 patchVersion, aid, ns, userId, password, keyspace, tablename, info, limit);
       } catch (MusicServiceException ex) {
-    	logger.error(EELFLoggerDelegate.errorLogger, "MusicServiceException occured in peek"+ ex);
         logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.UNKNOWNERROR,
                 ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
         return response.status(Status.BAD_REQUEST)
@@ -402,9 +391,8 @@ public class RestMusicQAPI {
     try {
       ResultSet results = MusicCore.get(queryObject);
       return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS)
-              .setDataResult(MusicCore.marshallResults(results)).toMap()).build();
+              .setDataResult(MusicDataStoreHandle.marshallResults(results)).toMap()).build();
     } catch (MusicServiceException ex) {
-      logger.error(EELFLoggerDelegate.errorLogger, "MusicServiceException occured in peek"+ ex);
       logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.UNKNOWNERROR,
               ErrorSeverity.ERROR, ErrorTypes.MUSICSERVICEERROR);
       return response.status(Status.BAD_REQUEST)
@@ -428,20 +416,15 @@ public class RestMusicQAPI {
   @Produces(MediaType.APPLICATION_JSON)
   // public Map<String, HashMap<String, Object>> filter(
   public Response filter(
-          @ApiParam(value = "Major Version", required = true) @PathParam("version") String version,
-          @ApiParam(value = "Minor Version",
-                  required = false) @HeaderParam("X-minorVersion") String minorVersion,
-          @ApiParam(value = "Patch Version",
-                  required = false) @HeaderParam("X-patchVersion") String patchVersion,
-          @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
-          @ApiParam(value = "Application namespace", required = true) @HeaderParam("ns") String ns,
-          @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-         // @ApiParam(value = "userId", required = true) @HeaderParam("userId") String userId,
-          //@ApiParam(value = "Password", required = true) @HeaderParam("password") String password,
-          @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
-          @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename,
-          @Context UriInfo info) throws Exception {
-    
+      @ApiParam(value = "Major Version", required = true) @PathParam("version") String version,
+      @ApiParam(value = "Minor Version", required = false) @HeaderParam("X-minorVersion") String minorVersion,
+      @ApiParam(value = "Patch Version", required = false) @HeaderParam("X-patchVersion") String patchVersion,
+      @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
+      @ApiParam(value = "Application namespace", required = true) @HeaderParam("ns") String ns,
+      @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
+      @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
+      @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename,
+      @Context UriInfo info) throws Exception {
     return new RestMusicDataAPI().select(version, minorVersion, patchVersion, aid, ns, authorization, keyspace, tablename, info);// , limit)
     
   }
@@ -463,16 +446,12 @@ public class RestMusicQAPI {
                   required = false) @HeaderParam("X-minorVersion") String minorVersion,
           @ApiParam(value = "Patch Version",
                   required = false) @HeaderParam("X-patchVersion") String patchVersion,
-          @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+          @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
           @ApiParam(value = "Application namespace", required = true) @HeaderParam("ns") String ns,
           @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-         // @ApiParam(value = "userId", required = true) @HeaderParam("userId") String userId,
-          //@ApiParam(value = "Password", required = true) @HeaderParam("password") String password,
-          // cjc JsonTable tabObj,
           @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
           @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename)
           throws Exception {
-
 
     return new RestMusicDataAPI().dropTable(version, minorVersion, patchVersion, aid, ns, authorization, keyspace, tablename);
   }

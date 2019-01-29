@@ -19,6 +19,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.lockingservice;
 
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
@@ -50,9 +51,9 @@ class ZNodeName implements Comparable<ZNodeName> {
                 // If an exception occurred we misdetected a sequence suffix,
                 // so return -1.
             } catch (NumberFormatException e) {
-            	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),"Number format exception "+idx, ErrorSeverity.ERROR, ErrorTypes.GENERALSERVICEERROR);
+                logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),"Number format exception "+idx, ErrorSeverity.ERROR, ErrorTypes.GENERALSERVICEERROR);
             } catch (ArrayIndexOutOfBoundsException e) {
-            	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),"Array out of bounds for  "+idx, ErrorSeverity.ERROR, ErrorTypes.GENERALSERVICEERROR);
+                logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),"Array out of bounds for  "+idx, ErrorSeverity.ERROR, ErrorTypes.GENERALSERVICEERROR);
             }
         }
     }

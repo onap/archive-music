@@ -29,7 +29,7 @@ import static org.junit.Assert.*;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Test;
-import org.onap.music.lockingservice.MusicLockState.LockStatus;
+import org.onap.music.lockingservice.cassandra.MusicLockState.LockStatus;
 import org.onap.music.main.ResultType;
 import org.onap.music.response.jsonobjects.JsonResponse;
 

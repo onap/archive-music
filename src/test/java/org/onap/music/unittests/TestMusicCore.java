@@ -19,11 +19,12 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.unittests;
 
 import static org.junit.Assert.*;
-import static org.onap.music.main.MusicCore.mDstoreHandle;
-import static org.onap.music.main.MusicCore.mLockHandle;
+import static org.onap.music.service.impl.MusicZKCore.mLockHandle;
+
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.zookeeper.KeeperException.NoNodeException;
@@ -37,15 +38,16 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
-import org.onap.music.lockingservice.MusicLockState;
-import org.onap.music.lockingservice.MusicLockingService;
-import org.onap.music.lockingservice.MusicLockState.LockStatus;
-import org.onap.music.main.MusicCore;
+import org.onap.music.lockingservice.cassandra.MusicLockState;
+import org.onap.music.lockingservice.cassandra.MusicLockState.LockStatus;
+import org.onap.music.lockingservice.zookeeper.MusicLockingService;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
-import org.onap.music.main.MusicCore.Condition;
+import org.onap.music.service.impl.MusicZKCore;
+import org.onap.music.datastore.Condition;
 import org.onap.music.datastore.MusicDataStore;
+import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
@@ -55,31 +57,39 @@ import com.att.eelf.exception.EELFException;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
 
-@RunWith(MockitoJUnitRunner.class)
+
 public class TestMusicCore {
 
-    @Mock
+    
     private Condition condition;
 
-    @Mock
+    
     private ResultSet rs;
 
-    @Mock
+   
     private PreparedQueryObject preparedQueryObject;
     
-    @Mock
+   
     private Session session;
+    
+    @Mock 
+    MusicZKCore musicZKCore;
 
     @Before
     public void setUp() {
         mLockHandle = Mockito.mock(MusicLockingService.class);
-
+        musicZKCore = MusicZKCore.getInstance();
+        condition=Mockito.mock(Condition.class);
+          rs =Mockito.mock(ResultSet.class);
+          preparedQueryObject =Mockito.mock(PreparedQueryObject.class);
+          session =Mockito.mock(Session.class);
+         
     }
 
     @Test
     public void testCreateLockReferenceforvalidlock() {
         Mockito.when(mLockHandle.createLockId("/" + "test")).thenReturn("lock");
-        String lockId = MusicCore.createLockReference("test");
+        String lockId = musicZKCore.createLockReference("test");
         assertEquals("lock", lockId);
         Mockito.verify(mLockHandle).createLockId("/" + "test");
     }
@@ -87,8 +97,8 @@ public class TestMusicCore {
 
     @Test
     public void testCreateLockReferencefornullname() {
-        Mockito.when(mLockHandle.createLockId("/" + "test")).thenReturn("lock");
-        String lockId = MusicCore.createLockReference("x"); //test");
+        //Mockito.when(mLockHandle.createLockId("/" + "test")).thenReturn("lock");
+        String lockId = musicZKCore.createLockReference("x"); //test");
         //System.out.println("cjc exception lockhandle=" + mLockHandle+"lockid="+lockId );
         assertNotEquals("lock", lockId);
         //Mockito.verify(mLockHandle).createLockId("/" + "test");
@@ -96,13 +106,13 @@ public class TestMusicCore {
     
     @Test
     public void testIsTableOrKeySpaceLock() {
-        Boolean result = MusicCore.isTableOrKeySpaceLock("ks1.tn1");
+        Boolean result = musicZKCore.isTableOrKeySpaceLock("ks1.tn1");
         assertTrue(result);
     }
 
     @Test
     public void testIsTableOrKeySpaceLockwithPrimarykey() {
-        Boolean result = MusicCore.isTableOrKeySpaceLock("ks1.tn1.pk1");
+        Boolean result = musicZKCore.isTableOrKeySpaceLock("ks1.tn1.pk1");
         assertFalse(result);
     }
 
@@ -110,7 +120,7 @@ public class TestMusicCore {
     public void testGetMusicLockState() throws MusicLockingException {
         MusicLockState musicLockState = new MusicLockState(LockStatus.UNLOCKED, "id1");
         Mockito.when(mLockHandle.getLockState("ks1.tb1.pk1")).thenReturn(musicLockState);
-        MusicLockState mls = MusicCore.getMusicLockState("ks1.tb1.pk1");
+        MusicLockState mls = MusicZKCore.getMusicLockState("ks1.tb1.pk1");
         assertEquals(musicLockState, mls);
         Mockito.verify(mLockHandle).getLockState("ks1.tb1.pk1");
     }
@@ -118,7 +128,7 @@ public class TestMusicCore {
     @Test
     public void testAcquireLockifisMyTurnTrue() throws MusicLockingException {
         Mockito.when(mLockHandle.isMyTurn("id1")).thenReturn(true);
-        ReturnType lock = MusicCore.acquireLock("ks1.tn1", "id1");
+        ReturnType lock = musicZKCore.acquireLock("ks1.tn1", "id1");
         assertEquals(lock.getResult(), ResultType.SUCCESS);
         Mockito.verify(mLockHandle).isMyTurn("id1");
     }
@@ -126,7 +136,7 @@ public class TestMusicCore {
     @Test
     public void testAcquireLockifisMyTurnFalse() throws MusicLockingException {
         Mockito.when(mLockHandle.isMyTurn("id1")).thenReturn(false);
-        ReturnType lock = MusicCore.acquireLock("ks1.ts1", "id1");
+        ReturnType lock = musicZKCore.acquireLock("ks1.ts1", "id1");
         assertEquals(lock.getResult(), ResultType.FAILURE);
         Mockito.verify(mLockHandle).isMyTurn("id1");
     }
@@ -134,7 +144,7 @@ public class TestMusicCore {
     @Test
     public void testAcquireLockifisMyTurnTrueandIsTableOrKeySpaceLockTrue() throws MusicLockingException {
         Mockito.when(mLockHandle.isMyTurn("id1")).thenReturn(true);
-        ReturnType lock = MusicCore.acquireLock("ks1.tn1", "id1");
+        ReturnType lock = musicZKCore.acquireLock("ks1.tn1", "id1");
         assertEquals(lock.getResult(), ResultType.SUCCESS);
         Mockito.verify(mLockHandle).isMyTurn("id1");
     }
@@ -144,7 +154,7 @@ public class TestMusicCore {
         MusicLockState musicLockState = new MusicLockState(LockStatus.LOCKED, "id1");
         Mockito.when(mLockHandle.isMyTurn("id1")).thenReturn(true);
         Mockito.when(mLockHandle.getLockState("ks1.tn1.pk1")).thenReturn(musicLockState);
-        ReturnType lock = MusicCore.acquireLock("ks1.tn1.pk1", "id1");
+        ReturnType lock = musicZKCore.acquireLock("ks1.tn1.pk1", "id1");
         assertEquals(lock.getResult(), ResultType.SUCCESS);
         Mockito.verify(mLockHandle).isMyTurn("id1");
         Mockito.verify(mLockHandle).getLockState("ks1.tn1.pk1");
@@ -155,7 +165,7 @@ public class TestMusicCore {
         MusicLockState musicLockState = new MusicLockState(LockStatus.LOCKED, "id2");
         Mockito.when(mLockHandle.isMyTurn("id1")).thenReturn(true);
         Mockito.when(mLockHandle.getLockState("ks1.tn1.pk1")).thenReturn(musicLockState);
-        ReturnType lock = MusicCore.acquireLock("ks1.tn1.pk1", "id1");
+        ReturnType lock = musicZKCore.acquireLock("ks1.tn1.pk1", "id1");
         assertEquals(lock.getResult(), ResultType.SUCCESS);
         Mockito.verify(mLockHandle).isMyTurn("id1");
         Mockito.verify(mLockHandle).getLockState("ks1.tn1.pk1");
@@ -164,7 +174,7 @@ public class TestMusicCore {
     @Test
     public void testAcquireLockifLockRefDoesntExist() throws MusicLockingException {
         Mockito.when(mLockHandle.lockIdExists("bs1")).thenReturn(false);
-        ReturnType lock = MusicCore.acquireLock("ks1.ts1", "bs1");
+        ReturnType lock = musicZKCore.acquireLock("ks1.ts1", "bs1");
         assertEquals(lock.getResult(), ResultType.FAILURE);
         assertEquals(lock.getMessage(), "Lockid doesn't exist");
         Mockito.verify(mLockHandle).lockIdExists("bs1");
@@ -177,7 +187,7 @@ public class TestMusicCore {
         ReturnType expectedResult = new ReturnType(ResultType.SUCCESS, "Succes");
         Mockito.when(mLockHandle.getLockState("ks1.tn1.pk1")).thenReturn(musicLockState);
         Mockito.when(mLockHandle.isMyTurn("id1")).thenReturn(true);
-        ReturnType actualResult = MusicCore.acquireLockWithLease("ks1.tn1.pk1", "id1", 6000);
+        ReturnType actualResult = musicZKCore.acquireLockWithLease("ks1.tn1.pk1", "id1", 6000);
         assertEquals(expectedResult.getResult(), actualResult.getResult());
         Mockito.verify(mLockHandle).isMyTurn("id1");
         Mockito.verify(mLockHandle, Mockito.atLeastOnce()).getLockState("ks1.tn1.pk1");
@@ -188,7 +198,7 @@ public class TestMusicCore {
         ReturnType expectedResult = new ReturnType(ResultType.FAILURE, "failure");
         Mockito.when(mLockHandle.getLockState("ks1.tn1.pk1")).thenThrow(new MusicLockingException());
         Mockito.when(mLockHandle.isMyTurn("id1")).thenReturn(true);
-        ReturnType actualResult = MusicCore.acquireLockWithLease("ks1.tn1.pk1", "id1", 6000);
+        ReturnType actualResult = musicZKCore.acquireLockWithLease("ks1.tn1.pk1", "id1", 6000);
         assertEquals(expectedResult.getResult(), actualResult.getResult());
         Mockito.verify(mLockHandle, Mockito.atLeastOnce()).getLockState("ks1.tn1.pk1");
     }
@@ -199,7 +209,7 @@ public class TestMusicCore {
         ReturnType expectedResult = new ReturnType(ResultType.SUCCESS, "Succes");
         Mockito.when(mLockHandle.getLockState("ks1.tn1.pk1")).thenReturn(musicLockState);
         Mockito.when(mLockHandle.isMyTurn("id1")).thenReturn(true);
-        ReturnType actualResult = MusicCore.acquireLockWithLease("ks1.tn1.pk1", "id1", 6000);
+        ReturnType actualResult = musicZKCore.acquireLockWithLease("ks1.tn1.pk1", "id1", 6000);
         assertEquals(expectedResult.getResult(), actualResult.getResult());
         Mockito.verify(mLockHandle).isMyTurn("id1");
         Mockito.verify(mLockHandle, Mockito.atLeastOnce()).getLockState("ks1.tn1.pk1");
@@ -211,7 +221,7 @@ public class TestMusicCore {
         ReturnType expectedResult = new ReturnType(ResultType.SUCCESS, "Succes");
         Mockito.when(mLockHandle.getLockState("ks1.tn1.pk1")).thenReturn(musicLockState);
         Mockito.when(mLockHandle.isMyTurn("id1")).thenReturn(true);
-        ReturnType actualResult = MusicCore.acquireLockWithLease("ks1.tn1.pk1", "id1", 6000);
+        ReturnType actualResult = musicZKCore.acquireLockWithLease("ks1.tn1.pk1", "id1", 6000);
         assertEquals(expectedResult.getResult(), actualResult.getResult());
         Mockito.verify(mLockHandle).isMyTurn("id1");
         Mockito.verify(mLockHandle, Mockito.atLeastOnce()).getLockState("ks1.tn1.pk1");
@@ -224,7 +234,7 @@ public class TestMusicCore {
         ReturnType expectedResult = new ReturnType(ResultType.FAILURE, "Failure");
         Mockito.when(mLockHandle.getLockState("ks1.tn1.pk1")).thenReturn(musicLockState);
         Mockito.when(mLockHandle.isMyTurn("id1")).thenReturn(false);
-        ReturnType actualResult = MusicCore.acquireLockWithLease("ks1.tn1.pk1", "id1", 6000);
+        ReturnType actualResult = musicZKCore.acquireLockWithLease("ks1.tn1.pk1", "id1", 6000);
         assertEquals(expectedResult.getResult(), actualResult.getResult());
         Mockito.verify(mLockHandle).isMyTurn("id1");
         Mockito.verify(mLockHandle).getLockState("ks1.tn1.pk1");
@@ -233,25 +243,25 @@ public class TestMusicCore {
     @Test
     public void testQuorumGet() throws MusicServiceException, MusicQueryException {
         preparedQueryObject = Mockito.mock(PreparedQueryObject.class);
-        mDstoreHandle = Mockito.mock(MusicDataStore.class);
+        MusicDataStoreHandle.mDstoreHandle = Mockito.mock(MusicDataStore.class);
         rs = Mockito.mock(ResultSet.class);
         session = Mockito.mock(Session.class);
-        Mockito.when(mDstoreHandle.getSession()).thenReturn(session);
-        Mockito.when(mDstoreHandle.executeCriticalGet(preparedQueryObject)).thenReturn(rs);
-        ResultSet rs1 = MusicCore.quorumGet(preparedQueryObject);
+        Mockito.when(MusicDataStoreHandle.mDstoreHandle.getSession()).thenReturn(session);
+        Mockito.when(MusicDataStoreHandle.mDstoreHandle.executeQuorumConsistencyGet(preparedQueryObject)).thenReturn(rs);
+        ResultSet rs1 = musicZKCore.quorumGet(preparedQueryObject);
         assertNotNull(rs1);
     }
 
     @Test
     public void testGetLockNameFromId() {
-        String lockname = MusicCore.getLockNameFromId("lockName$id");
+        String lockname = MusicZKCore.getLockNameFromId("lockName$id");
         assertEquals("lockName", lockname);
     }
 
     @Test
     public void testDestroyLockRef() throws NoNodeException {
         Mockito.doNothing().when(mLockHandle).unlockAndDeleteId("id1");
-        MusicCore.destroyLockRef("id1");
+        musicZKCore.destroyLockRef("id1");
         Mockito.verify(mLockHandle, Mockito.atLeastOnce()).unlockAndDeleteId("id1");
     }
 
@@ -259,7 +269,7 @@ public class TestMusicCore {
     public void testreleaseLockwithvoluntaryReleaseTrue() throws NoNodeException {
         MusicLockState musicLockState = new MusicLockState(LockStatus.UNLOCKED, "id2");
         Mockito.doNothing().when(mLockHandle).unlockAndDeleteId("id1");
-        MusicLockState musicLockState1 = MusicCore.releaseLock("id1", true);
+        MusicLockState musicLockState1 = musicZKCore.releaseLock("id1", true);
         assertEquals(musicLockState.getLockStatus(), musicLockState1.getLockStatus());
         Mockito.verify(mLockHandle, Mockito.atLeastOnce()).unlockAndDeleteId("id1");
     }
@@ -268,7 +278,7 @@ public class TestMusicCore {
     public void testreleaseLockwithvoluntaryReleaseFalse() throws NoNodeException {
         MusicLockState musicLockState = new MusicLockState(LockStatus.UNLOCKED, "id2");
         Mockito.doNothing().when(mLockHandle).unlockAndDeleteId("id1");
-        MusicLockState musicLockState1 = MusicCore.releaseLock("id1", false);
+        MusicLockState musicLockState1 = musicZKCore.releaseLock("id1", false);
         assertEquals(musicLockState.getLockStatus(), musicLockState1.getLockStatus());
         Mockito.verify(mLockHandle, Mockito.atLeastOnce()).unlockAndDeleteId("id1");
     }
@@ -276,76 +286,76 @@ public class TestMusicCore {
     @Test
     public void testDeleteLock() throws MusicLockingException {
         Mockito.doNothing().when(mLockHandle).deleteLock("/" + "id1");
-        MusicCore.deleteLock("id1");
+        musicZKCore.deleteLock("id1");
         Mockito.verify(mLockHandle).deleteLock("/" + "id1");
     }
 
     /*
-     * @Test public void testNonKeyRelatedPut() throws Exception { mDstoreHandle =
-     * Mockito.mock(MusicDataStore.class); Mockito.when(mDstoreHandle.executePut("qu1",
+     * @Test public void testNonKeyRelatedPut() throws Exception { MusicDataStoreHandle.mDstoreHandle =
+     * Mockito.mock(MusicDataStore.class); Mockito.when(MusicDataStoreHandle.mDstoreHandle.executePut("qu1",
      * "consistency")).thenReturn(true); Boolean result = MusicCore.nonKeyRelatedPut("qu1",
-     * "consistency"); assertTrue(result); Mockito.verify(mDstoreHandle).executePut("qu1",
+     * "consistency"); assertTrue(result); Mockito.verify(MusicDataStoreHandle.mDstoreHandle).executePut("qu1",
      * "consistency"); }
      */
 
     @Test
     public void testEventualPutPreparedQuery() throws MusicServiceException, MusicQueryException {
-        mDstoreHandle = Mockito.mock(MusicDataStore.class);
+        MusicDataStoreHandle.mDstoreHandle = Mockito.mock(MusicDataStore.class);
         preparedQueryObject = Mockito.mock(PreparedQueryObject.class);
         ReturnType expectedResult = new ReturnType(ResultType.SUCCESS, "Succes");
         session = Mockito.mock(Session.class);
-        Mockito.when(mDstoreHandle.getSession()).thenReturn(session);
-        Mockito.when(mDstoreHandle.executePut(preparedQueryObject, "eventual")).thenReturn(true);
-        ReturnType actualResult = MusicCore.eventualPut(preparedQueryObject);
+        Mockito.when(MusicDataStoreHandle.mDstoreHandle.getSession()).thenReturn(session);
+        Mockito.when(MusicDataStoreHandle.mDstoreHandle.executePut(preparedQueryObject, "eventual")).thenReturn(true);
+        ReturnType actualResult = musicZKCore.eventualPut(preparedQueryObject);
         assertEquals(expectedResult.getResult(), actualResult.getResult());
-        Mockito.verify(mDstoreHandle).executePut(preparedQueryObject, "eventual");
+        Mockito.verify(MusicDataStoreHandle.mDstoreHandle).executePut(preparedQueryObject, "eventual");
     }
 
     @Test
     public void testEventualPutPreparedQuerywithResultFalse()
                     throws MusicServiceException, MusicQueryException {
-        mDstoreHandle = Mockito.mock(MusicDataStore.class);
+        MusicDataStoreHandle.mDstoreHandle = Mockito.mock(MusicDataStore.class);
         preparedQueryObject = Mockito.mock(PreparedQueryObject.class);
         ReturnType expectedResult = new ReturnType(ResultType.FAILURE, "Failure");
         session = Mockito.mock(Session.class);
-        Mockito.when(mDstoreHandle.getSession()).thenReturn(session);
-        Mockito.when(mDstoreHandle.executePut(preparedQueryObject, "eventual")).thenReturn(false);
-        ReturnType actualResult = MusicCore.eventualPut(preparedQueryObject);
+        Mockito.when(MusicDataStoreHandle.mDstoreHandle.getSession()).thenReturn(session);
+        Mockito.when(MusicDataStoreHandle.mDstoreHandle.executePut(preparedQueryObject, "eventual")).thenReturn(false);
+        ReturnType actualResult = musicZKCore.eventualPut(preparedQueryObject);
         assertEquals(expectedResult.getResult(), actualResult.getResult());
-        Mockito.verify(mDstoreHandle).executePut(preparedQueryObject, "eventual");
-        //Mockito.verify(mDstoreHandle).executePut(preparedQueryObject, MusicUtil.EVENTUAL);
+        Mockito.verify(MusicDataStoreHandle.mDstoreHandle).executePut(preparedQueryObject, "eventual");
+        //Mockito.verify(MusicDataStoreHandle.mDstoreHandle).executePut(preparedQueryObject, MusicUtil.EVENTUAL);
     }
 
     @Test
     public void testCriticalPutPreparedQuerywithValidLockId()
                     throws Exception {
-        mDstoreHandle = Mockito.mock(MusicDataStore.class);
+        MusicDataStoreHandle.mDstoreHandle = Mockito.mock(MusicDataStore.class);
         preparedQueryObject = Mockito.mock(PreparedQueryObject.class);
         MusicLockState musicLockState = new MusicLockState(LockStatus.UNLOCKED, "id1");
         Mockito.when(condition.testCondition()).thenReturn(true);
         session = Mockito.mock(Session.class);
-        Mockito.when(mDstoreHandle.getSession()).thenReturn(session);
+        Mockito.when(MusicDataStoreHandle.mDstoreHandle.getSession()).thenReturn(session);
         ReturnType expectedResult = new ReturnType(ResultType.SUCCESS, "Succes");
         Mockito.when(mLockHandle.getLockState("ks1" + "." + "tn1" + "." + "pk1"))
                         .thenReturn(musicLockState);
-        Mockito.when(mDstoreHandle.executePut(preparedQueryObject, "critical")).thenReturn(true);
-        ReturnType returnType = MusicCore.criticalPut("ks1", "tn1", "pk1", preparedQueryObject,
+        Mockito.when(MusicDataStoreHandle.mDstoreHandle.executePut(preparedQueryObject, "critical")).thenReturn(true);
+        ReturnType returnType = musicZKCore.criticalPut("ks1", "tn1", "pk1", preparedQueryObject,
                         "id1", condition);
         assertEquals(expectedResult.getResult(), returnType.getResult());
         Mockito.verify(condition).testCondition();
         Mockito.verify(mLockHandle).getLockState("ks1" + "." + "tn1" + "." + "pk1");
-        Mockito.verify(mDstoreHandle).executePut(preparedQueryObject, "critical");
+        Mockito.verify(MusicDataStoreHandle.mDstoreHandle).executePut(preparedQueryObject, "critical");
     }
 
     @Test
     public void testCriticalPutPreparedQuerywithInvalidLockId() throws MusicLockingException {
-        mDstoreHandle = Mockito.mock(MusicDataStore.class);
+        MusicDataStoreHandle.mDstoreHandle = Mockito.mock(MusicDataStore.class);
         preparedQueryObject = Mockito.mock(PreparedQueryObject.class);
         MusicLockState musicLockState = new MusicLockState(LockStatus.UNLOCKED, "id2");
         ReturnType expectedResult = new ReturnType(ResultType.FAILURE, "Failure");
         Mockito.when(mLockHandle.getLockState("ks1" + "." + "tn1" + "." + "pk1"))
                         .thenReturn(musicLockState);
-        ReturnType returnType = MusicCore.criticalPut("ks1", "tn1", "pk1", preparedQueryObject,
+        ReturnType returnType = musicZKCore.criticalPut("ks1", "tn1", "pk1", preparedQueryObject,
                         "id1", condition);
         assertEquals(expectedResult.getResult(), returnType.getResult());
         Mockito.verify(mLockHandle).getLockState("ks1" + "." + "tn1" + "." + "pk1");
@@ -353,14 +363,14 @@ public class TestMusicCore {
 
     @Test
     public void testCriticalPutPreparedQuerywithvalidLockIdandTestConditionFalse() throws Exception {
-        mDstoreHandle = Mockito.mock(MusicDataStore.class);
+        MusicDataStoreHandle.mDstoreHandle = Mockito.mock(MusicDataStore.class);
         preparedQueryObject = Mockito.mock(PreparedQueryObject.class);
         MusicLockState musicLockState = new MusicLockState(LockStatus.UNLOCKED, "id1");
         Mockito.when(condition.testCondition()).thenReturn(false);
         ReturnType expectedResult = new ReturnType(ResultType.FAILURE, "Failure");
         Mockito.when(mLockHandle.getLockState("ks1" + "." + "tn1" + "." + "pk1"))
                         .thenReturn(musicLockState);
-        ReturnType returnType = MusicCore.criticalPut("ks1", "tn1", "pk1", preparedQueryObject,
+        ReturnType returnType = musicZKCore.criticalPut("ks1", "tn1", "pk1", preparedQueryObject,
                         "id1", condition);
         assertEquals(expectedResult.getResult(), returnType.getResult());
         Mockito.verify(condition).testCondition();
@@ -369,33 +379,33 @@ public class TestMusicCore {
 
     @Test
     public void testNonKeyRelatedPutPreparedQuery() throws Exception {
-        mDstoreHandle = Mockito.mock(MusicDataStore.class);
+        MusicDataStoreHandle.mDstoreHandle = Mockito.mock(MusicDataStore.class);
         preparedQueryObject = Mockito.mock(PreparedQueryObject.class);
         session = Mockito.mock(Session.class);
-        Mockito.when(mDstoreHandle.getSession()).thenReturn(session);
-        Mockito.when(mDstoreHandle.executePut(preparedQueryObject, "consistency")).thenReturn(true);
-        ResultType result = MusicCore.nonKeyRelatedPut(preparedQueryObject, "consistency");
+        Mockito.when(MusicDataStoreHandle.mDstoreHandle.getSession()).thenReturn(session);
+        Mockito.when(MusicDataStoreHandle.mDstoreHandle.executePut(preparedQueryObject, "consistency")).thenReturn(true);
+        ResultType result = musicZKCore.nonKeyRelatedPut(preparedQueryObject, "consistency");
         assertEquals(ResultType.SUCCESS, result);
-        Mockito.verify(mDstoreHandle).executePut(preparedQueryObject, "consistency");
+        Mockito.verify(MusicDataStoreHandle.mDstoreHandle).executePut(preparedQueryObject, "consistency");
     }
 
     @Test
     public void testAtomicPutPreparedQuery() throws Exception {
-        mDstoreHandle = Mockito.mock(MusicDataStore.class);
+        MusicDataStoreHandle.mDstoreHandle = Mockito.mock(MusicDataStore.class);
         preparedQueryObject = Mockito.mock(PreparedQueryObject.class);
         Mockito.when(mLockHandle.createLockId("/" + "ks1.tn1.pk1")).thenReturn("id1");
         MusicLockState musicLockState = new MusicLockState(LockStatus.LOCKED, "id1");
         ReturnType expectedResult = new ReturnType(ResultType.SUCCESS, "Succes");
         session = Mockito.mock(Session.class);
-        Mockito.when(mDstoreHandle.getSession()).thenReturn(session);
+        Mockito.when(MusicDataStoreHandle.mDstoreHandle.getSession()).thenReturn(session);
         Mockito.when(mLockHandle.getLockState("ks1.tn1.pk1")).thenReturn(musicLockState);
         Mockito.when(mLockHandle.isMyTurn("id1")).thenReturn(true);
         Mockito.when(condition.testCondition()).thenReturn(true);
         Mockito.when(mLockHandle.getLockState("ks1" + "." + "tn1" + "." + "pk1"))
                         .thenReturn(musicLockState);
-        Mockito.when(mDstoreHandle.executePut(preparedQueryObject, "critical")).thenReturn(true);
+        Mockito.when(MusicDataStoreHandle.mDstoreHandle.executePut(preparedQueryObject, "critical")).thenReturn(true);
         ReturnType returnType =
-                        MusicCore.atomicPut("ks1", "tn1", "pk1", preparedQueryObject, condition);
+                musicZKCore.atomicPut("ks1", "tn1", "pk1", preparedQueryObject, condition);
         assertEquals(expectedResult.getResult(), returnType.getResult());
         Mockito.verify(mLockHandle).createLockId("/" + "ks1.tn1.pk1");
         Mockito.verify(mLockHandle, Mockito.atLeastOnce()).getLockState("ks1.tn1.pk1");
@@ -403,18 +413,18 @@ public class TestMusicCore {
         Mockito.verify(condition).testCondition();
         Mockito.verify(mLockHandle, Mockito.atLeastOnce())
                         .getLockState("ks1" + "." + "tn1" + "." + "pk1");
-        Mockito.verify(mDstoreHandle).executePut(preparedQueryObject, "critical");
+        Mockito.verify(MusicDataStoreHandle.mDstoreHandle).executePut(preparedQueryObject, "critical");
     }
 
     @Test
     public void testAtomicPutPreparedQuerywithAcquireLockWithLeaseFalse() throws MusicLockingException {
-        mDstoreHandle = Mockito.mock(MusicDataStore.class);
+        MusicDataStoreHandle.mDstoreHandle = Mockito.mock(MusicDataStore.class);
         preparedQueryObject = Mockito.mock(PreparedQueryObject.class);
         Mockito.when(mLockHandle.createLockId("/" + "ks1.tn1.pk1")).thenReturn("id1");
         ReturnType expectedResult = new ReturnType(ResultType.FAILURE, "Failure");
         Mockito.when(mLockHandle.isMyTurn("id1")).thenReturn(false);
         ReturnType returnType =
-                        MusicCore.atomicPut("ks1", "tn1", "pk1", preparedQueryObject, condition);
+                musicZKCore.atomicPut("ks1", "tn1", "pk1", preparedQueryObject, condition);
         assertEquals(expectedResult.getResult(), returnType.getResult());
         Mockito.verify(mLockHandle).isMyTurn("id1");
         Mockito.verify(mLockHandle).createLockId("/" + "ks1.tn1.pk1");
@@ -422,37 +432,37 @@ public class TestMusicCore {
 
     @Test
     public void testAtomicGetPreparedQuery() throws MusicServiceException, MusicQueryException, MusicLockingException {
-        mDstoreHandle = Mockito.mock(MusicDataStore.class);
+        MusicDataStoreHandle.mDstoreHandle = Mockito.mock(MusicDataStore.class);
         preparedQueryObject = Mockito.mock(PreparedQueryObject.class);
         rs = Mockito.mock(ResultSet.class);
         session = Mockito.mock(Session.class);
-        Mockito.when(mDstoreHandle.getSession()).thenReturn(session);
+        Mockito.when(MusicDataStoreHandle.mDstoreHandle.getSession()).thenReturn(session);
         Mockito.when(mLockHandle.createLockId("/" + "ks1.tn1.pk1")).thenReturn("id1");
         MusicLockState musicLockState = new MusicLockState(LockStatus.LOCKED, "id1");
         Mockito.when(mLockHandle.getLockState("ks1.tn1.pk1")).thenReturn(musicLockState);
         Mockito.when(mLockHandle.isMyTurn("id1")).thenReturn(true);
         Mockito.when(mLockHandle.getLockState("ks1" + "." + "tn1" + "." + "pk1"))
                         .thenReturn(musicLockState);
-        Mockito.when(mDstoreHandle.executeCriticalGet(preparedQueryObject)).thenReturn(rs);
-        ResultSet rs1 = MusicCore.atomicGet("ks1", "tn1", "pk1", preparedQueryObject);
+        Mockito.when(MusicDataStoreHandle.mDstoreHandle.executeQuorumConsistencyGet(preparedQueryObject)).thenReturn(rs);
+        ResultSet rs1 = musicZKCore.atomicGet("ks1", "tn1", "pk1", preparedQueryObject);
         assertNotNull(rs1);
         Mockito.verify(mLockHandle).createLockId("/" + "ks1.tn1.pk1");
         Mockito.verify(mLockHandle, Mockito.atLeastOnce()).getLockState("ks1.tn1.pk1");
         Mockito.verify(mLockHandle).isMyTurn("id1");
         Mockito.verify(mLockHandle, Mockito.atLeastOnce())
                         .getLockState("ks1" + "." + "tn1" + "." + "pk1");
-        Mockito.verify(mDstoreHandle).executeCriticalGet(preparedQueryObject);
+        Mockito.verify(MusicDataStoreHandle.mDstoreHandle).executeQuorumConsistencyGet(preparedQueryObject);
     }
 
     @Test
     public void testAtomicGetPreparedQuerywithAcquireLockWithLeaseFalse()
                     throws MusicServiceException, MusicLockingException {
-        mDstoreHandle = Mockito.mock(MusicDataStore.class);
+        MusicDataStoreHandle.mDstoreHandle = Mockito.mock(MusicDataStore.class);
         preparedQueryObject = Mockito.mock(PreparedQueryObject.class);
         rs = Mockito.mock(ResultSet.class);
         Mockito.when(mLockHandle.createLockId("/" + "ks1.tn1.pk1")).thenReturn("id1");
         Mockito.when(mLockHandle.isMyTurn("id1")).thenReturn(false);
-        ResultSet rs1 = MusicCore.atomicGet("ks1", "tn1", "pk1", preparedQueryObject);
+        ResultSet rs1 = musicZKCore.atomicGet("ks1", "tn1", "pk1", preparedQueryObject);
         assertNull(rs1);
         Mockito.verify(mLockHandle).createLockId("/" + "ks1.tn1.pk1");
         Mockito.verify(mLockHandle).isMyTurn("id1");
@@ -460,44 +470,44 @@ public class TestMusicCore {
 
     @Test
     public void testGetPreparedQuery() throws MusicServiceException, MusicQueryException {
-        mDstoreHandle = Mockito.mock(MusicDataStore.class);
+        MusicDataStoreHandle.mDstoreHandle = Mockito.mock(MusicDataStore.class);
         rs = Mockito.mock(ResultSet.class);
         preparedQueryObject = Mockito.mock(PreparedQueryObject.class);
         session = Mockito.mock(Session.class);
-        Mockito.when(mDstoreHandle.getSession()).thenReturn(session);
-        Mockito.when(mDstoreHandle.executeEventualGet(preparedQueryObject)).thenReturn(rs);
-        ResultSet rs1 = MusicCore.get(preparedQueryObject);
+        Mockito.when(MusicDataStoreHandle.mDstoreHandle.getSession()).thenReturn(session);
+        Mockito.when(MusicDataStoreHandle.mDstoreHandle.executeOneConsistencyGet(preparedQueryObject)).thenReturn(rs);
+        ResultSet rs1 = musicZKCore.get(preparedQueryObject);
         assertNotNull(rs1);
-        Mockito.verify(mDstoreHandle).executeEventualGet(preparedQueryObject);
+        Mockito.verify(MusicDataStoreHandle.mDstoreHandle).executeOneConsistencyGet(preparedQueryObject);
 
     }
 
     @Test
     public void testcriticalGetPreparedQuery() throws MusicServiceException, MusicQueryException, MusicLockingException {
-        mDstoreHandle = Mockito.mock(MusicDataStore.class);
+        MusicDataStoreHandle.mDstoreHandle = Mockito.mock(MusicDataStore.class);
         preparedQueryObject = Mockito.mock(PreparedQueryObject.class);
         MusicLockState musicLockState = new MusicLockState(LockStatus.UNLOCKED, "id1");
         rs = Mockito.mock(ResultSet.class);
         session = Mockito.mock(Session.class);
-        Mockito.when(mDstoreHandle.getSession()).thenReturn(session);
+        Mockito.when(MusicDataStoreHandle.mDstoreHandle.getSession()).thenReturn(session);
         Mockito.when(mLockHandle.getLockState("ks1" + "." + "tn1" + "." + "pk1"))
                         .thenReturn(musicLockState);
-        Mockito.when(mDstoreHandle.executeCriticalGet(preparedQueryObject)).thenReturn(rs);
-        ResultSet rs1 = MusicCore.criticalGet("ks1", "tn1", "pk1", preparedQueryObject, "id1");
+        Mockito.when(MusicDataStoreHandle.mDstoreHandle.executeQuorumConsistencyGet(preparedQueryObject)).thenReturn(rs);
+        ResultSet rs1 = musicZKCore.criticalGet("ks1", "tn1", "pk1", preparedQueryObject, "id1");
         assertNotNull(rs1);
         Mockito.verify(mLockHandle, Mockito.atLeastOnce())
                         .getLockState("ks1" + "." + "tn1" + "." + "pk1");
-        Mockito.verify(mDstoreHandle).executeCriticalGet(preparedQueryObject);
+        Mockito.verify(MusicDataStoreHandle.mDstoreHandle).executeQuorumConsistencyGet(preparedQueryObject);
     }
 
     @Test
     public void testcriticalGetPreparedQuerywithInvalidLockId() throws MusicServiceException, MusicLockingException {
-        mDstoreHandle = Mockito.mock(MusicDataStore.class);
+        MusicDataStoreHandle.mDstoreHandle = Mockito.mock(MusicDataStore.class);
         preparedQueryObject = Mockito.mock(PreparedQueryObject.class);
         MusicLockState musicLockState = new MusicLockState(LockStatus.UNLOCKED, "id2");
         Mockito.when(mLockHandle.getLockState("ks1" + "." + "tn1" + "." + "pk1"))
                         .thenReturn(musicLockState);
-        ResultSet rs1 = MusicCore.criticalGet("ks1", "tn1", "pk1", preparedQueryObject, "id1");
+        ResultSet rs1 = musicZKCore.criticalGet("ks1", "tn1", "pk1", preparedQueryObject, "id1");
         assertNull(rs1);
         Mockito.verify(mLockHandle, Mockito.atLeastOnce())
                         .getLockState("ks1" + "." + "tn1" + "." + "pk1");
@@ -506,12 +516,12 @@ public class TestMusicCore {
     @Test
     public void testAtomicGetPreparedQuerywithDeleteLockWithLeaseFalse()
                     throws MusicServiceException, MusicLockingException {
-        mDstoreHandle = Mockito.mock(MusicDataStore.class);
+        MusicDataStoreHandle.mDstoreHandle = Mockito.mock(MusicDataStore.class);
         preparedQueryObject = Mockito.mock(PreparedQueryObject.class);
         rs = Mockito.mock(ResultSet.class);
         Mockito.when(mLockHandle.createLockId("/" + "ks1.tn1.pk1")).thenReturn("id1");
         Mockito.when(mLockHandle.isMyTurn("id1")).thenReturn(false);
-        ResultSet rs1 = MusicCore.atomicGet("ks1", "tn1", "pk1", preparedQueryObject);
+        ResultSet rs1 = musicZKCore.atomicGet("ks1", "tn1", "pk1", preparedQueryObject);
         assertNull(rs1);
         Mockito.verify(mLockHandle).createLockId("/" + "ks1.tn1.pk1");
         Mockito.verify(mLockHandle).isMyTurn("id1");
@@ -547,53 +557,31 @@ public class TestMusicCore {
       mLockHandle=null;
       
       MusicLockingService mLockHandley=null; //MusicCore.getLockingServiceHandle();
-      Mockito.when(MusicCore.getLockingServiceHandle()).thenReturn(mLockHandley);
+      Mockito.when(MusicZKCore.getLockingServiceHandle()).thenReturn(mLockHandley);
       System.out.println("cjc locking test n");
       mLockHandle=mLockHandlea;
       assertTrue(true);
       
     }
-   
-   @Test(expected = MusicServiceException.class)
-   public void testGetDSHandle() throws MusicServiceException, MusicQueryException {
-      // rs = Mockito.mock(ResultSet.class);
-      // session = Mockito.mock(Session.class);
-       //Mockito.when(mDstoreHandle.getSession()).thenReturn(session);
-       //Mockito.when(mDstoreHandle.executeCriticalGet(preparedQueryObject)).thenReturn(rs);
-      
-       MusicDataStore mDstoreHandlea = Mockito.mock(MusicDataStore.class);
-       //MusicUtil mMusicUtil=Mockito.mock(MusicUtil.class);
-       //System.out.println("cjc 0 getDsHandle");
-       Mockito.when(MusicCore.getDSHandle()).thenReturn(mDstoreHandlea);
-      // System.out.println("cjc localhost");
-      // Mockito.when(mMusicUtil.getMyCassaHost().equals("localhost")).thenReturn(null);
-       //System.out.println("cjc 1 localhost");
-    //     mDstoreHandle = new MusicDataStore(MusicUtil.getMyCassaHost());
-    // } else {
-    //     mDstoreHandle = new MusicDataStore();
-    // }
-       assertTrue(true);
-   }
-   
   //add mocking 
    @Ignore
    @Test
    public void testGetDSHandleIp() throws MusicServiceException, MusicQueryException {
       // rs = Mockito.mock(ResultSet.class);
       // session = Mockito.mock(Session.class);
-       //Mockito.when(mDstoreHandle.getSession()).thenReturn(session);
-       //Mockito.when(mDstoreHandle.executeCriticalGet(preparedQueryObject)).thenReturn(rs);
+       //Mockito.when(MusicDataStoreHandle.mDstoreHandle.getSession()).thenReturn(session);
+       //Mockito.when(MusicDataStoreHandle.mDstoreHandle.executeCriticalGet(preparedQueryObject)).thenReturn(rs);
       
-       //mDstoreHandle = Mockito.mock(MusicDataStore.class);
+       //MusicDataStoreHandle.mDstoreHandle = Mockito.mock(MusicDataStore.class);
        //MusicUtil mMusicUtil=Mockito.mock(MusicUtil.class);
        System.out.println("cjc 0 getDsHandleIP");
-       Mockito.when(MusicCore.getDSHandle("1.127.0.1")).thenReturn(mDstoreHandle);
+       Mockito.when(MusicDataStoreHandle.getDSHandle("1.127.0.1")).thenReturn(MusicDataStoreHandle.mDstoreHandle);
        System.out.println("cjc localhost");
       // Mockito.when(mMusicUtil.getMyCassaHost().equals("localhost")).thenReturn(null);
        System.out.println("cjc 1 localhost IP");
-    //     mDstoreHandle = new MusicDataStore(MusicUtil.getMyCassaHost());
+    //     MusicDataStoreHandle.mDstoreHandle = new MusicDataStore(MusicUtil.getMyCassaHost());
     // } else {
-    //     mDstoreHandle = new MusicDataStore();
+    //     MusicDataStoreHandle.mDstoreHandle = new MusicDataStore();
     // }
        assertTrue(true);
    }
@@ -602,7 +590,7 @@ public class TestMusicCore {
    @Test
    public void testPureZkCreate() { 
      try {
-     MusicCore.pureZkCreate("local");
+     MusicZKCore.pureZkCreate("local");
      } catch(NullPointerException e) {
        System.out.println("cjc zkcreate null pointwer exception:"+ e);
      }
@@ -611,7 +599,7 @@ public class TestMusicCore {
    @Ignore
    @Test 
    public void testPureZkRead() {   //String nodeName) {
-     byte[] data = MusicCore.pureZkRead("localhost");
+     byte[] data = MusicZKCore.pureZkRead("localhost");
    }
 
    //need fixing
@@ -631,13 +619,13 @@ public class TestMusicCore {
      logger.info(EELFLoggerDelegate.applicationLogger,"Time taken for the actual zk put:" + (end - start) + " ms");
     */
     
-      // mDstoreHandle = Mockito.mock(MusicDataStore.class);
+      // MusicDataStoreHandle.mDstoreHandle = Mockito.mock(MusicDataStore.class);
       // rs = Mockito.mock(ResultSet.class);
       // session = Mockito.mock(Session.class);
-       //Mockito.when(mDstoreHandle.getSession()).thenReturn(session);
+       //Mockito.when(MusicDataStoreHandle.mDstoreHandle.getSession()).thenReturn(session);
        
        byte[] data= "Testing Zoo Keeper".getBytes();
-       MusicCore.pureZkWrite("1.127.0.1", data);
+       MusicZKCore.pureZkWrite("1.127.0.1", data);
       // assertNotNull(rs1);
    }
    
@@ -654,7 +642,7 @@ public class TestMusicCore {
      */
      
      String lockName="xxx";
-     if (MusicCore.whoseTurnIsIt(lockName) != null) assertTrue(true);
+     if (musicZKCore.whoseTurnIsIt(lockName) != null) assertTrue(true);
      
 
 
@@ -666,7 +654,7 @@ public class TestMusicCore {
      //ResultSet results =null;
      rs = Mockito.mock(ResultSet.class);
     try { 
-      ret= MusicCore.marshallResults(rs);
+      ret= MusicDataStoreHandle.marshallResults(rs);
       
      } catch( Exception e ) {
      

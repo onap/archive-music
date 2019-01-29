@@ -7,7 +7,7 @@
          </listener-class>
     </listener>
     <listener>
-    	 <listener-class>
+         <listener-class>
              org.onap.music.main.CronJobManager
          </listener-class>
     </listener>

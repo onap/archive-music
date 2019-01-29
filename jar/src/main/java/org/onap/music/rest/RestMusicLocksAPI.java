@@ -19,6 +19,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.rest;
 
 import java.util.Map;
@@ -413,10 +414,10 @@ public class RestMusicLocksAPI {
             return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
         try{
-        	MusicCore.deleteLock(lockName);
+            MusicCore.deleteLock(lockName);
         }catch (Exception e) {
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
-		}
+        }
         return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).toMap()).build();
     }
 

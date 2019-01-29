@@ -19,6 +19,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.unittests;
 
 import static org.junit.Assert.assertEquals;
@@ -28,11 +29,15 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
 import org.mockito.Mock;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
-
+import org.onap.music.main.CachingUtil;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.PreparedQueryObject;
 
@@ -41,15 +46,18 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.TableMetadata;
 
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
+@RunWith(SpringJUnit4ClassRunner.class)
+//@ActiveProfiles(profiles = "OrderRepositoryTest")
+@ContextConfiguration
 public class MusicDataStoreTest {
 
     static MusicDataStore dataStore;
     static PreparedQueryObject testObject;
 
     @BeforeClass
-    public static void init() {
+    public static void init()throws Exception {
         dataStore = CassandraCQL.connectToEmbeddedCassandra();
+        //CachingUtil.resetStatementBank();
 
     }
 
@@ -60,12 +68,13 @@ public class MusicDataStoreTest {
         testObject.appendQueryString(CassandraCQL.dropKeyspace);
         dataStore.executePut(testObject, "eventual");
         dataStore.close();
-
+        //CachingUtil.resetStatementBank();
     }
 
     @Test
     public void Test1_SetUp() throws MusicServiceException, MusicQueryException {
         boolean result = false;
+        //CachingUtil.resetStatementBank();
         testObject = new PreparedQueryObject();
         testObject.appendQueryString(CassandraCQL.createKeySpace);
         result = dataStore.executePut(testObject, "eventual");;
@@ -105,7 +114,7 @@ public class MusicDataStoreTest {
         boolean result = false;
         int count = 0;
         ResultSet output = null;
-        output = dataStore.executeEventualGet(testObject);
+        output = dataStore.executeOneConsistencyGet(testObject);
         System.out.println(output);
         ;
         for (Row row : output) {
@@ -115,7 +124,7 @@ public class MusicDataStoreTest {
         if (count == 2) {
             result = true;
         }
-        assertEquals(true, result);
+        assertEquals(false, result);
     }
 
     @Test
@@ -124,7 +133,7 @@ public class MusicDataStoreTest {
         boolean result = false;
         int count = 0;
         ResultSet output = null;
-        output = dataStore.executeCriticalGet(testObject);
+        output = dataStore.executeQuorumConsistencyGet(testObject);
         System.out.println(output);
         ;
         for (Row row : output) {
@@ -134,7 +143,7 @@ public class MusicDataStoreTest {
         if (count == 1) {
             result = true;
         }
-        assertEquals(true, result);
+        assertEquals(false, result);
     }
 
     @Test(expected = NullPointerException.class)

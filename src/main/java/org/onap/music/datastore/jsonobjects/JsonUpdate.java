@@ -20,6 +20,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.datastore.jsonobjects;
 
 import java.io.ByteArrayOutputStream;

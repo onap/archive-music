@@ -7,18 +7,19 @@
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- * 
+ *
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.rest;
 
 import java.util.ArrayList;
@@ -85,7 +86,7 @@ public class RestMusicDataAPI {
      * (e.g. if the full version is 1.24.5, X-minorVersion = "24") - Is optional for the client on
      * request; however, this header should be provided if the client needs to take advantage of
      * MINOR incremented version functionality - Is mandatory for the server on response
-     * 
+     *
      *** X-patchVersion *** - Used only to communicate a PATCH version in a response for
      * troubleshooting purposes only, and will not be provided by the client on request - This will
      * be the latest PATCH version of the MINOR requested by the client, or the latest PATCH version
@@ -107,7 +108,7 @@ public class RestMusicDataAPI {
     private static final String USERID = "userId";
     private static final String PASSWORD = "password";
     private static final String VERSION = "v2";
-    
+
     private class RowIdentifier {
         public String primarKeyValue;
         public StringBuilder rowIdString;
@@ -126,7 +127,7 @@ public class RestMusicDataAPI {
 
     /**
      * Create Keyspace REST
-     * 
+     *
      * @param kspObject
      * @param keyspaceName
      * @return
@@ -149,7 +150,7 @@ public class RestMusicDataAPI {
                     JsonKeySpace kspObject,
                     @ApiParam(value = "Keyspace Name",required = true) @PathParam("name") String keyspaceName) {
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        
+
         Map<String, Object> authMap = CachingUtil.verifyOnboarding(ns, userId, password);
         if (!authMap.isEmpty()) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
@@ -192,7 +193,7 @@ public class RestMusicDataAPI {
             repString = "{" + MusicUtil.jsonMaptoSqlString(replicationInfo, ",") + "}";
         } catch (Exception e) {
             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
-            
+
         }
         queryObject.appendQueryString(
                         "CREATE KEYSPACE " + keyspaceName + " WITH replication = " + repString);
@@ -214,7 +215,7 @@ public class RestMusicDataAPI {
             logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("err:" + ex.getMessage()).toMap()).build();
         }
-        
+
         try {
             queryObject = new PreparedQueryObject();
             queryObject.appendQueryString("CREATE ROLE IF NOT EXISTS '" + userId
@@ -228,7 +229,7 @@ public class RestMusicDataAPI {
         } catch (Exception e) {
             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
         }
-        
+
         try {
             boolean isAAF = Boolean.valueOf(CachingUtil.isAAFApplication(ns));
             String hashedpwd = BCrypt.hashpw(password, BCrypt.gensalt());
@@ -250,12 +251,12 @@ public class RestMusicDataAPI {
             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
             return response.status(Response.Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
         }
-        
+
         return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setMessage("Keyspace " + keyspaceName + " Created").toMap()).build();
     }
 
     /**
-     * 
+     *
      * @param kspObject
      * @param keyspaceName
      * @return
@@ -325,7 +326,7 @@ public class RestMusicDataAPI {
     }
 
     /**
-     * 
+     *
      * @param tableObj
      * @param version
      * @param keyspace
@@ -369,7 +370,7 @@ public class RestMusicDataAPI {
         int counter = 0;
         String primaryKey;
         for (Map.Entry<String, String> entry : fields.entrySet()) {
-            
+
             if (entry.getKey().equals("PRIMARY KEY")) {
                 if(! entry.getValue().contains("("))
                     primaryKey = entry.getValue();
@@ -433,7 +434,7 @@ public class RestMusicDataAPI {
     }
 
     /**
-     * 
+     *
      * @param keyspace
      * @param tablename
      * @param fieldName
@@ -473,7 +474,7 @@ public class RestMusicDataAPI {
         PreparedQueryObject query = new PreparedQueryObject();
         query.appendQueryString("Create index " + indexName + " if not exists on " + keyspace + "."
                         + tablename + " (" + fieldName + ");");
-        
+
         ResultType result = ResultType.FAILURE;
         try {
             result = MusicCore.nonKeyRelatedPut(query, "eventual");
@@ -490,7 +491,7 @@ public class RestMusicDataAPI {
     }
 
     /**
-     * 
+     *
      * @param insObj
      * @param keyspace
      * @param tablename
@@ -518,7 +519,7 @@ public class RestMusicDataAPI {
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
 
         Map<String, Object> authMap = null;
-        
+
         try {
             authMap = MusicCore.autheticateUser(ns, userId, password, keyspace,
                           aid, "insertIntoTable");
@@ -587,7 +588,7 @@ public class RestMusicDataAPI {
             }
             counter = counter + 1;
         }
-        
+
         if(primaryKey == null || primaryKey.length() <= 0) {
             logger.error(EELFLoggerDelegate.errorLogger, "Some required partition key parts are missing: "+primaryKeyName );
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.SYNTAXERROR).setError("Some required partition key parts are missing: "+primaryKeyName).toMap()).build();
@@ -646,7 +647,7 @@ public class RestMusicDataAPI {
             logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
         }
-        
+
         if (result==null) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Null result - Please Contact admin").toMap()).build();
@@ -655,7 +656,7 @@ public class RestMusicDataAPI {
     }
 
     /**
-     * 
+     *
      * @param insObj
      * @param keyspace
      * @param tablename
@@ -853,7 +854,7 @@ public class RestMusicDataAPI {
             timingString = timingString + lockManagementTime;
         }
         logger.info(EELFLoggerDelegate.applicationLogger, timingString);
-        
+
         if (operationResult==null) {
             logger.error(EELFLoggerDelegate.errorLogger,"Null result - Please Contact admin", AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
               return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Null result - Please Contact admin").toMap()).build();
@@ -864,11 +865,11 @@ public class RestMusicDataAPI {
             logger.error(EELFLoggerDelegate.errorLogger,operationResult.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(operationResult.getResult()).setError(operationResult.getMessage()).toMap()).build();
         }
-        
+
     }
 
     /**
-     * 
+     *
      * @param delObj
      * @param keyspace
      * @param tablename
@@ -1014,7 +1015,7 @@ public class RestMusicDataAPI {
     }
 
     /**
-     * 
+     *
      * @param tabObj
      * @param keyspace
      * @param tablename
@@ -1066,7 +1067,7 @@ public class RestMusicDataAPI {
     }
 
     /**
-     * 
+     *
      * @param selObj
      * @param keyspace
      * @param tablename
@@ -1137,7 +1138,7 @@ public class RestMusicDataAPI {
         } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
             results = MusicCore.atomicGet(keyspace, tablename, rowId.primarKeyValue, queryObject);
         }
-        
+
         else if (consistency.equalsIgnoreCase(MusicUtil.ATOMICDELETELOCK)) {
             results = MusicCore.atomicGetWithDeleteLock(keyspace, tablename, rowId.primarKeyValue, queryObject);
         }
@@ -1146,7 +1147,7 @@ public class RestMusicDataAPI {
     }
 
     /**
-     * 
+     *
      * @param keyspace
      * @param tablename
      * @param info
@@ -1212,7 +1213,7 @@ public class RestMusicDataAPI {
     }
 
     /**
-     * 
+     *
      * @param keyspace
      * @param tablename
      * @param info
@@ -1242,7 +1243,7 @@ public class RestMusicDataAPI {
     }
 
     /**
-     * 
+     *
      * @param keyspace
      * @param tablename
      * @param rowParams

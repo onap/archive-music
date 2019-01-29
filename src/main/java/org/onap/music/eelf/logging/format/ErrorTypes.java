@@ -19,6 +19,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.eelf.logging.format;
 
 import com.att.eelf.i18n.EELFResolvableErrorEnum;
@@ -28,17 +29,18 @@ import com.att.eelf.i18n.EELFResolvableErrorEnum;
  *
  */
 public enum ErrorTypes implements EELFResolvableErrorEnum {
-	
-	
-	CONNECTIONERROR,
-	SESSIONEXPIRED,
-	AUTHENTICATIONERROR,
-	SERVICEUNAVAILABLE,
-	QUERYERROR,
-	DATAERROR,
-	GENERALSERVICEERROR,
-	MUSICSERVICEERROR,
-	LOCKINGERROR,
-	UNKNOWN,
-	
+    
+    
+    CONNECTIONERROR,
+    SESSIONEXPIRED,
+    AUTHENTICATIONERROR,
+    CACHEERROR,
+    SERVICEUNAVAILABLE,
+    QUERYERROR,
+    DATAERROR,
+    GENERALSERVICEERROR,
+    MUSICSERVICEERROR,
+    LOCKINGERROR,
+    UNKNOWN,
+    
 }

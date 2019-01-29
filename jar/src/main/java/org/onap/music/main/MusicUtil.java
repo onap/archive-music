@@ -19,6 +19,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.main;
 
 import java.io.File;
@@ -531,42 +532,42 @@ public class MusicUtil {
 
     
     public static void loadProperties() throws Exception {
-    	CipherUtil.readAndSetKeyString();
+        CipherUtil.readAndSetKeyString();
         Properties prop = new Properties();
-	    InputStream input = null;
-	    try {
-	        // load the properties file
-	        input = MusicUtil.class.getClassLoader().getResourceAsStream("music.properties");
-	        prop.load(input);
-	    } catch (Exception ex) {
-	        logger.error(EELFLoggerDelegate.errorLogger, "Unable to find properties file.");
-	        throw new Exception();
-	    } finally {
-	        if (input != null) {
-	            try {
-	                input.close();
-	            } catch (IOException e) {
-	                e.printStackTrace();
-	            }
-	        }
-	    }
-	    String cassPwd = prop.getProperty("cassandra.password");
-	    String isEncrypted = prop.getProperty("cassandra.password.isencrypted");
-	    logger.info(EELFLoggerDelegate.applicationLogger,"cassandra.password:" + cassPwd);
-	    logger.info(EELFLoggerDelegate.applicationLogger,"cassandra.password.isencrypted:" + isEncrypted);
-	    if("true".equals(isEncrypted)) {
-	        logger.info(EELFLoggerDelegate.applicationLogger,"Decrypting....");
-	        cassPwd = CipherUtil.decryptPKC(cassPwd);
-	        logger.info(EELFLoggerDelegate.applicationLogger,"Decrypted password: "+cassPwd);
-	        MusicUtil.setCassPwd(cassPwd);
-	    } else
-	        MusicUtil.setCassPwd(cassPwd);
-	    // get the property value and return it
-	        MusicUtil.setMyCassaHost(prop.getProperty("cassandra.host"));
-	        String zkHosts = prop.getProperty("zookeeper.host");
-	        MusicUtil.setMyZkHost(zkHosts);
-	        MusicUtil.setCassName(prop.getProperty("cassandra.user"));
-	}
+        InputStream input = null;
+        try {
+            // load the properties file
+            input = MusicUtil.class.getClassLoader().getResourceAsStream("music.properties");
+            prop.load(input);
+        } catch (Exception ex) {
+            logger.error(EELFLoggerDelegate.errorLogger, "Unable to find properties file.");
+            throw new Exception();
+        } finally {
+            if (input != null) {
+                try {
+                    input.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        String cassPwd = prop.getProperty("cassandra.password");
+        String isEncrypted = prop.getProperty("cassandra.password.isencrypted");
+        logger.info(EELFLoggerDelegate.applicationLogger,"cassandra.password:" + cassPwd);
+        logger.info(EELFLoggerDelegate.applicationLogger,"cassandra.password.isencrypted:" + isEncrypted);
+        if("true".equals(isEncrypted)) {
+            logger.info(EELFLoggerDelegate.applicationLogger,"Decrypting....");
+            cassPwd = CipherUtil.decryptPKC(cassPwd);
+            logger.info(EELFLoggerDelegate.applicationLogger,"Decrypted password: "+cassPwd);
+            MusicUtil.setCassPwd(cassPwd);
+        } else
+            MusicUtil.setCassPwd(cassPwd);
+        // get the property value and return it
+            MusicUtil.setMyCassaHost(prop.getProperty("cassandra.host"));
+            String zkHosts = prop.getProperty("zookeeper.host");
+            MusicUtil.setMyZkHost(zkHosts);
+            MusicUtil.setCassName(prop.getProperty("cassandra.user"));
+    }
 
     
 }

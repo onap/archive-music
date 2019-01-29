@@ -39,14 +39,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
-import org.apache.cassandra.exceptions.ConfigurationException;
-import org.apache.thrift.transport.TTransportException;
+
+//import org.apache.thrift.transport.TTransportException;
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
 import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.PreparedQueryObject;
+
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 public class CassandraCQL {
 
@@ -232,14 +233,12 @@ public class CassandraCQL {
             try {
 
                 try {
-                    EmbeddedCassandraServerHelper.startEmbeddedCassandra(80000);
-                } catch (ConfigurationException | TTransportException | IOException e) {
-
-                    System.out.println(e.getMessage());
+                     EmbeddedCassandraServerHelper.startEmbeddedCassandra();
+                } catch (Exception e) {
+                         e.printStackTrace();
                 }
-
-                cluster = new Cluster.Builder().addContactPoint(address).withPort(9142).build();
-                cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(20000);
+                cluster = new Cluster.Builder().withoutJMXReporting().withoutMetrics().addContactPoint(address).withPort(9142).build();
+                cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(5000);
                 session = cluster.connect();
 
                 break;

@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2018 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2019 IBM.
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -19,6 +21,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  *******************************************************************************/
+
 package org.onap.music.unittests.jsonobjects;
 
 import static org.junit.Assert.*;
@@ -98,6 +101,11 @@ public class JsonUpdateTest {
         cons.put("val2","two");
         ju.setValues(cons);
         assertEquals("one",ju.getValues().get("val1"));
+    }
+    
+    @Test
+    public void testSerialize() {
+        assertTrue(ju.serialize() instanceof byte[]);
     }
 
 }

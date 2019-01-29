@@ -24,17 +24,17 @@ Version: 3.0.24
 
 **Bug Fixes**
 
-	- `MUSIC-176 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-176>`_ nc: bad address
+    - `MUSIC-176 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-176>`_ nc: bad address
 
-	- `MUSIC-154 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-154>`_ Helm charts using latest tag name
+    - `MUSIC-154 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-154>`_ Helm charts using latest tag name
 
-	- `MUSIC-152 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-152>`_ MUSIC tomcat returning HTTP 401
+    - `MUSIC-152 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-152>`_ MUSIC tomcat returning HTTP 401
 
-	- `MUSIC-147 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-147>`_ Cassandra-job is failing
+    - `MUSIC-147 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-147>`_ Cassandra-job is failing
 
-	- `MUSIC-143 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-143>`_ Translator Service not picking records from controller
+    - `MUSIC-143 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-143>`_ Translator Service not picking records from controller
 
-	- `MUSIC-78 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-78>`_ Build failed to find artifact org.onap.music:MUSIC:jar:2.5.5
+    - `MUSIC-78 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-78>`_ Build failed to find artifact org.onap.music:MUSIC:jar:2.5.5
 
 
 
@@ -55,15 +55,15 @@ Quick Links:
 
 **Upgrade Notes**
 
-	N/A
+    N/A
 
 **Deprecation Notes**
 
-	N/A
+    N/A
 
 **Other**
 
-	N/A
+    N/A
 
 ===========
 

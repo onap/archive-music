@@ -19,6 +19,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.rest;
 
 import java.util.HashMap;
@@ -41,27 +42,27 @@ import io.swagger.annotations.ApiOperation;
 @Path("/v{version: [0-9]+}/test")
 @Api(value="Test Api")
 public class RestMusicTestAPI {
-	
-	@SuppressWarnings("unused")
+    
+    @SuppressWarnings("unused")
     private EELFLoggerDelegate logger =EELFLoggerDelegate.getLogger(RestMusicTestAPI.class);
 
-	/**
-	 * Returns a test JSON. This will confirm that REST is working.
-	 * @return
-	 */
-	@GET
-	@ApiOperation(value = "Get Test", response = Map.class)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Map<String, HashMap<String, String>> simpleTests(
-			@Context HttpServletResponse response) {
-		response.addHeader("X-latestVersion",MusicUtil.getVersion());
-		Map<String, HashMap<String, String>> testMap = new HashMap<>();
-		for(int i=0; i < 3; i++){
-			HashMap<String, String> innerMap = new HashMap<>();
-			innerMap.put(i+"", i+1+"");
-			innerMap.put(i+1+"", i+2+"");
-			testMap.put(i+"", innerMap);
-		}
-		return testMap;
-	}
+    /**
+     * Returns a test JSON. This will confirm that REST is working.
+     * @return
+     */
+    @GET
+    @ApiOperation(value = "Get Test", response = Map.class)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Map<String, HashMap<String, String>> simpleTests(
+            @Context HttpServletResponse response) {
+        response.addHeader("X-latestVersion",MusicUtil.getVersion());
+        Map<String, HashMap<String, String>> testMap = new HashMap<>();
+        for(int i=0; i < 3; i++){
+            HashMap<String, String> innerMap = new HashMap<>();
+            innerMap.put(i+"", i+1+"");
+            innerMap.put(i+1+"", i+2+"");
+            testMap.put(i+"", innerMap);
+        }
+        return testMap;
+    }
 }

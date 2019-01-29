@@ -19,13 +19,14 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.main;
 
 public enum ResultType {
     SUCCESS("Success"), FAILURE("Failure"),
-	SYNTAXERROR("SyntaxError"), EXCEPTION("Exception"),
-	BODYMISSING("Incomplete Request body. Please correct your input request and retry.");
-	
+    SYNTAXERROR("SyntaxError"), EXCEPTION("Exception"),
+    BODYMISSING("Incomplete Request body. Please correct your input request and retry.");
+    
     private String result;
 
     ResultType(String result) {

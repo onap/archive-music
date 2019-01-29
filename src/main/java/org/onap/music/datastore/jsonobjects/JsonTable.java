@@ -19,6 +19,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.datastore.jsonobjects;
 
 import java.util.Map;
@@ -116,29 +117,29 @@ public class JsonTable {
         this.primaryKey = primaryKey;
     }
 
-	public String getClusteringKey() {
-		return clusteringKey;
-	}
+    public String getClusteringKey() {
+        return clusteringKey;
+    }
 
-	public void setClusteringKey(String clusteringKey) {
-		this.clusteringKey = clusteringKey;
-	}
+    public void setClusteringKey(String clusteringKey) {
+        this.clusteringKey = clusteringKey;
+    }
 
-	public String getFilteringKey() {
-		return filteringKey;
-	}
+    public String getFilteringKey() {
+        return filteringKey;
+    }
 
-	public void setFilteringKey(String filteringKey) {
-		this.filteringKey = filteringKey;
-	}
+    public void setFilteringKey(String filteringKey) {
+        this.filteringKey = filteringKey;
+    }
 
-	public String getPartitionKey() {
-		return partitionKey;
-	}
+    public String getPartitionKey() {
+        return partitionKey;
+    }
 
-	public void setPartitionKey(String partitionKey) {
-		this.partitionKey = partitionKey;
-	}
+    public void setPartitionKey(String partitionKey) {
+        this.partitionKey = partitionKey;
+    }
 
 
 }

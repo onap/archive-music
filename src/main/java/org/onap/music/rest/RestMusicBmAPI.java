@@ -1,22 +1,25 @@
 /*
- * ============LICENSE_START========================================== org.onap.music
- * =================================================================== Copyright (c) 2017 AT&T
- * Intellectual Property
- * Modifications Copyright (C) 2018 IBM.
+ * ============LICENSE_START==========================================
+ * org.onap.music
  * ===================================================================
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License. You may obtain a copy of the License at
+ *  Copyright (c) 2017 AT&T Intellectual Property
+ * ===================================================================
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  * 
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  * 
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.rest;
 
 import java.util.List;
@@ -39,6 +42,8 @@ import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
+import org.onap.music.service.impl.MusicZKCore;
+import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.TableMetadata;
@@ -66,7 +71,7 @@ public class RestMusicBmAPI {
     @Path("/purezk/{name}")
     @Consumes(MediaType.APPLICATION_JSON)
     public void pureZkCreate(@PathParam("name") String nodeName) throws Exception {
-        MusicCore.pureZkCreate("/" + nodeName);
+        MusicZKCore.pureZkCreate("/" + nodeName);
     }
 
 
@@ -83,7 +88,7 @@ public class RestMusicBmAPI {
                     throws Exception {
         logger.info(EELFLoggerDelegate.applicationLogger,"--------------Zk normal update-------------------------");
         long start = System.currentTimeMillis();
-        MusicCore.pureZkWrite(nodeName, insObj.serialize());
+        MusicZKCore.pureZkWrite(nodeName, insObj.serialize());
         long end = System.currentTimeMillis();
         logger.info(EELFLoggerDelegate.applicationLogger,"Total time taken for Zk normal update:" + (end - start) + " ms");
     }
@@ -98,7 +103,7 @@ public class RestMusicBmAPI {
     @Path("/purezk/{name}")
     @Consumes(MediaType.TEXT_PLAIN)
     public byte[] pureZkGet(@PathParam("name") String nodeName) throws Exception {
-        return MusicCore.pureZkRead(nodeName);
+        return MusicZKCore.pureZkRead(nodeName);
     }
 
     /**
@@ -135,12 +140,18 @@ public class RestMusicBmAPI {
 
         if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
             logger.info(EELFLoggerDelegate.applicationLogger,"acquired lock with id " + lockId);
-            MusicCore.pureZkWrite(lockname, data);
+            MusicZKCore.pureZkWrite(lockname, data);
             zkPutTime = System.currentTimeMillis();
             boolean voluntaryRelease = true;
+/*<<<<<<< HEAD
             if (("atomic").equals(consistency))
                 MusicCore.releaseLock(lockId, voluntaryRelease);
             else if (("atomic_delete_lock").equals(consistency))
+                MusicCore.deleteLock(lockname);
+=======*/
+            if (consistency.equals("atomic"))
+                MusicCore.releaseLock(lockId, voluntaryRelease);
+            else if (consistency.equals("atomic_delete_lock"))
                 MusicCore.deleteLock(lockname);
             lockReleaseTime = System.currentTimeMillis();
         } else {
@@ -189,7 +200,7 @@ public class RestMusicBmAPI {
         ReturnType lockAcqResult = MusicCore.acquireLockWithLease(lockName, lockId, leasePeriod);
         if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
             logger.info("acquired lock with id " + lockId);
-            MusicCore.pureZkRead(nodeName);
+            MusicZKCore.pureZkRead(nodeName);
             boolean voluntaryRelease = true;
             MusicCore.releaseLock(lockId, voluntaryRelease);
         } else {
@@ -225,7 +236,7 @@ public class RestMusicBmAPI {
                         + "-------------------------");
         PreparedQueryObject queryObject = new PreparedQueryObject();
         Map<String, Object> valuesMap = insObj.getValues();
-        TableMetadata tableInfo = MusicCore.returnColumnMetadata(keyspace, tablename);
+        TableMetadata tableInfo = MusicDataStoreHandle.returnColumnMetadata(keyspace, tablename);
         String vectorTs = "'" + Thread.currentThread().getId() + System.currentTimeMillis() + "'";
         String fieldValueString = "vector_ts= ? ,";
         queryObject.addValue(vectorTs);
@@ -290,7 +301,7 @@ public class RestMusicBmAPI {
         long jsonParseCompletionTime = System.currentTimeMillis();
 
         boolean operationResult = true;
-        MusicCore.getDSHandle().executePut(queryObject, insObj.getConsistencyInfo().get("type"));
+        MusicDataStoreHandle.getDSHandle().executePut(queryObject, insObj.getConsistencyInfo().get("type"));
 
         long actualUpdateCompletionTime = System.currentTimeMillis();
 

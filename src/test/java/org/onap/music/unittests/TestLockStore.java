@@ -19,10 +19,11 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.unittests;
 
 import org.apache.log4j.Logger;
-import org.onap.music.lockingservice.MusicLockingService;
+import org.onap.music.lockingservice.zookeeper.MusicLockingService;
 
 public class TestLockStore {
     final static Logger logger = Logger.getLogger(TestLockStore.class);

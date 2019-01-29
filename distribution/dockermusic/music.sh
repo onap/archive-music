@@ -24,9 +24,9 @@
 SS=0
 if [ -e /opt/config/nexus_docker_repo.txt ]
 then
-	NEXUS_DOCKER_REPO=$(cat /opt/config/nexus_docker_repo.txt)
+    NEXUS_DOCKER_REPO=$(cat /opt/config/nexus_docker_repo.txt)
 else
-	NEXUS_DOCKER_REPO=nexus3.onap.org:10001
+    NEXUS_DOCKER_REPO=nexus3.onap.org:10001
 fi
 echo "Using ${NEXUS_DOCKER_REPO} for docker Repo"
 
@@ -92,7 +92,7 @@ SS=1
 fi
 
 if [ $SS = 0 ]; then
-	echo "Please type ${0} start or ${0} stop"
+    echo "Please type ${0} start or ${0} stop"
 fi
 
 

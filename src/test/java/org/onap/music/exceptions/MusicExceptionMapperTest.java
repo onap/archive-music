@@ -25,8 +25,8 @@ package org.onap.music.exceptions;
 import org.codehaus.jackson.map.exc.UnrecognizedPropertyException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.Mockito;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import javax.ws.rs.core.Response;
 import java.io.EOFException;
@@ -34,25 +34,26 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
-@RunWith(PowerMockRunner.class)
+@RunWith(SpringJUnit4ClassRunner.class)
 public class MusicExceptionMapperTest {
 
     @Test
     public void testToResponse() {
         MusicExceptionMapper musicExceptionMapper = new MusicExceptionMapper();
-        UnrecognizedPropertyException unrecognizedPropertyException = PowerMockito.mock(UnrecognizedPropertyException.class);
+        UnrecognizedPropertyException unrecognizedPropertyException = mock(UnrecognizedPropertyException.class);
         Response response = musicExceptionMapper.toResponse(unrecognizedPropertyException);
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
         assertTrue(((Map)response.getEntity()).get("error").toString().startsWith("Unknown field :"));
 
-        EOFException eofException = PowerMockito.mock(EOFException.class);
+        EOFException eofException = mock(EOFException.class);
         response = musicExceptionMapper.toResponse(eofException);
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
         assertTrue(((Map)response.getEntity()).get("error").toString().equals("Request body cannot be empty".trim()));
 
-        IllegalArgumentException illegalArgumentException = PowerMockito.mock(IllegalArgumentException.class);
-        PowerMockito.when(illegalArgumentException.getMessage()).thenReturn("ERROR MSG");
+        IllegalArgumentException illegalArgumentException = mock(IllegalArgumentException.class);
+        Mockito.when(illegalArgumentException.getMessage()).thenReturn("ERROR MSG");
         response = musicExceptionMapper.toResponse(illegalArgumentException);
         assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
         assertTrue(((Map)response.getEntity()).get("error").toString().equals("ERROR MSG".trim()));
