@@ -19,6 +19,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.rest;
 
 import java.util.HashMap;
@@ -58,56 +59,56 @@ import io.swagger.annotations.ApiOperation;
 @Path("/v{version: [0-9]+}/service")
 @Api(value="Healthcheck Api")
 public class RestMusicHealthCheckAPI {
-	
-	
-	private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicUtil.class);
-	
-	
-	@GET
-	@Path("/cs")
-	@ApiOperation(value = "Get Health Status", response = Map.class)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response cassandraStatus(@Context HttpServletResponse response) {
-		logger.info(EELFLoggerDelegate.applicationLogger,"Replying to request for MUSIC Health Check status for Cassandra");
-		
-		Map<String, Object> resultMap = new HashMap<>();
-		
-		MusicHealthCheck cassHealthCheck = new MusicHealthCheck();
-		String status = cassHealthCheck.getCassandraStatus();
-		if(status.equals("ACTIVE")) {
-			resultMap.put("ACTIVE", "Cassandra Running and Listening to requests");
-			return Response.status(Status.OK).entity(resultMap).build();
-		}else {
-			resultMap.put("INACTIVE", "Cassandra Service is not responding");
-			return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
-		}
-		
-		
-		
-	}
-	
-	@GET
-	@Path("/zk")
-	@ApiOperation(value = "Get Health Status", response = Map.class)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response ZKStatus(@Context HttpServletResponse response) {
-		logger.info(EELFLoggerDelegate.applicationLogger,"Replying to request for MUSIC Health Check status for Zookeeper");
-		Map<String, Object> resultMap = new HashMap<>();
-		MusicHealthCheck ZKHealthCheck = new MusicHealthCheck();
-		String status = ZKHealthCheck.getZookeeperStatus();
-		if(status.equals("ACTIVE")) {
-			resultMap.put("ACTIVE", "Zookeeper is Active and Running");
-			return Response.status(Status.OK).entity(resultMap).build();
-		}else {
-			resultMap.put("INACTIVE", "Zookeeper is not responding");
-			return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
-		}
-	}
-	
-	
-	
-	
-	
-	
+    
+    
+    private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicUtil.class);
+    
+    
+    @GET
+    @Path("/cs")
+    @ApiOperation(value = "Get Health Status", response = Map.class)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response cassandraStatus(@Context HttpServletResponse response) {
+        logger.info(EELFLoggerDelegate.applicationLogger,"Replying to request for MUSIC Health Check status for Cassandra");
+        
+        Map<String, Object> resultMap = new HashMap<>();
+        
+        MusicHealthCheck cassHealthCheck = new MusicHealthCheck();
+        String status = cassHealthCheck.getCassandraStatus();
+        if(status.equals("ACTIVE")) {
+            resultMap.put("ACTIVE", "Cassandra Running and Listening to requests");
+            return Response.status(Status.OK).entity(resultMap).build();
+        }else {
+            resultMap.put("INACTIVE", "Cassandra Service is not responding");
+            return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
+        }
+        
+        
+        
+    }
+    
+    @GET
+    @Path("/zk")
+    @ApiOperation(value = "Get Health Status", response = Map.class)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response ZKStatus(@Context HttpServletResponse response) {
+        logger.info(EELFLoggerDelegate.applicationLogger,"Replying to request for MUSIC Health Check status for Zookeeper");
+        Map<String, Object> resultMap = new HashMap<>();
+        MusicHealthCheck ZKHealthCheck = new MusicHealthCheck();
+        String status = ZKHealthCheck.getZookeeperStatus();
+        if(status.equals("ACTIVE")) {
+            resultMap.put("ACTIVE", "Zookeeper is Active and Running");
+            return Response.status(Status.OK).entity(resultMap).build();
+        }else {
+            resultMap.put("INACTIVE", "Zookeeper is not responding");
+            return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
+        }
+    }
+    
+    
+    
+    
+    
+    
 
 }

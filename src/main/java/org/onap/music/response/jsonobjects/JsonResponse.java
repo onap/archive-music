@@ -19,12 +19,13 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.response.jsonobjects;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.onap.music.lockingservice.MusicLockState.LockStatus;
+import org.onap.music.lockingservice.cassandra.MusicLockState.LockStatus;
 import org.onap.music.main.ResultType;
 
 
@@ -34,7 +35,7 @@ import io.swagger.annotations.ApiModelProperty;
 @ApiModel(value = "JsonResponse", description = "General Response JSON")
 public class JsonResponse {
 
-	/* Status is required */
+    /* Status is required */
     private ResultType status;
     
     /* Standard informational fields */
@@ -64,7 +65,7 @@ public class JsonResponse {
         this.status = status;
     }
 
- 	/**
+     /**
      * 
      * @return
      */
@@ -125,7 +126,7 @@ public class JsonResponse {
      * @return the music version
      */
     public String getMusicVersion() {
-    	return this.musicVersion;
+        return this.musicVersion;
     }
     
     /**
@@ -134,20 +135,20 @@ public class JsonResponse {
      * @return
      */
     public JsonResponse setMusicVersion(String version) {
-    	this.musicVersion = version;
-    	return this;
+        this.musicVersion = version;
+        return this;
     }
 
     public Map<String, HashMap<String, Object>> getDataResult() {
-    	return this.dataResult;
+        return this.dataResult;
     }
     
     public JsonResponse setDataResult(Map<String, HashMap<String, Object>> map) {
-    	this.dataResult = map;
-    	return this;
+        this.dataResult = map;
+        return this;
     }
 
-	/**
+    /**
      * 
      * @return
      */
@@ -226,36 +227,40 @@ public class JsonResponse {
     public Map<String, Object> toMap() {
         Map<String, Object> fullMap = new HashMap<>();
         fullMap.put("status", status);
+/*<<<<<<< HEAD
         if (error!=null) {
             fullMap.put("error", error);
         }
         if (message!=null) {
             fullMap.put("message", message);
         }
+=======*/
+        if (error!=null && !"".equals(error)) {fullMap.put("error", error);}
+        if (message!=null) {fullMap.put("message", message);}
         
         if (musicVersion!=null) {
             fullMap.put("version", musicVersion);
         }
         
         if (dataResult!=null) {
-        	fullMap.put("result", dataResult);
+            fullMap.put("result", dataResult);
         }
         
         if (lock!=null) {
-	        Map<String, Object> lockMap = new HashMap<>();
-	        if (lock!=null) {
-	            lockMap.put("lock", lock);
-	        }
-	        if (lockStatus!=null) {
-	            lockMap.put("lock-status", lockStatus);
-	        }
-	        if (lockHolder!=null) {
-	            lockMap.put("lock-holder", lockHolder);
-	        }
-	        if (lockLease!=null) {
-	            lockMap.put("lock-lease", lockLease);
-	        }
-	        fullMap.put("lock", lockMap);
+            Map<String, Object> lockMap = new HashMap<>();
+            if (lock!=null) {
+                lockMap.put("lock", lock);
+            }
+            if (lockStatus!=null) {
+                lockMap.put("lock-status", lockStatus);
+            }
+            if (lockHolder!=null) {
+                lockMap.put("lock-holder", lockHolder);
+            }
+            if (lockLease!=null) {
+                lockMap.put("lock-lease", lockLease);
+            }
+            fullMap.put("lock", lockMap);
         }
 
         return fullMap;

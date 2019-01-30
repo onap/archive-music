@@ -19,6 +19,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.eelf.logging;
 
 import static com.att.eelf.configuration.Configuration.MDC_SERVER_FQDN;

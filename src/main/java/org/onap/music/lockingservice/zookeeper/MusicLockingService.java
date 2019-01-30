@@ -1,21 +1,26 @@
 /*
- * ============LICENSE_START========================================== org.onap.music
- * =================================================================== Copyright (c) 2017 AT&T
- * Intellectual Property ===================================================================
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License. You may obtain a copy of the License at
+ * ============LICENSE_START==========================================
+ * org.onap.music
+ * ===================================================================
+ *  Copyright (c) 2017 AT&T Intellectual Property
+ * ===================================================================
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  * 
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  * 
  * ============LICENSE_END=============================================
  * ====================================================================
  */
-package org.onap.music.lockingservice;
+
+package org.onap.music.lockingservice.zookeeper;
 
 
 import java.io.IOException;
@@ -33,6 +38,7 @@ import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicServiceException;
+import org.onap.music.lockingservice.cassandra.MusicLockState;
 import org.onap.music.main.CachingUtil;
 import org.onap.music.main.MusicUtil;
 
@@ -57,7 +63,7 @@ public class MusicLockingService implements Watcher {
             throw new MusicServiceException("IO Error has occured" + e.getMessage());
         } catch (InterruptedException e) {
             logger.error("Error", e);
-        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
             throw new MusicServiceException("Exception Occured " + e.getMessage());
         }
     }
@@ -99,17 +105,17 @@ public class MusicLockingService implements Watcher {
 
     public MusicLockState getLockState(String lockName) throws MusicLockingException {
 
-    	byte[] data = null;
+        byte[] data = null;
         try{
-        	data = zkLockHandle.getNodeData(lockName);
+            data = zkLockHandle.getNodeData(lockName);
         }catch (Exception ex){
-        	logger.error(EELFLoggerDelegate.errorLogger, ex,AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+            logger.error(EELFLoggerDelegate.errorLogger, ex,AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
         if(data !=null)
         return MusicLockState.deSerialize(data);
         else {
-        	logger.error(EELFLoggerDelegate.errorLogger,"",AppMessages.INVALIDLOCK, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
-        	throw new  MusicLockingException("Invalid lock or acquire failed");
+            logger.error(EELFLoggerDelegate.errorLogger,"Invalid lock or acquire failed",AppMessages.INVALIDLOCK, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+            throw new  MusicLockingException("Invalid lock or acquire failed");
         }
     }
 
@@ -126,14 +132,14 @@ public class MusicLockingService implements Watcher {
             return zkLockHandle.lock(lockName, lockId);
         } catch (KeeperException e) {
             logger.error("Error", e);
-        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.LOCKINGERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.LOCKINGERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }catch( InterruptedException e) {
             logger.error("Error", e);
-        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
-		}catch(Exception e) {
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+        }catch(Exception e) {
             logger.error("Error", e);
-			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
-		}
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+        }
         return false;
     }
 
@@ -144,11 +150,11 @@ public class MusicLockingService implements Watcher {
     }
 
     public void deleteLock(String lockName) throws MusicLockingException {
-    	if(lockIdExists(lockName))
-    		zkLockHandle.deleteLock(lockName);
-    	else{
-    		throw new MusicLockingException("Lock does not exist.Please check the lock: " + lockName + " and try again");
-    	}
+        if(lockIdExists(lockName))
+            zkLockHandle.deleteLock(lockName);
+        else{
+            throw new MusicLockingException("Lock does not exist.Please check the lock: " + lockName + " and try again");
+        }
     }
 
     public String whoseTurnIsIt(String lockName) {
@@ -168,9 +174,9 @@ public class MusicLockingService implements Watcher {
         zkLockHandle.close();
     }
 
-	public boolean lockIdExists(String lockIdWithDollar) {
-		String lockId = lockIdWithDollar.replace('$', '/');
-		return zkLockHandle.checkIfLockExists(lockId);
-	}
+    public boolean lockIdExists(String lockIdWithDollar) {
+        String lockId = lockIdWithDollar.replace('$', '/');
+        return zkLockHandle.checkIfLockExists(lockId);
+    }
 
 }

@@ -19,6 +19,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.main;
 
 import java.util.Arrays;
@@ -122,12 +123,12 @@ public class CachingUtil implements Runnable {
 
     @Override
     public void run() {
-    	logger.info(EELFLoggerDelegate.applicationLogger,"Scheduled task invoked. Refreshing Cache...");
+        logger.info(EELFLoggerDelegate.applicationLogger,"Scheduled task invoked. Refreshing Cache...");
         try {
-			initializeAafCache();
-		} catch (MusicServiceException e) {
-			logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.INFO, ErrorTypes.GENERALSERVICEERROR);
-		}
+            initializeAafCache();
+        } catch (MusicServiceException e) {
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.INFO, ErrorTypes.GENERALSERVICEERROR);
+        }
     }
 
     public static boolean authenticateAAFUser(String nameSpace, String userId, String password,
@@ -135,9 +136,9 @@ public class CachingUtil implements Runnable {
 
         if (aafCache.get(nameSpace) != null) {
             if (keySpace != null && !musicCache.get(keySpace).equals(nameSpace)) {
-            	logger.info(EELFLoggerDelegate.applicationLogger,"Create new application for the same namespace.");
+                logger.info(EELFLoggerDelegate.applicationLogger,"Create new application for the same namespace.");
             } else if (aafCache.get(nameSpace).get(userId).equals(password)) {
-            	logger.info(EELFLoggerDelegate.applicationLogger,"Authenticated with cache value..");
+                logger.info(EELFLoggerDelegate.applicationLogger,"Authenticated with cache value..");
                 // reset invalid attempts to 0
                 userAttempts.put(nameSpace, 0);
                 return true;
@@ -155,7 +156,7 @@ public class CachingUtil implements Runnable {
                         logger.info(EELFLoggerDelegate.applicationLogger,"Resetting failed attempt.");
                         userAttempts.put(nameSpace, 0);
                     } else {
-                    	logger.info(EELFLoggerDelegate.applicationLogger,"No more attempts allowed. Please wait for atleast 2 min.");
+                        logger.info(EELFLoggerDelegate.applicationLogger,"No more attempts allowed. Please wait for atleast 2 min.");
                         throw new Exception("No more attempts allowed. Please wait for atleast 2 min.");
                     }
                 }
@@ -167,10 +168,10 @@ public class CachingUtil implements Runnable {
         AAFResponse responseObj = triggerAAF(nameSpace, userId, password);
         if (responseObj.getNs().size() > 0) {
             if (responseObj.getNs().get(0).getAdmin().contains(userId)) {
-            	//Map<String, String> map = new HashMap<>();
+                //Map<String, String> map = new HashMap<>();
                 //map.put(userId, password);
                 //aafCache.put(nameSpace, map);
-            	return true;
+                return true;
             }
         }
         logger.info(EELFLoggerDelegate.applicationLogger,"Invalid user. Cache not updated");
@@ -180,7 +181,7 @@ public class CachingUtil implements Runnable {
     private static AAFResponse triggerAAF(String nameSpace, String userId, String password)
                     throws Exception {
         if (MusicUtil.getAafEndpointUrl() == null) {
-        	logger.error(EELFLoggerDelegate.errorLogger,"",AppMessages.UNKNOWNERROR,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,"",AppMessages.UNKNOWNERROR,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
             throw new Exception("AAF endpoint is not set. Please specify in the properties file.");
         }
         Client client = Client.create();
@@ -255,8 +256,8 @@ public class CachingUtil implements Runnable {
                 if(isAAF != null)
                     appNameCache.put(namespace, isAAF);
             } catch (Exception e) {
-            	logger.error(EELFLoggerDelegate.errorLogger,  e.getMessage(), AppMessages.QUERYERROR,ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
-            	e.printStackTrace();
+                logger.error(EELFLoggerDelegate.errorLogger,  e.getMessage(), AppMessages.QUERYERROR,ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
+                e.printStackTrace();
             }
         }
         return isAAF;
@@ -290,7 +291,7 @@ public class CachingUtil implements Runnable {
         try {
             appName = rs.getString("application_name");
         } catch (Exception e) {
-        	logger.error(EELFLoggerDelegate.errorLogger,  e.getMessage(), AppMessages.QUERYERROR, ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,  e.getMessage(), AppMessages.QUERYERROR, ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
             e.printStackTrace();
         }
         return appName;
@@ -317,8 +318,8 @@ public class CachingUtil implements Runnable {
     public static Map<String, Object> verifyOnboarding(String ns, String userId, String password) {
         Map<String, Object> resultMap = new HashMap<>();
         if (ns == null || userId == null || password == null) {
-        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
-        	logger.error(EELFLoggerDelegate.errorLogger,"One or more required headers is missing. userId: "+userId+" :: password: "+password);
+            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,"One or more required headers is missing. userId: "+userId+" :: password: "+password);
             resultMap.put("Exception",
                             "One or more required headers appName(ns), userId, password is missing. Please check.");
             return resultMap;
@@ -327,20 +328,20 @@ public class CachingUtil implements Runnable {
         queryObject.appendQueryString(
                         "select * from admin.keyspace_master where application_name = ? allow filtering");
         try {
-        	queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), ns));
+            queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), ns));
         } catch(Exception e) {
-        	resultMap.put("Exception",
+            resultMap.put("Exception",
                     "Unable to process input data. Invalid input data type. Please check ns, userId and password values. "+e.getMessage());
-        	return resultMap;
+            return resultMap;
         }
         Row rs = null;
-		try {
-			rs = MusicCore.get(queryObject).one();
-		} catch (MusicServiceException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			resultMap.put("Exception", "Unable to process operation. Error is "+e.getMessage());
-			return resultMap;
+        try {
+            rs = MusicCore.get(queryObject).one();
+        } catch (MusicServiceException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            resultMap.put("Exception", "Unable to process operation. Error is "+e.getMessage());
+            return resultMap;
         } catch (InvalidQueryException e) {
             logger.error(EELFLoggerDelegate.errorLogger,"Exception admin keyspace not configured."+e.getMessage());
             resultMap.put("Exception", "Please make sure admin.keyspace_master table is configured.");
@@ -350,7 +351,7 @@ public class CachingUtil implements Runnable {
             logger.error(EELFLoggerDelegate.errorLogger,"Application is not onboarded. Please contact admin.");
             resultMap.put("Exception", "Application is not onboarded. Please contact admin.");
         } else {
-        	if(!(rs.getString("username").equals(userId)) || !(BCrypt.checkpw(password, rs.getString("password")))) {
+            if(!(rs.getString("username").equals(userId)) || !(BCrypt.checkpw(password, rs.getString("password")))) {
                 logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
                 logger.error(EELFLoggerDelegate.errorLogger,"Namespace, UserId and password doesn't match. namespace: "+ns+" and userId: "+userId);
                 resultMap.put("Exception", "Namespace, UserId and password doesn't match. namespace: "+ns+" and userId: "+userId);

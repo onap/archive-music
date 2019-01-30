@@ -19,6 +19,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.datastore.jsonobjects;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -34,6 +35,16 @@ public class JsonOnboard {
     private String password;
     private String isAAF;
     private String aid;
+    private String keyspace;
+
+    @ApiModelProperty(value = "Application Keyspace")
+    public String getKeyspace() {
+        return keyspace;
+    }
+
+    public void setKeyspace_name(String keyspace) {
+        this.keyspace = keyspace;
+    }
 
     @ApiModelProperty(value = "Application Password")
     public String getPassword() {

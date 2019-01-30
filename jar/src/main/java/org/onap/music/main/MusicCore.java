@@ -19,6 +19,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.main;
 
 
@@ -87,7 +88,7 @@ public class MusicCore {
             try {
                 mLockHandle = new MusicLockingService();
             } catch (Exception e) {
-            	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.LOCKHANDLE,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+                logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.LOCKHANDLE,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
                 throw new MusicLockingException("Failed to aquire Locl store handle " + e);
             }
         }
@@ -105,11 +106,11 @@ public class MusicCore {
         logger.info(EELFLoggerDelegate.applicationLogger,"Acquiring data store handle");
         long start = System.currentTimeMillis();
         if (mDstoreHandle == null) {
-        	try {
-    			MusicUtil.loadProperties();
-    		} catch (Exception e) {
-    			logger.error(EELFLoggerDelegate.errorLogger, "No properties file defined. Falling back to default.");
-    		}
+            try {
+                MusicUtil.loadProperties();
+            } catch (Exception e) {
+                logger.error(EELFLoggerDelegate.errorLogger, "No properties file defined. Falling back to default.");
+            }
             mDstoreHandle = new MusicDataStore(remoteIp);
         }
         long end = System.currentTimeMillis();
@@ -126,11 +127,11 @@ public class MusicCore {
         logger.info(EELFLoggerDelegate.applicationLogger,"Acquiring data store handle");
         long start = System.currentTimeMillis();
         if (mDstoreHandle == null) {
-        	try {
-    			MusicUtil.loadProperties();
-    		} catch (Exception e) {
-    			logger.error(EELFLoggerDelegate.errorLogger, "No properties file defined. Falling back to default.");
-    		}
+            try {
+                MusicUtil.loadProperties();
+            } catch (Exception e) {
+                logger.error(EELFLoggerDelegate.errorLogger, "No properties file defined. Falling back to default.");
+            }
             // Quick Fix - Best to put this into every call to getDSHandle?
             if (! MusicUtil.getMyCassaHost().equals("localhost") ) {
                 mDstoreHandle = new MusicDataStore(MusicUtil.getMyCassaHost());
@@ -139,9 +140,9 @@ public class MusicCore {
             }
         }
         if(mDstoreHandle.getSession() == null) {
-        	String message = "Connection to Cassandra has not been enstablished."
-        			+ " Please check connection properites and reboot.";
-        	logger.info(EELFLoggerDelegate.applicationLogger, message);
+            String message = "Connection to Cassandra has not been enstablished."
+                    + " Please check connection properites and reboot.";
+            logger.info(EELFLoggerDelegate.applicationLogger, message);
             throw new MusicServiceException(message);
         }
         long end = System.currentTimeMillis();
@@ -156,8 +157,8 @@ public class MusicCore {
         try {
             lockId = getLockingServiceHandle().createLockId("/" + lockName);
         } catch (MusicLockingException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.CREATELOCK+lockName,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
-        	
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.CREATELOCK+lockName,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+            
         }
         long end = System.currentTimeMillis();
         logger.info(EELFLoggerDelegate.applicationLogger,"Time taken to create lock reference:" + (end - start) + " ms");
@@ -196,7 +197,7 @@ public class MusicCore {
             logger.info(EELFLoggerDelegate.applicationLogger,"Time taken to get lock state:" + (end - start) + " ms");
             return mls;
         } catch (NullPointerException | MusicLockingException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.INVALIDLOCK,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.INVALIDLOCK,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         }
         return null;
     }
@@ -221,7 +222,7 @@ public class MusicCore {
                     }
                 }
             } else
-            	logger.error(EELFLoggerDelegate.errorLogger,key, AppMessages.INVALIDLOCK,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+                logger.error(EELFLoggerDelegate.errorLogger,key, AppMessages.INVALIDLOCK,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
           
             /*
              * call the traditional acquire lock now and if the result returned is true, set the
@@ -248,7 +249,7 @@ public class MusicCore {
             }
         } catch (Exception e) {
             StringWriter sw = new StringWriter();
-           	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), "[ERR506E] Failed to aquire lock ",ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+               logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), "[ERR506E] Failed to aquire lock ",ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
             
             String exceptionAsString = sw.toString();
             return new ReturnType(ResultType.FAILURE,
@@ -272,14 +273,14 @@ public class MusicCore {
         if (!result) {
             logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: Not your turn, someone else has the lock");
             try {
-				if (!getLockingServiceHandle().lockIdExists(lockId)) {
-					logger.info(EELFLoggerDelegate.applicationLogger, "In acquire lock: this lockId doesn't exist");
-					return new ReturnType(ResultType.FAILURE, "Lockid doesn't exist");
-				}
-			} catch (MusicLockingException e) {
-				logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.INVALIDLOCK+lockId,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
-				 throw new MusicLockingException();
-			}
+                if (!getLockingServiceHandle().lockIdExists(lockId)) {
+                    logger.info(EELFLoggerDelegate.applicationLogger, "In acquire lock: this lockId doesn't exist");
+                    return new ReturnType(ResultType.FAILURE, "Lockid doesn't exist");
+                }
+            } catch (MusicLockingException e) {
+                logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.INVALIDLOCK+lockId,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+                 throw new MusicLockingException();
+            }
             logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: returning failure");
             return new ReturnType(ResultType.FAILURE, "Not your turn, someone else has the lock");
         }
@@ -304,7 +305,7 @@ public class MusicCore {
                 return new ReturnType(ResultType.SUCCESS, "You already have the lock!");
             }
         } catch (NullPointerException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.INVALIDLOCK+lockId,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.INVALIDLOCK+lockId,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         }
 
         // change status to "being locked". This state transition is necessary to ensure syncing
@@ -320,7 +321,7 @@ public class MusicCore {
         try {
             getLockingServiceHandle().setLockState(key, newMls);
         } catch (MusicLockingException e1) {
-        	logger.error(EELFLoggerDelegate.errorLogger,e1.getMessage(), AppMessages.LOCKSTATE+key,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e1.getMessage(), AppMessages.LOCKSTATE+key,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         }
         logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: Set lock state to being_locked");
 
@@ -341,7 +342,7 @@ public class MusicCore {
         try {
             getLockingServiceHandle().setLockState(key, newMls);
         } catch (MusicLockingException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.LOCKSTATE+key,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.LOCKSTATE+key,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         }
         logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: Set lock state to locked and assigned current lock ref "
                         + lockId + " as holder");
@@ -412,7 +413,7 @@ public class MusicCore {
 
             getDSHandle().executePut(updateQuery, "critical");
         } catch (MusicServiceException | MusicQueryException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.QUERYERROR +""+updateQuery ,ErrorSeverity.MAJOR, ErrorTypes.QUERYERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.QUERYERROR +""+updateQuery ,ErrorSeverity.MAJOR, ErrorTypes.QUERYERROR);
         }
     }
 
@@ -429,7 +430,7 @@ public class MusicCore {
         try {
             results = getDSHandle().executeCriticalGet(query);
         } catch (MusicServiceException | MusicQueryException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR ,ErrorSeverity.MAJOR, ErrorTypes.GENERALSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR ,ErrorSeverity.MAJOR, ErrorTypes.GENERALSERVICEERROR);
         
         }
         return results;
@@ -456,7 +457,7 @@ public class MusicCore {
         try {
             return getLockingServiceHandle().whoseTurnIsIt("/" + lockName) + "";
         } catch (MusicLockingException e) {
-         	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.LOCKINGERROR+lockName ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.LOCKINGERROR+lockName ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         }
         return null;
 
@@ -478,7 +479,7 @@ public class MusicCore {
         try {
             getLockingServiceHandle().unlockAndDeleteId(lockId);
         } catch (MusicLockingException | NoNodeException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.DESTROYLOCK+lockId  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.DESTROYLOCK+lockId  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         } 
         long end = System.currentTimeMillis();
         logger.info(EELFLoggerDelegate.applicationLogger,"Time taken to destroy lock reference:" + (end - start) + " ms");
@@ -489,11 +490,11 @@ public class MusicCore {
         try {
             getLockingServiceHandle().unlockAndDeleteId(lockId);
         } catch (MusicLockingException e1) {
-        	logger.error(EELFLoggerDelegate.errorLogger,e1.getMessage(), AppMessages.RELEASELOCK+lockId  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e1.getMessage(), AppMessages.RELEASELOCK+lockId  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         } catch (KeeperException.NoNodeException nne) {
-			logger.error(EELFLoggerDelegate.errorLogger,"Failed to release Lock " + lockId + " " + nne);
-			MusicLockState mls = new MusicLockState("Lock doesn't exists. Release lock operation failed.");
-			return mls;
+            logger.error(EELFLoggerDelegate.errorLogger,"Failed to release Lock " + lockId + " " + nne);
+            MusicLockState mls = new MusicLockState("Lock doesn't exists. Release lock operation failed.");
+            return mls;
         }
         String lockName = getLockNameFromId(lockId);
         MusicLockState mls;
@@ -510,7 +511,7 @@ public class MusicCore {
         try {
             getLockingServiceHandle().setLockState(lockName, mls);
         } catch (MusicLockingException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.RELEASELOCK+lockId  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.RELEASELOCK+lockId  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         }
         long end = System.currentTimeMillis();
         logger.info(EELFLoggerDelegate.applicationLogger,"Time taken to release lock:" + (end - start) + " ms");
@@ -518,12 +519,12 @@ public class MusicCore {
     }
     
     public static  void  voluntaryReleaseLock(String lockId) throws MusicLockingException{
-		try {
-			getLockingServiceHandle().unlockAndDeleteId(lockId);
-		} catch (KeeperException.NoNodeException e) {
-			// ??? No way
-		}
-	}
+        try {
+            getLockingServiceHandle().unlockAndDeleteId(lockId);
+        } catch (KeeperException.NoNodeException e) {
+            // ??? No way
+        }
+    }
 
     /**
      * 
@@ -536,8 +537,8 @@ public class MusicCore {
         try {
             getLockingServiceHandle().deleteLock("/" + lockName);
         } catch (MusicLockingException e) {
-         	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.DELTELOCK+lockName  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
-         	throw new MusicLockingException(e.getMessage());
+             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.DELTELOCK+lockName  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+             throw new MusicLockingException(e.getMessage());
         }
         long end = System.currentTimeMillis();
         logger.info(EELFLoggerDelegate.applicationLogger,"Time taken to delete lock:" + (end - start) + " ms");
@@ -565,7 +566,7 @@ public class MusicCore {
         try {
             getLockingServiceHandle().getzkLockHandle().createNode(nodeName);
         } catch (MusicLockingException e) {
-         	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), "[ERR512E] Failed to get ZK Lock Handle "  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), "[ERR512E] Failed to get ZK Lock Handle "  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         }
     }
 
@@ -580,7 +581,7 @@ public class MusicCore {
         try {
             getLockingServiceHandle().getzkLockHandle().setNodeData(nodeName, data);
         } catch (MusicLockingException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), "[ERR512E] Failed to get ZK Lock Handle "  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), "[ERR512E] Failed to get ZK Lock Handle "  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         }
         logger.info(EELFLoggerDelegate.applicationLogger,"Performed zookeeper write to " + nodeName);
         long end = System.currentTimeMillis();
@@ -598,7 +599,7 @@ public class MusicCore {
         try {
             data = getLockingServiceHandle().getzkLockHandle().getNodeData(nodeName);
         } catch (MusicLockingException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), "[ERR512E] Failed to get ZK Lock Handle "  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), "[ERR512E] Failed to get ZK Lock Handle "  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         }
         long end = System.currentTimeMillis();
         logger.info(EELFLoggerDelegate.applicationLogger,"Time taken for the actual zk put:" + (end - start) + " ms");
@@ -623,7 +624,7 @@ public class MusicCore {
         try {
             result = getDSHandle().executePut(queryObject, MusicUtil.EVENTUAL);
         } catch (MusicServiceException | MusicQueryException ex) {
-        	logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), "[ERR512E] Failed to get ZK Lock Handle "  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), "[ERR512E] Failed to get ZK Lock Handle "  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
             logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage() + "  " + ex.getCause() + " " + ex);
             return new ReturnType(ResultType.FAILURE, ex.getMessage());
         }
@@ -695,7 +696,7 @@ public class MusicCore {
         try {
             result = getDSHandle().executePut(queryObject, consistency);
         } catch (MusicQueryException | MusicServiceException ex) {
-        	logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
             throw new MusicServiceException(ex.getMessage());
         }
         return result?ResultType.SUCCESS:ResultType.FAILURE;
@@ -711,7 +712,7 @@ public class MusicCore {
     public static ResultSet get(PreparedQueryObject queryObject) throws MusicServiceException {
         ResultSet results = null;
         try {
-			results = getDSHandle().executeEventualGet(queryObject);
+            results = getDSHandle().executeEventualGet(queryObject);
         } catch (MusicQueryException | MusicServiceException e) {
             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
             throw new MusicServiceException(e.getMessage());
@@ -741,7 +742,7 @@ public class MusicCore {
             } else
                 throw new MusicServiceException("YOU DO NOT HAVE THE LOCK");
         } catch (MusicQueryException | MusicServiceException | MusicLockingException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
         }
         return results;
     }
@@ -853,31 +854,31 @@ public class MusicCore {
             voluntaryReleaseLock(lockId);
             return result;
         } else {
-        	destroyLockRef(lockId);
+            destroyLockRef(lockId);
             logger.info(EELFLoggerDelegate.applicationLogger,"unable to acquire lock, id " + lockId);
             return null;
         }
     }
     
-	public static ResultSet atomicGetWithDeleteLock(String keyspaceName, String tableName, String primaryKey,
-			PreparedQueryObject queryObject) throws MusicServiceException, MusicLockingException {
-		String key = keyspaceName + "." + tableName + "." + primaryKey;
-		String lockId = createLockReference(key);
-		long leasePeriod = MusicUtil.getDefaultLockLeasePeriod();
+    public static ResultSet atomicGetWithDeleteLock(String keyspaceName, String tableName, String primaryKey,
+            PreparedQueryObject queryObject) throws MusicServiceException, MusicLockingException {
+        String key = keyspaceName + "." + tableName + "." + primaryKey;
+        String lockId = createLockReference(key);
+        long leasePeriod = MusicUtil.getDefaultLockLeasePeriod();
 
-		ReturnType lockAcqResult = acquireLock(key, lockId);
+        ReturnType lockAcqResult = acquireLock(key, lockId);
 
-		if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
-			logger.info(EELFLoggerDelegate.applicationLogger, "acquired lock with id " + lockId);
-			ResultSet result = criticalGet(keyspaceName, tableName, primaryKey, queryObject, lockId);
-			deleteLock(key);
-			return result;
-		} else {
-			deleteLock(key);
-			logger.info(EELFLoggerDelegate.applicationLogger, "unable to acquire lock, id " + lockId);
-			return null;
-		}
-	}
+        if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
+            logger.info(EELFLoggerDelegate.applicationLogger, "acquired lock with id " + lockId);
+            ResultSet result = criticalGet(keyspaceName, tableName, primaryKey, queryObject, lockId);
+            deleteLock(key);
+            return result;
+        } else {
+            deleteLock(key);
+            logger.info(EELFLoggerDelegate.applicationLogger, "unable to acquire lock, id " + lockId);
+            return null;
+        }
+    }
     
     
 
@@ -916,7 +917,7 @@ public class MusicCore {
         }
         boolean isAAF = Boolean.valueOf(isAAFApp);
         if (userId == null || password == null) {
-        	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
             logger.error(EELFLoggerDelegate.errorLogger,"One or more required headers is missing. userId: " + userId
                             + " :: password: " + password);
             resultMap.put("Exception",
@@ -932,14 +933,14 @@ public class MusicCore {
         if (isAAF && nameSpace != null && userId != null && password != null) {
             boolean isValid = true;
             try {
-            	 isValid = CachingUtil.authenticateAAFUser(nameSpace, userId, password, keyspace);
+                 isValid = CachingUtil.authenticateAAFUser(nameSpace, userId, password, keyspace);
             } catch (Exception e) {
-            	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.AUTHENTICATIONERROR  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
+                logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.AUTHENTICATIONERROR  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
                 logger.error(EELFLoggerDelegate.errorLogger,"Got exception while AAF authentication for namespace " + nameSpace);
                 resultMap.put("Exception", e.getMessage());
             }
             if (!isValid) {
-            	logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.AUTHENTICATIONERROR  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
+                logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.AUTHENTICATIONERROR  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
                 resultMap.put("Exception", "User not authenticated...");
             }
             if (!resultMap.isEmpty())

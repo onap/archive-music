@@ -1,5 +1,5 @@
-<?xml version="1.0"?>
-<!-- 
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
  ============LICENSE_START==========================================
  org.onap.music
  ===================================================================
@@ -18,7 +18,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
- 
+
  ============LICENSE_END=============================================
  ====================================================================
 -->
@@ -26,21 +26,41 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.onap.music</groupId>
     <artifactId>MUSIC</artifactId>
-    <packaging>war</packaging>
-    <version>3.0.24</version>
+    <packaging>jar</packaging>
+    <version>3.2.17-SNAPSHOT</version>
     <description>
-            This is the MUSIC REST interface, packaged as a war file.
+            This is the MUSIC REST interface, packaged as a Springboot jar file.
     </description>
 
-     <parent>
+      <parent>
         <groupId>org.onap.oparent</groupId>
         <artifactId>oparent</artifactId>
         <version>1.2.0</version>
         <relativePath/>
-    </parent>
+    </parent> 
 
+    <dependencyManagement>
+        <dependencies>
+            <!-- <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-data-jpa</artifactId>
+                <version>2.0.3.RELEASE</version>
+               </dependency> -->
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>2.1.1.RELEASE</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <properties>
+        <start-class>org.onap.music.MusicApplication</start-class>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.version>1.8</java.version>
         <jersey1.version>1.19</jersey1.version>
         <jersey2.version>2.25.1</jersey2.version>
         <jaxrs.version>2.0.1</jaxrs.version>
@@ -61,28 +81,43 @@
         <!--docker -->
         <docker.tag>${project.version}-${timestamp}</docker.tag>
         <docker.latest.tag>${project.version}-latest</docker.latest.tag>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
 
     <repositories>
         <repository>
-            <id>ecomp-releases</id>
-            <name>ECOMP Release Repository</name>
-            <url>${onap.nexus.url}/${releaseNexusPath}</url>
+            <id>onap-releases</id>
+            <name>ONAP - Release Repository</name>
+            <url>${nexusproxy}/${releaseNexusPath}</url>
         </repository>
         <repository>
-            <id>ecomp-snapshots</id>
-            <name>Snapshot Repository</name>
+            <id>onap-staging</id>
+            <name>ONAP - Staging Repository</name>
+            <url>${nexusproxy}/${stagingNexusPath}</url>
+        </repository>
+        <repository>
+            <id>onap-snapshots</id>
+            <name>ONAP - Snapshot Repository</name>
             <url>${nexusproxy}/${snapshotNexusPath}</url>
         </repository>
         <repository>
-            <id>ecomp-staging</id>
-            <name>Staging Repository</name>
-            <url>${nexusproxy}/${stagingNexusPath}</url>
+            <id>onap-public</id>
+            <name>ONAP public Repository</name>
+            <url>${nexusproxy}/content/groups/public</url>
         </repository>
+        <repository>
+            <!-- SWM repository has EELF jars -->
+            <id>att-cadi-repo</id>
+            <name>ATT CADI Repository</name>
+            <url>http://mavencentral.it.att.com:8084/nexus/content/repositories/attarch-releases/</url>
+        </repository>
+        
     </repositories>
 
     <build>
-        <finalName>MUSIC</finalName>
+        <!-- <finalName>${project.artifactId}-${project.version}-${timestamp}</finalName>-->
+        <finalName>${project.artifactId}</finalName>
         <sourceDirectory>src/main/java</sourceDirectory>
         <outputDirectory>src/main/webapp/WEB-INF/classes</outputDirectory>
         <testSourceDirectory>src/test/java</testSourceDirectory>
@@ -92,42 +127,40 @@
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
+                <includes>
+                <include>**/*.properties</include>
+                <include>**/*.xml</include>
+                <include>**/*.ccf</include>
+                </includes>
             </resource>
         </resources>
         <plugins>
             <plugin>
-                <artifactId>maven-eclipse-plugin</artifactId>
-                <version>2.9</version>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <additionalProjectnatures>
-                        <projectnature>org.springframework.ide.eclipse.core.springnature</projectnature>
-                    </additionalProjectnatures>
-                    <additionalBuildcommands>
-                        <buildcommand>org.springframework.ide.eclipse.core.springbuilder</buildcommand>
-                    </additionalBuildcommands>
-                    <downloadSources>true</downloadSources>
-                    <downloadJavadocs>true</downloadJavadocs>
-                </configuration>
+                    <mainClass>org.onap.music.MusicApplication</mainClass>
+                    <outputDirectory>./distribution/music/</outputDirectory>
+                    <addResources>true</addResources>
+                 </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.5.1</version>
-                <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
-                    <excludes>
-				     	<exclude>jar/**</exclude>
-				   	</excludes>
-                </configuration>
-            </plugin>
+<!--
             <plugin>
                 <artifactId>maven-war-plugin</artifactId>
                 <version>2.4</version>
                 <configuration>
                     <warSourceDirectory>WebContent</warSourceDirectory>
+                    <failOnMissingWebXml>false</failOnMissingWebXml>
                 </configuration>
             </plugin>
+-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -141,8 +174,8 @@
                         </goals>
                         <configuration>
                             <excludes>
-                                <exclude>**/*.xml</exclude>
-                                <exclude>**/*.properties</exclude>
+                                <!--<exclude>**/*.xml</exclude>
+                                <exclude>**/*.properties</exclude>-->
                                 <exclude>**/Sample*</exclude>
                             </excludes>
                         </configuration>
@@ -173,8 +206,72 @@
     </build>
 
     <dependencies>
+        <!-- Springboot -->
+         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-cassandra</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jersey</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-tomcat</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.springframework/spring-webmvc -->
+         <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aop</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        <!--  Swagger 2 -->
+<!--         <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger2</artifactId>
+            <version>2.8.0</version>
+            <scope>compile</scope>
+        </dependency>
+ -->
+<!--         <dependency>
+            <groupId>io.springfox</groupId>
+            <artifactId>springfox-swagger-ui</artifactId>
+            <version>2.8.0</version>
+            <scope>compile</scope>
+        </dependency>
+  -->
+        <!-- End Swagger -->
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+            <scope>compile</scope>
+        </dependency>
+        
+        <!-- Springboot -->
         <!-- Development -->
-       
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.4</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
@@ -182,12 +279,6 @@
             <scope>provided</scope>
         </dependency>
         <!-- /Development -->
-        <!-- <dependency>
-		  	<groupId>com.hazelcast</groupId>
-	  		<artifactId>hazelcast-client</artifactId>
-	  		<version>3.7.1</version>
-  		</dependency> -->
-  		
         <!-- Logging -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
@@ -217,13 +308,34 @@
             <version>1.0.1-oss</version>
         </dependency>
         <!-- End Logging -->
-        <!-- Cassandra -->       
+        <!-- Cassandra -->
         <dependency>
+            <groupId>com.codahale.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+            <version>3.0.2</version>
+        </dependency>
+        <dependency>
+        <groupId>io.dropwizard.metrics</groupId>
+        <artifactId>metrics-core</artifactId>
+        <version>4.1.0-rc3</version>
+        </dependency>
+        <dependency>
+        <groupId>com.datastax.cassandra</groupId>
+        <artifactId>cassandra-driver-core</artifactId>
+        <version>3.6.0</version>
+        </dependency>
+         <dependency>
             <groupId>com.datastax.cassandra</groupId>
             <artifactId>cassandra-driver-core</artifactId>
             <version>${cassandra.version}</version>
-        </dependency>
-        <!-- /Cassandra -->       
+           <exclusions>
+        <!-- <exclusion>
+        <groupId>io.netty</groupId>
+        <artifactId>*</artifactId>
+        </exclusion> -->
+    </exclusions>
+        </dependency> 
+        <!-- /Cassandra -->
         <!-- Zookeeper -->
         <dependency>
             <groupId>org.apache.zookeeper</groupId>
@@ -253,10 +365,10 @@
             <artifactId>jersey-json</artifactId>
             <version>${jersey1.version}</version>
         </dependency>
-        <dependency> 
-            <groupId>com.sun.jersey</groupId> 
-            <artifactId>jersey-servlet</artifactId> 
-            <version>${jersey1.version}</version> 
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-servlet</artifactId>
+            <version>${jersey1.version}</version>
         </dependency>
         <!-- /Jersey -->
 
@@ -270,7 +382,11 @@
             <artifactId>commons-codec</artifactId>
             <version>1.11</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.8</version>
+        </dependency>
         <!-- Testing -->
         <dependency>
             <groupId>junit</groupId>
@@ -278,10 +394,41 @@
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
+        <!-- <dependency>
             <groupId>org.cassandraunit</groupId>
             <artifactId>cassandra-unit</artifactId>
             <version>3.3.0.2</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.dropwizard.metrics</groupId>
+                    <artifactId>metrics-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.addthis.metrics</groupId>
+                    <artifactId>reporter-config-base</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency> -->
+        <dependency>
+        <groupId>org.cassandraunit</groupId>
+        <artifactId>cassandra-unit-spring</artifactId>
+        <version>3.5.0.1</version>
+        <scope>test</scope>
+        <exclusions>
+        <exclusion>
+
+                    <groupId>org.cassandraunit</groupId>
+
+                    <artifactId>cassandra-unit</artifactId>
+
+                </exclusion>
+        </exclusions>
+    </dependency>
+    <dependency>
+            <groupId>org.cassandraunit</groupId>
+            <artifactId>cassandra-unit-shaded</artifactId>
+            <version>3.5.0.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -308,24 +455,25 @@
         </dependency>
         <!--  /Testing -->
         <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-handler</artifactId>
-            <version>4.1.30.Final</version>
-        </dependency>
-        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.9.4</version>
-        </dependency>
+            </dependency>
+        <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                </dependency>
+        <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.5.3</version>
         </dependency>
         <dependency>
             <groupId>io.swagger</groupId>
             <artifactId>swagger-jersey-jaxrs</artifactId>
-            <version>1.5.18</version>
+            <version>1.5.21</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -336,18 +484,27 @@
             <artifactId>jbcrypt</artifactId>
             <version>0.4</version>
         </dependency>
-        <!-- <dependency>
-		   <groupId>com.owlike</groupId>
-		   <artifactId>genson</artifactId>
-		   <version>1.3</version>
-        </dependency> -->
-        <!-- Added to fix MUSIC-157 License Issue -->
-	<dependency>
-            <groupId>javax.xml.bind</groupId>
-            <artifactId>jaxb-api</artifactId>
-            <version>2.2.3</version>
-        </dependency>
+     <dependency>
+        <groupId>org.onap.aaf.authz</groupId>
+        <artifactId>aaf-cadi-aaf</artifactId>
+        <version>2.1.7</version>
+    </dependency>
+    <dependency>
+        <groupId>org.onap.aaf.authz</groupId>
+        <artifactId>aaf-cadi-client</artifactId>
+        <version>2.1.7</version>
+    </dependency>
+    <dependency>
+        <groupId>org.onap.aaf.authz</groupId>
+        <artifactId>aaf-cadi-core</artifactId>
+        <version>2.1.7</version>
+    </dependency>
 
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.8.5</version>
+        </dependency>
     </dependencies>
 
     <reporting>
@@ -365,6 +522,14 @@
                         <link>https://tomcat.apache.org/tomcat-7.0-doc/jspapi/</link>
                         <link>http://docs.oracle.com/javaee/7/api/</link>
                     </links>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
         </plugins>
@@ -386,7 +551,7 @@
                             <images>
                                 <!-- MUSIC War -->
                                 <image>
-                                    <name>onap/music/music</name>
+                                    <name>onap/music/music_sb</name>
                                     <alias>docker_music</alias>
                                     <build>
                                         <cleanup>true</cleanup>
@@ -394,10 +559,10 @@
                                             <tag>${docker.tag}</tag>
                                             <tag>${docker.latest.tag}</tag>
                                         </tags>
-                                        <dockerFileDir>${project.basedir}</dockerFileDir>
-                                        <assembly>
+                                        <dockerFileDir>${project.basedir}/distribution/music</dockerFileDir>
+<!--                                    <assembly>
                                             <descriptorRef>artifact</descriptorRef>
-                                        </assembly>
+                                        </assembly>  -->
                                     </build>
                                 </image>
                                 <!-- Cassandra -->
@@ -426,15 +591,29 @@
                                         <dockerFileDir>${project.basedir}/distribution/cassandra_job</dockerFileDir>
                                     </build>
                                 </image>
+                                <!-- Trigger -->
+                                <image>
+                                    <name>onap/music/musictrigger</name>
+                                    <alias>docker_trigger</alias>
+                                    <build>
+                                        <cleanup>true</cleanup>
+                                        <tags>
+                                            <tag>${docker.tag}</tag>
+                                            <tag>${docker.latest.tag}</tag>
+                                        </tags>
+                                        <dockerFileDir>${project.basedir}/distribution/trigger</dockerFileDir>
+                                    </build>
+                                </image>
+
                                 <!-- Zookeeper -->
-                                <!-- <image> <name>onap/music/zookeeper_music</name> 
-                                    <alias>docker_zookeeper</alias> <build> <cleanup>true</cleanup> <tags> <tag>3.4-${timestamp}</tag> 
-                                    <tag>3.4-latest</tag> </tags> <dockerFileDir>${project.basedir}/distribution/zookeeper</dockerFileDir> 
+                                <!-- <image> <name>onap/music/zookeeper_music</name>
+                                    <alias>docker_zookeeper</alias> <build> <cleanup>true</cleanup> <tags> <tag>3.4-${timestamp}</tag>
+                                    <tag>3.4-latest</tag> </tags> <dockerFileDir>${project.basedir}/distribution/zookeeper</dockerFileDir>
                                     </build> </image> -->
                                 <!-- tomcat 8.5 -->
-                                <!-- <image> <name>onap/music/tomcat_music</name> 
-                                    <alias>docker_tomcat</alias> <build> <cleanup>true</cleanup> <tags> <tag>8.5-${timestamp}</tag> 
-                                    <tag>8.5-latest</tag> </tags> <dockerFileDir>${project.basedir}/distribution/tomcat</dockerFileDir> 
+                                <!-- <image> <name>onap/music/tomcat_music</name>
+                                    <alias>docker_tomcat</alias> <build> <cleanup>true</cleanup> <tags> <tag>8.5-${timestamp}</tag>
+                                    <tag>8.5-latest</tag> </tags> <dockerFileDir>${project.basedir}/distribution/tomcat</dockerFileDir>
                                     </build> </image>\ -->
                             </images>
                         </configuration>
@@ -472,6 +651,16 @@
                 </plugins>
             </build>
         </profile>
+        <profile> 
+              <id>default</id> 
+              <repositories> 
+                  <repository> 
+                    <id>nexus</id> 
+                    <name>attarch-releases</name> 
+                    <url>http://mavencentral.it.att.com:8084/nexus/content/repositories/attarch-releases</url> 
+                </repository> 
+            </repositories> 
+          </profile>
     </profiles>
     <distributionManagement>
         <repository>

@@ -20,36 +20,37 @@ stated inside of the file.
  ---------------------------------------------------------------------------
 
  */
+
 package main;
 import java.util.Map;
 
 public class JsonTable {
     private Map<String,String> fields;
-	private Map<String, Object> properties; 
+    private Map<String, Object> properties; 
     private Map<String,String> consistencyInfo;
 
 
-	public Map<String, String> getConsistencyInfo() {
-		return consistencyInfo;
-	}
+    public Map<String, String> getConsistencyInfo() {
+        return consistencyInfo;
+    }
 
-	public void setConsistencyInfo(Map<String, String> consistencyInfo) {
-		this.consistencyInfo = consistencyInfo;
-	}
+    public void setConsistencyInfo(Map<String, String> consistencyInfo) {
+        this.consistencyInfo = consistencyInfo;
+    }
 
     public Map<String, Object> getProperties() {
-		return properties;
-	}
+        return properties;
+    }
 
-	public void setProperties(Map<String, Object> properties) {
-		this.properties = properties;
-	}
+    public void setProperties(Map<String, Object> properties) {
+        this.properties = properties;
+    }
     
-	public Map<String, String> getFields() {
-		return fields;
-	}
+    public Map<String, String> getFields() {
+        return fields;
+    }
 
-	public void setFields(Map<String, String> fields) {
-		this.fields = fields;
-	}
+    public void setFields(Map<String, String> fields) {
+        this.fields = fields;
+    }
 }

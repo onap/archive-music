@@ -27,17 +27,17 @@ Example use of a block diagram.
    m -> y;
    m -> z;
    group l1 {
-	color = blue;
-	x; y; z;
-	}
+    color = blue;
+    x; y; z;
+    }
    group l2 {
-	color = yellow;
-	m; n; 
-	}
+    color = yellow;
+    m; n; 
+    }
    group l3 {
-	color = orange;
-	a; b; c;
-	}
+    color = orange;
+    a; b; c;
+    }
 
    }
 

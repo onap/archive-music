@@ -21,6 +21,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.datastore.jsonobjects;
 
 import java.util.List;

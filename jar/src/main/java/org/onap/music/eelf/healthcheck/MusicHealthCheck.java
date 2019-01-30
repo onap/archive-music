@@ -19,6 +19,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.eelf.healthcheck;
 
 import java.io.BufferedReader;
@@ -57,119 +58,119 @@ import com.datastax.driver.core.ResultSet;
  *
  */
 public class MusicHealthCheck {
-	
-	private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicUtil.class);
-	
-	private String cassandrHost;
-	private String zookeeperHost;
-	
-	
-	
-	
-	
-	
-	
-	
-	public String getCassandraStatus() {
-		logger.info(EELFLoggerDelegate.applicationLogger,"Getting Status for Cassandra");
-	    if(this.getAdminKeySpace()) {
-        	return "ACTIVE";
+    
+    private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicUtil.class);
+    
+    private String cassandrHost;
+    private String zookeeperHost;
+    
+    
+    
+    
+    
+    
+    
+    
+    public String getCassandraStatus() {
+        logger.info(EELFLoggerDelegate.applicationLogger,"Getting Status for Cassandra");
+        if(this.getAdminKeySpace()) {
+            return "ACTIVE";
         }else {
-        	logger.info(EELFLoggerDelegate.applicationLogger,"Cassandra Service is not responding");
+            logger.info(EELFLoggerDelegate.applicationLogger,"Cassandra Service is not responding");
             return "INACTIVE";
         }
    }
-	
-	
-	private Boolean getAdminKeySpace() {
-		
-		String appName = "";
-		
-		PreparedQueryObject pQuery = new PreparedQueryObject();
+    
+    
+    private Boolean getAdminKeySpace() {
+        
+        String appName = "";
+        
+        PreparedQueryObject pQuery = new PreparedQueryObject();
         pQuery.appendQueryString(
                         "select * from admin.keyspace_master");
         //pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), appName));
         try {
-			ResultSet rs = MusicCore.get(pQuery);
-		
-			if(rs != null) {
-	        	return Boolean.TRUE;
-	        }else {
-	        	return Boolean.FALSE;
-	        }
-	    } catch (Exception e) {
-	    	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(),AppMessages.CASSANDRACONNECTIVITY, ErrorTypes.CONNECTIONERROR, ErrorSeverity.CRITICAL);
-		}
+            ResultSet rs = MusicCore.get(pQuery);
+        
+            if(rs != null) {
+                return Boolean.TRUE;
+            }else {
+                return Boolean.FALSE;
+            }
+        } catch (Exception e) {
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(),AppMessages.CASSANDRACONNECTIVITY, ErrorTypes.CONNECTIONERROR, ErrorSeverity.CRITICAL);
+        }
         
         return Boolean.FALSE;
         
        
-	}
-	
-	public String getZookeeperStatus() {
-		
-		
-		String host = MusicUtil.getMyZkHost();
-		logger.info(EELFLoggerDelegate.applicationLogger,"Getting Status for Zookeeper Host: "+host);
-		try {
-			MusicLockingService lockingService = MusicCore.getLockingServiceHandle();
-		    //additionally need to call the ZK to create,aquire and delete lock
-		} catch (MusicLockingException e) {
-			logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(),AppMessages.LOCKINGERROR, ErrorTypes.CONNECTIONERROR, ErrorSeverity.CRITICAL);
-			return "INACTIVE";
-		}
-	
-		logger.info(EELFLoggerDelegate.applicationLogger,"Zookeeper is Active and Running");
+    }
+    
+    public String getZookeeperStatus() {
+        
+        
+        String host = MusicUtil.getMyZkHost();
+        logger.info(EELFLoggerDelegate.applicationLogger,"Getting Status for Zookeeper Host: "+host);
+        try {
+            MusicLockingService lockingService = MusicCore.getLockingServiceHandle();
+            //additionally need to call the ZK to create,aquire and delete lock
+        } catch (MusicLockingException e) {
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(),AppMessages.LOCKINGERROR, ErrorTypes.CONNECTIONERROR, ErrorSeverity.CRITICAL);
+            return "INACTIVE";
+        }
+    
+        logger.info(EELFLoggerDelegate.applicationLogger,"Zookeeper is Active and Running");
         return "ACTIVE";
         
-        	//return "Zookeeper is not responding";
+            //return "Zookeeper is not responding";
         
-	}
+    }
 
 
 
 
-	public String getCassandrHost() {
-		return cassandrHost;
-	}
+    public String getCassandrHost() {
+        return cassandrHost;
+    }
 
 
 
 
-	public void setCassandrHost(String cassandrHost) {
-		this.cassandrHost = cassandrHost;
-	}
+    public void setCassandrHost(String cassandrHost) {
+        this.cassandrHost = cassandrHost;
+    }
 
 
 
 
-	public String getZookeeperHost() {
-		return zookeeperHost;
-	}
+    public String getZookeeperHost() {
+        return zookeeperHost;
+    }
 
 
 
 
-	public void setZookeeperHost(String zookeeperHost) {
-		this.zookeeperHost = zookeeperHost;
-	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+    public void setZookeeperHost(String zookeeperHost) {
+        this.zookeeperHost = zookeeperHost;
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
 }

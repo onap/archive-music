@@ -15,7 +15,7 @@ src/main/webapp
 .DS_Store
 
 ._*
-
+*.jar
 .metadata
 # Eclipse stuff
 .settings/

@@ -19,7 +19,8 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
-package org.onap.music.lockingservice;
+
+package org.onap.music.lockingservice.cassandra;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -44,8 +45,7 @@ public class MusicLockState implements Serializable {
     LockStatus lockStatus;
     boolean needToSyncQuorum = false;
     String lockHolder;
-    long leasePeriod = Long.MAX_VALUE;
-    long leaseStartTime = -1;
+    long leasePeriod = Long.MAX_VALUE, leaseStartTime = -1;
     
     private String errorMessage = null;
     
@@ -108,8 +108,8 @@ public class MusicLockState implements Serializable {
     }
 
     public String getErrorMessage() {
-		return errorMessage;
-	}
+        return errorMessage;
+    }
     
     public byte[] serialize() {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -118,8 +118,7 @@ public class MusicLockState implements Serializable {
             out = new ObjectOutputStream(bos);
             out.writeObject(this);
         } catch (IOException e) {
-        	logger.error("Error", e);
-        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.IOERROR, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.IOERROR, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
         }
         return bos.toByteArray();
     }
@@ -132,8 +131,7 @@ public class MusicLockState implements Serializable {
             in = new ObjectInputStream(bis);
             o = in.readObject();
         } catch (ClassNotFoundException | IOException e) {
-        	logger.error("Error", e);
-        	logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.UNKNOWN);
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.UNKNOWN);
         }
         return (MusicLockState) o;
     }

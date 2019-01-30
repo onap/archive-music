@@ -875,6 +875,56 @@
         }
       }
     },
+    "/v{version}/service/pingZookeeper": {
+      "get": {
+        "tags": [
+          "Healthcheck Api"
+        ],
+        "summary": "Get Health Status",
+        "description": "",
+        "operationId": "ZKStatus",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v{version}/service/musicHealthCheck": {
+      "get": {
+        "tags": [
+          "Healthcheck Api"
+        ],
+        "summary": "Get Health Status",
+        "description": "",
+        "operationId": "musicHealthCheck",
+        "produces": [
+          "application/json"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "schema": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
     "/v{version}/service/pingCassandra/{consistency}": {
       "get": {
         "tags": [
@@ -895,31 +945,6 @@
             "type": "string"
           }
         ],
-        "responses": {
-          "200": {
-            "description": "successful operation",
-            "schema": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v{version}/service/pingZookeeper": {
-      "get": {
-        "tags": [
-          "Healthcheck Api"
-        ],
-        "summary": "Get Health Status",
-        "description": "",
-        "operationId": "ZKStatus",
-        "produces": [
-          "application/json"
-        ],
-        "parameters": [],
         "responses": {
           "200": {
             "description": "successful operation",
@@ -1267,20 +1292,6 @@
             "name": "ns",
             "in": "header",
             "description": "Application namespace",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "userId",
-            "in": "header",
-            "description": "userId",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "password",
-            "in": "header",
-            "description": "Password",
             "required": true,
             "type": "string"
           }

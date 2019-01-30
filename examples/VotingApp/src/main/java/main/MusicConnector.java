@@ -20,6 +20,7 @@ stated inside of the file.
  ---------------------------------------------------------------------------
 
  */
+
 package main;
 
 import java.io.IOException;
@@ -28,49 +29,49 @@ import java.net.UnknownHostException;
 import java.util.Random;
 
 public class MusicConnector {
-	
-	//change this to point to relevant cluster
-	public String[] musicNodes;
+    
+    //change this to point to relevant cluster
+    public String[] musicNodes;
 
-	public MusicConnector(String[] musicNodes){
-		this.musicNodes = musicNodes; 
-	}
-	
-	private String getMusicNodeIp(){
-		Random r = new Random();
-		int index = r.nextInt(musicNodes.length);	
-		return musicNodes[index];
-	}
-	
-	public String getMusicNodeURL(){
-			String musicurl = "http://"+getMusicNodeIp()+":8080/MUSIC/rest/v2";
-			return musicurl;
-	}
-	
-	public boolean isHostUp(String serverAddress) { 
-		Boolean isUp = false;
-	    try {
-			InetAddress inet = InetAddress.getByName(serverAddress);
-			isUp = inet.isReachable(1000);	
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	    return isUp;
-	}
-	
-	/*	
-	private static String getMusicNodeIp(){
-		
-		//return "54.224.168.13";
-		return bigSiteMusicNode;
-		String serverAddress;
-		serverAddress = agaveMusicNode;
-		while(isHostUp(serverAddress) != true)
-			serverAddress = toggle(serverAddress);
-		return serverAddress;
-	}*/
+    public MusicConnector(String[] musicNodes){
+        this.musicNodes = musicNodes; 
+    }
+    
+    private String getMusicNodeIp(){
+        Random r = new Random();
+        int index = r.nextInt(musicNodes.length);    
+        return musicNodes[index];
+    }
+    
+    public String getMusicNodeURL(){
+            String musicurl = "http://"+getMusicNodeIp()+":8080/MUSIC/rest/v2";
+            return musicurl;
+    }
+    
+    public boolean isHostUp(String serverAddress) { 
+        Boolean isUp = false;
+        try {
+            InetAddress inet = InetAddress.getByName(serverAddress);
+            isUp = inet.isReachable(1000);    
+        } catch (UnknownHostException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return isUp;
+    }
+    
+    /*    
+    private static String getMusicNodeIp(){
+        
+        //return "54.224.168.13";
+        return bigSiteMusicNode;
+        String serverAddress;
+        serverAddress = agaveMusicNode;
+        while(isHostUp(serverAddress) != true)
+            serverAddress = toggle(serverAddress);
+        return serverAddress;
+    }*/
 }

@@ -1,3 +1,4 @@
+Compatible with MUSIC 2.5.3
 
 The voting app for MUSIC  illustrates the features of MUSIC as a
 multi-site state management

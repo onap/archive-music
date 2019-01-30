@@ -20,6 +20,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.main;
 
 import java.io.FileInputStream;
@@ -28,17 +29,33 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
+
+import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 
-public class PropertiesListener implements ServletContextListener {
+import org.onap.music.exceptions.MusicLockingException;
+import org.onap.music.exceptions.MusicServiceException;
+
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+
+public class PropertiesListener { // implements ServletContextListener {
     private Properties prop;
     private static final String MUSIC_PROPERTIES="music.properties";
+/*    private Properties prop;
+
+>>>>>>> c8db07f77a945bc22046ef50d773c3c3608b014a
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(PropertiesListener.class);
 
     @Override
@@ -120,15 +137,37 @@ public class PropertiesListener implements ServletContextListener {
                         case "aaf.endpoint.url":
                             MusicUtil.setAafEndpointUrl(prop.getProperty(key));
                             break;
+                        case "admin.username":
+                            MusicUtil.setAdminId(prop.getProperty(key));
+                            break;
+                        case "admin.password":
+                            MusicUtil.setAdminPass(prop.getProperty(key));
+                            break;
                         case "cassandra.port":
                             MusicUtil.setCassandraPort(Integer.parseInt(prop.getProperty(key)));
                             break;
+                        case "aaf.admin.url":
+                            MusicUtil.setAafAdminUrl(prop.getProperty(key));
+                            break;
+                        case "music.namespace":
+                            MusicUtil.setMusicNamespace(prop.getProperty(key));
+                            break;
+                        case "admin.aaf.role":
+                            MusicUtil.setAdminAafRole(prop.getProperty(key));
+                            break; 
                         case "notify.interval":
-                        	MusicUtil.setNotifyInterval(Integer.parseInt(prop.getProperty(key)));
-                        	break;
+                            MusicUtil.setNotifyInterval(Integer.parseInt(prop.getProperty(key)));
+                            break;
                         case "notify.timeout":
-                        	MusicUtil.setNotifyTimeOut(Integer.parseInt(prop.getProperty(key)));
-                        	break;
+                            MusicUtil.setNotifyTimeOut(Integer.parseInt(prop.getProperty(key)));
+                            break;
+                        case "lock.using":
+                            MusicUtil.setLockUsing(prop.getProperty(key));
+                            break; 
+                        case "cacheobject.maxlife":
+                            MusicUtil.setCacheObjectMaxLife(Integer.parseInt(prop.getProperty(key)));
+                            CachingUtil.setCacheEternalProps();
+                            break;
                         default:
                             logger.error(EELFLoggerDelegate.errorLogger,
                                             "No case found for " + key);
@@ -136,7 +175,7 @@ public class PropertiesListener implements ServletContextListener {
                 }
             }
         } catch (IOException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.IOERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.CONNECTIONERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.IOERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.CONNECTIONERROR);
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
         }
 
@@ -148,10 +187,71 @@ public class PropertiesListener implements ServletContextListener {
                         "List of all MUSIC ids:" + MusicUtil.getAllIds().toString());
         logger.info(EELFLoggerDelegate.applicationLogger,
                         "List of all MUSIC public ips:" + MusicUtil.getAllPublicIps().toString());
+        
+        scheduleCronJobForZKCleanup();
     }
 
     @Override
     public void contextDestroyed(ServletContextEvent servletContextEvent) {
         prop = null;
     }
+    
+    
+    private ScheduledExecutorService scheduler;
+    public void scheduleCronJobForZKCleanup() {
+        scheduler = Executors.newSingleThreadScheduledExecutor();
+        scheduler.scheduleAtFixedRate(new CachingUtil(), 0, 24, TimeUnit.HOURS);
+        PreparedQueryObject pQuery = new PreparedQueryObject();
+        String consistency = MusicUtil.EVENTUAL;
+        pQuery.appendQueryString("CREATE TABLE IF NOT EXISTS admin.locks ( lock_id text PRIMARY KEY, ctime text)");
+        try {
+            ResultType result = MusicCore.nonKeyRelatedPut(pQuery, consistency);
+        } catch (MusicServiceException e1) {
+            logger.error(EELFLoggerDelegate.errorLogger, e1.getMessage(),ErrorSeverity.ERROR);
+        }
+
+      //Zookeeper cleanup
+        scheduler.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run() {
+                deleteLocksFromDB();
+            }
+        } , 0, 24, TimeUnit.HOURS);
+    }
+
+
+    public void deleteLocksFromDB() {
+        PreparedQueryObject pQuery = new PreparedQueryObject();
+        pQuery.appendQueryString(
+                        "select * from admin.locks");
+            try {
+                ResultSet rs = MusicCore.get(pQuery);
+                Iterator<Row> it = rs.iterator();
+                StringBuilder deleteKeys = new StringBuilder();
+                Boolean expiredKeys = false;
+                while (it.hasNext()) {
+                    Row row = (Row) it.next();
+                    String id = row.getString("lock_id");
+                    long ctime = Long.parseLong(row.getString("ctime"));
+                    if(System.currentTimeMillis() >= ctime + 24 * 60 * 60 * 1000) {
+                        expiredKeys = true;
+                        String new_id = id.substring(1);
+                        try {
+                            MusicCore.deleteLock(new_id);
+                        } catch (MusicLockingException e) {
+                            logger.info(EELFLoggerDelegate.applicationLogger,
+                                     e.getMessage());
+                        }
+                        deleteKeys.append("'").append(id).append("'").append(",");
+                    }
+                }
+                if(expiredKeys) {
+                    deleteKeys.deleteCharAt(deleteKeys.length()-1);
+                    CachingUtil.deleteKeysFromDB(deleteKeys.toString());
+               }
+            } catch (MusicServiceException e) {
+                logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),ErrorSeverity.ERROR);
+            }
+    }
+*/
 }

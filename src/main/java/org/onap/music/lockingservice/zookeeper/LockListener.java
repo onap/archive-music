@@ -19,7 +19,8 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
-package org.onap.music.lockingservice;
+
+package org.onap.music.lockingservice.zookeeper;
 
 /**
  * This class has two methods which are call back methods when a lock is acquired and when the lock

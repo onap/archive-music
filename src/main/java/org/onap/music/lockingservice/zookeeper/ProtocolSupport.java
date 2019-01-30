@@ -20,7 +20,8 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
-package org.onap.music.lockingservice;
+
+package org.onap.music.lockingservice.zookeeper;
 
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
@@ -32,7 +33,8 @@ import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
-import org.onap.music.lockingservice.ZooKeeperOperation;
+import org.onap.music.lockingservice.zookeeper.ZooKeeperOperation;
+
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -129,7 +131,7 @@ class ProtocolSupport {
             try {
                 return operation.execute();
             } catch (KeeperException.SessionExpiredException e) {
-            	logger.error(EELFLoggerDelegate.errorLogger, e,AppMessages.SESSIONEXPIRED+" for: " + zookeeper + " so reconnecting due to: " + e, ErrorSeverity.ERROR, ErrorTypes.SESSIONEXPIRED);
+                logger.error(EELFLoggerDelegate.errorLogger, e,AppMessages.SESSIONEXPIRED+" for: " + zookeeper + " so reconnecting due to: " + e, ErrorSeverity.ERROR, ErrorTypes.SESSIONEXPIRED);
                 throw e;
             } catch (KeeperException.ConnectionLossException e) {
                 if (exception == null) {
@@ -181,10 +183,9 @@ class ProtocolSupport {
                 }
             });
         } catch (KeeperException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger, e,AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         } catch (InterruptedException e) {
-        	logger.error(EELFLoggerDelegate.errorLogger, e,AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
-        	
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
     }
 
@@ -207,8 +208,8 @@ class ProtocolSupport {
             try {
                 Thread.sleep(attemptCount * retryDelay);
             } catch (InterruptedException e) {
-            	logger.error(EELFLoggerDelegate.errorLogger, e,AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.GENERALSERVICEERROR);
-            	logger.error(EELFLoggerDelegate.errorLogger, e,"Thread failed to sleep: " + e);
+                logger.error(EELFLoggerDelegate.errorLogger, e,AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.GENERALSERVICEERROR);
+                logger.error(EELFLoggerDelegate.errorLogger, e,"Thread failed to sleep: " + e);
                 Thread.currentThread().interrupt();
             }
         }

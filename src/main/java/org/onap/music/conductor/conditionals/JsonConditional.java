@@ -19,6 +19,7 @@
  * ============LICENSE_END=============================================
  * ====================================================================
  */
+
 package org.onap.music.conductor.conditionals;
 
 import java.io.Serializable;
@@ -32,58 +33,58 @@ import io.swagger.annotations.ApiModel;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonConditional implements Serializable {
 
-	private String primaryKey;
-	private String primaryKeyValue;
-	private String casscadeColumnName;
-	private transient Map<String,Object> tableValues;
-	private transient Map<String,Object> casscadeColumnData;
-	private Map<String,Map<String,String>> conditions;
-	
-	public Map<String, Object> getTableValues() {
-		return tableValues;
-	}
-	public void setTableValues(Map<String, Object> tableValues) {
-		this.tableValues = tableValues;
-	}
-	
-	public String getPrimaryKey() {
-		return primaryKey;
-	}
-	public String getPrimaryKeyValue() {
-		return primaryKeyValue;
-	}
-	public String getCasscadeColumnName() {
-		return casscadeColumnName;
-	}
+    private String primaryKey;
+    private String primaryKeyValue;
+    private String casscadeColumnName;
+    private Map<String,Object> tableValues;
+    private Map<String,Object> casscadeColumnData;
+    private Map<String,Map<String,String>> conditions;
+    
+    public Map<String, Object> getTableValues() {
+        return tableValues;
+    }
+    public void setTableValues(Map<String, Object> tableValues) {
+        this.tableValues = tableValues;
+    }
+    
+    public String getPrimaryKey() {
+        return primaryKey;
+    }
+    public String getPrimaryKeyValue() {
+        return primaryKeyValue;
+    }
+    public String getCasscadeColumnName() {
+        return casscadeColumnName;
+    }
 
-	public Map<String, Object> getCasscadeColumnData() {
-		return casscadeColumnData;
-	}
+    public Map<String, Object> getCasscadeColumnData() {
+        return casscadeColumnData;
+    }
 
-	
-	
-	public void setPrimaryKey(String primaryKey) {
-		this.primaryKey = primaryKey;
-	}
-	public void setPrimaryKeyValue(String primaryKeyValue) {
-		this.primaryKeyValue = primaryKeyValue;
-	}
-	public Map<String, Map<String, String>> getConditions() {
-		return conditions;
-	}
-	public void setConditions(Map<String, Map<String, String>> conditions) {
-		this.conditions = conditions;
-	}
-	public void setCasscadeColumnName(String casscadeColumnName) {
-		this.casscadeColumnName = casscadeColumnName;
-	}
+    
+    
+    public void setPrimaryKey(String primaryKey) {
+        this.primaryKey = primaryKey;
+    }
+    public void setPrimaryKeyValue(String primaryKeyValue) {
+        this.primaryKeyValue = primaryKeyValue;
+    }
+    public Map<String, Map<String, String>> getConditions() {
+        return conditions;
+    }
+    public void setConditions(Map<String, Map<String, String>> conditions) {
+        this.conditions = conditions;
+    }
+    public void setCasscadeColumnName(String casscadeColumnName) {
+        this.casscadeColumnName = casscadeColumnName;
+    }
 
-	public void setCasscadeColumnData(Map<String, Object> casscadeColumnData) {
-		this.casscadeColumnData = casscadeColumnData;
-	}
+    public void setCasscadeColumnData(Map<String, Object> casscadeColumnData) {
+        this.casscadeColumnData = casscadeColumnData;
+    }
 
-	
-	
-	
-	
+    
+    
+    
+    
 }

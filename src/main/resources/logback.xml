@@ -39,10 +39,12 @@
   <property name="auditLogName" value="audit" />
   <property name="debugLogName" value="debug" />
   <property name="defaultPattern" value="%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n" />
-  <property name="applicationLoggerPattern" value="%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %msg%n" />
+  <!-- <property name="applicationLoggerPattern" value="%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %msg%n" /> -->
+  <property name="applicationLoggerPattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5level %X{keyspace} - %msg%n" />
   <property name="auditLoggerPattern" value="%X{BeginTimestamp}|%X{EndTimestamp}|%X{RequestId}|%X{ServiceInstanceId}|%thread|%X{VirtualServerName}|%X{ServiceName}|%X{PartnerName}|%X{StatusCode}|%X{ResponseCode}|%X{ResponseDescription}|%X{InstanceUUID}|%.-5level|%X{AlertSeverity}|%X{ServerIPAddress}|%X{ElapsedTime}|%X{ServerFQDN}|%X{RemoteHost}|%X{ClassName}|%X{Unused}|%X{ProcessKey}|%X{CustomField1}|%X{CustomField2}|%X{CustomField3}|%X{CustomField4}| %msg%n" />
   <property name="metricsLoggerPattern" value="%X{BeginTimestamp}|%X{EndTimestamp}|%X{RequestId}|%X{ServiceInstanceId}|%thread|%X{VirtualServerName}|%X{ServiceName}|%X{PartnerName}|%X{TargetEntity}|%X{TargetServiceName}|%X{StatusCode}|%X{ResponseCode}|%X{ResponseDescription}|%X{InstanceUUID}|%.-5level|%X{AlertSeverity}|%X{ServerIPAddress}|%X{ElapsedTime}|%X{ServerFQDN}|%X{RemoteHost}|%X{ClassName}|%X{Unused}|%X{ProcessKey}|%X{TargetVirtualEntity}|%X{CustomField1}|%X{CustomField2}|%X{CustomField3}|%X{CustomField4}| %msg%n" />
-  <property name="errorLoggerPattern" value= "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %msg%n	" />
+  <!-- <property name="errorLoggerPattern" value= "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %msg%n    " /> -->
+  <property name="errorLoggerPattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5level %X{keyspace} - %msg%n" />
   <property name="debugLoggerPattern" value="%date{ISO8601,UTC}|%X{RequestId}| %msg%n" ></property>
   <property name="logDirectory" value="${logDir}/${componentName}" />
   <property name="debugLogDirectory" value="${debugDir}/${componentName}" />
@@ -53,7 +55,7 @@
     </encoder> -->
     <layout class="">
         <pattern>
-        		    %d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n	
+                    %d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n    
         </pattern>
     </layout>
   </appender>
@@ -61,7 +63,7 @@
   <!-- ============================================================================ -->
   <!-- EELF Appenders -->
   <!-- ============================================================================ -->
-  <appender name="EELF"
+<!--   <appender name="EELF"
     class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>${logDirectory}/${generalLogName}.log</file>
     <rollingPolicy
@@ -73,12 +75,41 @@
     </rollingPolicy>
     <triggeringPolicy
       class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-      <maxFileSize>5MB</maxFileSize>
+      <maxFileSize>100MB</maxFileSize>
     </triggeringPolicy>
     <encoder>
       <pattern>${applicationLoggerPattern}</pattern>
     </encoder>
-  </appender>
+  </appender> -->
+  
+  <!-- <appender name="EELF" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${logDirectory}/${generalLogName}.log</file>
+       <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">        
+             daily rollover
+             <fileNamePattern>${logDirectory}/${generalLogName}.%d{yyyy-MM-dd}.%i.log.zip</fileNamePattern>
+             <maxFileSize>1GB</maxFileSize>    
+             <maxHistory>5</maxHistory>
+             <totalSizeCap>5GB</totalSizeCap>
+       </rollingPolicy>
+       <encoder>
+             <pattern>${applicationLoggerPattern}</pattern>
+       </encoder>
+     </appender> -->
+     
+     
+     <appender name="EELF" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${logDirectory}/${generalLogName}.log</file>
+           <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">        
+             <!-- daily rollover -->
+             <fileNamePattern>${logDirectory}/${generalLogName}.%d{yyyy-MM-dd}.%i.log.zip</fileNamePattern>
+             <maxFileSize>1GB</maxFileSize>    
+             <maxHistory>5</maxHistory>
+             <totalSizeCap>5GB</totalSizeCap>
+           </rollingPolicy>
+           <encoder>
+             <pattern>${applicationLoggerPattern}</pattern>
+           </encoder>
+     </appender>
   
   <appender name="asyncEELF" class="ch.qos.logback.classic.AsyncAppender">
     <queueSize>256</queueSize>
@@ -106,7 +137,7 @@
       <maxFileSize>5MB</maxFileSize>
     </triggeringPolicy>
     <encoder>
-      <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n	</pattern>
+      <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n    </pattern>
     </encoder>
   </appender>
   
@@ -266,6 +297,6 @@
 
   <!-- Conductor Specific additions to squash WARNING and INFO -->
   <logger name="com.datastax.driver.core.Cluster" level="ERROR"/> 
-  <logger name="org.onap.music.main.MusicCore" level="ERROR"/>  
+  <logger name="org.onap.music.main.MusicCore" level="ERROR"/> 
 
 </configuration>
