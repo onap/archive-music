@@ -113,7 +113,7 @@ public class MusicDataStore {
     }
     
     /**
-     * @param session
+     * @return  session
      */
     public Session getSession() {
         return session;
@@ -158,10 +158,8 @@ public class MusicDataStore {
      */
     private void connectToCassaCluster() {
     	Iterator<String> it = getAllPossibleLocalIps().iterator();
-        String address = "localhost";
-        String[] addresses = null;
-        address = MusicUtil.getMyCassaHost();
-		addresses = address.split(",");
+        String address = MusicUtil.getMyCassaHost();
+		String[] addresses = address.split(",");
 		
         logger.info(EELFLoggerDelegate.applicationLogger,
                         "Connecting to cassa cluster: Iterating through possible ips:"
@@ -309,7 +307,7 @@ public class MusicDataStore {
         }
     }
     
-    public byte[] getBlobValue(Row row, String colName, DataType colType) {
+    public byte[] getBlobValue(Row row, String colName) {
     	ByteBuffer bb = row.getBytes(colName);
     	return bb.array();
     }
@@ -345,7 +343,7 @@ public class MusicDataStore {
                 if (!(("vector_ts").equals(definition.getName()))) {
                 	if(definition.getType().toString().toLowerCase().contains("blob")) {
                 		resultOutput.put(definition.getName(),
-                                getBlobValue(row, definition.getName(), definition.getType()));
+                                getBlobValue(row, definition.getName()));
                 	} 
                 	else
                 		resultOutput.put(definition.getName(),
