@@ -83,20 +83,12 @@ public class MusicHealthCheck {
     }
 
     private Boolean getAdminKeySpace(String consistency) throws MusicServiceException {
-
-
         PreparedQueryObject pQuery = new PreparedQueryObject();
         pQuery.appendQueryString("insert into admin.healthcheck (id) values (?)");
         pQuery.addValue(UUID.randomUUID());
-            ResultType rs = MusicCore.nonKeyRelatedPut(pQuery, consistency);
-            logger.info(rs.toString());
-            if (rs != null) {
-                return Boolean.TRUE;
-            } else {
-                return Boolean.FALSE;
-            }
-
-
+        ResultType rs = MusicCore.nonKeyRelatedPut(pQuery, consistency);
+        logger.info(rs.toString());
+        return null != rs;
     }
     
     private boolean createKeyspace() {
@@ -110,10 +102,7 @@ public class MusicHealthCheck {
             e.printStackTrace();
             logger.error("Error", e);
         }
-        if(rs != null && rs.getResult().toLowerCase().contains("success"))
-            return true;
-        else
-            return false;
+        return rs != null && rs.getResult().toLowerCase().contains("success");
     }
 
     public String getZookeeperStatus() {
