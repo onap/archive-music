@@ -3,6 +3,7 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *  Modifications Copyright (C) 2019 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -37,13 +38,11 @@ import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
-import org.onap.music.lockingservice.cassandra.MusicLockState;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
 import org.onap.music.rest.RestMusicDataAPI;
-import org.onap.music.service.impl.MusicZKCore;
 
 import com.datastax.driver.core.ColumnDefinitions;
 import com.datastax.driver.core.DataType;
@@ -72,8 +71,8 @@ public class MusicConditional {
         queryBank.put(MusicUtil.SELECT, select);
 
         PreparedQueryObject update = new PreparedQueryObject();
-        Map<String, String> updateColumnvalues = new HashMap<>(); //casscade column values
-        updateColumnvalues = getValues(true, casscadeColumnData, status);
+        //casscade column values
+        Map<String, String> updateColumnvalues = getValues(true, casscadeColumnData, status);
         Object formatedValues = MusicUtil.convertToActualDataType(casscadeColumnType, updateColumnvalues);
         update.appendQueryString("UPDATE " + keyspace + "." + tablename + " SET " + casscadeColumnName + " ="
                 + casscadeColumnName + " + ? , vector_ts = ?" + " WHERE " + primaryId + " = ? ");
@@ -83,8 +82,8 @@ public class MusicConditional {
         queryBank.put(MusicUtil.UPDATE, update);
 
 
-        Map<String, String> insertColumnvalues = new HashMap<>();//casscade column values
-        insertColumnvalues = getValues(false, casscadeColumnData, status);
+        //casscade column values
+        Map<String, String> insertColumnvalues = getValues(false, casscadeColumnData, status);
         formatedValues = MusicUtil.convertToActualDataType(casscadeColumnType, insertColumnvalues);
         PreparedQueryObject insert = extractQuery(valuesMap, tableInfo, tablename, keyspace, primaryId, primaryKey,casscadeColumnName,formatedValues);
         queryBank.put(MusicUtil.INSERT, insert);
@@ -127,8 +126,6 @@ public class MusicConditional {
         try {
             String fullyQualifiedKey = keyspace + "." + tableName + "." + primaryKey;
             ReturnType lockAcqResult = MusicCore.acquireLock(fullyQualifiedKey, lockId);
-            //MusicLockState mls = MusicZKCore.getLockingServiceHandle()
-                    //.getLockState(keyspace + "." + tableName + "." + primaryKey);
             if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
                 try {
                     results = MusicDataStoreHandle.getDSHandle().executeQuorumConsistencyGet(queryBank.get(MusicUtil.SELECT));
@@ -188,8 +185,7 @@ public class MusicConditional {
         try {
             String fullyQualifiedKey = keyspace + "." + tableName + "." + primaryKeyValue;
             ReturnType lockAcqResult = MusicCore.acquireLock(fullyQualifiedKey, lockId);
-            //MusicLockState mls = MusicZKCore.getLockingServiceHandle()
-                    //.getLockState(keyspace + "." + tableName + "." + primaryKeyValue);
+
             if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
                 Row row  = MusicDataStoreHandle.getDSHandle().executeQuorumConsistencyGet(queryBank.get(MusicUtil.SELECT)).one();
                 
@@ -234,11 +230,10 @@ public class MusicConditional {
     public static Map<String, String> getValues(boolean isExists, Map<String, Object> casscadeColumnData,
             Map<String, String> status) {
 
-        Map<String, String> value = new HashMap<>();
         Map<String, String> returnMap = new HashMap<>();
         Object key = casscadeColumnData.get("key");
         String setStatus = "";
-        value = (Map<String, String>) casscadeColumnData.get("value");
+        Map<String, String> value = (Map<String, String>) casscadeColumnData.get("value");
 
         if (isExists)
             setStatus = status.get("exists");
@@ -261,7 +256,7 @@ public class MusicConditional {
         String vector = String.valueOf(Thread.currentThread().getId() + System.currentTimeMillis());
         queryObject.addValue(vector);
         if(casscadeColumn!=null && casscadeColumnValues!=null) {
-            fieldsString.append("" +casscadeColumn+" ," );
+            fieldsString.append(casscadeColumn).append(" ,");
           valueString.append("?,");
           queryObject.addValue(casscadeColumnValues);
         }
@@ -269,7 +264,7 @@ public class MusicConditional {
         int counter = 0;
         for (Map.Entry<String, Object> entry : valuesMap.entrySet()) {
             
-            fieldsString.append("" + entry.getKey());
+            fieldsString.append(entry.getKey());
             Object valueObj = entry.getValue();
             if (primaryKeyName.equals(entry.getKey())) {
                 primaryKey = entry.getValue() + "";
@@ -339,11 +334,10 @@ public class MusicConditional {
 
         ColumnDefinitions colInfo = row.getColumnDefinitions();
         DataType colType = colInfo.getType(cascadeColumnName);
-        Map<String, String> values = new HashMap<>();
         Object columnValue = getColValue(row, cascadeColumnName, colType);
 
         Map<String, String> finalValues = new HashMap<>();
-        values = (Map<String, String>) columnValue;
+        Map<String, String> values = (Map<String, String>) columnValue;
         if (values != null && values.keySet().contains(planId)) {
             String valueString = values.get(planId);
             String tempValueString = valueString.replaceAll("\\{", "").replaceAll("\"", "").replaceAll("\\}", "");
