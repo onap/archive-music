@@ -28,6 +28,7 @@ import org.junit.Test;
 
 public class AppMessagesTest {
     
+
     private AppMessages messages;
     
     @Before
