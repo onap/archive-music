@@ -55,6 +55,7 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
 import com.datastax.driver.core.HostDistance;
 import com.datastax.driver.core.PoolingOptions;
+import org.onap.music.main.MusicUtil;
 
 
 /**
@@ -167,17 +168,18 @@ public class MusicDataStore {
         .setConnectionsPerHost(HostDistance.REMOTE, 2, 4);
         while (it.hasNext()) {
             try {
-                if(MusicUtil.getCassName() != null && MusicUtil.getCassPwd() != null) {
+            	if(MusicUtil.getCassName() != null && MusicUtil.getCassPwd() != null) {
                     logger.info(EELFLoggerDelegate.applicationLogger,
                             "Building with credentials "+MusicUtil.getCassName()+" & "+MusicUtil.getCassPwd());
-                    cluster = Cluster.builder().withPort(9042)
+                    cluster = Cluster.builder().withPort(MusicUtil.getCassandraPort())
                                        .withCredentials(MusicUtil.getCassName(), MusicUtil.getCassPwd())
                                        //.withLoadBalancingPolicy(new RoundRobinPolicy())
+                                       .withoutJMXReporting()
                                        .withPoolingOptions(poolingOptions)
                                        .addContactPoints(addresses).build();
                 }
                 else
-                    cluster = Cluster.builder().withPort(9042)
+                    cluster = Cluster.builder().withPort(MusicUtil.getCassandraPort())
                                          //.withLoadBalancingPolicy(new RoundRobinPolicy())
                                          .addContactPoints(addresses).build();
                 
@@ -216,15 +218,17 @@ public class MusicDataStore {
         if(MusicUtil.getCassName() != null && MusicUtil.getCassPwd() != null) {
             logger.info(EELFLoggerDelegate.applicationLogger,
                     "Building with credentials "+MusicUtil.getCassName()+" & "+MusicUtil.getCassPwd());
-            cluster = Cluster.builder().withPort(9042)
+            cluster = Cluster.builder().withPort(MusicUtil.getCassandraPort())
                        .withCredentials(MusicUtil.getCassName(), MusicUtil.getCassPwd())
                        //.withLoadBalancingPolicy(new RoundRobinPolicy())
+                       .withoutJMXReporting()
                        .withPoolingOptions(poolingOptions)
                        .addContactPoints(addresses).build();
         }
         else {
-            cluster = Cluster.builder().withPort(9042)
+            cluster = Cluster.builder().withPort(MusicUtil.getCassandraPort())
                         //.withLoadBalancingPolicy(new RoundRobinPolicy())
+                        .withoutJMXReporting()
                         .withPoolingOptions(poolingOptions)
                         .addContactPoints(addresses).build();
         }
