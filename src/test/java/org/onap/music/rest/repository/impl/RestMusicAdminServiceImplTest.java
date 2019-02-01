@@ -22,6 +22,7 @@
 package org.onap.music.rest.repository.impl;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.Assert;
@@ -56,6 +57,9 @@ public class RestMusicAdminServiceImplTest {
 	
 	@Spy
 	RestMusicAdminRepository restMusicAdminRepository;
+	
+	@Mock
+	List<Row> rw;
 	
 	@Mock
 	Iterator<Row> it;
@@ -98,5 +102,13 @@ public class RestMusicAdminServiceImplTest {
 		Mockito.when(rs.one()).thenReturn(row);
 		Mockito.when(restMusicAdminRepository.getKeySpaceNameFromKeySpaceMasterWithUuid("AID123")).thenReturn(rs);
 		Assert.assertNotNull(restMusicAdminServiceImpl.deleteOnboardApp(jsonObj));
+	}
+	
+	@Test
+	public void updateOnboardAppTest() throws Exception {
+		Mockito.when(rw.isEmpty()).thenReturn(true);
+		Mockito.when(rs.all()).thenReturn(rw);
+		Mockito.when(restMusicAdminRepository.getUuidFromKeySpaceMasterUsingAppName("AppName")).thenReturn(rs);
+		Assert.assertNotNull(restMusicAdminServiceImpl.updateOnboardApp(jsonObj));
 	}
 }
