@@ -37,7 +37,6 @@ import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.CachingUtil;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
-import org.onap.music.service.impl.MusicZKCore;
 
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.Row;
@@ -76,6 +75,7 @@ public class MusicAuthentication {
             try {
                 isAAFApp= CachingUtil.isAAFApplication(nameSpace);
             } catch(MusicServiceException e) {
+                logger.error(e.getErrorMessage(), e);
                resultMap.put("Exception", e.getMessage());
                return resultMap;
             }
@@ -84,7 +84,7 @@ public class MusicAuthentication {
                         + " is correct and Application is onboarded.");
                 return resultMap;
             }
-            boolean isAAF = Boolean.valueOf(isAAFApp);
+            boolean isAAF = Boolean.parseBoolean(isAAFApp);
             if (userId == null || password == null) {
                 logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
                 logger.error(EELFLoggerDelegate.errorLogger,"One or more required headers is missing. userId: " + userId
@@ -141,7 +141,7 @@ public class MusicAuthentication {
                 uuid = rs.getUUID("uuid").toString();
                 resultMap.put("uuid", "existing");
             } catch (Exception e) {
-                logger.info(EELFLoggerDelegate.applicationLogger,"No UUID found in DB. So creating new UUID.");
+                logger.error(EELFLoggerDelegate.applicationLogger,"No UUID found in DB. So creating new UUID.");
                 uuid = CachingUtil.generateUUID();
                 resultMap.put("uuid", "new");
             }
@@ -154,8 +154,6 @@ public class MusicAuthentication {
 
     
     public static boolean authenticateAdmin(String id,String password) {
-        String a = MusicUtil.getAdminId();
-        String b = MusicUtil.getAdminPass();
         return (id.equals(MusicUtil.getAdminId()) && password.equals(MusicUtil.getAdminPass()));
     }
 
