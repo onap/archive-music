@@ -84,6 +84,7 @@ public class MusicUtil {
     private static String cassName = "cassandra";
     private static String cassPwd = "cassandra";
     private static String aafEndpointUrl = null;
+    private static int cassandraPort = 9042;
 
     private MusicUtil() {
         throw new IllegalStateException("Utility Class");
@@ -342,6 +343,21 @@ public class MusicUtil {
     }
 
     /**
+    *
+    * @return cassandra port
+    */
+   public static int getCassandraPort() {
+       return cassandraPort;
+   }
+
+   /**
+    * set cassandra port
+    * @param cassandraPort
+    */
+   public static void setCassandraPort(int cassandraPort) {
+       MusicUtil.cassandraPort = cassandraPort;
+   }
+    /**
      * 
      * @return
      */
@@ -567,6 +583,9 @@ public class MusicUtil {
             String zkHosts = prop.getProperty("zookeeper.host");
             MusicUtil.setMyZkHost(zkHosts);
             MusicUtil.setCassName(prop.getProperty("cassandra.user"));
+        String cassPort = prop.getProperty("cassandra.port");
+        if(cassPort != null) 
+            MusicUtil.setCassandraPort(Integer.parseInt(cassPort));
     }
 
     
