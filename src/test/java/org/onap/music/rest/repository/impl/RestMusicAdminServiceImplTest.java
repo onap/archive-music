@@ -61,6 +61,9 @@ public class RestMusicAdminServiceImplTest {
 	Iterator<Row> it;
 	
 	@Mock
+	Row row;
+	
+	@Mock
 	ResultSet rs;
 	JsonOnboard jsonObj=new JsonOnboard();
 	
@@ -87,5 +90,13 @@ public class RestMusicAdminServiceImplTest {
 		Mockito.when(rs.iterator()).thenReturn(it);
 		Mockito.when(restMusicAdminRepository.fetchOnboardedInfoSearch("AppName", "AID123", "false")).thenReturn(rs);
 		Assert.assertNotNull(restMusicAdminServiceImpl.getOnboardedInfoSearch(jsonObj));
+	}
+	
+	@Test
+	public void deleteOnboardAppTest() throws Exception {
+		Mockito.when(row.getString("keyspace_name")).thenReturn("TBD");
+		Mockito.when(rs.one()).thenReturn(row);
+		Mockito.when(restMusicAdminRepository.getKeySpaceNameFromKeySpaceMasterWithUuid("AID123")).thenReturn(rs);
+		Assert.assertNotNull(restMusicAdminServiceImpl.deleteOnboardApp(jsonObj));
 	}
 }
