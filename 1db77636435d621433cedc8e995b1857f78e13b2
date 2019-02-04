@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "65ed69f6_04f40555",
+        "filename": "src/main/java/org/onap/music/rest/RestMusicLocksAPI.java",
+        "patchSetId": 10
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-02-04T13:55:40Z",
+      "side": 1,
+      "message": "We don\u0027t need the spring framework imports anymore, right?",
+      "revId": "1db77636435d621433cedc8e995b1857f78e13b2",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
