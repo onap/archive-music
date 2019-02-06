@@ -21,57 +21,35 @@
  */
 
 package org.onap.music;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
-import org.onap.aaf.cadi.Access;
+import com.att.eelf.configuration.EELFLogger;
 import org.onap.aaf.cadi.CadiWrap;
 import org.onap.aaf.cadi.Permission;
 import org.onap.aaf.cadi.PropAccess;
 import org.onap.aaf.cadi.aaf.AAFPermission;
 import org.onap.aaf.cadi.filter.CadiFilter;
+import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.main.MusicCore;
 
 public class CadiAuthFilter extends CadiFilter {
 
-    private static String include_url_endpoints ="";
-    private static String exclude_url_endpoints = "";
-    public static final String AUTHORIZATION = "Authorization";
-    
-    public CadiAuthFilter(boolean init, PropAccess access) throws ServletException {
+    private static final EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(CadiAuthFilter.class);
+
+    public CadiAuthFilter(PropAccess access) throws ServletException {
         super(true, access);
     }
     
     public void init(FilterConfig filterConfig) throws ServletException {
         super.init(filterConfig);
-        include_url_endpoints = filterConfig.getInitParameter("include_url_endpoints");
-        exclude_url_endpoints = filterConfig.getInitParameter("exclude_url_endpoints");
-    }
-
-
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws IOException, ServletException {
-        
-        super.doFilter(request, response, chain);
-    }
-
-
-    private String getUrl(ServletRequest request) {
-        String path = "";
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
-        path = httpRequest.getRequestURI().substring(httpRequest.getContextPath().length() + 1);
-        return path;
     }
 
 
@@ -83,7 +61,7 @@ public class CadiAuthFilter extends CadiFilter {
             boolean match = true;
             for (int i = 0; i < roleFunctionArray.length; i++) {
                 if (match) {
-                    if (!roleFunctionArray[i].equals("*")) {
+                    if (!"*".equals(roleFunctionArray[i])) {
                         Pattern p = Pattern.compile(Pattern.quote(path[i]), Pattern.CASE_INSENSITIVE);
                         Matcher m = p.matcher(roleFunctionArray[i]);
                         match = m.matches();
@@ -98,7 +76,7 @@ public class CadiAuthFilter extends CadiFilter {
         } else {
             if (requestedPath.matches(includeUrl))
                 return true;
-            else if (includeUrl.equals("*"))
+            else if ("*".equals(includeUrl))
                 return true;
         }
         return false;
@@ -112,8 +90,8 @@ public class CadiAuthFilter extends CadiFilter {
         for (Permission perm : perms) { 
             AAFPermission aafPerm = (AAFPermission) perm; 
             aafPermsList.add(aafPerm); 
-            System.out.println(aafPerm.toString());
-            System.out.println(aafPerm.getType());
+            logger.info(aafPerm.toString());
+            logger.info(aafPerm.getType());
         } 
         return aafPermsList; 
     } 
@@ -127,17 +105,6 @@ public class CadiAuthFilter extends CadiFilter {
             aafPermsList.add(aafPerm); 
         } 
         return aafPermsList; 
-    } 
- 
-    /** 
-     * 
-     * @param request 
-     * @return returns list of AAFPermission for the specific namespace 
-     */ 
-    public static List<AAFPermission> getNameSpacesAAFPermissions(String nameSpace, 
-            List<AAFPermission> allPermissionsList) { 
-        String type = nameSpace + ".url"; 
-        allPermissionsList.removeIf(perm -> (!perm.getType().equals(type))); 
-        return allPermissionsList; 
     }
+
 }

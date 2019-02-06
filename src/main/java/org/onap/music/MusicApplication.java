@@ -97,7 +97,7 @@ public class MusicApplication extends SpringBootServletInitializer {
         propertyLoader.loadProperties();
         if(MusicUtil.getIsCadi()) {
             PropAccess propAccess = propAccess();
-            CadiAuthFilter cadiFilter = new CadiAuthFilter(true, propAccess);
+            CadiAuthFilter cadiFilter = new CadiAuthFilter(propAccess);
             return cadiFilter;
         } else 
             return (ServletRequest request, ServletResponse response, FilterChain chain) -> {
