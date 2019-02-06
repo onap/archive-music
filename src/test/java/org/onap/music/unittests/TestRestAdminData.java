@@ -2568,4 +2568,12 @@ public class TestRestAdminData {
                 appName, authorization, keyspaceName, tableNameConditional, json);
         assertEquals(401, response.getStatus());
     }
+    @Test
+    public void Test8_HealthCheck_cassandra_musicHealthCheck() {
+        RestMusicHealthCheckAPI healthCheck = new RestMusicHealthCheckAPI();
+        Response response = healthCheck.musicHealthCheck();
+        assertEquals(200, response.getStatus());
+    }
+    
+   
 }
