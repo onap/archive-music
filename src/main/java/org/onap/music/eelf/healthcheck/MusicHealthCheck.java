@@ -3,6 +3,8 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *  
+ *  Modifications Copyright (C) 2018 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -66,8 +68,7 @@ public class MusicHealthCheck {
                         result = getAdminKeySpace(consistency);
                     } catch (MusicServiceException e1) {
                         // TODO Auto-generated catch block
-                        logger.error("Error", e);
-                        e1.printStackTrace();
+                        logger.error("Error", e1);
                     }
             } else {
                 logger.error("Error", e);
@@ -107,7 +108,6 @@ public class MusicHealthCheck {
             rs = MusicCore.nonKeyRelatedPut(pQuery, ConsistencyLevel.ONE.toString());
         } catch (MusicServiceException e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
             logger.error("Error", e);
         }
         if(rs != null && rs.getResult().toLowerCase().contains("success"))
