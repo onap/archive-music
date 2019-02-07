@@ -3,7 +3,7 @@
  * ===================================================================
  * Copyright (c) 2017 AT&T Intellectual Property 
  * ===================================================================
- * Modifications Copyright (c) 2018 IBM. 
+ * Modifications Copyright (c) 2018-2019 IBM.
  * ===================================================================
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -304,7 +304,12 @@ public class ZkStatelessLockService extends ProtocolSupport {
                         try {
                             stat = zookeeper.exists(id, false);
                         } catch (KeeperException | InterruptedException e1) {
-                            e1.printStackTrace();
+                          if(e1 instanceof InterruptedException){
+                                logger.error(EELFLoggerDelegate.errorLogger, e1.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+                                }
+                          else if(e1 instanceof KeeperException){
+                                logger.error(EELFLoggerDelegate.errorLogger, e1.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+                                }
                         }
                         Long ctime = stat.getCtime();
                         MusicUtil.zkNodeMap.put(id, ctime);
@@ -316,7 +321,7 @@ public class ZkStatelessLockService extends ProtocolSupport {
                             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), ctime));
                             MusicCore.eventualPut(pQuery);
                         } catch (Exception e) {
-                               e.printStackTrace();
+                          logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.UNKNOWN);
                         }
                         break;
                    }
