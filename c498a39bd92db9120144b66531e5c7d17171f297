@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "021a0023_9ee7aea2",
+        "filename": "src/main/java/org/onap/music/main/CachingUtil.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 3949
+      },
+      "writtenOn": "2019-02-07T15:19:33Z",
+      "side": 1,
+      "message": "We may have to add our own Modification Copyright under this",
+      "range": {
+        "startLine": 6,
+        "startChar": 0,
+        "endLine": 8,
+        "endChar": 70
+      },
+      "revId": "c498a39bd92db9120144b66531e5c7d17171f297",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "63fb83f3_3e2920e5",
+        "filename": "src/main/java/org/onap/music/main/CachingUtil.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 329,
+      "author": {
+        "id": 3949
+      },
+      "writtenOn": "2019-02-07T15:19:33Z",
+      "side": 1,
+      "message": "Could fix this too while you\u0027re at it (should be \"occurred\")",
+      "range": {
+        "startLine": 329,
+        "startChar": 71,
+        "endLine": 329,
+        "endChar": 78
+      },
+      "revId": "c498a39bd92db9120144b66531e5c7d17171f297",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "380aec86_f9320bda",
+        "filename": "src/main/java/org/onap/music/main/CachingUtil.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 436,
+      "author": {
+        "id": 3949
+      },
+      "writtenOn": "2019-02-07T15:19:33Z",
+      "side": 1,
+      "message": "Adding",
+      "range": {
+        "startLine": 436,
+        "startChar": 57,
+        "endLine": 436,
+        "endChar": 62
+      },
+      "revId": "c498a39bd92db9120144b66531e5c7d17171f297",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
