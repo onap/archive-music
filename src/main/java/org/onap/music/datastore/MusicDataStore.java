@@ -310,7 +310,7 @@ public class MusicDataStore {
      */
     public boolean executePut(PreparedQueryObject queryObject, String consistencyLevel, long timeSlot)
             throws MusicServiceException, MusicQueryException {
-        TimeMeasureInstance.instance().enter("executePut");
+        TimeMeasureInstance.instance().enter("executePut" + consistencyLevel);
         try {
             boolean result;
             long timeOfWrite = System.currentTimeMillis();
