@@ -31,24 +31,21 @@ import org.onap.music.service.impl.MusicCassaCore;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 
+public class Condition {
+    Map<String, Object> conditions;
+    PreparedQueryObject selectQueryForTheRow;
+    private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(Condition.class);
+   //private static MusicCoreService musicCore = MusicCassaCore.getInstance();
 
-
-    public class Condition {
-        Map<String, Object> conditions;
-        PreparedQueryObject selectQueryForTheRow;
-        private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(Condition.class);
-       //private static MusicCoreService musicCore = MusicCassaCore.getInstance();
-
-        public Condition(Map<String, Object> conditions, PreparedQueryObject selectQueryForTheRow) {
-            this.conditions = conditions;
-            this.selectQueryForTheRow = selectQueryForTheRow;
-        }
-
-        public boolean testCondition() throws Exception {
-            // first generate the row
-            ResultSet results = MusicCore.quorumGet(selectQueryForTheRow);
-            Row row = results.one();
-            return MusicDataStoreHandle.getDSHandle().doesRowSatisfyCondition(row, conditions);
-        }
+    public Condition(Map<String, Object> conditions, PreparedQueryObject selectQueryForTheRow) {
+        this.conditions = conditions;
+        this.selectQueryForTheRow = selectQueryForTheRow;
     }
 
+    public boolean testCondition() throws Exception {
+        // first generate the row
+        ResultSet results = MusicCore.quorumGet(selectQueryForTheRow);
+        Row row = results.one();
+        return MusicDataStore.doesRowSatisfyCondition(row, conditions);
+    }
+}

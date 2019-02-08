@@ -59,7 +59,6 @@ public class MusicDataStoreTest {
         testObject.appendQueryString(CassandraCQL.dropKeyspace);
         dataStore.executePut(testObject, "eventual");
         dataStore.close();
-
     }
 
     @Test
