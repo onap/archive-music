@@ -116,7 +116,8 @@ public class MusicCassaCore implements MusicCoreService {
             try {
                 lockReference = "" + getLockingServiceHandle().genLockRefandEnQueue(keyspace, table, lockName, isWriteLock);
             } catch (MusicLockingException | MusicServiceException | MusicQueryException e) {
-                e.printStackTrace();
+                logger.info(EELFLoggerDelegate.applicationLogger, "Failed to create lock reference");
+                return null;
             }
             long end = System.currentTimeMillis();
             logger.info(EELFLoggerDelegate.applicationLogger, "Time taken to create lock reference:" + (end - start) + " ms");
