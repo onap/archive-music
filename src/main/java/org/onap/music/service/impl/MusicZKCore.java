@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2019 Samsung
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -24,17 +26,12 @@ package org.onap.music.service.impl;
 
 
 import java.io.StringWriter;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-import javax.ws.rs.core.MediaType;
-
-import org.apache.commons.jcs.access.CacheAccess;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NoNodeException;
-import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonKeySpace;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
@@ -53,15 +50,10 @@ import org.onap.music.main.ReturnType;
 import org.onap.music.service.MusicCoreService;
 import org.onap.music.datastore.*;
 
-import com.datastax.driver.core.ColumnDefinitions;
-import com.datastax.driver.core.ColumnDefinitions.Definition;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.TableMetadata;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
 
 /**
  * This class .....
@@ -73,18 +65,18 @@ public class MusicZKCore implements MusicCoreService {
     public static MusicLockingService mLockHandle = null;
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicZKCore.class);
     private static MusicZKCore musicZKCoreInstance = null;
-    
+
     private MusicZKCore() {
-        
+
     }
     public static MusicZKCore getInstance() {
-        
+
         if(musicZKCoreInstance == null) {
             musicZKCoreInstance = new MusicZKCore();
         }
         return musicZKCoreInstance;
     }
-    
+
 
 
 
@@ -344,36 +336,8 @@ public class MusicZKCore implements MusicCoreService {
         selectQuery.appendQueryString("SELECT *  FROM " + keyspaceName + "." + tableName + " WHERE "
                         + primaryKeyName + "= ?" + ";");
         selectQuery.addValue(cqlFormattedPrimaryKeyValue);
-        ResultSet results = null;
-        try {
-            results = MusicDataStoreHandle.getDSHandle().executeQuorumConsistencyGet(selectQuery);
-            // write it back to a quorum
-            Row row = results.one();
-            ColumnDefinitions colInfo = row.getColumnDefinitions();
-            int totalColumns = colInfo.size();
-            int counter = 1;
-            StringBuilder fieldValueString = new StringBuilder("");
-            for (Definition definition : colInfo) {
-                String colName = definition.getName();
-                if (colName.equals(primaryKeyName))
-                    continue;
-                DataType colType = definition.getType();
-                Object valueObj = MusicDataStoreHandle.getDSHandle().getColValue(row, colName, colType);
-                Object valueString = MusicUtil.convertToActualDataType(colType, valueObj);
-                fieldValueString.append(colName + " = ?");
-                updateQuery.addValue(valueString);
-                if (counter != (totalColumns - 1))
-                    fieldValueString.append(",");
-                counter = counter + 1;
-            }
-            updateQuery.appendQueryString("UPDATE " + keyspaceName + "." + tableName + " SET "
-                            + fieldValueString + " WHERE " + primaryKeyName + "= ? " + ";");
-            updateQuery.addValue(cqlFormattedPrimaryKeyValue);
-
-            MusicDataStoreHandle.getDSHandle().executePut(updateQuery, "critical");
-        } catch (MusicServiceException | MusicQueryException e) {
-            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.QUERYERROR +""+updateQuery ,ErrorSeverity.MAJOR, ErrorTypes.QUERYERROR);
-        }
+        MusicUtil.writeBackToQuorum(selectQuery, primaryKeyName, updateQuery, keyspaceName, tableName,
+            cqlFormattedPrimaryKeyValue);
     }
 
 
@@ -843,47 +807,34 @@ public class MusicZKCore implements MusicCoreService {
      * @return
      */
     public Map<String, Object> validateLock(String lockName) {
-        Map<String, Object> resultMap = new HashMap<>();
-        String[] locks = lockName.split("\\.");
-        if(locks.length < 3) {
-            resultMap.put("Error", "Invalid lock. Please make sure lock is of the type keyspaceName.tableName.primaryKey");
-            return resultMap;
-        }
-        String keyspace= locks[0];
-        if(keyspace.startsWith("$"))
-            keyspace = keyspace.substring(1);
-        resultMap.put("keyspace",keyspace);
-        return resultMap;
+        return MusicUtil.validateLock(lockName);
     }
-
-
 
     @Override
     public ResultType createTable(String keyspace, String table, PreparedQueryObject tableQueryObject,
             String consistency) throws MusicServiceException {
         boolean result = false;
-        
         try {
-            //create shadow locking table 
-            result = createLockQueue(keyspace, table);
-            if(result == false) 
-                return ResultType.FAILURE;
+            //create shadow locking table
+            //result = createLockQueue(keyspace, table);
+            if(result == false)
+              return ResultType.FAILURE;
 
             result = false;
-            
+
             //create table to track unsynced_keys
-            table = "unsyncedKeys_"+table; 
-            
+            table = "unsyncedKeys_"+table;
+
             String tabQuery = "CREATE TABLE IF NOT EXISTS "+keyspace+"."+table
                     + " ( key text,PRIMARY KEY (key) );";
             System.out.println(tabQuery);
-            PreparedQueryObject queryObject = new PreparedQueryObject(); 
-            
+            PreparedQueryObject queryObject = new PreparedQueryObject();
+
             queryObject.appendQueryString(tabQuery);
             result = false;
             result = MusicDataStoreHandle.getDSHandle().executePut(queryObject, "eventual");
 
-        
+
             //create actual table
             result = MusicDataStoreHandle.getDSHandle().executePut(tableQueryObject, consistency);
         } catch (MusicQueryException | MusicServiceException ex) {
@@ -892,17 +843,17 @@ public class MusicZKCore implements MusicCoreService {
         }
         return result?ResultType.SUCCESS:ResultType.FAILURE;
     }
-    
+
     public static boolean createLockQueue(String keyspace, String table) throws MusicServiceException, MusicQueryException {
         logger.info(EELFLoggerDelegate.applicationLogger,
                 "Create lock queue/table for " +  keyspace+"."+table);
-        table = "lockQ_"+table; 
+        table = "lockQ_"+table;
         String tabQuery = "CREATE TABLE IF NOT EXISTS "+keyspace+"."+table
                 + " ( key text, lockReference bigint, createTime text, acquireTime text, guard bigint static, PRIMARY KEY ((key), lockReference) ) "
                 + "WITH CLUSTERING ORDER BY (lockReference ASC);";
         System.out.println(tabQuery);
-        PreparedQueryObject queryObject = new PreparedQueryObject(); 
-        
+        PreparedQueryObject queryObject = new PreparedQueryObject();
+
         queryObject.appendQueryString(tabQuery);
         boolean result;
         result = MusicDataStoreHandle.mDstoreHandle.executePut(queryObject, "eventual");
