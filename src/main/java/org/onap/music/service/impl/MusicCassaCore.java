@@ -666,7 +666,23 @@ public class MusicCassaCore implements MusicCoreService {
             ReturnType criticalPutResult = criticalPut(keyspaceName, tableName, primaryKey,
                     queryObject, lockReference, conditionInfo);
             long criticalPutTime = System.currentTimeMillis();
-            voluntaryReleaseLock(fullyQualifiedKey, lockReference);
+
+            int releaseTries = 0;
+            while (true) {
+                MusicLockState rs = voluntaryReleaseLock(fullyQualifiedKey, lockReference);
+                releaseTries++;
+                if (rs.getLockStatus() != MusicLockState.LockStatus.UNLOCKED) {
+                    try {
+                        Thread.sleep(Integer.min(100, (int) Math.pow(2, releaseTries - 1)));
+                    } catch (InterruptedException e) {
+                    }
+                } else
+                    break;
+            }
+            if (releaseTries > 1) {
+                System.out.print((char) (Integer.min(releaseTries, 9) + 78));
+            }
+
             long lockDeleteTime = System.currentTimeMillis();
             String timingInfo = "|lock creation time:" + (lockCreationTime - start)
                     + "|lock accquire time:" + (lockAcqTime - lockCreationTime)
