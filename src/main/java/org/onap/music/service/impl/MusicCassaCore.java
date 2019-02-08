@@ -89,7 +89,7 @@ public class MusicCassaCore implements MusicCoreService {
                 mLockHandle = new CassaLockStore(MusicDataStoreHandle.getDSHandle());
             } catch (Exception e) {
             	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.LOCKHANDLE,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
-                throw new MusicLockingException("Failed to aquire Locl store handle " + e);
+                throw new MusicLockingException("Failed to acquire Local store handle " + e);
             }
         }
         long end = System.currentTimeMillis();
@@ -116,11 +116,11 @@ public class MusicCassaCore implements MusicCoreService {
             try {
                 lockReference = "" + getLockingServiceHandle().genLockRefandEnQueue(keyspace, table, lockName, isWriteLock);
             } catch (MusicLockingException | MusicServiceException | MusicQueryException e) {
-                logger.info(EELFLoggerDelegate.applicationLogger, "Failed to create lock reference");
+                logger.info(EELFLoggerDelegate.applicationLogger, "Failed to create lock reference for" + lockName);
                 return null;
             }
             long end = System.currentTimeMillis();
-            logger.info(EELFLoggerDelegate.applicationLogger, "Time taken to create lock reference:" + (end - start) + " ms");
+            logger.info(EELFLoggerDelegate.applicationLogger, "Time taken to create lock reference " + lockName + " " + lockReference + " :" + (end - start) + " ms");
             return lockReference;
         }
         finally {
@@ -487,7 +487,7 @@ public class MusicCassaCore implements MusicCoreService {
      */
     public  ReturnType criticalPut(String keyspace, String table, String primaryKeyValue,
                     PreparedQueryObject queryObject, String lockReference, Condition conditionInfo) {
-        TimeMeasureInstance.instance().enter("executePut");
+        TimeMeasureInstance.instance().enter("criticalPut");
         try {
             long start = System.currentTimeMillis();
             try {
@@ -506,17 +506,17 @@ public class MusicCassaCore implements MusicCoreService {
                                         + e.getMessage());
                     }
 
-                String query = queryObject.getQuery();
                 long timeOfWrite = System.currentTimeMillis();
                 long lockOrdinal = Long.parseLong(lockReference);
                 long ts = MusicUtil.v2sTimeStampInMicroseconds(lockOrdinal, timeOfWrite);
                 // TODO: use Statement instead of modifying query
-                query = query.replaceFirst("SET", "USING TIMESTAMP " + ts + " SET");
-                queryObject.replaceQueryString(query);
+//                String query = queryObject.getQuery();
+//                query = query.replaceFirst("SET", "USING TIMESTAMP " + ts + " SET");
+//                queryObject.replaceQueryString(query);
                 MusicDataStore dsHandle = MusicDataStoreHandle.getDSHandle();
-                dsHandle.executePut(queryObject, MusicUtil.CRITICAL);
+                dsHandle.executePut(queryObject, MusicUtil.CRITICAL, lockOrdinal);
                 long end = System.currentTimeMillis();
-                logger.info(EELFLoggerDelegate.applicationLogger, "Time taken for the critical put:" + (end - start) + " ms");
+                logger.info(EELFLoggerDelegate.applicationLogger, "Time taken for the critical put " + primaryKeyValue + " " + lockReference + " :" + (end - start) + " ms");
             } catch (MusicQueryException | MusicServiceException | MusicLockingException e) {
                 logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
                 return new ReturnType(ResultType.FAILURE,
@@ -664,7 +664,7 @@ public class MusicCassaCore implements MusicCoreService {
 //            }
 
             logger.info(EELFLoggerDelegate.applicationLogger,
-                    "acquired lock with id " + lockReference + " after " + acquireLockTries + " tries");
+                    "acquired lock with id " + primaryKey + " " + lockReference + " after " + acquireLockTries + " tries");
             ReturnType criticalPutResult = criticalPut(keyspaceName, tableName, primaryKey,
                     queryObject, lockReference, conditionInfo);
             long criticalPutTime = System.currentTimeMillis();
