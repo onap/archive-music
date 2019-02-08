@@ -1,16 +1,22 @@
 package org.onap.music.lockingservice.cassandra;
 
+import java.io.IOError;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Session;
+import org.onap.music.datastore.CassandraClusterBuilder;
 import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
+import org.onap.music.main.MusicUtil;
 import org.onap.music.util.TimeMeasureInstance;
 
 /*
@@ -21,7 +27,8 @@ public class CassaLockStore {
 	
 	private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(CassaLockStore.class);
 	private static String table_prepend_name = "lockQ_";
-	
+	private MusicDataStore dsHandle;
+
 	public class LockObject{
 		public String lockRef;
 		public String createTime;
@@ -30,19 +37,13 @@ public class CassaLockStore {
 			this.lockRef = lockRef;
 			this.acquireTime = acquireTime;
 			this.createTime = createTime;
-			
 		}
 	}
-	MusicDataStore dsHandle;
-	public CassaLockStore() {
-		dsHandle = new MusicDataStore();
-	}
-	
+
 	public CassaLockStore(MusicDataStore dsHandle) {
 		this.dsHandle=dsHandle;
 	}
 
-    
 	/**
 	 * 
 	 * This method creates a shadow locking table for every main table in Cassandra. This table tracks all information regarding locks. 
@@ -304,6 +305,4 @@ public class CassaLockStore {
             TimeMeasureInstance.instance().exit();
         }
 	}
-	
-
 }

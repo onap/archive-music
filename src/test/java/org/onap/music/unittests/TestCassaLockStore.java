@@ -4,11 +4,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Session;
+import org.onap.music.datastore.CassandraClusterBuilder;
+import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.lockingservice.cassandra.CassaLockStore;
 import org.onap.music.main.MusicCore;
+import org.onap.music.main.MusicUtil;
 
 public class TestCassaLockStore {
 	
@@ -17,7 +22,9 @@ public class TestCassaLockStore {
 		
 		
 		try {
-			CassaLockStore lockStore = new CassaLockStore();
+			Cluster cluster = CassandraClusterBuilder.connectSmart(MusicUtil.getMyCassaHost());
+			Session session = cluster.connect();
+			CassaLockStore lockStore = new CassaLockStore(new MusicDataStore(cluster, session));
 			String keyspace = "ks_testLockStore";
 			String table = "table_testLockStore";
 
