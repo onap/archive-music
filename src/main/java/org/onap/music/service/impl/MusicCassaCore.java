@@ -401,12 +401,14 @@ public class MusicCassaCore implements MusicCoreService {
             String primaryKeyValue = splitString[2];
             try {
                 getLockingServiceHandle().deQueueLockRef(keyspace, table, primaryKeyValue, lockReference);
-            } catch (MusicLockingException | MusicServiceException | MusicQueryException e) {
-                logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), AppMessages.DESTROYLOCK + lockReference, ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+            } catch (MusicServiceException | MusicQueryException e) {
+                logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), AppMessages.DESTROYLOCK + " " + primaryKeyValue + " " + lockReference, ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+                logger.info(EELFLoggerDelegate.applicationLogger, "Lock not destroyed " + primaryKeyValue + " " + lockReference + " " + " :" + e.getMessage());
+                return new MusicLockState(MusicLockState.LockStatus.LOCKED, "");
             }
             long end = System.currentTimeMillis();
-            logger.info(EELFLoggerDelegate.applicationLogger, "Time taken to destroy lock reference:" + (end - start) + " ms");
-            return getMusicLockState(fullyQualifiedKey);
+            logger.info(EELFLoggerDelegate.applicationLogger, "Time taken to destroy lock reference " + primaryKeyValue + " " + lockReference + " " + " :" + (end - start) + " ms");
+            return new MusicLockState(MusicLockState.LockStatus.UNLOCKED, "");
         }
         finally {
             TimeMeasureInstance.instance().exit();
@@ -624,7 +626,6 @@ public class MusicCassaCore implements MusicCoreService {
                     try {
                         Thread.sleep(Integer.min(100, (int) Math.pow(2, createLockReferenceTries - 1)));
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
                     }
                 } else
                     break;
@@ -644,7 +645,6 @@ public class MusicCassaCore implements MusicCoreService {
                     try {
                         Thread.sleep(Integer.min(100, (int) Math.pow(2, acquireLockTries - 1)));
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
                     }
                 } else
                     break;
@@ -679,9 +679,6 @@ public class MusicCassaCore implements MusicCoreService {
             TimeMeasureInstance.instance().exit();
         }
     }
-    
-
-
 
     /**
      * This method performs DDL operation on cassasndra, when the lock for the resource is acquired.
@@ -713,13 +710,10 @@ public class MusicCassaCore implements MusicCoreService {
             return null;
         }
     }
-    
-    
+
     public static MusicLockState getMusicLockState(String fullyQualifiedKey) {
     		return null;
     }
-
-  
     
     /**
      * @param lockName
@@ -738,15 +732,6 @@ public class MusicCassaCore implements MusicCoreService {
         resultMap.put("keyspace",keyspace);
         return resultMap;
     }
-    
-
-	public static void main(String[] args) {
-		String x = "axe top";
-		x = x.replaceFirst("top", "sword");
-		System.out.print(x); //returns sword pickaxe
-	}
-
-
 
 	@Override
 	public ReturnType atomicPutWithDeleteLock(String keyspaceName, String tableName, String primaryKey,
