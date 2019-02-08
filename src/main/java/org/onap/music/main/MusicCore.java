@@ -22,35 +22,18 @@
 package org.onap.music.main;
 
 
-import java.io.StringWriter;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.StringTokenizer;
 
-import org.onap.music.datastore.Condition;
-import org.onap.music.datastore.MusicDataStore;
-import org.onap.music.datastore.MusicDataStoreHandle;
-import org.onap.music.datastore.PreparedQueryObject;
+import com.datastax.driver.core.*;
+import org.onap.music.datastore.*;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
-import org.onap.music.eelf.logging.format.AppMessages;
-import org.onap.music.eelf.logging.format.ErrorSeverity;
-import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.lockingservice.cassandra.CassaLockStore;
 import org.onap.music.lockingservice.cassandra.MusicLockState;
-import org.onap.music.lockingservice.cassandra.CassaLockStore.LockObject;
 import org.onap.music.service.MusicCoreService;
 import org.onap.music.service.impl.MusicCassaCore;
-
-import com.datastax.driver.core.ColumnDefinitions;
-import com.datastax.driver.core.ColumnDefinitions.Definition;
-import com.datastax.driver.core.DataType;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.TableMetadata;
 
 
 /**
@@ -60,94 +43,132 @@ import com.datastax.driver.core.TableMetadata;
  */
 public class MusicCore {
 
-    public static CassaLockStore mLockHandle = null;
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicCore.class);
     private static boolean unitTestRun=true;
-    
-private static MusicCoreService musicCore = MusicCassaCore.getInstance();
-	
-	
+
+	public static CassaLockStore mLockHandle = null;
+	private static MusicDataStore mDependantDataStoreHandle = null;
+	private static MusicCoreService mMusicCore = null;
+
+	public static MusicCoreService getSingletonInstance() {
+		/* Hacks to make singleton instance backward-compatible
+		   Some clients of MusicCore, set the data-store handle directly on MusicDataStoreHandle and
+		   lock-store handle on mLockHandle static field. We should watch for changes in these and
+		   create new Core instance in case they have changed
+		 */
+		if (MusicDataStoreHandle.mDstoreHandle != null &&
+			mDependantDataStoreHandle != MusicDataStoreHandle.mDstoreHandle) {
+				// Use externally set data-store and lock-store handle
+				mDependantDataStoreHandle = MusicDataStoreHandle.mDstoreHandle;
+				mMusicCore = new MusicCassaCore(mDependantDataStoreHandle, mLockHandle);
+		}
+		else if (mMusicCore == null) {
+			String address = MusicUtil.getMyCassaHost();
+			Cluster cluster;
+			try {
+				cluster = CassandraClusterBuilder.connectSmart(MusicUtil.getMyCassaHost());
+			} catch (MusicServiceException e) {
+				logger.error(EELFLoggerDelegate.errorLogger, "Can not connect to Cassandra cluster: " + address);
+				return null;
+			}
+			Metadata metadata = cluster.getMetadata();
+			logger.info(EELFLoggerDelegate.applicationLogger, "Connected to Cassandra cluster "
+					+ metadata.getClusterName() + " at " + address);
+			Session session = cluster.connect();
+
+			mMusicCore = new MusicCassaCore(cluster, session);
+		}
+
+		return mMusicCore;
+	}
+
 	public static ReturnType acquireLock(String fullyQualifiedKey, String lockReference) throws MusicLockingException, MusicQueryException, MusicServiceException {
-		return musicCore.acquireLock(fullyQualifiedKey, lockReference);
+		return getSingletonInstance().acquireLock(fullyQualifiedKey, lockReference);
 	}
 	
 	public static ReturnType acquireLockWithLease(String key, String lockReference, long leasePeriod) throws MusicLockingException, MusicQueryException, MusicServiceException {
-		return musicCore.acquireLockWithLease(key, lockReference, leasePeriod);
+		return getSingletonInstance().acquireLockWithLease(key, lockReference, leasePeriod);
 	}
 	
 	public static String createLockReference(String fullyQualifiedKey) {
-		return musicCore.createLockReference(fullyQualifiedKey);
+		return getSingletonInstance().createLockReference(fullyQualifiedKey);
 	}
 	
 	public static String createLockReference(String fullyQualifiedKey, boolean isWriteLock) {
-	    return musicCore.createLockReference(fullyQualifiedKey, isWriteLock);
+	    return getSingletonInstance().createLockReference(fullyQualifiedKey, isWriteLock);
 	}
 	
 	public static MusicLockState  forciblyReleaseLock(String fullyQualifiedKey, String lockReference) throws MusicLockingException, MusicServiceException, MusicQueryException{
-		return musicCore.forciblyReleaseLock(fullyQualifiedKey, lockReference);
+		return getSingletonInstance().forciblyReleaseLock(fullyQualifiedKey, lockReference);
 	}
 	
 	public static ResultType createTable(String keyspace, String table, PreparedQueryObject tableQueryObject, String consistency) throws MusicServiceException {
-		return musicCore.createTable(keyspace, table, tableQueryObject, consistency);
+		return getSingletonInstance().createTable(keyspace, table, tableQueryObject, consistency);
 	}
 	
 	public static ResultSet quorumGet(PreparedQueryObject query) {
-		return musicCore.quorumGet(query);		
+		return getSingletonInstance().quorumGet(query);
 	}
 	
 	public static String whoseTurnIsIt(String fullyQualifiedKey) {
-		return musicCore.whoseTurnIsIt(fullyQualifiedKey);
+		return getSingletonInstance().whoseTurnIsIt(fullyQualifiedKey);
 	}
 	
 	public static MusicLockState destroyLockRef(String fullyQualifiedKey, String lockReference) {
-		return musicCore.destroyLockRef(fullyQualifiedKey, lockReference);
+		return getSingletonInstance().destroyLockRef(fullyQualifiedKey, lockReference);
 	}
 	
 	public static  MusicLockState  voluntaryReleaseLock(String fullyQualifiedKey, String lockReference) throws MusicLockingException {
-		return musicCore.voluntaryReleaseLock(fullyQualifiedKey, lockReference);
+		return getSingletonInstance().voluntaryReleaseLock(fullyQualifiedKey, lockReference);
 	}
 	
 	public static ReturnType eventualPut(PreparedQueryObject queryObject) {
-		return musicCore.eventualPut(queryObject);
+		return getSingletonInstance().eventualPut(queryObject);
 	}
 	
 	public static ReturnType criticalPut(String keyspace, String table, String primaryKeyValue,
             PreparedQueryObject queryObject, String lockReference, Condition conditionInfo) {
-		return musicCore.criticalPut(keyspace, table, primaryKeyValue, queryObject, lockReference, conditionInfo);
+		return getSingletonInstance().criticalPut(keyspace, table, primaryKeyValue, queryObject, lockReference, conditionInfo);
 	}
 	
 	public static ResultType nonKeyRelatedPut(PreparedQueryObject queryObject, String consistency) throws MusicServiceException {
-		return musicCore.nonKeyRelatedPut(queryObject, consistency);
+		return getSingletonInstance().nonKeyRelatedPut(queryObject, consistency);
 	}
 	
 	public static ResultSet get(PreparedQueryObject queryObject) throws MusicServiceException{
-		return musicCore.get(queryObject);
+		return getSingletonInstance().get(queryObject);
 	}
 	
 	public static ResultSet criticalGet(String keyspace, String table, String primaryKeyValue,
             PreparedQueryObject queryObject, String lockReference) throws MusicServiceException{
-		return musicCore.criticalGet(keyspace, table, primaryKeyValue, queryObject,lockReference);
+		return getSingletonInstance().criticalGet(keyspace, table, primaryKeyValue, queryObject,lockReference);
 	}
 	
 	public static ReturnType atomicPut(String keyspaceName, String tableName, String primaryKey,
             PreparedQueryObject queryObject, Condition conditionInfo) throws MusicLockingException, MusicQueryException, MusicServiceException 
 	{
-		return musicCore.atomicPut(keyspaceName, tableName, primaryKey, queryObject, conditionInfo);
+		return getSingletonInstance().atomicPut(keyspaceName, tableName, primaryKey, queryObject, conditionInfo);
 	}
 	
     public static ResultSet atomicGet(String keyspaceName, String tableName, String primaryKey,
             PreparedQueryObject queryObject) throws MusicServiceException, MusicLockingException, MusicQueryException {
-    	return musicCore.atomicGet(keyspaceName, tableName, primaryKey, queryObject);
+    	return getSingletonInstance().atomicGet(keyspaceName, tableName, primaryKey, queryObject);
     }
     
     public static List<String> getLockQueue(String fullyQualifiedKey)
 			throws MusicServiceException, MusicQueryException, MusicLockingException{
-    	return musicCore.getLockQueue(fullyQualifiedKey);
+    	return getSingletonInstance().getLockQueue(fullyQualifiedKey);
     }
     
 	public static long getLockQueueSize(String fullyQualifiedKey)
 			throws MusicServiceException, MusicQueryException, MusicLockingException {
-		return musicCore.getLockQueueSize(fullyQualifiedKey);
+		return getSingletonInstance().getLockQueueSize(fullyQualifiedKey);
 	}
 
+	public static MusicDataStore getInstanceDSHandle() {
+		MusicCoreService singletonInstance = getSingletonInstance();
+		if (singletonInstance instanceof MusicCassaCore)
+			return ((MusicCassaCore) singletonInstance).getDataStoreHandle();
+		return null;
+	}
 }
