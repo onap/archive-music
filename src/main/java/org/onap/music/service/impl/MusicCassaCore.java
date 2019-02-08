@@ -613,15 +613,44 @@ public class MusicCassaCore implements MusicCoreService {
         try {
             long start = System.currentTimeMillis();
             String fullyQualifiedKey = keyspaceName + "." + tableName + "." + primaryKey;
-            String lockReference = createLockReference(fullyQualifiedKey);
+            int createLockReferenceTries = 0;
+            String lockReference;
+
+            while (true) {
+                lockReference = createLockReference(fullyQualifiedKey);
+                createLockReferenceTries++;
+                if (lockReference == null) {
+                    try {
+                        Thread.sleep(Integer.min(100, (int) Math.pow(2, createLockReferenceTries - 1)));
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } else
+                    break;
+            }
+            if (createLockReferenceTries > 1) {
+                System.out.print((char) (Integer.min(createLockReferenceTries, 9) + 64));
+            }
+
             long lockCreationTime = System.currentTimeMillis();
             ReturnType lockAcqResult;
 
-            int tries = 0;
-            do {
+            int acquireLockTries = 0;
+            while (true) {
                 lockAcqResult = acquireLock(fullyQualifiedKey, lockReference);
-                tries++;
-            } while (!lockAcqResult.getResult().equals(ResultType.SUCCESS));
+                acquireLockTries++;
+                if (!lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
+                    try {
+                        Thread.sleep(Integer.min(100, (int) Math.pow(2, acquireLockTries - 1)));
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } else
+                    break;
+            }
+            if (acquireLockTries > 1) {
+                System.out.print(Integer.min(acquireLockTries,9));
+            }
 
             long lockAcqTime = System.currentTimeMillis();
 
@@ -632,7 +661,7 @@ public class MusicCassaCore implements MusicCoreService {
 //            }
 
             logger.info(EELFLoggerDelegate.applicationLogger,
-                    "acquired lock with id " + lockReference + " after " + tries + "tries");
+                    "acquired lock with id " + lockReference + " after " + acquireLockTries + " tries");
             ReturnType criticalPutResult = criticalPut(keyspaceName, tableName, primaryKey,
                     queryObject, lockReference, conditionInfo);
             long criticalPutTime = System.currentTimeMillis();
