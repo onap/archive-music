@@ -185,19 +185,19 @@ public class MusicCassaCore implements MusicCoreService {
 	                return new ReturnType(ResultType.SUCCESS, lockReference + " can read the values");
             	}
             logger.info(EELFLoggerDelegate.applicationLogger,
-                    lockReference + " is not the lock holder yet");
+                    primaryKeyValue + " " + lockReference + " is not the lock holder yet");
             return new ReturnType(ResultType.FAILURE,
                     lockReference + " is not the lock holder yet");
             }
 
             if (lockReferenceL < topOfLockStoreL) {
             logger.info(EELFLoggerDelegate.applicationLogger,
-                    lockReference + " is no longer/or was never in the lock store queue");
+                    primaryKeyValue + " " + lockReference + " is no longer/or was never in the lock store queue");
             return new ReturnType(ResultType.FAILURE,
                     lockReference + " is no longer/or was never in the lock store queue");
             }
 
-            return new ReturnType(ResultType.SUCCESS, lockReference + " is top of lock store");
+            return new ReturnType(ResultType.SUCCESS, primaryKeyValue + " " + lockReference + " is top of lock store");
         }
         finally {
             TimeMeasureInstance.instance().exit();
@@ -241,7 +241,7 @@ public class MusicCassaCore implements MusicCoreService {
 
             getLockingServiceHandle().updateLockAcquireTime(keyspace, table, primaryKeyValue, lockReference);
 
-            return new ReturnType(ResultType.SUCCESS, lockReference + " is the lock holder for the key");
+            return new ReturnType(ResultType.SUCCESS, primaryKeyValue + " " + lockReference + " is the lock holder for the key");
         }
         finally {
             TimeMeasureInstance.instance().exit();
