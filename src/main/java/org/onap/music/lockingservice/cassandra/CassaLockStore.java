@@ -119,8 +119,6 @@ public class CassaLockStore {
 			long lockEpochMillis = System.currentTimeMillis();
 
 //        System.out.println("guard(" + lockName + "): " + prevGuard + "->" + lockRef);
-			logger.info(EELFLoggerDelegate.applicationLogger,
-					"Created lock reference for " + keyspace + "." + table + "." + lockName + ":" + lockRef);
 
 			queryObject = new PreparedQueryObject();
 			String insQuery = "BEGIN BATCH" +
@@ -141,6 +139,11 @@ public class CassaLockStore {
 	        queryObject.addValue(isWriteLock);
 			queryObject.appendQueryString(insQuery);
 			boolean pResult = dsHandle.executePut(queryObject, "critical");
+
+			if (pResult == false) // LockReference is used by another actor before we could guard it
+				throw new MusicServiceException("LockReference went out of hand");
+			logger.info(EELFLoggerDelegate.applicationLogger,
+					"Created+Enq lock reference for " + keyspace + "." + table + "." + lockName + ":" + lockRef);
 			return String.valueOf(lockRef);
 		}
 		finally {
@@ -172,8 +175,7 @@ public class CassaLockStore {
 		}
 		return lockQueue;
 	}
-	
-	
+
 	/**
 	 * Returns a result set containing the list of clients waiting for a particular lock
 	 * @param keyspace
