@@ -27,12 +27,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
-import java.util.UUID;
 
-import org.onap.music.datastore.MusicDataStore;
-import org.onap.music.datastore.MusicDataStoreHandle;
-import org.onap.music.datastore.Condition;
-import org.onap.music.datastore.PreparedQueryObject;
+import com.datastax.driver.core.*;
+import org.onap.music.datastore.*;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
@@ -48,12 +45,7 @@ import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
 import org.onap.music.service.MusicCoreService;
 
-import com.datastax.driver.core.ColumnDefinitions;
 import com.datastax.driver.core.ColumnDefinitions.Definition;
-import com.datastax.driver.core.DataType;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.TableMetadata;
 import org.onap.music.util.TimeMeasureInstance;
 
 
@@ -63,46 +55,61 @@ import org.onap.music.util.TimeMeasureInstance;
  *
  */
 public class MusicCassaCore implements MusicCoreService {
+    private Session cassandraSession;
+    private Cluster cassandraCluster;
 
-    public static CassaLockStore mLockHandle = null;;
+    private CassaLockStore mLockStoreHandle = null;
+    private MusicDataStore mDataStoreHandle = null;
+
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicCassaCore.class);
     private static boolean unitTestRun=true;
-    private static MusicCassaCore musicCassaCoreInstance = null;
-    
-    private MusicCassaCore() {
-    	
-    }
-    public static MusicCassaCore getInstance() {
-    	
-    	if(musicCassaCoreInstance == null) {
-    		musicCassaCoreInstance = new MusicCassaCore();
-    	}
-    	return musicCassaCoreInstance;
-    }
-    
-    public static CassaLockStore getLockingServiceHandle() throws MusicLockingException {
-        logger.info(EELFLoggerDelegate.applicationLogger,"Acquiring lock store handle");
-        long start = System.currentTimeMillis();
 
-        if (mLockHandle == null) {
-            try {
-                mLockHandle = new CassaLockStore(MusicDataStoreHandle.getDSHandle());
-            } catch (Exception e) {
-            	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.LOCKHANDLE,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
-                throw new MusicLockingException("Failed to acquire Local store handle " + e);
-            }
+    public MusicCassaCore(Cluster cc, Session cs) {
+    	cassandraCluster = cc;
+        cassandraSession = cs;
+
+        try {
+            MusicUtil.loadProperties();
+        } catch (Exception e) {
+            logger.error(EELFLoggerDelegate.errorLogger, "No properties file defined. Falling back to default.");
         }
-        long end = System.currentTimeMillis();
-        logger.info(EELFLoggerDelegate.applicationLogger,"Time taken to acquire lock store handle:" + (end - start) + " ms");
-        return mLockHandle;
+
+        {
+            logger.info(EELFLoggerDelegate.applicationLogger, "Acquiring data store handle");
+            long start = System.currentTimeMillis();
+            if (mDataStoreHandle == null) {
+                mDataStoreHandle = new MusicDataStore(cassandraCluster, cassandraSession);
+            }
+            long end = System.currentTimeMillis();
+            logger.info(EELFLoggerDelegate.applicationLogger, "Time taken to acquire data store handle:" + (end - start) + " ms");
+        }
+        {
+            logger.info(EELFLoggerDelegate.applicationLogger,"Acquiring lock store handle");
+            long start = System.currentTimeMillis();
+
+            try {
+                mLockStoreHandle = new CassaLockStore(getDataStoreHandle());
+            } catch (Exception e) {
+                logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.LOCKHANDLE,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+            }
+            long end = System.currentTimeMillis();
+            logger.info(EELFLoggerDelegate.applicationLogger,"Time taken to acquire lock store handle:" + (end - start) + " ms");
+        }
     }
 
+    public MusicDataStore getDataStoreHandle() {
+        return mDataStoreHandle;
+    }
+
+    public CassaLockStore getLockingServiceHandle() {
+        return mLockStoreHandle;
+    }
 
     public  String createLockReference(String fullyQualifiedKey) {
         return createLockReference(fullyQualifiedKey, true);
     }
 
-    public  String createLockReference(String fullyQualifiedKey, boolean isWriteLock) {
+    public String createLockReference(String fullyQualifiedKey, boolean isWriteLock) {
         TimeMeasureInstance.instance().enter("createLockReference");
         try {
             String[] splitString = fullyQualifiedKey.split("\\.");
@@ -115,7 +122,7 @@ public class MusicCassaCore implements MusicCoreService {
             String lockReference = null;
             try {
                 lockReference = "" + getLockingServiceHandle().genLockRefandEnQueue(keyspace, table, lockName, isWriteLock);
-            } catch (MusicLockingException | MusicServiceException | MusicQueryException e) {
+            } catch (MusicServiceException | MusicQueryException e) {
                 logger.info(EELFLoggerDelegate.applicationLogger, "Failed to create lock reference for" + lockName);
                 return null;
             }
@@ -129,7 +136,7 @@ public class MusicCassaCore implements MusicCoreService {
     }
 
 
-    public  ReturnType acquireLockWithLease(String fullyQualifiedKey, String lockReference, long leasePeriod) throws MusicLockingException, MusicQueryException, MusicServiceException  {
+    public ReturnType acquireLockWithLease(String fullyQualifiedKey, String lockReference, long leasePeriod) throws MusicLockingException, MusicQueryException, MusicServiceException  {
      	evictExpiredLockHolder(fullyQualifiedKey,leasePeriod);
     		return acquireLock(fullyQualifiedKey, lockReference);
     }
@@ -157,7 +164,7 @@ public class MusicCassaCore implements MusicCoreService {
 		}    	
     }
     
-    private static ReturnType isTopOfLockStore(String keyspace, String table,
+    private ReturnType isTopOfLockStore(String keyspace, String table,
 			String primaryKeyValue, String lockReference)
 			throws MusicLockingException, MusicQueryException, MusicServiceException {
         TimeMeasureInstance.instance().enter("isTopOfLockStore");
@@ -204,7 +211,7 @@ public class MusicCassaCore implements MusicCoreService {
         }
     }
 
-    public  ReturnType acquireLock(String fullyQualifiedKey, String lockReference) throws MusicLockingException, MusicQueryException, MusicServiceException {
+    public ReturnType acquireLock(String fullyQualifiedKey, String lockReference) throws MusicLockingException, MusicQueryException, MusicServiceException {
         TimeMeasureInstance.instance().enter("acquireLock");
         try {
             String[] splitString = fullyQualifiedKey.split("\\.");
@@ -222,7 +229,7 @@ public class MusicCassaCore implements MusicCoreService {
             String query = "select * from " + syncTable + " where key='" + fullyQualifiedKey + "';";
             PreparedQueryObject readQueryObject = new PreparedQueryObject();
             readQueryObject.appendQueryString(query);
-            ResultSet results = MusicDataStoreHandle.getDSHandle().executeQuorumConsistencyGet(readQueryObject);
+            ResultSet results = getDataStoreHandle().executeQuorumConsistencyGet(readQueryObject);
             if (results.all().size() != 0) {
                 logger.info("In acquire lock: Since there was a forcible release, need to sync quorum!");
                 try {
@@ -236,7 +243,7 @@ public class MusicCassaCore implements MusicCoreService {
                 String cleanQuery = "delete  from music_internal.unsynced_keys where key='" + fullyQualifiedKey + "';";
                 PreparedQueryObject deleteQueryObject = new PreparedQueryObject();
                 deleteQueryObject.appendQueryString(cleanQuery);
-                MusicDataStoreHandle.getDSHandle().executePut(deleteQueryObject, "critical");
+                getDataStoreHandle().executePut(deleteQueryObject, "critical");
             }
 
             getLockingServiceHandle().updateLockAcquireTime(keyspace, table, primaryKeyValue, lockReference);
@@ -259,7 +266,7 @@ public class MusicCassaCore implements MusicCoreService {
      * 
      * 
      */
-    public  ResultType createTable(String keyspace, String table, PreparedQueryObject tableQueryObject, String consistency) throws MusicServiceException {
+    public ResultType createTable(String keyspace, String table, PreparedQueryObject tableQueryObject, String consistency) throws MusicServiceException {
 	    	boolean result = false;
 	
 	    	try {
@@ -279,19 +286,19 @@ public class MusicCassaCore implements MusicCoreService {
 	    		
 	    		queryObject.appendQueryString(tabQuery);
 	    		result = false;
-	    		result = MusicDataStoreHandle.getDSHandle().executePut(queryObject, "eventual");
+	    		result = getDataStoreHandle().executePut(queryObject, "eventual");
 
 	    	
 	    		//create actual table
-	    		result = MusicDataStoreHandle.getDSHandle().executePut(tableQueryObject, consistency);
-	    	} catch (MusicQueryException | MusicServiceException | MusicLockingException ex) {
+	    		result = getDataStoreHandle().executePut(tableQueryObject, consistency);
+	    	} catch (MusicQueryException | MusicServiceException ex) {
 	    		logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
 	    		throw new MusicServiceException(ex.getMessage());
 	    	}
 	    	return result?ResultType.SUCCESS:ResultType.FAILURE;
     }
 
-    private static void syncQuorum(String keyspace, String table, String primaryKeyValue) throws Exception {
+    private void syncQuorum(String keyspace, String table, String primaryKeyValue) throws Exception {
         logger.info(EELFLoggerDelegate.applicationLogger,"Performing sync operation---");
         PreparedQueryObject selectQuery = new PreparedQueryObject();
         PreparedQueryObject updateQuery = new PreparedQueryObject();
@@ -310,7 +317,7 @@ public class MusicCassaCore implements MusicCoreService {
         selectQuery.addValue(cqlFormattedPrimaryKeyValue);
         ResultSet results = null;
         try {
-            results = MusicDataStoreHandle.getDSHandle().executeQuorumConsistencyGet(selectQuery);
+            results = getDataStoreHandle().executeQuorumConsistencyGet(selectQuery);
             // write it back to a quorum
             Row row = results.one();
             ColumnDefinitions colInfo = row.getColumnDefinitions();
@@ -322,7 +329,7 @@ public class MusicCassaCore implements MusicCoreService {
                 if (colName.equals(primaryKeyName))
                     continue;
                 DataType colType = definition.getType();
-                Object valueObj = MusicDataStoreHandle.getDSHandle().getColValue(row, colName, colType);
+                Object valueObj = getDataStoreHandle().getColValue(row, colName, colType);
                 Object valueString = MusicUtil.convertToActualDataType(colType, valueObj);
                 fieldValueString.append(colName + " = ?");
                 updateQuery.addValue(valueString);
@@ -334,24 +341,21 @@ public class MusicCassaCore implements MusicCoreService {
                             + fieldValueString + " WHERE " + primaryKeyName + "= ? " + ";");
             updateQuery.addValue(cqlFormattedPrimaryKeyValue);
 
-            MusicDataStoreHandle.getDSHandle().executePut(updateQuery, "critical");
+            getDataStoreHandle().executePut(updateQuery, "critical");
         } catch (MusicServiceException | MusicQueryException e) {
         	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.QUERYERROR +""+updateQuery ,ErrorSeverity.MAJOR, ErrorTypes.QUERYERROR);
         }
     }
-
-
-
 
     /**
      * 
      * @param query
      * @return ResultSet
      */
-    public  ResultSet quorumGet(PreparedQueryObject query) {
+    public ResultSet quorumGet(PreparedQueryObject query) {
         ResultSet results = null;
         try {
-            results = MusicDataStoreHandle.getDSHandle().executeQuorumConsistencyGet(query);
+            results = getDataStoreHandle().executeQuorumConsistencyGet(query);
         } catch (MusicServiceException | MusicQueryException e) {
         	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR ,ErrorSeverity.MAJOR, ErrorTypes.GENERALSERVICEERROR);
         
@@ -375,7 +379,7 @@ public class MusicCassaCore implements MusicCoreService {
         try {
             LockObject lockObject = getLockingServiceHandle().peekLockQueue(keyspace, table, primaryKeyValue);
             return lockObject != null ? lockObject.lockRef : null;
-        } catch (MusicLockingException | MusicServiceException | MusicQueryException e) {
+        } catch (MusicServiceException | MusicQueryException e) {
          	logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.LOCKINGERROR+fullyQualifiedKey ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         }
         return null;
@@ -391,7 +395,7 @@ public class MusicCassaCore implements MusicCoreService {
         return st.nextToken("$");
     }
 
-    public  MusicLockState destroyLockRef(String fullyQualifiedKey, String lockReference) {
+    public MusicLockState destroyLockRef(String fullyQualifiedKey, String lockReference) {
         TimeMeasureInstance.instance().enter("destroyLockRef");
         try {
             long start = System.currentTimeMillis();
@@ -401,7 +405,7 @@ public class MusicCassaCore implements MusicCoreService {
             String primaryKeyValue = splitString[2];
             try {
                 getLockingServiceHandle().deQueueLockRef(keyspace, table, primaryKeyValue, lockReference);
-            } catch (MusicServiceException | MusicQueryException | MusicLockingException e) {
+            } catch (MusicServiceException | MusicQueryException e) {
                 logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), AppMessages.DESTROYLOCK + " " + primaryKeyValue + " " + lockReference, ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
                 logger.info(EELFLoggerDelegate.applicationLogger, "Lock not destroyed " + primaryKeyValue + " " + lockReference + " " + " :" + e.getMessage());
                 return new MusicLockState(MusicLockState.LockStatus.LOCKED, "");
@@ -415,7 +419,7 @@ public class MusicCassaCore implements MusicCoreService {
         }
     }
 
-    public   MusicLockState  voluntaryReleaseLock(String fullyQualifiedKey, String lockReference) throws MusicLockingException{
+    public MusicLockState voluntaryReleaseLock(String fullyQualifiedKey, String lockReference) throws MusicLockingException{
         TimeMeasureInstance.instance().enter("voluntaryReleaseLock");
         try {
             return destroyLockRef(fullyQualifiedKey, lockReference);
@@ -437,7 +441,7 @@ public class MusicCassaCore implements MusicCoreService {
 		queryObject.addValue(fullyQualifiedKey);
 		String insQuery = "insert into "+syncTable+" (key) values "+values+";";
         queryObject.appendQueryString(insQuery);
-        MusicDataStoreHandle.getDSHandle().executePut(queryObject, "critical");
+        getDataStoreHandle().executePut(queryObject, "critical");
 
         //now release the lock
 		return destroyLockRef(fullyQualifiedKey, lockReference);
@@ -448,7 +452,7 @@ public class MusicCassaCore implements MusicCoreService {
      * @param lockName
      * @throws MusicLockingException 
      */
-    public  void deleteLock(String lockName) throws MusicLockingException {
+    public void deleteLock(String lockName) throws MusicLockingException {
     		//deprecated
     	}
 
@@ -460,10 +464,10 @@ public class MusicCassaCore implements MusicCoreService {
      * @return ReturnType
      * @throws MusicServiceException
      */
-    public  ReturnType eventualPut(PreparedQueryObject queryObject) {
+    public ReturnType eventualPut(PreparedQueryObject queryObject) {
         boolean result = false;
         try {
-            result = MusicDataStoreHandle.getDSHandle().executePut(queryObject, MusicUtil.EVENTUAL);
+            result = getDataStoreHandle().executePut(queryObject, MusicUtil.EVENTUAL);
         } catch (MusicServiceException | MusicQueryException ex) {
         	logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), "[ERR512E] Failed to get ZK Lock Handle "  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
             logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage() + "  " + ex.getCause() + " " + ex);
@@ -475,7 +479,7 @@ public class MusicCassaCore implements MusicCoreService {
             return new ReturnType(ResultType.FAILURE, "Failure");
         }
     }
-    
+
     /**
      * 
      * @param keyspace
@@ -485,7 +489,7 @@ public class MusicCassaCore implements MusicCoreService {
      * @param lockReference
      * @return
      */
-    public  ReturnType criticalPut(String keyspace, String table, String primaryKeyValue,
+    public ReturnType criticalPut(String keyspace, String table, String primaryKeyValue,
                     PreparedQueryObject queryObject, String lockReference, Condition conditionInfo) {
         TimeMeasureInstance.instance().enter("criticalPut");
         try {
@@ -513,7 +517,7 @@ public class MusicCassaCore implements MusicCoreService {
 //                String query = queryObject.getQuery();
 //                query = query.replaceFirst("SET", "USING TIMESTAMP " + ts + " SET");
 //                queryObject.replaceQueryString(query);
-                MusicDataStore dsHandle = MusicDataStoreHandle.getDSHandle();
+                MusicDataStore dsHandle = getDataStoreHandle();
                 dsHandle.executePut(queryObject, MusicUtil.CRITICAL, lockOrdinal);
                 long end = System.currentTimeMillis();
                 logger.info(EELFLoggerDelegate.applicationLogger, "Time taken for the critical put " + primaryKeyValue + " " + lockReference + " :" + (end - start) + " ms");
@@ -540,12 +544,12 @@ public class MusicCassaCore implements MusicCoreService {
      * 
      * 
      */
-    public  ResultType nonKeyRelatedPut(PreparedQueryObject queryObject, String consistency) throws MusicServiceException {
+    public ResultType nonKeyRelatedPut(PreparedQueryObject queryObject, String consistency) throws MusicServiceException {
         // this is mainly for some functions like keyspace creation etc which does not
         // really need the bells and whistles of Music locking.
         boolean result = false;
         try {
-            result = MusicDataStoreHandle.getDSHandle().executePut(queryObject, consistency);
+            result = getDataStoreHandle().executePut(queryObject, consistency);
         } catch (MusicQueryException | MusicServiceException ex) {
         	logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(), AppMessages.UNKNOWNERROR,
                     ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
@@ -561,10 +565,10 @@ public class MusicCassaCore implements MusicCoreService {
      * @return ResultSet
      * @throws MusicServiceException 
      */
-    public  ResultSet get(PreparedQueryObject queryObject) throws MusicServiceException {
+    public ResultSet get(PreparedQueryObject queryObject) throws MusicServiceException {
         ResultSet results = null;
         try {
-			results = MusicDataStoreHandle.getDSHandle().executeOneConsistencyGet(queryObject);
+			results = getDataStoreHandle().executeOneConsistencyGet(queryObject);
         } catch (MusicQueryException | MusicServiceException e) {
             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
             throw new MusicServiceException(e.getMessage());
@@ -583,7 +587,7 @@ public class MusicCassaCore implements MusicCoreService {
      * @param lockReference lock ID to check if the resource is free to perform the operation.
      * @return ResultSet
      */
-    public  ResultSet criticalGet(String keyspace, String table, String primaryKeyValue,
+    public ResultSet criticalGet(String keyspace, String table, String primaryKeyValue,
                     PreparedQueryObject queryObject, String lockReference) throws MusicServiceException {
         ResultSet results = null;
         
@@ -591,7 +595,7 @@ public class MusicCassaCore implements MusicCoreService {
             ReturnType result = isTopOfLockStore(keyspace, table, primaryKeyValue, lockReference);
             if(result.getResult().equals(ResultType.FAILURE))
             		return null; // not top of the lock store q
-                results = MusicDataStoreHandle.getDSHandle().executeQuorumConsistencyGet(queryObject);
+                results = getDataStoreHandle().executeQuorumConsistencyGet(queryObject);
         } catch (MusicQueryException | MusicServiceException | MusicLockingException e) {
         		logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
         }
@@ -610,7 +614,7 @@ public class MusicCassaCore implements MusicCoreService {
      * @throws MusicServiceException 
      * @throws MusicQueryException 
      */
-    public  ReturnType atomicPut(String keyspaceName, String tableName, String primaryKey,
+    public ReturnType atomicPut(String keyspaceName, String tableName, String primaryKey,
                     PreparedQueryObject queryObject, Condition conditionInfo) throws MusicLockingException, MusicQueryException, MusicServiceException {
         TimeMeasureInstance.instance().enter("atomicPut");
         try {
@@ -708,7 +712,7 @@ public class MusicCassaCore implements MusicCoreService {
      * @throws MusicLockingException 
      * @throws MusicQueryException 
      */
-    public  ResultSet atomicGet(String keyspaceName, String tableName, String primaryKey,
+    public ResultSet atomicGet(String keyspaceName, String tableName, String primaryKey,
                     PreparedQueryObject queryObject) throws MusicServiceException, MusicLockingException, MusicQueryException {
         String fullyQualifiedKey = keyspaceName + "." + tableName + "." + primaryKey;
         String lockReference = createLockReference(fullyQualifiedKey);

@@ -24,10 +24,11 @@ package org.onap.music.datastore;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Session;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.MusicUtil;
-import org.onap.music.service.impl.MusicCassaCore;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.TableMetadata;
@@ -38,32 +39,11 @@ public class MusicDataStoreHandle {
 	 private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicDataStoreHandle.class);
 
     /**
-     *
-     * @param remoteAddress
-     * @return
-     */
-    public static MusicDataStore getDSHandle(String remoteAddress) {
-        logger.info(EELFLoggerDelegate.applicationLogger,"Acquiring data store handle");
-        long start = System.currentTimeMillis();
-        if (mDstoreHandle == null) {
-            try {
-                MusicUtil.loadProperties();
-            } catch (Exception e) {
-                logger.error(EELFLoggerDelegate.errorLogger, "No properties file defined. Falling back to default.");
-            }
-            mDstoreHandle = new MusicDataStore(remoteAddress);
-        }
-        long end = System.currentTimeMillis();
-        logger.info(EELFLoggerDelegate.applicationLogger,"Time taken to acquire data store handle:" + (end - start) + " ms");
-        return mDstoreHandle;
-    }
-
-    /**
      * 
      * @return
      * @throws MusicServiceException 
      */
-    public static MusicDataStore getDSHandle() throws MusicServiceException {
+    private static MusicDataStore getDSHandle() throws MusicServiceException {
 		
         logger.info(EELFLoggerDelegate.applicationLogger,"Acquiring data store handle");
         long start = System.currentTimeMillis();
@@ -73,12 +53,11 @@ public class MusicDataStoreHandle {
     		} catch (Exception e) {
     			logger.error(EELFLoggerDelegate.errorLogger, "No properties file defined. Falling back to default.");
     		}
-            // Quick Fix - Best to put this into every call to getDSHandle?
-            if (MusicUtil.getMyCassaHost().equals("localhost")) {
-                mDstoreHandle = new MusicDataStore();
-            } else {
-                mDstoreHandle = new MusicDataStore(MusicUtil.getMyCassaHost());
-            }
+            // Quick Fix - Best to put this into every call to getInstanceDSHandle?
+            Cluster cluster = CassandraClusterBuilder.connectSmart(MusicUtil.getMyCassaHost());
+            Session session = cluster.connect();
+            mDstoreHandle = new MusicDataStore(cluster, session);
+
         }
         if(mDstoreHandle.getSession() == null) {
         	String message = "Connection to Cassandra has not been enstablished."

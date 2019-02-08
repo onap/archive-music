@@ -65,13 +65,6 @@ public class MusicDataStore {
 
 
     /**
-     * Constructs DataStore by connecting to local Cassandra
-     */
-    public MusicDataStore() {
-        connectToLocalCassandraCluster();
-    }
-
-    /**
      * Constructs DataStore by providing existing cluster and session
      * @param cluster
      * @param session
@@ -79,94 +72,6 @@ public class MusicDataStore {
     public MusicDataStore(Cluster cluster, Session session) {
         this.session = session;
         this.cluster = cluster;
-    }
-
-    /**
-     * Constructs DataStore by connecting to provided remote Cassandra
-     * @param remoteAddress
-     * @throws MusicServiceException
-     */
-    public MusicDataStore(String remoteAddress) {
-        try {
-            connectToRemoteCassandraCluster(remoteAddress);
-        } catch (MusicServiceException e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
-        }
-    }
-
-    private void createCassandraSession(String address) throws NoHostAvailableException {
-        cluster = Cluster.builder().withPort(9042)
-                .withCredentials(MusicUtil.getCassName(), MusicUtil.getCassPwd())
-                .addContactPoint(address).build();
-        Metadata metadata = cluster.getMetadata();
-        logger.info(EELFLoggerDelegate.applicationLogger, "Connected to cassa cluster "
-                + metadata.getClusterName() + " at " + address);
-        session = cluster.connect();
-    }
-
-    /**
-     *
-     * @return
-     */
-    private ArrayList<String> getAllPossibleLocalIps() {
-        ArrayList<String> allPossibleIps = new ArrayList<String>();
-        try {
-            Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
-            while (en.hasMoreElements()) {
-                NetworkInterface ni = (NetworkInterface) en.nextElement();
-                Enumeration<InetAddress> ee = ni.getInetAddresses();
-                while (ee.hasMoreElements()) {
-                    InetAddress ia = (InetAddress) ee.nextElement();
-                    allPossibleIps.add(ia.getHostAddress());
-                }
-            }
-        } catch (SocketException e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), AppMessages.CONNCECTIVITYERROR, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
-        }catch(Exception e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), ErrorSeverity.ERROR, ErrorTypes.GENERALSERVICEERROR);
-        }
-        return allPossibleIps;
-    }
-
-    /**
-     * This method iterates through all available local IP addresses and tries to connect to first successful one
-     */
-    private void connectToLocalCassandraCluster() {
-        ArrayList<String> localAddrs = getAllPossibleLocalIps();
-        localAddrs.add(0, "localhost");
-        logger.info(EELFLoggerDelegate.applicationLogger,
-                        "Connecting to cassa cluster: Iterating through possible ips:"
-                                        + getAllPossibleLocalIps());
-        for (String address: localAddrs) {
-            try {
-                createCassandraSession(address);
-                break;
-            } catch (NoHostAvailableException e) {
-                logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.HOSTUNAVAILABLE, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
-            }
-        }
-    }
-
-    /**
-     * This method connects to cassandra cluster on specific address.
-     * 
-     * @param address
-     */
-    private void connectToRemoteCassandraCluster(String address) throws MusicServiceException {
-        try {
-            createCassandraSession(address);
-        } catch (Exception ex) {
-            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.CASSANDRACONNECTIVITY, ErrorSeverity.ERROR, ErrorTypes.SERVICEUNAVAILABLE);
-            throw new MusicServiceException(
-                            "Error while connecting to Cassandra cluster.. " + ex.getMessage());
-        }
-    }
-
-    /**
-     *
-     */
-    public void close() {
-        session.close();
     }
 
     /**
@@ -203,7 +108,7 @@ public class MusicDataStore {
      * @param colType
      * @return
      */
-    public Object getColValue(Row row, String colName, DataType colType) {
+    public static Object getColValue(Row row, String colName, DataType colType) {
 
         switch (colType.getName()) {
             case VARCHAR:
@@ -237,7 +142,7 @@ public class MusicDataStore {
     	return data;
     }
 
-    public boolean doesRowSatisfyCondition(Row row, Map<String, Object> condition) throws Exception {
+    public static boolean doesRowSatisfyCondition(Row row, Map<String, Object> condition) throws Exception {
         ColumnDefinitions colInfo = row.getColumnDefinitions();
 
         for (Map.Entry<String, Object> entry : condition.entrySet()) {
@@ -452,6 +357,11 @@ public class MusicDataStore {
         finally {
             TimeMeasureInstance.instance().exit();
         }
+    }
+
+    @Deprecated
+    public void close() {
+        session.close();
     }
 }
 
