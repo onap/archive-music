@@ -214,7 +214,7 @@ public class CassaLockStore {
 			logger.info(EELFLoggerDelegate.applicationLogger,
 					"Peek in lock table for " +  keyspace+"."+table+"."+key);
 	        table = table_prepend_name+table; 
-			String selectQuery = "select * from "+keyspace+"."+table+" where key='"+key+"' LIMIT 1;";
+			String selectQuery = "SELECT * FROM "+keyspace+"."+table+" WHERE key='"+key+"' ORDER BY lockReference ASC LIMIT 1;";
 			PreparedQueryObject queryObject = new PreparedQueryObject();
 			queryObject.appendQueryString(selectQuery);
 			ResultSet results = dsHandle.executeOneConsistencyGet(queryObject);
@@ -238,7 +238,7 @@ public class CassaLockStore {
                 "Checking in lock table for " + keyspace + "." + table + "." + key);
         table = table_prepend_name + table;
         String selectQuery =
-                "select * from " + keyspace + "." + table + " where key='" + key + "';";
+                "SELECT * FROM " + keyspace + "." + table + " WHERE key='" + key + "' ORDER BY lockReference ASC;";
         PreparedQueryObject queryObject = new PreparedQueryObject();
         queryObject.appendQueryString(selectQuery);
         ResultSet rs = dsHandle.executeOneConsistencyGet(queryObject);
