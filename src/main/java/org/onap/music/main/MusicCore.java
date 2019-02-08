@@ -22,35 +22,18 @@
 package org.onap.music.main;
 
 
-import java.io.StringWriter;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.StringTokenizer;
 
-import org.onap.music.datastore.Condition;
-import org.onap.music.datastore.MusicDataStore;
-import org.onap.music.datastore.MusicDataStoreHandle;
-import org.onap.music.datastore.PreparedQueryObject;
+import com.datastax.driver.core.*;
+import org.onap.music.datastore.*;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
-import org.onap.music.eelf.logging.format.AppMessages;
-import org.onap.music.eelf.logging.format.ErrorSeverity;
-import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.lockingservice.cassandra.CassaLockStore;
 import org.onap.music.lockingservice.cassandra.MusicLockState;
-import org.onap.music.lockingservice.cassandra.CassaLockStore.LockObject;
 import org.onap.music.service.MusicCoreService;
 import org.onap.music.service.impl.MusicCassaCore;
-
-import com.datastax.driver.core.ColumnDefinitions;
-import com.datastax.driver.core.ColumnDefinitions.Definition;
-import com.datastax.driver.core.DataType;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.TableMetadata;
 
 
 /**
@@ -64,9 +47,26 @@ public class MusicCore {
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicCore.class);
     private static boolean unitTestRun=true;
     
-private static MusicCoreService musicCore = MusicCassaCore.getInstance();
-	
-	
+	private static MusicCoreService musicCore = createInstance();
+
+	public static MusicCassaCore createInstance() {
+		String address = MusicUtil.getMyCassaHost();
+		Cluster cluster;
+		try {
+			cluster = CassandraClusterBuilder.connectSmart(MusicUtil.getMyCassaHost());
+		} catch (MusicServiceException e) {
+			logger.error(EELFLoggerDelegate.errorLogger, "Can not connect to cassandra cluster");
+			return null;
+		}
+		Metadata metadata = cluster.getMetadata();
+		logger.info(EELFLoggerDelegate.applicationLogger, "Connected to cassa cluster "
+				+ metadata.getClusterName() + " at " + address);
+		Session session = cluster.connect();
+
+		MusicCassaCore musicCassaCoreInstance = new MusicCassaCore(cluster, session);
+		return musicCassaCoreInstance;
+	}
+
 	public static ReturnType acquireLock(String fullyQualifiedKey, String lockReference) throws MusicLockingException, MusicQueryException, MusicServiceException {
 		return musicCore.acquireLock(fullyQualifiedKey, lockReference);
 	}
@@ -150,4 +150,9 @@ private static MusicCoreService musicCore = MusicCassaCore.getInstance();
 		return musicCore.getLockQueueSize(fullyQualifiedKey);
 	}
 
+	public static MusicDataStore getInstanceDSHandle() {
+		if (musicCore instanceof MusicCassaCore)
+			return ((MusicCassaCore) musicCore).getDataStoreHandle();
+		return null;
+	}
 }
