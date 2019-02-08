@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2019 Samsung
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -24,17 +26,12 @@ package org.onap.music.service.impl;
 
 
 import java.io.StringWriter;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-import javax.ws.rs.core.MediaType;
-
-import org.apache.commons.jcs.access.CacheAccess;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NoNodeException;
-import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonKeySpace;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
@@ -53,15 +50,10 @@ import org.onap.music.main.ReturnType;
 import org.onap.music.service.MusicCoreService;
 import org.onap.music.datastore.*;
 
-import com.datastax.driver.core.ColumnDefinitions;
-import com.datastax.driver.core.ColumnDefinitions.Definition;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.TableMetadata;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.WebResource;
 
 /**
  * This class .....
@@ -344,36 +336,8 @@ public class MusicZKCore implements MusicCoreService {
         selectQuery.appendQueryString("SELECT *  FROM " + keyspaceName + "." + tableName + " WHERE "
                         + primaryKeyName + "= ?" + ";");
         selectQuery.addValue(cqlFormattedPrimaryKeyValue);
-        ResultSet results = null;
-        try {
-            results = MusicDataStoreHandle.getDSHandle().executeQuorumConsistencyGet(selectQuery);
-            // write it back to a quorum
-            Row row = results.one();
-            ColumnDefinitions colInfo = row.getColumnDefinitions();
-            int totalColumns = colInfo.size();
-            int counter = 1;
-            StringBuilder fieldValueString = new StringBuilder("");
-            for (Definition definition : colInfo) {
-                String colName = definition.getName();
-                if (colName.equals(primaryKeyName))
-                    continue;
-                DataType colType = definition.getType();
-                Object valueObj = MusicDataStoreHandle.getDSHandle().getColValue(row, colName, colType);
-                Object valueString = MusicUtil.convertToActualDataType(colType, valueObj);
-                fieldValueString.append(colName + " = ?");
-                updateQuery.addValue(valueString);
-                if (counter != (totalColumns - 1))
-                    fieldValueString.append(",");
-                counter = counter + 1;
-            }
-            updateQuery.appendQueryString("UPDATE " + keyspaceName + "." + tableName + " SET "
-                            + fieldValueString + " WHERE " + primaryKeyName + "= ? " + ";");
-            updateQuery.addValue(cqlFormattedPrimaryKeyValue);
-
-            MusicDataStoreHandle.getDSHandle().executePut(updateQuery, "critical");
-        } catch (MusicServiceException | MusicQueryException e) {
-            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.QUERYERROR +""+updateQuery ,ErrorSeverity.MAJOR, ErrorTypes.QUERYERROR);
-        }
+        MusicUtil.writeBackToQuorum(selectQuery, primaryKeyName, updateQuery, keyspaceName, tableName,
+            cqlFormattedPrimaryKeyValue);
     }
 
 
@@ -843,20 +807,8 @@ public class MusicZKCore implements MusicCoreService {
      * @return
      */
     public Map<String, Object> validateLock(String lockName) {
-        Map<String, Object> resultMap = new HashMap<>();
-        String[] locks = lockName.split("\\.");
-        if(locks.length < 3) {
-            resultMap.put("Error", "Invalid lock. Please make sure lock is of the type keyspaceName.tableName.primaryKey");
-            return resultMap;
-        }
-        String keyspace= locks[0];
-        if(keyspace.startsWith("$"))
-            keyspace = keyspace.substring(1);
-        resultMap.put("keyspace",keyspace);
-        return resultMap;
+        return MusicUtil.validateLock(lockName);
     }
-
-
 
     @Override
     public ResultType createTable(String keyspace, String table, PreparedQueryObject tableQueryObject,
