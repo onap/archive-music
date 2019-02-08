@@ -269,21 +269,24 @@ public class CassaLockStore {
 	 * @throws MusicServiceException
 	 * @throws MusicQueryException
 	 */	
-	public void deQueueLockRef(String keyspace, String table, String key, String lockReference) throws MusicServiceException, MusicQueryException{
+	public void deQueueLockRef(String keyspace, String table, String key, String lockReference) throws MusicServiceException, MusicQueryException {
 		TimeMeasureInstance.instance().enter("deQueueLockRef");
 		try {
 			   table = table_prepend_name+table; 
 			PreparedQueryObject queryObject = new PreparedQueryObject();
 			Long lockReferenceL = Long.parseLong(lockReference);
-			String deleteQuery = "delete from "+keyspace+"."+table+" where key='"+key+"' AND lockReference ="+lockReferenceL+" IF EXISTS;";
+			String deleteQuery = "delete from "+keyspace+"."+table+" where key=? AND lockReference =? IF EXISTS;";
 			queryObject.appendQueryString(deleteQuery);
-			dsHandle.executePut(queryObject, "critical");
+			queryObject.addValue(key);
+			queryObject.addValue(lockReferenceL);
+			boolean pResult = dsHandle.executePut(queryObject, "critical");
+			if (pResult == false)
+				throw new MusicServiceException("Could not destroy lock " + key + "  " + lockReferenceL);
 		}
 		finally {
 			TimeMeasureInstance.instance().exit();
 		}
 	}
-	
 
 	public void updateLockAcquireTime(String keyspace, String table, String key, String lockReference) throws MusicServiceException, MusicQueryException{
         TimeMeasureInstance.instance().enter("updateLockAcquireTime");
