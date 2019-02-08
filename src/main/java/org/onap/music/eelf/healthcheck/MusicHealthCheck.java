@@ -3,6 +3,7 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *  Modifications Copyright (c) 2018 IBM
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -89,8 +90,8 @@ public class MusicHealthCheck {
         pQuery.appendQueryString("insert into admin.healthcheck (id) values (?)");
         pQuery.addValue(UUID.randomUUID());
             ResultType rs = MusicCore.nonKeyRelatedPut(pQuery, consistency);
-            logger.info(rs.toString());
             if (rs != null) {
+            	logger.info(rs.toString());
                 return Boolean.TRUE;
             } else {
                 return Boolean.FALSE;
