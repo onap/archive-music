@@ -1,7 +1,9 @@
 /*
  * ============LICENSE_START========================================== org.onap.music
- * =================================================================== Copyright (c) 2017 AT&T
- * Intellectual Property ===================================================================
+ * =================================================================== 
+ * Copyright (c) 2017 AT&T Intellectual Property 
+ * Modifications Copyright (c) 2019 IBM
+ * ===================================================================
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
  * 
@@ -176,6 +178,18 @@ public class TestMusicCoreIntegration {
         byte[] data = MusicZKCore.pureZkRead("nodeName");
         String data1 = new String(data);
         assertEquals("I'm Test", data1);
+    }
+    @Test
+    public void Test13_ParameterizedConstructorCall() throws MusicServiceException, MusicQueryException {
+        MusicZKCore.mLockHandle = new MusicLockingService("localhost");
+        ResultType result = ResultType.FAILURE;
+        testObject = new PreparedQueryObject();
+        testObject.appendQueryString(CassandraCQL.createKeySpace);
+        musicZkCore.eventualPut(testObject);
+        testObject = new PreparedQueryObject();
+        testObject.appendQueryString(CassandraCQL.createTableEmployees);
+        result = musicZkCore.nonKeyRelatedPut(testObject, MusicUtil.EVENTUAL);
+        assertEquals(ResultType.SUCCESS, result);
     }
 
 }
