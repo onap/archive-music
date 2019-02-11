@@ -54,6 +54,7 @@ public class MusicLockingService implements Watcher {
 
     public MusicLockingService() throws MusicServiceException {
         try {
+        	System.out.println("Jegadeesh "+MusicUtil.getMyZkHost());
             ZooKeeper zk = new ZooKeeper(MusicUtil.getMyZkHost(), SESSION_TIMEOUT, this);
             connectedSignal.await();
             zkLockHandle = new ZkStatelessLockService(zk);

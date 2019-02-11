@@ -177,5 +177,17 @@ public class TestMusicCoreIntegration {
         String data1 = new String(data);
         assertEquals("I'm Test", data1);
     }
+    @Test
+    public void Test13_ParameterizedConstructorCall() throws MusicServiceException, MusicQueryException {
+        MusicZKCore.mLockHandle = new MusicLockingService("localhost");
+        ResultType result = ResultType.FAILURE;
+        testObject = new PreparedQueryObject();
+        testObject.appendQueryString(CassandraCQL.createKeySpace);
+        musicZkCore.eventualPut(testObject);
+        testObject = new PreparedQueryObject();
+        testObject.appendQueryString(CassandraCQL.createTableEmployees);
+        result = musicZkCore.nonKeyRelatedPut(testObject, MusicUtil.EVENTUAL);
+        assertEquals(ResultType.SUCCESS, result);
+    }
 
 }
