@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2019 Samsung
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -23,7 +25,6 @@
 package org.onap.music;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,9 +35,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
-import org.onap.aaf.cadi.Access;
 import org.onap.aaf.cadi.CadiWrap;
 import org.onap.aaf.cadi.Permission;
 import org.onap.aaf.cadi.PropAccess;
@@ -83,11 +82,11 @@ public class CadiAuthFilter extends CadiFilter {
             boolean match = true;
             for (int i = 0; i < roleFunctionArray.length; i++) {
                 if (match) {
-                    if (!roleFunctionArray[i].equals("*")) {
+                    if (!"*".equals(roleFunctionArray[i])) {
                         Pattern p = Pattern.compile(Pattern.quote(path[i]), Pattern.CASE_INSENSITIVE);
                         Matcher m = p.matcher(roleFunctionArray[i]);
                         match = m.matches();
-                    } else if (roleFunctionArray[i].equals("*")) {
+                    } else if ("*".equals(roleFunctionArray[i])) {
                         match = true;
                     }
 
@@ -98,37 +97,33 @@ public class CadiAuthFilter extends CadiFilter {
         } else {
             if (requestedPath.matches(includeUrl))
                 return true;
-            else if (includeUrl.equals("*"))
+            else if ("*".equals(includeUrl))
                 return true;
         }
         return false;
     }
     
 
-    public static List<AAFPermission> getAAFPermissions(HttpServletRequest request) { 
-        CadiWrap wrapReq = (CadiWrap) request; 
-        List<Permission> perms = wrapReq.getPermissions(wrapReq.getUserPrincipal()); 
-        List<AAFPermission> aafPermsList = new ArrayList<>(); 
-        for (Permission perm : perms) { 
-            AAFPermission aafPerm = (AAFPermission) perm; 
-            aafPermsList.add(aafPerm); 
-            System.out.println(aafPerm.toString());
-            System.out.println(aafPerm.getType());
-        } 
-        return aafPermsList; 
+    public static List<AAFPermission> getAAFPermissions(HttpServletRequest request) {
+        CadiWrap wrapReq = (CadiWrap) request;
+        return getAAFPermissions(wrapReq);
     } 
     
     public static List<AAFPermission> getAAFPermissions(ServletRequest request) { 
         CadiWrap wrapReq = (CadiWrap) request; 
-        List<Permission> perms = wrapReq.getPermissions(wrapReq.getUserPrincipal()); 
-        List<AAFPermission> aafPermsList = new ArrayList<>(); 
-        for (Permission perm : perms) { 
-            AAFPermission aafPerm = (AAFPermission) perm; 
-            aafPermsList.add(aafPerm); 
-        } 
-        return aafPermsList; 
+        return getAAFPermissions(wrapReq);
     } 
- 
+
+    private static List<AAFPermission> getAAFPermissions(CadiWrap wrapReq){
+        List<Permission> perms = wrapReq.getPermissions(wrapReq.getUserPrincipal());
+        List<AAFPermission> aafPermsList = new ArrayList<>();
+        for (Permission perm : perms) {
+            AAFPermission aafPerm = (AAFPermission) perm;
+            aafPermsList.add(aafPerm);
+        }
+        return aafPermsList;
+    }
+
     /** 
      * 
      * @param request 
@@ -138,6 +133,6 @@ public class CadiAuthFilter extends CadiFilter {
             List<AAFPermission> allPermissionsList) { 
         String type = nameSpace + ".url"; 
         allPermissionsList.removeIf(perm -> (!perm.getType().equals(type))); 
-        return allPermissionsList; 
+        return allPermissionsList;
     }
 }
