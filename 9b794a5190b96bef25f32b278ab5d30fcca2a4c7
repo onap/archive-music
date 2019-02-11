@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c7ef9459_4973b994",
+        "filename": "src/main/java/org/onap/music/lockingservice/zookeeper/ZkStatelessLockService.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 312,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-02-11T13:56:41Z",
+      "side": 1,
+      "message": "please fix the indentations here",
+      "revId": "9b794a5190b96bef25f32b278ab5d30fcca2a4c7",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
