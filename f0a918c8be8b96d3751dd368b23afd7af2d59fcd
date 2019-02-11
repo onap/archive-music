@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "c061f27e_e378f89e",
+        "filename": "src/main/java/org/onap/music/eelf/healthcheck/MusicHealthCheck.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-02-11T21:43:27Z",
+      "side": 1,
+      "message": "Yes, we should be consistent in the error logging across the project",
+      "parentUuid": "f8215c04_ac3e3518",
+      "range": {
+        "startLine": 71,
+        "startChar": 23,
+        "endLine": 71,
+        "endChar": 50
+      },
+      "revId": "f0a918c8be8b96d3751dd368b23afd7af2d59fcd",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "b2d1d673_04a4d4d8",
         "filename": "src/main/java/org/onap/music/eelf/healthcheck/MusicHealthCheck.java",
         "patchSetId": 1
