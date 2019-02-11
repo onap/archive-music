@@ -17,8 +17,7 @@
 package org.onap.music; 
  
 import javax.annotation.PostConstruct;
-import javax.ws.rs.ApplicationPath;
-import org.glassfish.jersey.server.ResourceConfig; 
+import org.glassfish.jersey.server.ResourceConfig;
 import org.onap.music.rest.RestMusicAdminAPI;
 import org.onap.music.rest.RestMusicDataAPI;
 import org.onap.music.rest.RestMusicHealthCheckAPI;
