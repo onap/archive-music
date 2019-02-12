@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2019 Samsung
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -404,9 +406,10 @@ public class RestMusicDataAPI {
                     @ApiParam(value = "Table Name",required = true) @PathParam("tablename") String tablename) throws Exception {
         try {
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        if((keyspace == null || keyspace == null) || (tablename.isEmpty() || tablename.isEmpty())){
+        if(keyspace == null || keyspace.isEmpty() || tablename == null || tablename.isEmpty()){
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
-                    .setError("one or more path parameters are not set, please check and try again")
+                    .setError("One or more path parameters are not set, please check and try again."
+                        + "Parameter values: keyspace='" + keyspace + "' tablename='" + tablename + "'")
                           .toMap()).build();
         }
         EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspace+" ) ");
