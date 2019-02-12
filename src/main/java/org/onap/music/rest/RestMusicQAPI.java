@@ -1,16 +1,22 @@
 /*
- * ============LICENSE_START========================================== org.onap.music
- * =================================================================== Copyright (c) 2017 AT&T
- * Intellectual Property ===================================================================
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License. You may obtain a copy of the License at
+ * ============LICENSE_START==========================================
+ * org.onap.music
+ * ===================================================================
+ *  Copyright (c) 2017 AT&T Intellectual Property
+ * ===================================================================
+ *  Modifications Copyright (c) 2019 IBM
+ * ===================================================================
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  * 
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  * 
  * ============LICENSE_END=============================================
  * ====================================================================
@@ -18,485 +24,411 @@
 package org.onap.music.rest;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
+
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
-// cjcimport javax.servlet.http.HttpServletResponse;
+
+import org.onap.music.datastore.MusicDataStoreHandle;
+import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
 import org.onap.music.datastore.jsonobjects.JsonTable;
 import org.onap.music.datastore.jsonobjects.JsonUpdate;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
-
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
-import org.apache.commons.lang3.StringUtils;
-import org.onap.music.datastore.MusicDataStoreHandle;
-import org.onap.music.datastore.PreparedQueryObject;
-import com.datastax.driver.core.ResultSet;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
-// cjc import org.onap.music.main.ReturnType;
 import org.onap.music.response.jsonobjects.JsonResponse;
+import org.onap.music.rest.service.MusicDataAPIService;
+import org.onap.music.rest.service.RestMusicQAPIService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.TableMetadata;
+
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 
-// import io.swagger.models.Response;
-// @Path("/v{version: [0-9]+}/priorityq/")
-@Path("{version}/priorityq/")
+@RestController
+@RequestMapping(value = "/rest/v{version:[0-9]+}/priorityq")
 @Api(value = "Q Api")
 public class RestMusicQAPI {
 
-  private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(RestMusicQAPI.class);
-  // private static String xLatestVersion = "X-latestVersion";
-  /*
-   * private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(RestMusicDataAPI.class);
-   * private static final String XMINORVERSION = "X-minorVersion"; private static final String
-   * XPATCHVERSION = "X-patchVersion"; private static final String NS = "ns"; private static final
-   * String USERID = "userId"; private static final String PASSWORD = "password";
-   *    */
-  // private static final String VERSION = "v2";
+	private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(RestMusicQAPI.class);
+	
+	 @Autowired
+	 MusicDataAPIService musicDataAPIService;
+	 
+	 @Autowired
+	 RestMusicQAPIService restMusicQAPIService;
 
+	/**
+	 * 
+	 * @param version
+	 * @param minorVersion
+	 * @param patchVersion
+	 * @param aid
+	 * @param ns
+	 * @param authorization
+	 * @param tableObj
+	 * @param keyspace
+	 * @param tablename
+	 * @return
+	 * @throws Exception
+	 */
+	@PostMapping(value = "/keyspaces/{keyspace}/{qname}", produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON)
+	@ApiOperation(value = "Create Q", response = String.class)
+	public Response createQ(@ApiParam(value = "Major Version", required = true) @PathVariable("version") String version,
+			@ApiParam(value = "Minor Version", required = false) @RequestHeader(required = false, value = XMINORVERSION) String minorVersion,
+            @ApiParam(value = "Patch Version", required = false) @RequestHeader(required = false, value = XPATCHVERSION) String patchVersion,
+			@ApiParam(value = "AID", required = true) @RequestHeader("aid") String aid,
+			@ApiParam(value = "Application namespace", required = true) @RequestHeader("ns") String ns,
+			@ApiParam(value = "Authorization", required = true) @RequestHeader(MusicUtil.AUTHORIZATION) String authorization,
+			@RequestBody JsonTable tableObj, @ApiParam(value = "Key Space", required = true) @PathVariable("keyspace") String keyspace,
+			@ApiParam(value = "Table Name", required = true) @PathVariable("qname") String tablename) throws Exception {
 
-  /**
-   * 
-   * @param tableObj
-   * @param keyspace
-   * @param tablename
-   * @throws Exception
-   */
- 
-  @POST
-  @Path("/keyspaces/{keyspace}/{qname}") // is it same as tablename?down
-  @ApiOperation(value = "Create Q", response = String.class)
-  @Consumes(MediaType.APPLICATION_JSON)
-  @Produces(MediaType.APPLICATION_JSON)
-  
-  /* old
-  @POST
-  @Path("/keyspaces/{keyspace}/{qname}")
-  @ApiOperation(value = "", response = Void.class)
-  @Consumes(MediaType.APPLICATION_JSON)
-  */
-  public Response createQ(
-  // public Map<String,Object> createQ(
-          @ApiParam(value = "Major Version", required = true) @PathParam("version") String version,
-          @ApiParam(value = "Minor Version",
-                  required = false) @HeaderParam("X-minorVersion") String minorVersion,
-          @ApiParam(value = "Patch Version",
-                  required = false) @HeaderParam("X-patchVersion") String patchVersion,
-          @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
-          @ApiParam(value = "Application namespace", required = true) @HeaderParam("ns") String ns,
-          @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-          JsonTable tableObj, 
-          @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
-          @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename)
-          throws Exception {
-    //logger.info(logger, "cjc before start in q 1** major version=" + version);
+		if (logger.isDebugEnabled()) {
+			logger.info(logger, "cjc before start in q 1** major version=" + version);
+		}
 
-    ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
+		return restMusicQAPIService.createQueue(version, minorVersion, patchVersion, tableObj, authorization, aid, ns,
+				keyspace, tablename, musicDataAPIService);
+	}
 
-    Map<String, String> fields = tableObj.getFields();
-    if (fields == null) { // || (!fields.containsKey("order")) ){
-      logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA,
-              ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
-      return response.status(Status.BAD_REQUEST)
-              .entity(new JsonResponse(ResultType.FAILURE)
-                      .setError("CreateQ/Required table fields are empty or not set").toMap())
-              .build();
-    }
+	/**
+	 * 
+	 * @param version
+	 * @param minorVersion
+	 * @param patchVersion
+	 * @param aid
+	 * @param ns
+	 * @param authorization
+	 * @param insObj
+	 * @param keyspace
+	 * @param tablename
+	 * @return
+	 * @throws Exception
+	 */
+	@PostMapping(value = "/keyspaces/{keyspace}/{qname}/rows", produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON)
+	@ApiOperation(value = "", response = Void.class)
+	public Response insertIntoQ(
+			@ApiParam(value = "Major Version", required = true) @PathVariable("version") String version,
+			@ApiParam(value = "Minor Version", required = false) @RequestHeader(required = false, value = XMINORVERSION) String minorVersion,
+            @ApiParam(value = "Patch Version", required = false) @RequestHeader(required = false, value = XPATCHVERSION) String patchVersion,
+            @ApiParam(value = "AID", required = true) @RequestHeader("aid") String aid,
+			@ApiParam(value = "Application namespace", required = true) @RequestHeader("ns") String ns,
+			@ApiParam(value = "Authorization", required = true) @RequestHeader(MusicUtil.AUTHORIZATION) String authorization,
+			JsonInsert insObj, @ApiParam(value = "Key Space", required = true) @PathVariable("keyspace") String keyspace,
+			@ApiParam(value = "Table Name", required = true) @PathVariable("qname") String tablename) throws Exception {
 
-    String primaryKey = tableObj.getPrimaryKey();
-    String partitionKey = tableObj.getPartitionKey();
-    String clusteringKey = tableObj.getClusteringKey();
-    String filteringKey = tableObj.getFilteringKey();
-    String clusteringOrder = tableObj.getClusteringOrder();
+		ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
+		if (insObj.getValues().isEmpty()) {
+			logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA, ErrorSeverity.CRITICAL,
+					ErrorTypes.DATAERROR);
+			return response.status(Status.BAD_REQUEST).entity(
+					new JsonResponse(ResultType.FAILURE).setError("Required HTTP Request body is missing.").toMap())
+					.build();
+		}
+		
+		return musicDataAPIService.insertIntoTable(VERSION, minorVersion, patchVersion, aid, ns, authorization, insObj, keyspace, tablename);
+	}
 
-    if(primaryKey == null) {
-        primaryKey = tableObj.getFields().get("PRIMARY KEY");
-    }
+	/**
+	 * 
+	 * @param version
+	 * @param minorVersion
+	 * @param patchVersion
+	 * @param aid
+	 * @param ns
+	 * @param authorization
+	 * @param updateObj
+	 * @param keyspace
+	 * @param tablename
+	 * @param info
+	 * @return
+	 * @throws Exception
+	 */
+	@PutMapping(value = "/keyspaces/{keyspace}/{qname}/rows", produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON)
+	@ApiOperation(value = "updateQ", response = String.class)
+	public Response updateQ(@ApiParam(value = "Major Version", required = true) @PathVariable("version") String version,
+			@ApiParam(value = "Minor Version", required = false) @RequestHeader(required = false, value = XMINORVERSION) String minorVersion,
+            @ApiParam(value = "Patch Version", required = false) @RequestHeader(required = false, value = XPATCHVERSION) String patchVersion,
+            @ApiParam(value = "AID", required = true) @RequestHeader("aid") String aid,
+			@ApiParam(value = "Application namespace", required = true) @RequestHeader("ns") String ns,
+			@ApiParam(value = "Authorization", required = true) @RequestHeader(MusicUtil.AUTHORIZATION) String authorization,
+			JsonUpdate updateObj,
+			@ApiParam(value = "Key Space", required = true) @PathVariable("keyspace") String keyspace,
+			@ApiParam(value = "Table Name", required = true) @PathVariable("qname") String tablename,
+			@RequestParam MultiValueMap<String, String> info) throws Exception {
 
-    if ((primaryKey == null) && (partitionKey == null)) {
-        logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA,
-                ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
-        return response.status(Status.BAD_REQUEST)
-                .entity(new JsonResponse(ResultType.FAILURE)
-                        .setError("CreateQ: Partition key cannot be empty").toMap())
-                .build();
-      }
+		ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
+		if (updateObj.getValues().isEmpty()) {
+			logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA, ErrorSeverity.CRITICAL,
+					ErrorTypes.DATAERROR);
+			return response.status(Status.BAD_REQUEST)
+					.entity(new JsonResponse(ResultType.FAILURE).setError(
+							"Required HTTP Request body is missing. JsonUpdate updateObj.getValues() is empty. ")
+							.toMap())
+					.build();
+		}
 
-    if ((primaryKey == null) && (clusteringKey == null)) {
-        logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA,
-                ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
-        return response.status(Status.BAD_REQUEST)
-                .entity(new JsonResponse(ResultType.FAILURE)
-                        .setError("CreateQ: Clustering key cannot be empty").toMap())
-                .build();
-      }
+		return musicDataAPIService.updateTable(VERSION, minorVersion, patchVersion, aid, ns, authorization,
+				updateObj, keyspace, tablename, info);
+	}
 
-    if (clusteringOrder == null) {
-        logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA,
-                ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
-        return response.status(Status.BAD_REQUEST)
-                .entity(new JsonResponse(ResultType.FAILURE)
-                        .setError("CreateQ: Clustering Order cannot be empty").toMap())
-                .build();
-      }
+	/**
+	 * 
+	 * @param delObj
+	 * @param keyspace
+	 * @param tablename
+	 * @param info
+	 * 
+	 * @return
+	 * @throws Exception
+	 */
 
-    if ((primaryKey!=null) && (partitionKey == null)) {
-        primaryKey.trim();
-        int count1 = StringUtils.countMatches(primaryKey, ')');
-        int count2 = StringUtils.countMatches(primaryKey, '(');
-        if (count1 != count2) {
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
-                      .setError("CreateQ Error: primary key '(' and ')' do not match, primary key=" + primaryKey)
-                      .toMap()).build();
-        }
+	@DeleteMapping(value = "/keyspaces/{keyspace}/{qname}/rows", produces = MediaType.APPLICATION_JSON, consumes = MediaType.APPLICATION_JSON)
+	@ApiOperation(value = "deleteQ", response = String.class)
+	public Response deleteFromQ(
+			@ApiParam(value = "Major Version", required = true) @PathVariable("version") String version,
+			@ApiParam(value = "Minor Version", required = false) @RequestHeader(required = false, value = XMINORVERSION) String minorVersion,
+            @ApiParam(value = "Patch Version", required = false) @RequestHeader(required = false, value = XPATCHVERSION) String patchVersion,
+            @ApiParam(value = "AID", required = true) @RequestHeader("aid") String aid,
+			@ApiParam(value = "Application namespace", required = true) @RequestHeader("ns") String ns,
+			@ApiParam(value = "Authorization", required = true) @RequestHeader(MusicUtil.AUTHORIZATION) String authorization,
+			JsonDelete delObj, @ApiParam(value = "Key Space", required = true) @PathVariable("keyspace") String keyspace,
+			@ApiParam(value = "Table Name", required = true) @PathVariable("qname") String tablename,
+			@RequestParam MultiValueMap<String, String> info) throws Exception {
+		
+		ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
+		if (delObj == null) {
+			logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA, ErrorSeverity.CRITICAL,
+					ErrorTypes.DATAERROR);
+			return response.status(Status.BAD_REQUEST).entity(
+					new JsonResponse(ResultType.FAILURE).setError("deleteFromQ JsonDelete delObjis empty").toMap())
+					.build();
+		}
 
-        if ( primaryKey.indexOf('(') == -1  || ( count2 == 1 && (primaryKey.lastIndexOf(")") +1) ==  primaryKey.length() ) )
-        {
-            if (primaryKey.contains(",") ) {
-                partitionKey= primaryKey.substring(0,primaryKey.indexOf(","));
-                partitionKey=partitionKey.replaceAll("[\\(]+","");
-                clusteringKey=primaryKey.substring(primaryKey.indexOf(',')+1);  // make sure index
-                clusteringKey=clusteringKey.replaceAll("[)]+", "");
-            } else {
-              partitionKey=primaryKey;
-              partitionKey=partitionKey.replaceAll("[\\)]+","");
-              partitionKey=partitionKey.replaceAll("[\\(]+","");
-              clusteringKey="";
-           }
-      } else {
-            partitionKey= primaryKey.substring(0,primaryKey.indexOf(')'));
-            partitionKey=partitionKey.replaceAll("[\\(]+","");
-            partitionKey.trim();
-            clusteringKey= primaryKey.substring(primaryKey.indexOf(')'));
-            clusteringKey=clusteringKey.replaceAll("[\\(]+","");
-            clusteringKey=clusteringKey.replaceAll("[\\)]+","");
-            clusteringKey.trim();
-            if (clusteringKey.indexOf(",") == 0) clusteringKey=clusteringKey.substring(1);
-            clusteringKey.trim();
-            if (clusteringKey.equals(",") ) clusteringKey=""; // print error if needed    ( ... ),)
-         }
-    }
+		return musicDataAPIService.deleteFromTable(VERSION, minorVersion, patchVersion, aid, ns,
+				authorization, delObj, keyspace, tablename, info);
+	}
 
-    if (partitionKey.trim().isEmpty()) {
-        logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA,
-                ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
-        return response.status(Status.BAD_REQUEST)
-                .entity(new JsonResponse(ResultType.FAILURE)
-                        .setError("CreateQ: Partition key cannot be empty").toMap())
-                .build();
-    }
+	/**
+	 * 
+	 * @param keyspace
+	 * @param tablename
+	 * @param info
+	 * @return
+	 * @throws Exception
+	 */
+	@GetMapping(value = "/keyspaces/{keyspace}/{qname}/peek", produces = MediaType.APPLICATION_JSON)
+	@ApiOperation(value = "", response = Map.class)
+	public Response peek(@ApiParam(value = "Major Version", required = true) @PathVariable("version") String version,
+			@ApiParam(value = "Minor Version", required = false) @RequestHeader(required = false, value = XMINORVERSION) String minorVersion,
+            @ApiParam(value = "Patch Version", required = false) @RequestHeader(required = false, value = XPATCHVERSION) String patchVersion,
+            @ApiParam(value = "AID", required = true) @RequestHeader("aid") String aid,
+			@ApiParam(value = "Application namespace", required = true) @RequestHeader("ns") String ns,
+			@ApiParam(value = "Authorization", required = true) @RequestHeader(MusicUtil.AUTHORIZATION) String authorization,
+			@ApiParam(value = "Key Space", required = true) @PathVariable("keyspace") String keyspace,
+			@ApiParam(value = "Table Name", required = true) @PathVariable("qname") String tablename,
+			@RequestParam MultiValueMap<String, String> info) throws Exception {
+		
+		int limit = 1; // peek must return just the top row
+		Map<String, String> auth = new HashMap<>();
+		String userId = auth.get(MusicUtil.USERID);
+		String password = auth.get(MusicUtil.PASSWORD);
+		ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
 
-    if (clusteringKey.trim().isEmpty()) {
-        logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA,
-                ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
-        return response.status(Status.BAD_REQUEST)
-                .entity(new JsonResponse(ResultType.FAILURE)
-                        .setError("CreateQ: Clustering key cannot be empty").toMap())
-                .build();
-    }
+		PreparedQueryObject queryObject = new PreparedQueryObject();
+		if (info == null)
+			queryObject.appendQueryString("SELECT *  FROM " + keyspace + "." + tablename + " LIMIT " + limit + ";");
+		else {
 
-    if((filteringKey != null) && (filteringKey.equalsIgnoreCase(partitionKey))) {
-        logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA,
-                ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
-        return response.status(Status.BAD_REQUEST)
-                .entity(new JsonResponse(ResultType.FAILURE)
-                        .setError("CreateQ: Filtering key cannot be same as Partition Key").toMap())
-                .build();
-    }
+			try {
+				queryObject = selectSpecificQuery(version, minorVersion, patchVersion, aid, ns,
+						userId, password, keyspace, tablename, info, limit);
+				
+			} catch (MusicServiceException ex) {
+				logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.UNKNOWNERROR, ErrorSeverity.WARN,
+						ErrorTypes.GENERALSERVICEERROR);
+				return response.status(Status.BAD_REQUEST)
+						.entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
+			}
+		}
 
-    return new RestMusicDataAPI().createTable(version, minorVersion, patchVersion, aid, ns, authorization, tableObj, keyspace, tablename);
-  }
+		try {
+			ResultSet results = MusicCore.get(queryObject);
+			return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS)
+					.setDataResult(MusicDataStoreHandle.marshallResults(results)).toMap()).build();
+		} catch (MusicServiceException ex) {
+			logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR,
+					ErrorTypes.MUSICSERVICEERROR);
+			return response.status(Status.BAD_REQUEST)
+					.entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
+		}
+	}
 
-  /**
-   * 
-   * @param insObj
-   * @param keyspace
-   * @param tablename
-   * @throws Exception
-   */
-  @POST
-  @Path("/keyspaces/{keyspace}/{qname}/rows")
-  @ApiOperation(value = "", response = Void.class)
-  @Consumes(MediaType.APPLICATION_JSON)
-  @Produces(MediaType.APPLICATION_JSON)
-  // public Map<String, Object> insertIntoQ(
-  public Response insertIntoQ(
-          @ApiParam(value = "Major Version", required = true) @PathParam("version") String version,
-          @ApiParam(value = "Minor Version",
-                  required = false) @HeaderParam("X-minorVersion") String minorVersion,
-          @ApiParam(value = "Patch Version",
-                  required = false) @HeaderParam("X-patchVersion") String patchVersion,
-          @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
-          @ApiParam(value = "Application namespace", required = true) @HeaderParam("ns") String ns,
-          @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-          JsonInsert insObj,
-          @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
-          @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename)
-          throws Exception {
-    // ,@Context HttpServletResponse response) throws Exception {
+	/**
+	 * 
+	 * @param version
+	 * @param minorVersion
+	 * @param patchVersion
+	 * @param aid
+	 * @param ns
+	 * @param authorization
+	 * @param keyspace
+	 * @param tablename
+	 * @param info
+	 * @return
+	 * @throws Exception
+	 */
+	@GetMapping(value = "/keyspaces/{keyspace}/{qname}/filter", produces = MediaType.APPLICATION_JSON)
+	@ApiOperation(value = "filter", response = Map.class)
+	public Response filter(@ApiParam(value = "Major Version", required = true) @PathVariable("version") String version,
+			@ApiParam(value = "Minor Version", required = false) @RequestHeader(required = false, value = XMINORVERSION) String minorVersion,
+            @ApiParam(value = "Patch Version", required = false) @RequestHeader(required = false, value = XPATCHVERSION) String patchVersion,
+            @ApiParam(value = "AID", required = true) @RequestHeader("aid") String aid,
+			@ApiParam(value = "Application namespace", required = true) @RequestHeader("ns") String ns,
+			@ApiParam(value = "Authorization", required = true) @RequestHeader(MusicUtil.AUTHORIZATION) String authorization,
+			@ApiParam(value = "Key Space", required = true) @PathVariable("keyspace") String keyspace,
+			@ApiParam(value = "Table Name", required = true) @PathVariable("qname") String tablename,
+			@RequestParam MultiValueMap<String, String> info) throws Exception {
+		
+		return musicDataAPIService.select(VERSION, minorVersion, patchVersion, aid, ns, authorization, keyspace, tablename, info);
 
-    // Map<String, Object> valuesMap = insObj.getValues();
-    // check valuesMap.isEmpty and proceed
-    // if(valuesMap.isEmpty() ) {
-    // response.addHeader(xLatestVersion, MusicUtil.getVersion());
-    ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
-    if (insObj.getValues().isEmpty()) {
-      // response.status(404);
-      logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA,
-              ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
-      return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
-              .setError("Required HTTP Request body is missing.").toMap()).build();
-    }
-    return new RestMusicDataAPI().insertIntoTable(version, minorVersion, patchVersion, aid, ns,
-            authorization, insObj, keyspace, tablename);
-  }
+	}
 
-  /**
-   * 
-   * @param updateObj
-   * @param keyspace
-   * @param tablename
-   * @param info
-   * @return
-   * @throws Exception
-   */
-  @PUT
-  @Path("/keyspaces/{keyspace}/{qname}/rows")
-  @ApiOperation(value = "updateQ", response = String.class)
-  @Consumes(MediaType.APPLICATION_JSON)
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response updateQ(
-          @ApiParam(value = "Major Version", required = true) @PathParam("version") String version,
-          @ApiParam(value = "Minor Version",
-                  required = false) @HeaderParam("X-minorVersion") String minorVersion,
-          @ApiParam(value = "Patch Version",
-                  required = false) @HeaderParam("X-patchVersion") String patchVersion,
-          @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
-          @ApiParam(value = "Application namespace", required = true) @HeaderParam("ns") String ns,
-          @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-          JsonUpdate updateObj,
-          @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
-          @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename,
-          @Context UriInfo info) throws Exception {
+	/**
+	 * 
+	 * @param tabObj
+	 * @param keyspace
+	 * @param tablename
+	 * @throws Exception
+	 */
+	@DeleteMapping(value = "/keyspaces/{keyspace}/{qname}", produces = MediaType.APPLICATION_JSON)
+	@ApiOperation(value = "DropQ", response = String.class)
+	public Response dropQ(@ApiParam(value = "Major Version", required = true) @PathVariable("version") String version,
+			@ApiParam(value = "Minor Version", required = false) @RequestHeader(required = false, value = XMINORVERSION) String minorVersion,
+            @ApiParam(value = "Patch Version", required = false) @RequestHeader(required = false, value = XPATCHVERSION) String patchVersion,
+            @ApiParam(value = "AID", required = true) @RequestHeader("aid") String aid,
+			@ApiParam(value = "Application namespace", required = true) @RequestHeader("ns") String ns,
+			@ApiParam(value = "Authorization", required = true) @RequestHeader(MusicUtil.AUTHORIZATION) String authorization,
+			@ApiParam(value = "Key Space", required = true) @PathVariable("keyspace") String keyspace,
+			@ApiParam(value = "Table Name", required = true) @PathVariable("qname") String tablename) throws Exception {
 
-    //logger.info(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA, ErrorSeverity.CRITICAL,
-      //      ErrorTypes.DATAERROR);
-    ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
-    if (updateObj.getValues().isEmpty()) {
-      // response.status(404);
-      logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA,
-              ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
-      return response.status(Status.BAD_REQUEST)
-              .entity(new JsonResponse(ResultType.FAILURE).setError(
-                      "Required HTTP Request body is missing. JsonUpdate updateObj.getValues() is empty. ")
-                      .toMap())
-              .build();
+		return musicDataAPIService.dropTable(VERSION, minorVersion, patchVersion, aid, ns, authorization, keyspace,
+                tablename);
+	}
+	
+	private static final String XMINORVERSION = "X-minorVersion";
+    private static final String XPATCHVERSION = "X-patchVersion";
+	private static final String VERSION = "v2";
+	
+	/**
+	 * 
+	 * @param keyspace
+	 * @param tablename
+	 * @param info
+	 * @param limit
+	 * @return
+	 * @throws MusicServiceException
+	 */
+	public PreparedQueryObject selectSpecificQuery(String version, String minorVersion, String patchVersion, String aid,
+			String ns, String userId, String password, String keyspace, String tablename,
+			MultiValueMap<String, String> info, int limit) throws MusicServiceException {
 
- 
-    }
-    return new RestMusicDataAPI().updateTable(version, minorVersion, patchVersion, aid, ns, 
-            authorization,updateObj, keyspace, tablename, info);
-  }
+		PreparedQueryObject queryObject = new PreparedQueryObject();
+		StringBuilder rowIdString = getRowIdentifier(keyspace, tablename, info, queryObject).rowIdString;
 
-  /**
-   * 
-   * @param delObj
-   * @param keyspace
-   * @param tablename
-   * @param info
-   * 
-   * @return
-   * @throws Exception
-   */
+		queryObject.appendQueryString("SELECT *  FROM " + keyspace + "." + tablename + " WHERE " + rowIdString);
 
-  @DELETE
-  @Path("/keyspaces/{keyspace}/{qname}/rows")
-  @ApiOperation(value = "deleteQ", response = String.class)
-  @Consumes(MediaType.APPLICATION_JSON)
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response deleteFromQ(
-          @ApiParam(value = "Major Version", required = true) @PathParam("version") String version,
-          @ApiParam(value = "Minor Version",
-                  required = false) @HeaderParam("X-minorVersion") String minorVersion,
-          @ApiParam(value = "Patch Version",
-                  required = false) @HeaderParam("X-patchVersion") String patchVersion,
-          @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
-          @ApiParam(value = "Application namespace", required = true) @HeaderParam("ns") String ns,
-          @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-         // @ApiParam(value = "userId", required = true) @HeaderParam("userId") String userId,
-         // @ApiParam(value = "Password", required = true) @HeaderParam("password") String password,
-          JsonDelete delObj,
-          @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
-          @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename,
-          @Context UriInfo info) throws Exception {
-    // added checking as per RestMusicDataAPI
-    ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
-    if (delObj == null) {
-      // response.status(404);
-      logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA,
-              ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
-      return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
-              .setError("deleteFromQ JsonDelete delObjis empty").toMap()).build();
-    }
+		if (limit != -1) {
+			queryObject.appendQueryString(" LIMIT " + limit);
+		}
 
-    return new RestMusicDataAPI().deleteFromTable(version, minorVersion, patchVersion, aid, ns,
-            authorization, delObj, keyspace, tablename, info);
-  }
+		queryObject.appendQueryString(";");
+		return queryObject;
 
-  /**
-   * 
-   * @param keyspace
-   * @param tablename
-   * @param info
-   * @return
-   * @throws Exception
-   */
-  @GET
-  @Path("/keyspaces/{keyspace}/{qname}/peek")
-  @ApiOperation(value = "", response = Map.class)
-  @Produces(MediaType.APPLICATION_JSON)
-  //public Map<String, HashMap<String, Object>> peek(
-  public Response peek(
-          @ApiParam(value = "Major Version", required = true) @PathParam("version") String version,
-          @ApiParam(value = "Minor Version",
-                  required = false) @HeaderParam("X-minorVersion") String minorVersion,
-          @ApiParam(value = "Patch Version",
-                  required = false) @HeaderParam("X-patchVersion") String patchVersion,
-          @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
-          @ApiParam(value = "Application namespace", required = true) @HeaderParam("ns") String ns,
-          @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-          @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
-          @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename,
-          @Context UriInfo info) throws Exception {
-    int limit =1; //peek must return just the top row
-    Map<String ,String> auth = new HashMap<>();
-    String userId =auth.get(MusicUtil.USERID);
-    String password =auth.get(MusicUtil.PASSWORD);  
-    ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
-   
-    PreparedQueryObject queryObject = new PreparedQueryObject();
-    if (info.getQueryParameters() == null ) //|| info.getQueryParameters().isEmpty())
-      queryObject.appendQueryString(
-              "SELECT *  FROM " + keyspace + "." + tablename + " LIMIT " + limit + ";");
-    else {
+	}
 
-      try {
-        queryObject = new RestMusicDataAPI().selectSpecificQuery(version, minorVersion,
-                patchVersion, aid, ns, userId, password, keyspace, tablename, info, limit);
-      } catch (MusicServiceException ex) {
-        logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.UNKNOWNERROR,
-                ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
-        return response.status(Status.BAD_REQUEST)
-                .entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap())
-                .build();
-      }
-    }
+	
+	private class RowIdentifier {
+		public String primarKeyValue;
+		public StringBuilder rowIdString;
+		@SuppressWarnings("unused")
+		public PreparedQueryObject queryObject;// the string with all the row
+												// identifiers separated by AND
 
-    try {
-      ResultSet results = MusicCore.get(queryObject);
-      return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS)
-              .setDataResult(MusicDataStoreHandle.marshallResults(results)).toMap()).build();
-    } catch (MusicServiceException ex) {
-      logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.UNKNOWNERROR,
-              ErrorSeverity.ERROR, ErrorTypes.MUSICSERVICEERROR);
-      return response.status(Status.BAD_REQUEST)
-              .entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap())
-              .build();
-    }
-  }
-
-  /**
-   * 
-   *
-   * @param keyspace
-   * @param tablename
-   * @param info
-   * @return
-   * @throws Exception
-   */
-  @GET
-  @Path("/keyspaces/{keyspace}/{qname}/filter")
-  @ApiOperation(value = "filter", response = Map.class)
-  @Produces(MediaType.APPLICATION_JSON)
-  // public Map<String, HashMap<String, Object>> filter(
-  public Response filter(
-          @ApiParam(value = "Major Version", required = true) @PathParam("version") String version,
-          @ApiParam(value = "Minor Version",
-                  required = false) @HeaderParam("X-minorVersion") String minorVersion,
-          @ApiParam(value = "Patch Version",
-                  required = false) @HeaderParam("X-patchVersion") String patchVersion,
-          @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
-          @ApiParam(value = "Application namespace", required = true) @HeaderParam("ns") String ns,
-          @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-         // @ApiParam(value = "userId", required = true) @HeaderParam("userId") String userId,
-          //@ApiParam(value = "Password", required = true) @HeaderParam("password") String password,
-          @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
-          @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename,
-          @Context UriInfo info) throws Exception {
-    //int limit = -1;
-    /*
-     * PreparedQueryObject query = new RestMusicDataAPI().selectSpecificQuery(version, minorVersion,
-     * patchVersion, aid, ns, userId, password, keyspace, tablename, info, limit); ResultSet results
-     * = MusicCore.get(query); return MusicCore.marshallResults(results);
-     */
-   /* Map<String ,String> auth = new HashMap<>();
-    String userId =auth.get(MusicUtil.USERID);
-    String password =auth.get(MusicUtil.PASSWORD);
-   */ 
-    return new RestMusicDataAPI().select(version, minorVersion, patchVersion, aid, ns, authorization, keyspace, tablename, info);// , limit)
-    
-  }
-
-  /**
-   * 
-   * @param tabObj
-   * @param keyspace
-   * @param tablename
-   * @throws Exception
-   */
-  @DELETE
-  @ApiOperation(value = "DropQ", response = String.class)
-  @Path("/keyspaces/{keyspace}/{qname}")
-  @Produces(MediaType.APPLICATION_JSON)
-  public Response dropQ(
-          @ApiParam(value = "Major Version", required = true) @PathParam("version") String version,
-          @ApiParam(value = "Minor Version",
-                  required = false) @HeaderParam("X-minorVersion") String minorVersion,
-          @ApiParam(value = "Patch Version",
-                  required = false) @HeaderParam("X-patchVersion") String patchVersion,
-          @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
-          @ApiParam(value = "Application namespace", required = true) @HeaderParam("ns") String ns,
-          @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-         // @ApiParam(value = "userId", required = true) @HeaderParam("userId") String userId,
-          //@ApiParam(value = "Password", required = true) @HeaderParam("password") String password,
-          // cjc JsonTable tabObj,
-          @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
-          @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename)
-          throws Exception {
-    // @Context HttpServletResponse response) throws Exception {
-    // tabObj never in use & thus no need to verify
-
-
-    return new RestMusicDataAPI().dropTable(version, minorVersion, patchVersion, aid, ns, authorization, keyspace, tablename);
-  }
+		public RowIdentifier(String primaryKeyValue, StringBuilder rowIdString, PreparedQueryObject queryObject) {
+			this.primarKeyValue = primaryKeyValue;
+			this.rowIdString = rowIdString;
+			this.queryObject = queryObject;
+		}
+	}
+	
+	/**
+	 * 
+	 * @param keyspace
+	 * @param tablename
+	 * @param rowParams
+	 * @param queryObject
+	 * @return
+	 * @throws MusicServiceException
+	 */
+	private RowIdentifier getRowIdentifier(String keyspace, String tablename, MultiValueMap<String, String> rowParams,
+			PreparedQueryObject queryObject) throws MusicServiceException {
+		StringBuilder rowSpec = new StringBuilder();
+		int counter = 0;
+		TableMetadata tableInfo = MusicDataStoreHandle.returnColumnMetadata(keyspace, tablename);
+		if (tableInfo == null) {
+			logger.error(EELFLoggerDelegate.errorLogger,
+					"Table information not found. Please check input for table name= " + keyspace + "." + tablename);
+			throw new MusicServiceException(
+					"Table information not found. Please check input for table name= " + keyspace + "." + tablename);
+		}
+		StringBuilder primaryKey = new StringBuilder();
+		for (MultivaluedMap.Entry<String, List<String>> entry : rowParams.entrySet()) {
+			String keyName = entry.getKey();
+			List<String> valueList = entry.getValue();
+			String indValue = valueList.get(0);
+			DataType colType = null;
+			Object formattedValue = null;
+			try {
+				colType = tableInfo.getColumn(entry.getKey()).getType();
+				formattedValue = MusicUtil.convertToActualDataType(colType, indValue);
+			} catch (Exception e) {
+				logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
+			}
+			if (tableInfo.getPrimaryKey().get(0).getName().equals(entry.getKey()))
+				primaryKey.append(indValue);
+			rowSpec.append(keyName + "= ?");
+			queryObject.addValue(formattedValue);
+			if (counter != rowParams.size() - 1)
+				rowSpec.append(" AND ");
+			counter = counter + 1;
+		}
+		return new RowIdentifier(primaryKey.toString(), rowSpec, queryObject);
+	}
 }

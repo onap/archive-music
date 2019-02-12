@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2019 IBM
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -32,6 +34,7 @@ import org.onap.music.datastore.Condition;
 import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.datastore.jsonobjects.CassaKeyspaceObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
@@ -149,5 +152,13 @@ private static MusicCoreService musicCore = MusicCassaCore.getInstance();
 			throws MusicServiceException, MusicQueryException, MusicLockingException {
 		return musicCore.getLockQueueSize(fullyQualifiedKey);
 	}
+	
+	public static ResultType createKeyspace(CassaKeyspaceObject cassaKeyspaceObject) throws MusicServiceException {
+        return musicCore.createKeyspace(cassaKeyspaceObject);
+    }
+
+    public static ResultType deleteKeyspace(CassaKeyspaceObject cassaKeyspaceObject) throws MusicServiceException {
+        return musicCore.createKeyspace(cassaKeyspaceObject);
+    }
 
 }

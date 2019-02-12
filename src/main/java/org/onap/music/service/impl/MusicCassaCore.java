@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2019 IBM
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -33,6 +35,7 @@ import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.Condition;
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.datastore.jsonobjects.CassaKeyspaceObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
@@ -744,4 +747,43 @@ public class MusicCassaCore implements MusicCoreService {
 
         return getLockingServiceHandle().getLockQueueSize(keyspace, table, primaryKeyValue);
 	}
+	
+	@Override
+    public ResultType createKeyspace(CassaKeyspaceObject cassaKeyspaceObject) throws MusicServiceException {
+        logger.info(EELFLoggerDelegate.applicationLogger, "Coming Inside MusicCassaCore createKeyspace Method.");
+        boolean result = false;
+        try {
+            String consistencyInfo = cassaKeyspaceObject.getConsistencyInfo().get("type");
+            logger.info(EELFLoggerDelegate.applicationLogger,
+                    "consistencyInfo createKeyspace Method." + consistencyInfo);
+            result = MusicDataStoreHandle.getDSHandle().executePut(cassaKeyspaceObject.genKeyspaceQuery(),
+                    consistencyInfo);
+        } catch (MusicQueryException | MusicServiceException ex) {
+            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(), AppMessages.UNKNOWNERROR, ErrorSeverity.WARN,
+                    ErrorTypes.MUSICSERVICEERROR);
+            throw new MusicServiceException(ex.getMessage());
+        }
+        logger.info(EELFLoggerDelegate.applicationLogger, " Keyspace Creation Process successfully Completed");
+
+        return result ? ResultType.SUCCESS : ResultType.FAILURE;
+    }
+
+    @Override
+    public ResultType deleteKeyspace(CassaKeyspaceObject cassaKeyspaceObject) throws MusicServiceException {
+        logger.info(EELFLoggerDelegate.applicationLogger, "Coming Inside MusicCassaCore deleteKeyspace Method.");
+        boolean result = false;
+        try {
+            String consistencyInfo = cassaKeyspaceObject.getConsistencyInfo().get("type");
+            logger.info(EELFLoggerDelegate.applicationLogger,
+                    "consistencyInfo deleteKeyspace Method." + consistencyInfo);
+            result = MusicDataStoreHandle.getDSHandle().executePut(cassaKeyspaceObject.genDropKeyspaceQuery(),
+                    consistencyInfo);
+        } catch (MusicQueryException | MusicServiceException ex) {
+            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(), AppMessages.UNKNOWNERROR, ErrorSeverity.WARN,
+                    ErrorTypes.MUSICSERVICEERROR);
+            throw new MusicServiceException(ex.getMessage());
+        }
+        logger.info(EELFLoggerDelegate.applicationLogger, " Keyspace deletion Process successfully Completed");
+        return result ? ResultType.SUCCESS : ResultType.FAILURE;
+    }
 }
