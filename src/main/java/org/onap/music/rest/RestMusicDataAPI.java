@@ -404,7 +404,7 @@ public class RestMusicDataAPI {
                     @ApiParam(value = "Table Name",required = true) @PathParam("tablename") String tablename) throws Exception {
         try {
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        if((keyspace == null || keyspace == null) || (tablename.isEmpty() || tablename.isEmpty())){
+        if(keyspace == null || tablename.isEmpty()){
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
                     .setError("one or more path parameters are not set, please check and try again")
                           .toMap()).build();
