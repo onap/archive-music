@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8b285eb9_065060cf",
+        "filename": "src/main/java/org/onap/music/rest/RestMusicDataAPI.java",
+        "patchSetId": 3
+      },
+      "lineNbr": 409,
+      "author": {
+        "id": 3949
+      },
+      "writtenOn": "2019-02-12T12:44:38Z",
+      "side": 1,
+      "message": "The inner parentheses are redundant",
+      "range": {
+        "startLine": 409,
+        "startChar": 11,
+        "endLine": 409,
+        "endChar": 98
+      },
+      "revId": "14b0591c052e7e2b2f95758e808385e2a57eb613",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
