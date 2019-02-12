@@ -4,7 +4,7 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
- *  Modifications Copyright (c) 2018 IBM
+ *  Modifications Copyright (c) 2019 IBM
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -127,7 +127,6 @@ public class MusicDataStore {
         try {
             connectToCassaCluster(remoteIp);
         } catch (MusicServiceException e) {
-            logger.error("Exception", e);
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
         }
     }
@@ -149,10 +148,8 @@ public class MusicDataStore {
                 }
             }
         } catch (SocketException e) {
-            logger.error("Exception", e);
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), AppMessages.CONNCECTIVITYERROR, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
         }catch(Exception e) {
-            logger.error("Exception", e);
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), ErrorSeverity.ERROR, ErrorTypes.GENERALSERVICEERROR);
         }
         return allPossibleIps;
@@ -200,7 +197,6 @@ public class MusicDataStore {
 
                 break;
             } catch (NoHostAvailableException e) {
-                logger.error("Exception", e);
                 address = it.next();
                 logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.HOSTUNAVAILABLE, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
             }
@@ -257,7 +253,6 @@ public class MusicDataStore {
         try {
             session = cluster.connect();
         } catch (Exception ex) {
-            logger.error("Exception", ex);
             logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.CASSANDRACONNECTIVITY, ErrorSeverity.ERROR, ErrorTypes.SERVICEUNAVAILABLE);
             throw new MusicServiceException(
                             "Error while connecting to Cassandra cluster.. " + ex.getMessage());
@@ -451,12 +446,10 @@ public class MusicDataStore {
 
         }
         catch (AlreadyExistsException ae) {
-            logger.error("Exception", ae);
             logger.error(EELFLoggerDelegate.errorLogger, ae.getMessage(),AppMessages.SESSIONFAILED+ " [" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
             throw new MusicServiceException(ae.getMessage());
         }
         catch (Exception e) {
-            logger.error("Exception", e);
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.SESSIONFAILED+ " [" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
             throw new MusicQueryException("Executing Session Failure for Request = " + "["
                             + queryObject.getQuery() + "]" + " Reason = " + e.getMessage());
