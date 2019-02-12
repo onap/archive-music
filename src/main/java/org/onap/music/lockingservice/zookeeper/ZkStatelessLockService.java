@@ -3,7 +3,8 @@
  * ===================================================================
  * Copyright (c) 2017 AT&T Intellectual Property 
  * ===================================================================
- * Modifications Copyright (c) 2018 IBM. 
+ * Modifications Copyright (c) 2018 IBM.
+ * Modifications Copyright (c) 2019 Samsung.
  * ===================================================================
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -39,7 +40,6 @@ import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
-import org.onap.music.service.impl.MusicZKCore;
 
 import com.datastax.driver.core.DataType;
 
@@ -127,6 +127,7 @@ public class ZkStatelessLockService extends ProtocolSupport {
             }
         }catch (InterruptedException e) {
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+            Thread.currentThread().interrupt();
         }catch (KeeperException e) {
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
@@ -144,6 +145,7 @@ public class ZkStatelessLockService extends ProtocolSupport {
             retryOperation(zop);
         }catch (InterruptedException e) {
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+            Thread.currentThread().interrupt();
         }catch (KeeperException e) {
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
@@ -303,20 +305,26 @@ public class ZkStatelessLockService extends ProtocolSupport {
                         Stat stat = null;
                         try {
                             stat = zookeeper.exists(id, false);
-                        } catch (KeeperException | InterruptedException e1) {
-                            e1.printStackTrace();
+                        } catch (InterruptedException e) {
+                            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+                            Thread.currentThread().interrupt();
+                        } catch (KeeperException e) {
+                            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
                         }
-                        Long ctime = stat.getCtime();
-                        MusicUtil.zkNodeMap.put(id, ctime);
-                        PreparedQueryObject pQuery = new PreparedQueryObject();
-                        pQuery.appendQueryString(
-                                        "INSERT INTO admin.locks(lock_id, ctime) VALUES (?,?)");
-                        try {
-                            pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), id));
-                            pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), ctime));
-                            MusicCore.eventualPut(pQuery);
-                        } catch (Exception e) {
-                               e.printStackTrace();
+
+                        if (stat != null){
+                            Long ctime = stat.getCtime();
+                            MusicUtil.zkNodeMap.put(id, ctime);
+                            PreparedQueryObject pQuery = new PreparedQueryObject();
+                            pQuery.appendQueryString(
+                                            "INSERT INTO admin.locks(lock_id, ctime) VALUES (?,?)");
+                            try {
+                                pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), id));
+                                pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), ctime));
+                                MusicCore.eventualPut(pQuery);
+                            } catch (Exception e) {
+                                logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.UNKNOWN);
+                            }
                         }
                         break;
                    }
