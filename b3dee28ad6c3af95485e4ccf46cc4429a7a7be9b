@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "cd9aa50c_9a59ca2e",
+        "filename": "src/main/java/org/onap/music/lockingservice/zookeeper/ZkStatelessLockService.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 325,
+      "author": {
+        "id": 3949
+      },
+      "writtenOn": "2019-02-12T10:03:13Z",
+      "side": 1,
+      "message": "Could this be a little more refined?",
+      "range": {
+        "startLine": 325,
+        "startChar": 37,
+        "endLine": 325,
+        "endChar": 48
+      },
+      "revId": "b3dee28ad6c3af95485e4ccf46cc4429a7a7be9b",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
