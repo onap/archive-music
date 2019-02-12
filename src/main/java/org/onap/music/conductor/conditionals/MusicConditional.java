@@ -254,6 +254,7 @@ public class MusicConditional {
         StringBuilder fieldsString = new StringBuilder("(vector_ts"+",");
         StringBuilder valueString = new StringBuilder("(" + "?" + ",");
         String vector = String.valueOf(Thread.currentThread().getId() + System.currentTimeMillis());
+        String localPrimaryKey;
         queryObject.addValue(vector);
         if(casscadeColumn!=null && casscadeColumnValues!=null) {
             fieldsString.append(casscadeColumn).append(" ,");
@@ -267,8 +268,8 @@ public class MusicConditional {
             fieldsString.append(entry.getKey());
             Object valueObj = entry.getValue();
             if (primaryKeyName.equals(entry.getKey())) {
-                primaryKey = entry.getValue() + "";
-                primaryKey = primaryKey.replace("'", "''");
+              localPrimaryKey = entry.getValue() + "";
+              localPrimaryKey = localPrimaryKey.replace("'", "''");
             }
             DataType colType = null;
             try {
