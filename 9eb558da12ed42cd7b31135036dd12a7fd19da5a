@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "57d99844_abdb63d9",
+        "filename": "src/main/java/org/onap/music/rest/RestMusicDataAPI.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 409,
+      "author": {
+        "id": 5094
+      },
+      "writtenOn": "2019-02-12T12:39:12Z",
+      "side": 1,
+      "message": "Good find.",
+      "parentUuid": "15250ce5_87fb2b82",
+      "range": {
+        "startLine": 409,
+        "startChar": 10,
+        "endLine": 409,
+        "endChar": 50
+      },
+      "revId": "9eb558da12ed42cd7b31135036dd12a7fd19da5a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "7c245005_4f1331b2",
         "filename": "src/main/java/org/onap/music/rest/RestMusicDataAPI.java",
         "patchSetId": 2
@@ -36,6 +60,30 @@
       "writtenOn": "2019-02-12T11:26:40Z",
       "side": 1,
       "message": "This is an outrageously obscure error which we could improve while we\u0027re at it - the code knows which parameter is not set, so why not tell it to the user?",
+      "range": {
+        "startLine": 411,
+        "startChar": 30,
+        "endLine": 411,
+        "endChar": 99
+      },
+      "revId": "9eb558da12ed42cd7b31135036dd12a7fd19da5a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ddc30f05_18285534",
+        "filename": "src/main/java/org/onap/music/rest/RestMusicDataAPI.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 411,
+      "author": {
+        "id": 5094
+      },
+      "writtenOn": "2019-02-12T12:39:12Z",
+      "side": 1,
+      "message": "It can be improved with more details.",
+      "parentUuid": "7c245005_4f1331b2",
       "range": {
         "startLine": 411,
         "startChar": 30,
