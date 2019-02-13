@@ -5,6 +5,7 @@
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
  *  Modifications Copyright (c) 2018 IBM
+ *  Modifications Copyright (c) 2019 Samsung
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,10 +37,6 @@ import javax.ws.rs.core.MediaType;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.jcs.JCS;
 import org.apache.commons.jcs.access.CacheAccess;
-import org.apache.commons.jcs.engine.CompositeCacheAttributes;
-import org.apache.commons.jcs.engine.ElementAttributes;
-import org.apache.commons.jcs.engine.behavior.ICompositeCacheAttributes;
-import org.apache.commons.jcs.engine.behavior.IElementAttributes;
 import org.mindrot.jbcrypt.BCrypt;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
@@ -47,7 +44,6 @@ import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicServiceException;
-import org.onap.music.service.impl.MusicZKCore;
 
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.PreparedStatement;
@@ -133,7 +129,6 @@ public class CachingUtil implements Runnable {
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), false));
         } catch (Exception e1) {
             logger.error(EELFLoggerDelegate.errorLogger, e1.getMessage(),AppMessages.CACHEERROR, ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
-            e1.printStackTrace();
         }
         ResultSet rs = MusicCore.get(pQuery);
         Iterator<Row> it = rs.iterator();
@@ -158,7 +153,6 @@ public class CachingUtil implements Runnable {
             } catch (Exception e) {
                 logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.INFO, ErrorTypes.GENERALSERVICEERROR);
                 logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),"Something at AAF was changed for ns: " + nameSpace+" So not updating Cache for the namespace. ");
-                e.printStackTrace();
             }
         }
 
@@ -317,7 +311,6 @@ public class CachingUtil implements Runnable {
                     appNameCache.put(namespace, isAAF);
             } catch (Exception e) {
                 logger.error(EELFLoggerDelegate.errorLogger,  e.getMessage(), AppMessages.QUERYERROR,ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
-                e.printStackTrace();
             }
         }
         return isAAF;
@@ -334,8 +327,7 @@ public class CachingUtil implements Runnable {
             try {
                 uuid = rs.getUUID("uuid").toString();
             } catch (Exception e) {
-                logger.error(EELFLoggerDelegate.errorLogger,"Exception occured during uuid retrieval from DB."+e.getMessage());
-                e.printStackTrace();
+                logger.error(EELFLoggerDelegate.errorLogger,"Exception occurred during uuid retrieval from DB."+e.getMessage());
             }
         }
         return uuid;
@@ -352,7 +344,6 @@ public class CachingUtil implements Runnable {
             appName = rs.getString("application_name");
         } catch (Exception e) {
             logger.error(EELFLoggerDelegate.errorLogger,  e.getMessage(), AppMessages.QUERYERROR, ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
-            e.printStackTrace();
         }
         return appName;
     }
@@ -398,9 +389,9 @@ public class CachingUtil implements Runnable {
         try {
             rs = MusicCore.get(queryObject).one();
         } catch (MusicServiceException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            resultMap.put("Exception", "Unable to process operation. Error is "+e.getMessage());
+            String errorMsg = "Unable to process operation. Error is "+e.getMessage();
+            logger.error(EELFLoggerDelegate.errorLogger, errorMsg);
+            resultMap.put("Exception", errorMsg);
             return resultMap;
         } catch (InvalidQueryException e) {
             logger.error(EELFLoggerDelegate.errorLogger,"Exception admin keyspace not configured."+e.getMessage());
@@ -443,14 +434,15 @@ public class CachingUtil implements Runnable {
         try {
             queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), keyspace));
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(EELFLoggerDelegate.errorLogger,"Adding value to query object failed: " + e.getMessage());
         }
         Row rs = null;
         try {
             rs = MusicCore.get(queryObject).one();
         } catch (MusicServiceException e) {
-            e.printStackTrace();
-            resultMap.put("Exception", "Unable to process operation. Error is "+e.getMessage());
+            String errMsg = "Unable to process operation. Error is "+e.getMessage();
+            logger.error(EELFLoggerDelegate.errorLogger, errMsg);
+            resultMap.put("Exception", errMsg);
             return resultMap;
         }
         if(rs == null) {
@@ -486,7 +478,8 @@ public class CachingUtil implements Runnable {
         try {
             MusicCore.nonKeyRelatedPut(pQuery, "eventual");
         } catch (Exception e) {
-              e.printStackTrace();
+            logger.error(EELFLoggerDelegate.errorLogger,  e.getMessage(), "Deleting keys from "
+                + "DB failed.");
         }
     }
 }
