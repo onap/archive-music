@@ -4,7 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
- * Modifications Copyright (c) 2018 IBM.
+ *  Modifications Copyright (c) 2018 IBM.
+ *  Modifications Copyright (c) 2019 Samsung.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,6 +25,10 @@
 
 package org.onap.music.main;
 
+import com.datastax.driver.core.ColumnDefinitions;
+import com.datastax.driver.core.ColumnDefinitions.Definition;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -44,8 +49,12 @@ import java.util.concurrent.ConcurrentMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
+import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.eelf.logging.format.AppMessages;
+import org.onap.music.eelf.logging.format.ErrorSeverity;
+import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.service.MusicCoreService;
@@ -808,6 +817,42 @@ public class MusicUtil {
     public static void setIsCadi(boolean isCadi) {
         // TODO Auto-generated method stub
         MusicUtil.isCadi = isCadi;
+    }
+
+    public static void writeBackToQuorum(PreparedQueryObject selectQuery, String primaryKeyName,
+        PreparedQueryObject updateQuery, String keyspace, String table,
+        Object cqlFormattedPrimaryKeyValue)
+        throws Exception {
+        try {
+            ResultSet results = MusicDataStoreHandle.getDSHandle().executeQuorumConsistencyGet(selectQuery);
+            // write it back to a quorum
+            Row row = results.one();
+            ColumnDefinitions colInfo = row.getColumnDefinitions();
+            int totalColumns = colInfo.size();
+            int counter = 1;
+            StringBuilder fieldValueString = new StringBuilder("");
+            for (Definition definition : colInfo) {
+                String colName = definition.getName();
+                if (colName.equals(primaryKeyName))
+                    continue;
+                DataType colType = definition.getType();
+                Object valueObj = MusicDataStoreHandle.getDSHandle().getColValue(row, colName, colType);
+                Object valueString = MusicUtil.convertToActualDataType(colType, valueObj);
+                fieldValueString.append(colName + " = ?");
+                updateQuery.addValue(valueString);
+                if (counter != (totalColumns - 1))
+                    fieldValueString.append(",");
+                counter = counter + 1;
+            }
+            updateQuery.appendQueryString("UPDATE " + keyspace + "." + table + " SET "
+                + fieldValueString + " WHERE " + primaryKeyName + "= ? " + ";");
+            updateQuery.addValue(cqlFormattedPrimaryKeyValue);
+
+            MusicDataStoreHandle.getDSHandle().executePut(updateQuery, "critical");
+        } catch (MusicServiceException | MusicQueryException e) {
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.QUERYERROR +""+updateQuery ,
+                ErrorSeverity.MAJOR, ErrorTypes.QUERYERROR);
+        }
     }
     
     public static boolean getIsCadi() {
