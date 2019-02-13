@@ -3,6 +3,7 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *  Modifications Copyright (c) 2018 IBM. 
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -165,7 +166,7 @@ public class MusicCassaCore implements MusicCoreService {
         String keyspace = splitString[0].substring(1);//remove '$'
         String table = splitString[1];
         String primaryKeyValue = splitString[2].substring(0, splitString[2].lastIndexOf("$"));
-        fullyQualifiedKey = lockId.substring(1, lockId.lastIndexOf("$"));
+        String localFullyQualifiedKey = lockId.substring(1, lockId.lastIndexOf("$"));
         String lockRef = lockId.substring(lockId.lastIndexOf("$")+1); //lockRef is "$" to end
         
         ReturnType result = isTopOfLockStore(keyspace, table, primaryKeyValue, lockRef);
@@ -175,7 +176,7 @@ public class MusicCassaCore implements MusicCoreService {
             
         //check to see if the value of the key has to be synced in case there was a forceful release
         String syncTable = keyspace+".unsyncedKeys_"+table;
-        String query = "select * from "+syncTable+" where key='"+fullyQualifiedKey+"';";
+        String query = "select * from "+syncTable+" where key='"+localFullyQualifiedKey+"';";
         PreparedQueryObject readQueryObject = new PreparedQueryObject();
         readQueryObject.appendQueryString(query);
         ResultSet results = MusicDataStoreHandle.getDSHandle().executeQuorumConsistencyGet(readQueryObject);            
@@ -189,7 +190,7 @@ public class MusicCassaCore implements MusicCoreService {
                 String exceptionAsString = sw.toString();
                 return new ReturnType(ResultType.FAILURE, "Exception thrown while syncing key:\n" + exceptionAsString);            
             }
-            String cleanQuery = "delete  from music_internal.unsynced_keys where key='"+fullyQualifiedKey+"';";
+            String cleanQuery = "delete  from music_internal.unsynced_keys where key='"+localFullyQualifiedKey+"';";
             PreparedQueryObject deleteQueryObject = new PreparedQueryObject();
             deleteQueryObject.appendQueryString(cleanQuery);
             MusicDataStoreHandle.getDSHandle().executePut(deleteQueryObject, "critical");
