@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2019 Samsung
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -25,12 +27,6 @@ package org.onap.music.main;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Iterator;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
-import javax.servlet.annotation.WebListener;
 
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
@@ -52,13 +48,13 @@ public class CronJobManager {
 
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-   
+
     @Scheduled(cron = "0 0 0 * * ?")
     public void scheduleTaskWithFixedRate() {
         logger.info("Executing cronjob to cleanup locks..", dateTimeFormatter.format(LocalDateTime.now()) );
         deleteLocksFromDB();
     }
-    
+
     public void deleteLocksFromDB() {
         PreparedQueryObject pQuery = new PreparedQueryObject();
         String consistency = MusicUtil.EVENTUAL;
@@ -69,10 +65,9 @@ public class CronJobManager {
                 logger.error(EELFLoggerDelegate.errorLogger,"Error creating Admin.locks table.",AppMessages.QUERYERROR,ErrorSeverity.CRITICAL, ErrorTypes.QUERYERROR);
             }
         } catch (MusicServiceException e1) {
-            logger.error(EELFLoggerDelegate.errorLogger,e1.getMessage(),AppMessages.QUERYERROR,ErrorSeverity.CRITICAL, ErrorTypes.QUERYERROR);
-            e1.printStackTrace();
+            logger.error(EELFLoggerDelegate.errorLogger,e1,AppMessages.QUERYERROR,ErrorSeverity.CRITICAL, ErrorTypes.QUERYERROR);
         }
-        
+
         pQuery = new PreparedQueryObject();
         pQuery.appendQueryString(
                         "select * from admin.locks");
@@ -82,7 +77,7 @@ public class CronJobManager {
                 StringBuilder deleteKeys = new StringBuilder();
                 Boolean expiredKeys = false;
                 while (it.hasNext()) {
-                    Row row = (Row) it.next();
+                    Row row = it.next();
                     String id = row.getString("lock_id");
                     long ctime = Long.parseLong(row.getString("ctime"));
                     if(System.currentTimeMillis() >= ctime + 24 * 60 * 60 * 1000) {
@@ -102,8 +97,7 @@ public class CronJobManager {
                     CachingUtil.deleteKeysFromDB(deleteKeys.toString());
                }
             } catch (MusicServiceException e) {
-                logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(),AppMessages.CACHEERROR,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
-                e.printStackTrace();
+                logger.error(EELFLoggerDelegate.errorLogger,e,AppMessages.CACHEERROR,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
             }
     }
 }
