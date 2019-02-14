@@ -5,6 +5,7 @@
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
  *  Modifications Copyright (c) 2019 Samsung
+ *  Modifications Copyright (c) 2019 IBM
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -298,7 +299,7 @@ public class MusicZKCore implements MusicCoreService {
         logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: Set lock state to locked and assigned current lock ref "
                         + lockId + " as holder");
 
-        return new ReturnType(result?ResultType.SUCCESS:ResultType.FAILURE, "Set lock state to locked and assigned a lock holder");
+        return new ReturnType(ResultType.SUCCESS, "Set lock state to locked and assigned a lock holder");
     }
 
 
