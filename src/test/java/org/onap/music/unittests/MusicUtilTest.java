@@ -3,6 +3,7 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *  Modifications Copyright (C) 2019 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -202,6 +203,12 @@ public class MusicUtilTest {
         String result = MusicUtil.jsonMaptoSqlString(myMap,",");
         assertTrue(result.contains("name"));
         assertTrue(result.contains("value"));
+    }
+
+    @Test
+    public void testIsValidConsistency(){
+        assertTrue(MusicUtil.isValidConsistency("ALL"));
+        assertFalse(MusicUtil.isValidConsistency("TEST"));
     }
 
 }
