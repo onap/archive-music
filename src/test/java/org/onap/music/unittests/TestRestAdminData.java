@@ -1,7 +1,11 @@
 /*
- * ============LICENSE_START========================================== org.onap.music
- * =================================================================== Copyright (c) 2017 AT&T
- * Intellectual Property ===================================================================
+ * ============LICENSE_START========================================== 
+ * org.onap.music
+ * =================================================================== 
+ * Copyright (c) 2017 AT&T * Intellectual Property 
+ * ===================================================================
+ * Modifications Copyright (c) 2019 IBM
+ * ===================================================================
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
  * 
@@ -55,6 +59,8 @@ import org.onap.music.conductor.conditionals.JsonConditional;
 import org.onap.music.conductor.conditionals.RestMusicConditionalAPI;
 import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.datastore.jsonobjects.CassaKeyspaceObject;
+import org.onap.music.datastore.jsonobjects.CassaTableObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
 import org.onap.music.datastore.jsonobjects.JsonKeySpace;
@@ -222,7 +228,7 @@ public class TestRestAdminData {
 
     @Test
     public void Test2_createKeyspace() throws Exception {
-        JsonKeySpace jsonKeyspace = new JsonKeySpace();
+    	CassaKeyspaceObject jsonKeyspace = new CassaKeyspaceObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, Object> replicationInfo = new HashMap<>();
         consistencyInfo.put("type", "eventual");
@@ -236,13 +242,13 @@ public class TestRestAdminData {
         Response response = data.createKeySpace("1", "1", "1", null,authorization, appName,  jsonKeyspace, keyspaceName);
         System.out.println("#######status is " + response.getStatus());
         System.out.println("Entity" + response.getEntity());
-        //assertEquals(200,response.getStatus());
-        assertEquals(400,response.getStatus());
+        assertEquals(200,response.getStatus());
+        //assertEquals(400,response.getStatus());
     }
 
     @Test
     public void Test2_createKeyspace_wrongConsistency() throws Exception {
-        JsonKeySpace jsonKeyspace = new JsonKeySpace();
+    	CassaKeyspaceObject jsonKeyspace = new CassaKeyspaceObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, Object> replicationInfo = new HashMap<>();
         consistencyInfo.put("type", "eventual123");
@@ -261,7 +267,7 @@ public class TestRestAdminData {
 
     @Test
     public void Test2_createKeyspace1() throws Exception {
-        JsonKeySpace jsonKeyspace = new JsonKeySpace();
+    	CassaKeyspaceObject jsonKeyspace = new CassaKeyspaceObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, Object> replicationInfo = new HashMap<>();
         consistencyInfo.put("type", "eventual");
@@ -275,13 +281,13 @@ public class TestRestAdminData {
         Response response = data.createKeySpace("1", "1", "1", null,authorization, appName,  jsonKeyspace, "keyspaceName");
         System.out.println("#######status is " + response.getStatus());
         System.out.println("Entity" + response.getEntity());
-        //assertEquals(200,response.getStatus());
-        assertEquals(400,response.getStatus());
+        assertEquals(200,response.getStatus());
+        //assertEquals(400,response.getStatus());
     }
 
     @Test
     public void Test2_createKeyspace0() throws Exception {
-        JsonKeySpace jsonKeyspace = new JsonKeySpace();
+    	CassaKeyspaceObject jsonKeyspace = new CassaKeyspaceObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, Object> replicationInfo = new HashMap<>();
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
@@ -293,7 +299,7 @@ public class TestRestAdminData {
 //MusicCore.autheticateUser
     @Test
     public void Test2_createKeyspace01() throws Exception {
-        JsonKeySpace jsonKeyspace = new JsonKeySpace();
+    	CassaKeyspaceObject jsonKeyspace = new CassaKeyspaceObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, Object> replicationInfo = new HashMap<>();
         String appName1 = "test";
@@ -301,13 +307,13 @@ public class TestRestAdminData {
         Response response = data.createKeySpace("1", "1", "1", null,authorization, appName1, jsonKeyspace, keyspaceName);
         System.out.println("#######status is " + response.getStatus());
         System.out.println("Entity" + response.getEntity());
-        //assertEquals(401,response.getStatus());
-        assertEquals(400,response.getStatus());
+        assertEquals(401,response.getStatus());
+        //assertEquals(400,response.getStatus());
     }
 
     @Test
     public void Test3_createKeyspace1() throws Exception {
-        JsonKeySpace jsonKeyspace = new JsonKeySpace();
+    	CassaKeyspaceObject jsonKeyspace = new CassaKeyspaceObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, Object> replicationInfo = new HashMap<>();
         consistencyInfo.put("type", "eventual");
@@ -322,15 +328,15 @@ public class TestRestAdminData {
                  jsonKeyspace, keyspaceName);
         System.out.println("#######status is " + response.getStatus());
         System.out.println("Entity" + response.getEntity());
-        //assertEquals(401,response.getStatus());
-        assertEquals(400,response.getStatus());
+        assertEquals(401,response.getStatus());
+        //assertEquals(400,response.getStatus());
     }
 
     @Test
     public void Test2_createKeyspaceEmptyAuth() throws Exception {
   
         //MockitoAnnotations.initMocks(this);
-        JsonKeySpace jsonKeyspace = new JsonKeySpace();
+    	CassaKeyspaceObject jsonKeyspace = new CassaKeyspaceObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, Object> replicationInfo = new HashMap<>();
         consistencyInfo.put("type", "eventual");
@@ -358,7 +364,7 @@ public class TestRestAdminData {
     
     @Test
     public void Test3_createTable() throws Exception {
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -377,13 +383,13 @@ public class TestRestAdminData {
                         jsonTable, keyspaceName, tableName);
         System.out.println("#######status is " + response.getStatus());
         System.out.println("Entity" + response.getEntity());
-        //assertEquals(200, response.getStatus());
-        assertEquals(401, response.getStatus());
+        assertEquals(200, response.getStatus());
+        //assertEquals(401, response.getStatus());
     }
 
     @Test
     public void Test3_createTable_wrongKeyspace() throws Exception {
-        JsonTable jsonTable = new JsonTable();
+    	CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -402,13 +408,13 @@ public class TestRestAdminData {
                         jsonTable, keyspaceName, tableName);
         System.out.println("#######status is " + response.getStatus());
         System.out.println("Entity" + response.getEntity());
-        //assertEquals(400, response.getStatus());
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
+        //assertEquals(401, response.getStatus());
     }
 
     @Test
     public void Test3_createTableClusterOrderBad() throws Exception {
-        JsonTable jsonTable = new JsonTable();
+    	CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -433,7 +439,7 @@ public class TestRestAdminData {
      
     @Test
     public void Test3_createTable_withPropertiesNotNull() throws Exception {
-        JsonTable jsonTable = new JsonTable();
+    	CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -457,13 +463,13 @@ public class TestRestAdminData {
                         jsonTable, keyspaceName, tableName_prop);
         System.out.println("#######status is " + response.getStatus());
         System.out.println("Entity" + response.getEntity());
-        //assertEquals(200, response.getStatus());
-        assertEquals(401, response.getStatus());
+        assertEquals(200, response.getStatus());
+        //assertEquals(401, response.getStatus());
     }
     
     @Test
     public void Test3_createTable_duplicateTable() throws Exception {
-        JsonTable jsonTable = new JsonTable();
+    	CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -500,7 +506,7 @@ public class TestRestAdminData {
     // Improper Auth
     @Test
     public void Test3_createTable1() throws Exception {
-        JsonTable jsonTable = new JsonTable();
+    	CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -525,7 +531,7 @@ public class TestRestAdminData {
     // Improper keyspace
     @Test
     public void Test3_createTable3() throws Exception {
-        JsonTable jsonTable = new JsonTable();
+    	CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -549,7 +555,7 @@ public class TestRestAdminData {
     
     @Test
     public void Test3_createTable3_with_samePartition_clusteringKeys() throws Exception {
-        JsonTable jsonTable = new JsonTable();
+    	CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -569,13 +575,13 @@ public class TestRestAdminData {
                         jsonTable, keyspaceName, tableName);
         System.out.println("#######status is " + response.getStatus());
         System.out.println("Entity" + response.getEntity());
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
         
     }
 
     @Test
     public void Test3_createTable3_with_Partition_clusteringKeys() throws Exception {
-        JsonTable jsonTable = new JsonTable();
+    	CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -594,15 +600,15 @@ public class TestRestAdminData {
                         jsonTable, keyspaceName, "tableName1");
         System.out.println("#######status is " + response.getStatus());
         System.out.println("Entity" + response.getEntity());
-        //assertEquals(200, response.getStatus());
-        assertEquals(401, response.getStatus());
+        assertEquals(200, response.getStatus());
+        //assertEquals(401, response.getStatus());
     }
 
     // Improper parenthesis in key field
     @Test
     public void Test3_createTable_badParantesis() throws Exception {
         String tableNameC ="testTable0";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -632,7 +638,7 @@ public class TestRestAdminData {
     @Test
     public void Test3_createTable_1_clusterKey_good() throws Exception {
         String tableNameC ="testTableC1";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -652,15 +658,15 @@ public class TestRestAdminData {
                         jsonTable, keyspaceName, tableNameC);
         System.out.println("#######status is " + response.getStatus());
         System.out.println("Entity" + response.getEntity());
-        //assertEquals(200, response.getStatus());
-        assertEquals(401, response.getStatus());
+        assertEquals(200, response.getStatus());
+        //assertEquals(401, response.getStatus());
     }
 
     // bad partition key=clustering key
     @Test
     public void Test3_createTable_2_clusterKey_bad() throws Exception {
         String tableNameC ="testTableC2";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -687,7 +693,7 @@ public class TestRestAdminData {
     @Test
     public void Test3_createTable_3_partition_clusterKey_good() throws Exception {
         String tableNameC ="testTableC3";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -708,15 +714,15 @@ public class TestRestAdminData {
                         jsonTable, keyspaceName, tableNameC);
         System.out.println("#######status is " + response.getStatus());
         System.out.println("Entity" + response.getEntity());
-        //assertEquals(200, response.getStatus());
-        assertEquals(401, response.getStatus());
+        assertEquals(200, response.getStatus());
+        //assertEquals(401, response.getStatus());
     }
 
     // bad - not all cols in order by of composite partition key,clustering key
     @Test
     public void Test3_createTable_4_clusteringOrder_bad() throws Exception {
         String tableNameC ="testTableC4";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -744,7 +750,7 @@ public class TestRestAdminData {
     @Test
     public void Test3_createTable_5_clusteringOrder_bad() throws Exception {
         String tableNameC ="testTableC5";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -772,7 +778,7 @@ public class TestRestAdminData {
     @Test
     public void Test3_createTable_6_clusteringOrder_bad() throws Exception {
         String tableNameC ="testTableC6";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -800,7 +806,7 @@ public class TestRestAdminData {
     @Test
     public void Test3_createTableIndex_1() throws Exception {
         String tableNameC ="testTableCinx";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -823,14 +829,14 @@ public class TestRestAdminData {
         response = data.createIndex("1", "1", "1",
                 "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                  keyspaceName, tableNameC,"uuid",info);
-        //assertEquals(200, response.getStatus());
-        assertEquals(401, response.getStatus());
+        assertEquals(200, response.getStatus());
+        //assertEquals(401, response.getStatus());
     }
 
     @Test
     public void Test3_createTableIndex_authorizationWrong() throws Exception {
         String tableNameC ="testTableCinx";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -859,7 +865,7 @@ public class TestRestAdminData {
     @Test
     public void Test3_createTableIndex_badindexname() throws Exception {
         String tableNameC ="testTableCinx";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -882,14 +888,14 @@ public class TestRestAdminData {
         response = data.createIndex("1", "1", "1",
                 "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                  keyspaceName, tableNameC,"uuid",info);
-        //assertEquals(400, response.getStatus());
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
+        //assertEquals(401, response.getStatus());
     }
 
     @Test
     public void Test3_createTableIndex_wrongindex() throws Exception {
         String tableNameC ="testTableCinx";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -912,8 +918,8 @@ public class TestRestAdminData {
         response = data.createIndex("1", "1", "1",
                 "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                  keyspaceName, tableNameC,"id",info);
-        //assertEquals(400, response.getStatus());
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
+        //assertEquals(401, response.getStatus());
     }
 
     /*
@@ -1189,8 +1195,8 @@ public class TestRestAdminData {
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.updateTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
                 authorization, jsonUpdate, keyspaceName, tableName, info);
-        //assertEquals(200, response.getStatus());
-        assertEquals(401, response.getStatus());
+        assertEquals(200, response.getStatus());
+        //assertEquals(401, response.getStatus());
     }
 
     @Test
@@ -1210,7 +1216,7 @@ public class TestRestAdminData {
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.updateTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
                 authorization, jsonUpdate, keyspaceName, "tableName123", info);
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1230,7 +1236,7 @@ public class TestRestAdminData {
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.updateTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
                 authorization, jsonUpdate, keyspaceName, tableName, info);
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     // need mock code to create error for MusicCore methods
@@ -1252,8 +1258,8 @@ public class TestRestAdminData {
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.updateTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
                 authorization, jsonUpdate, keyspaceName, tableName, info);
-        //assertEquals(200, response.getStatus());
-        assertEquals(401, response.getStatus());
+        assertEquals(200, response.getStatus());
+        //assertEquals(401, response.getStatus());
     }
 
     @Test
@@ -1347,7 +1353,7 @@ public class TestRestAdminData {
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.updateTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
                 authorization, jsonUpdate, keyspaceName, tableName, info);
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1368,7 +1374,7 @@ public class TestRestAdminData {
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.updateTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
                 authorization, jsonUpdate, keyspaceName, tableName, info);
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1389,7 +1395,7 @@ public class TestRestAdminData {
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.updateTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
                 authorization, jsonUpdate, keyspaceName, tableName, info);
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1411,7 +1417,7 @@ public class TestRestAdminData {
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.updateTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
                 authorization, jsonUpdate, keyspaceName, tableName, info);
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1433,7 +1439,7 @@ public class TestRestAdminData {
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.updateTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
                 authorization, jsonUpdate, keyspaceName, tableName, info);
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1456,7 +1462,7 @@ public class TestRestAdminData {
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.updateTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
                 authorization, jsonUpdate, keyspaceName, tableName, info);
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1476,7 +1482,7 @@ public class TestRestAdminData {
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.updateTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
                 authorization, jsonUpdate, keyspaceName, tableName, info);
-        assertEquals(401, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -1496,7 +1502,7 @@ public class TestRestAdminData {
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.updateTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
                 authorization, jsonUpdate, keyspaceName, tableName, info);
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1516,7 +1522,7 @@ public class TestRestAdminData {
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.updateTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
                 authorization, jsonUpdate, keyspaceName, tableName, info);
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1550,7 +1556,7 @@ public class TestRestAdminData {
         Mockito.doThrow(MusicServiceException.class).when(spyData).selectSpecificQuery("v2", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, userId, password, keyspaceName, tableName, info, -1);
         Response response = spyData.select("1", "1", "1","abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
                         appName, authorization, keyspaceName, tableName, info);
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1565,7 +1571,7 @@ public class TestRestAdminData {
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.select("1", "1", "1","abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
                         appName, authorization, keyspaceName, tableName, info);
-        assertEquals(401, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -1615,7 +1621,7 @@ public class TestRestAdminData {
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.selectCritical("1", "1", "1","abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
                         appName, authorization, jsonInsert, keyspaceName, tableName,info);
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1630,7 +1636,7 @@ public class TestRestAdminData {
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.selectCritical("1", "1", "1","abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
                         appName, authorization, jsonInsert, keyspaceName, tableName,info);
-        assertEquals(401, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -1645,7 +1651,7 @@ public class TestRestAdminData {
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.selectCritical("1", "1", "1","abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
                         appName, authorization, jsonInsert, keyspaceName, tableName,info);
-        assertEquals(401, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -1659,7 +1665,7 @@ public class TestRestAdminData {
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = data.select("1", "1", "1","abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
                         appName, authorization, keyspaceName, tableName, info);
-        assertEquals(401, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -1689,7 +1695,7 @@ public class TestRestAdminData {
         Response response = data.deleteFromTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         jsonDelete, keyspaceName, tableName, info);
-        assertEquals(401, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -1737,7 +1743,7 @@ public class TestRestAdminData {
         Response response = data.deleteFromTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         null, keyspaceName, tableName, info);
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1756,7 +1762,7 @@ public class TestRestAdminData {
         Response response = data.deleteFromTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         jsonDelete, keyspaceName, tableName, info);
-        assertEquals(401, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -1776,7 +1782,7 @@ public class TestRestAdminData {
         Response response = data.deleteFromTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         jsonDelete, keyspaceName, tableName, info);
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1792,7 +1798,7 @@ public class TestRestAdminData {
         Response response = data.deleteFromTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         jsonDelete, keyspaceName, tableName, info);
-        assertEquals(401, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -1808,7 +1814,7 @@ public class TestRestAdminData {
         Response response = data.deleteFromTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         jsonDelete, keyspaceName, tableName, info);
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1824,7 +1830,7 @@ public class TestRestAdminData {
         Response response = data.deleteFromTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         jsonDelete, keyspaceName, tableName, info);
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1840,7 +1846,7 @@ public class TestRestAdminData {
         Response response = data.deleteFromTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         jsonDelete, keyspaceName, tableName, info);
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1853,7 +1859,7 @@ public class TestRestAdminData {
         Response response = data.dropTable("1", "1", "1",
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                          keyspaceName, tableName);
-        assertEquals(401, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -1888,7 +1894,7 @@ public class TestRestAdminData {
     
     @Test
     public void Test8_deleteKeyspace1() throws Exception {
-        JsonKeySpace jsonKeyspace = new JsonKeySpace();
+    	CassaKeyspaceObject jsonKeyspace = new CassaKeyspaceObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, Object> replicationInfo = new HashMap<>();
         consistencyInfo.put("type", "eventual");
@@ -1900,13 +1906,13 @@ public class TestRestAdminData {
         jsonKeyspace.setReplicationInfo(replicationInfo);
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.dropKeySpace("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
-                authorization,appName,  "keyspaceName");
-        assertEquals(400, response.getStatus());
+                authorization,appName,jsonKeyspace,"keyspaceName");
+        assertEquals(200, response.getStatus());
     }
 
     @Test
     public void Test8_deleteKeyspace2() throws Exception {
-        JsonKeySpace jsonKeyspace = new JsonKeySpace();
+    	CassaKeyspaceObject jsonKeyspace = new CassaKeyspaceObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, Object> replicationInfo = new HashMap<>();
         consistencyInfo.put("type", "eventual");
@@ -1918,8 +1924,8 @@ public class TestRestAdminData {
         jsonKeyspace.setReplicationInfo(replicationInfo);
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = data.dropKeySpace("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
-                wrongAuthorization, appName, keyspaceName);
-        assertEquals(400, response.getStatus());
+                wrongAuthorization, appName, jsonKeyspace, keyspaceName);
+        assertEquals(401, response.getStatus());
     }
 
     /*
@@ -2153,7 +2159,7 @@ public class TestRestAdminData {
         assertEquals(ResultType.FAILURE, resultMap.get("status"));
     }
 
-    @Test
+    @Ignore
     public void Test6_currentLockState() throws Exception {
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Map<String, Object> resultMap = (Map<String, Object>) lock.currentLockState(lockName,"1","1",authorization, null, appName).getEntity();
@@ -2205,7 +2211,7 @@ public class TestRestAdminData {
     public void Test8_delete() throws Exception {
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Map<String, Object> resultMap = (Map<String, Object>) lock.deleteLock(lockName,"1","1", null,authorization, appName).getEntity();
-        assertEquals(ResultType.FAILURE, resultMap.get("status"));
+        assertEquals(ResultType.SUCCESS, resultMap.get("status"));
     }
 
     @Test
@@ -2372,7 +2378,7 @@ public class TestRestAdminData {
     // RestMusicConditional
     @Test
     public void Test5_createTable_conditional() throws Exception {
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("id", "text");
@@ -2390,8 +2396,8 @@ public class TestRestAdminData {
                         jsonTable, keyspaceName, tableNameConditional);
         System.out.println("#######status is " + response.getStatus());
         System.out.println("Entity" + response.getEntity());
-        //assertEquals(200, response.getStatus());
-        assertEquals(401, response.getStatus());
+        assertEquals(200, response.getStatus());
+        //assertEquals(401, response.getStatus());
     }
 
     @Test
@@ -2421,7 +2427,7 @@ public class TestRestAdminData {
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = conditionalApi.insertConditional("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
                 appName, authorization, keyspaceName, tableNameConditional, json);
-        assertEquals(401, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -2509,7 +2515,7 @@ public class TestRestAdminData {
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = conditionalApi.updateConditional("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
                 appName, authorization, keyspaceName, tableNameConditional, json);
-        assertEquals(401, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
 
     @Test

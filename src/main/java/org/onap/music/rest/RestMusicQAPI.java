@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2019 IBM
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -24,6 +26,7 @@ package org.onap.music.rest;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -35,29 +38,29 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
-import org.onap.music.datastore.jsonobjects.JsonDelete;
-import org.onap.music.datastore.jsonobjects.JsonInsert;
-import org.onap.music.datastore.jsonobjects.JsonTable;
-import org.onap.music.datastore.jsonobjects.JsonUpdate;
-import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import javax.ws.rs.core.UriInfo;
 
-import org.onap.music.eelf.logging.format.AppMessages;
-import org.onap.music.eelf.logging.format.ErrorSeverity;
-import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.apache.commons.lang3.StringUtils;
 import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
-import com.datastax.driver.core.ResultSet;
+import org.onap.music.datastore.jsonobjects.CassaTableObject;
+import org.onap.music.datastore.jsonobjects.JsonDelete;
+import org.onap.music.datastore.jsonobjects.JsonInsert;
+import org.onap.music.datastore.jsonobjects.JsonUpdate;
+import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.eelf.logging.format.AppMessages;
+import org.onap.music.eelf.logging.format.ErrorSeverity;
+import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 import org.onap.music.response.jsonobjects.JsonResponse;
-import org.onap.music.service.impl.MusicZKCore;
+
+import com.datastax.driver.core.ResultSet;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -94,7 +97,7 @@ public class RestMusicQAPI {
           @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
           @ApiParam(value = "Application namespace", required = true) @HeaderParam("ns") String ns,
           @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-          JsonTable tableObj, 
+          CassaTableObject tableObj, 
           @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
           @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename)
           throws Exception {

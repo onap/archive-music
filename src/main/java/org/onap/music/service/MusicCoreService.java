@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2019 IBM
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -26,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.datastore.jsonobjects.CassaKeyspaceObject;
+import org.onap.music.datastore.jsonobjects.CassaTableObject;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
@@ -107,4 +111,12 @@ public interface MusicCoreService {
     public Map<String, Object> validateLock(String lockName);
 
     public MusicLockState releaseLock(String lockId, boolean voluntaryRelease);
+    
+    public ResultType createKeyspace(CassaKeyspaceObject cassaKeyspaceObject) throws MusicServiceException;
+    
+    public ResultType dropKeyspace(CassaKeyspaceObject cassaKeyspaceObject) throws MusicServiceException;
+    
+    public ResultType createTable(CassaTableObject cassaTableObject) throws MusicServiceException;
+    
+    public ResultType dropTable(CassaTableObject cassaTableObject) throws MusicServiceException;
 }
