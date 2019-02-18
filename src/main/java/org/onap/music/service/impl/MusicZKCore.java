@@ -233,73 +233,73 @@ public class MusicZKCore implements MusicCoreService {
             }
             logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: returning failure");
             return new ReturnType(ResultType.FAILURE, "Not your turn, someone else has the lock");
-        }
-
-
-        // this is for backward compatibility where locks could also be acquired on just
-        // keyspaces or tables.
-        if (isTableOrKeySpaceLock(key)) {
-            logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: A table or keyspace lock so no need to perform sync...so returning true");
-            return new ReturnType(ResultType.SUCCESS, "A table or keyspace lock so no need to perform sync...so returning true");
-        }
-
-        // read the lock name corresponding to the key and if the status is locked or being locked,
-        // then return false
-        MusicLockState currentMls = null;
-        MusicLockState newMls = null;
-        try {
-            currentMls = getMusicLockState(key);
-            String currentLockHolder = null;
-            if(currentMls != null) { currentLockHolder = currentMls.getLockHolder(); };
-            if (lockId.equals(currentLockHolder)) {
-                logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: You already have the lock!");
-                return new ReturnType(ResultType.SUCCESS, "You already have the lock!");
+        } else {
+            // this is for backward compatibility where locks could also be acquired on just
+            // keyspaces or tables.
+            if (isTableOrKeySpaceLock(key)) {
+                logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: A table or keyspace lock so no need to perform sync...so returning true");
+                return new ReturnType(ResultType.SUCCESS, "A table or keyspace lock so no need to perform sync...so returning true");
             }
-        } catch (NullPointerException e) {
-            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.INVALIDLOCK+lockId,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
-        }
 
-        // change status to "being locked". This state transition is necessary to ensure syncing
-        // before granting the lock
-        String lockHolder = null;
-        boolean needToSyncQuorum = false;
-        if (currentMls != null)
-            needToSyncQuorum = currentMls.isNeedToSyncQuorum();
-
-
-        newMls = new MusicLockState(MusicLockState.LockStatus.BEING_LOCKED, lockHolder,
-                        needToSyncQuorum);
-        try {
-            getLockingServiceHandle().setLockState(key, newMls);
-        } catch (MusicLockingException e1) {
-            logger.error(EELFLoggerDelegate.errorLogger,e1.getMessage(), AppMessages.LOCKSTATE+key,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
-        }
-        logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: Set lock state to being_locked");
-
-        // do syncing if this was a forced lock release
-        if (needToSyncQuorum) {
-            logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: Since there was a forcible release, need to sync quorum!");
+            // read the lock name corresponding to the key and if the status is locked or being locked,
+            // then return false
+            MusicLockState currentMls = null;
+            MusicLockState newMls = null;
             try {
-              syncQuorum(key);
-            } catch (Exception e) {
-              logger.error(EELFLoggerDelegate.errorLogger,"Failed to set Lock state " + e);
+                currentMls = getMusicLockState(key);
+                String currentLockHolder = null;
+                if(currentMls != null) { currentLockHolder = currentMls.getLockHolder(); };
+                if (lockId.equals(currentLockHolder)) {
+                    logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: You already have the lock!");
+                    return new ReturnType(ResultType.SUCCESS, "You already have the lock!");
+                }
+            } catch (NullPointerException e) {
+                logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.INVALIDLOCK+lockId,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
             }
-        }
 
-        // change status to locked
-        lockHolder = lockId;
-        needToSyncQuorum = false;
-        newMls = new MusicLockState(MusicLockState.LockStatus.LOCKED, lockHolder, needToSyncQuorum);
-        try {
-            getLockingServiceHandle().setLockState(key, newMls);
-        } catch (MusicLockingException e) {
-            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.LOCKSTATE+key,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
-        }
-        logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: Set lock state to locked and assigned current lock ref "
-                        + lockId + " as holder");
+            // change status to "being locked". This state transition is necessary to ensure syncing
+            // before granting the lock
+            String lockHolder = null;
+            boolean needToSyncQuorum = false;
+            if (currentMls != null)
+                needToSyncQuorum = currentMls.isNeedToSyncQuorum();
 
-        return new ReturnType(result?ResultType.SUCCESS:ResultType.FAILURE, "Set lock state to locked and assigned a lock holder");
+
+            newMls = new MusicLockState(MusicLockState.LockStatus.BEING_LOCKED, lockHolder,
+                            needToSyncQuorum);
+            try {
+                getLockingServiceHandle().setLockState(key, newMls);
+            } catch (MusicLockingException e1) {
+                logger.error(EELFLoggerDelegate.errorLogger,e1.getMessage(), AppMessages.LOCKSTATE+key,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+            }
+            logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: Set lock state to being_locked");
+
+            // do syncing if this was a forced lock release
+            if (needToSyncQuorum) {
+                logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: Since there was a forcible release, need to sync quorum!");
+                try {
+                  syncQuorum(key);
+                } catch (Exception e) {
+                  logger.error(EELFLoggerDelegate.errorLogger,"Failed to set Lock state " + e);
+                }
+            }
+
+            // change status to locked
+            lockHolder = lockId;
+            needToSyncQuorum = false;
+            newMls = new MusicLockState(MusicLockState.LockStatus.LOCKED, lockHolder, needToSyncQuorum);
+            try {
+                getLockingServiceHandle().setLockState(key, newMls);
+            } catch (MusicLockingException e) {
+                logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.LOCKSTATE+key,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+            }
+            logger.info(EELFLoggerDelegate.applicationLogger,"In acquire lock: Set lock state to locked and assigned current lock ref "
+                            + lockId + " as holder");
+
+            return new ReturnType(result?ResultType.SUCCESS:ResultType.FAILURE, "Set lock state to locked and assigned a lock holder");
+        }
     }
+
 
 
 
