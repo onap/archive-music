@@ -1,7 +1,11 @@
 /*
- * ============LICENSE_START========================================== org.onap.music
- * =================================================================== Copyright (c) 2017 AT&T
- * Intellectual Property ===================================================================
+ * ============LICENSE_START========================================== 
+ * org.onap.music
+ * =================================================================== 
+ * Copyright (c) 2017 AT&T Intellectual Property
+ * ===================================================================
+ * Modifications Copyright (c) 2019 IBM
+ * ===================================================================
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
  * 
@@ -22,8 +26,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-//cjc import static org.junit.Assert.assertTrue;
-import java.io.File;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -31,12 +34,13 @@ import java.util.List;
 //cjc import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+
 import org.apache.curator.test.TestingServer;
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
@@ -51,13 +55,11 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.datastore.jsonobjects.CassaKeyspaceObject;
+import org.onap.music.datastore.jsonobjects.CassaTableObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
 import org.onap.music.datastore.jsonobjects.JsonKeySpace;
-//cjc import org.onap.music.datastore.jsonobjects.JsonKeySpace;
-//import org.onap.music.datastore.jsonobjects.JsonOnboard;
-import org.onap.music.datastore.jsonobjects.JsonSelect;
-import org.onap.music.datastore.jsonobjects.JsonTable;
 import org.onap.music.datastore.jsonobjects.JsonUpdate;
 import org.onap.music.lockingservice.cassandra.CassaLockStore;
 import org.onap.music.main.MusicCore;
@@ -65,8 +67,9 @@ import org.onap.music.main.MusicUtil;
 //import org.onap.music.main.ResultType;
 import org.onap.music.rest.RestMusicAdminAPI;
 import org.onap.music.rest.RestMusicDataAPI;
-import org.onap.music.rest.RestMusicQAPI;
 import org.onap.music.rest.RestMusicLocksAPI;
+import org.onap.music.rest.RestMusicQAPI;
+
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -189,13 +192,10 @@ public class TestRestMusicQAPI {
             System.out.println("#######UUID is:" + rows.get(0).getUUID("uuid"));
         }
           
-        JsonKeySpace jsonKeyspace = new JsonKeySpace();
-        Map<String, String> consistencyInfo = new HashMap<>();
+        CassaKeyspaceObject jsonKeyspace = new CassaKeyspaceObject();
         Map<String, Object> replicationInfo = new HashMap<>();
-        consistencyInfo.put("type", "eventual");
         replicationInfo.put("class", "SimpleStrategy");
         replicationInfo.put("replication_factor", 1);
-        jsonKeyspace.setConsistencyInfo(consistencyInfo);
         jsonKeyspace.setDurabilityOfWrites("true");
         jsonKeyspace.setKeyspaceName(keyspaceName);
         jsonKeyspace.setReplicationInfo(replicationInfo);
@@ -250,8 +250,7 @@ public class TestRestMusicQAPI {
   
     @Test
     public void Test1_createQ_FieldsEmpty() throws Exception {
-        JsonTable jsonTable = new JsonTable();
-        Map<String, String> consistencyInfo = new HashMap<>();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> fields = new HashMap<>();
         /*
         fields.put("uuid", "text");
@@ -259,8 +258,6 @@ public class TestRestMusicQAPI {
         fields.put("emp_salary", "varint");
         fields.put("PRIMARY KEY", "(emp_name)");
         */
-        consistencyInfo.put("type", "eventual");
-        jsonTable.setConsistencyInfo(consistencyInfo);
         jsonTable.setKeyspaceName(keyspaceName);
         jsonTable.setPrimaryKey("emp_name");
         jsonTable.setTableName(tableName);
@@ -360,16 +357,13 @@ public class TestRestMusicQAPI {
     @Test
     public void Test1_createQ_PartitionKeybadclose() throws Exception {
         String tableNameC="testcjcP1";
-        JsonTable jsonTable = new JsonTable();
-        Map<String, String> consistencyInfo = new HashMap<>();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
         fields.put("emp_name", "text");
         fields.put("emp_id", "text");
         fields.put("emp_salary", "varint");
         fields.put("PRIMARY KEY", "((emp_name,emp_salary),emp_id))");
-        consistencyInfo.put("type", "eventual");
-        jsonTable.setConsistencyInfo(consistencyInfo);
         jsonTable.setKeyspaceName(keyspaceName);
         jsonTable.setPrimaryKey("emp_name,emp_id");
         jsonTable.setTableName(tableNameC);
@@ -449,16 +443,13 @@ public class TestRestMusicQAPI {
     @Test
     public void Test1_createQ_ClusterOrderBad() throws Exception {
         String tableNameC="testcjcO1b";
-        JsonTable jsonTable = new JsonTable();
-        Map<String, String> consistencyInfo = new HashMap<>();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
         fields.put("emp_name", "text");
         fields.put("emp_id", "text");
         fields.put("emp_salary", "varint");
         fields.put("PRIMARY KEY", "(emp_name,emp_id)");
-        consistencyInfo.put("type", "eventual");
-        jsonTable.setConsistencyInfo(consistencyInfo);
         jsonTable.setKeyspaceName(keyspaceName);
         jsonTable.setPrimaryKey("emp_name,emp_id");
         jsonTable.setTableName(tableNameC);
@@ -472,22 +463,19 @@ public class TestRestMusicQAPI {
         //                      "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, userId, password,
         System.out.println("#######status is " + response.getStatus()+"table namec="+tableNameC);
         System.out.println("Entity" + response.getEntity());
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
     } 
     
     
     @Test
     public void Test3_createQ_0() throws Exception {
          //duplicate testing ...
-        JsonTable jsonTable = new JsonTable();
-        Map<String, String> consistencyInfo = new HashMap<>();
+    	CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
         fields.put("emp_name", "text");
         fields.put("emp_salary", "varint");
         fields.put("PRIMARY KEY", "(emp_name)");
-        consistencyInfo.put("type", "eventual");
-        jsonTable.setConsistencyInfo(consistencyInfo);
         jsonTable.setKeyspaceName(keyspaceName);
         jsonTable.setPrimaryKey("emp_name");
         String tableNameDup=tableName+"X";
@@ -517,15 +505,12 @@ public class TestRestMusicQAPI {
     // Improper Auth
     @Test
     public void Test3_createQ1() throws Exception {
-        JsonTable jsonTable = new JsonTable();
-        Map<String, String> consistencyInfo = new HashMap<>();
+    	CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
         fields.put("emp_name", "text");
         fields.put("emp_salary", "varint");
         fields.put("PRIMARY KEY", "(emp_name)");
-        consistencyInfo.put("type", "eventual");
-        jsonTable.setConsistencyInfo(consistencyInfo);
         jsonTable.setKeyspaceName(keyspaceName);
         jsonTable.setPartitionKey("emp_name");
         jsonTable.setClusteringKey("uuid");
@@ -544,15 +529,12 @@ public class TestRestMusicQAPI {
     // Improper keyspace
     @Test
     public void Test3_createQ2() throws Exception {
-        JsonTable jsonTable = new JsonTable();
-        Map<String, String> consistencyInfo = new HashMap<>();
+    	CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
         fields.put("emp_name", "text");
         fields.put("emp_salary", "varint");
         fields.put("PRIMARY KEY", "(emp_name)");
-        consistencyInfo.put("type", "eventual");
-        jsonTable.setConsistencyInfo(consistencyInfo);
         jsonTable.setKeyspaceName(keyspaceName);
         jsonTable.setPartitionKey("emp_name");
         jsonTable.setTableName(tableName);
@@ -670,7 +652,7 @@ public class TestRestMusicQAPI {
         Response response = qData.insertIntoQ(majorV, minorV,patchV,
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
                         jsonInsert, keyspaceName, "wrong");
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
     }
       
 /*    @Test
@@ -850,10 +832,7 @@ public class TestRestMusicQAPI {
     @Test
     public void Test8_createQ_fields_empty() throws Exception {
         String tableNameC="testcjcC";
-        JsonTable jsonTable = new JsonTable();
-        Map<String, String> consistencyInfo = new HashMap<>();
-        consistencyInfo.put("type", "eventual");
-        jsonTable.setConsistencyInfo(consistencyInfo);
+        CassaTableObject jsonTable = new CassaTableObject();
         jsonTable.setKeyspaceName(keyspaceName);
         jsonTable.setPartitionKey("emp_name");
         jsonTable.setClusteringKey("emp_id");
@@ -872,15 +851,12 @@ public class TestRestMusicQAPI {
     @Test
     public void Test8_createQ_partitionKey_empty() throws Exception {
         String tableNameC="testcjcC";
-        JsonTable jsonTable = new JsonTable();
-        Map<String, String> consistencyInfo = new HashMap<>();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
         fields.put("emp_name", "text");
         fields.put("emp_id", "text");
         fields.put("emp_salary", "varint");
-        consistencyInfo.put("type", "eventual");
-        jsonTable.setConsistencyInfo(consistencyInfo);
         jsonTable.setKeyspaceName(keyspaceName);
         jsonTable.setClusteringKey("emp_id");
         jsonTable.setClusteringOrder("emp_id DESC");
@@ -899,15 +875,12 @@ public class TestRestMusicQAPI {
     @Test
     public void Test8_createQ_ClusteringKey_empty() throws Exception {
         String tableNameC="testcjcC";
-        JsonTable jsonTable = new JsonTable();
-        Map<String, String> consistencyInfo = new HashMap<>();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
         fields.put("emp_name", "text");
         fields.put("emp_id", "text");
         fields.put("emp_salary", "varint");
-        consistencyInfo.put("type", "eventual");
-        jsonTable.setConsistencyInfo(consistencyInfo);
         jsonTable.setKeyspaceName(keyspaceName);
         jsonTable.setPartitionKey("emp_name");
         jsonTable.setClusteringOrder("emp_id DESC");
@@ -926,15 +899,12 @@ public class TestRestMusicQAPI {
     @Test
     public void Test8_createQ_ClusteringOrder_empty() throws Exception {
         String tableNameC="testcjcC";
-        JsonTable jsonTable = new JsonTable();
-        Map<String, String> consistencyInfo = new HashMap<>();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
         fields.put("emp_name", "text");
         fields.put("emp_id", "text");
         fields.put("emp_salary", "varint");
-        consistencyInfo.put("type", "eventual");
-        jsonTable.setConsistencyInfo(consistencyInfo);
         jsonTable.setKeyspaceName(keyspaceName);
         jsonTable.setPartitionKey("emp_name");
         jsonTable.setClusteringKey("emp_id");
@@ -953,15 +923,12 @@ public class TestRestMusicQAPI {
     @Test
     public void Test8_createQ_primaryKey_invalid() throws Exception {
         String tableNameC="testcjcC";
-        JsonTable jsonTable = new JsonTable();
-        Map<String, String> consistencyInfo = new HashMap<>();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
         fields.put("emp_name", "text");
         fields.put("emp_id", "text");
         fields.put("emp_salary", "varint");
-        consistencyInfo.put("type", "eventual");
-        jsonTable.setConsistencyInfo(consistencyInfo);
         jsonTable.setPrimaryKey("(emp_name");
         jsonTable.setKeyspaceName(keyspaceName);
         jsonTable.setClusteringKey("emp_id");
@@ -981,15 +948,12 @@ public class TestRestMusicQAPI {
     @Test
     public void Test8_createQ_primaryKey_with_empty_clusteringKey() throws Exception {
         String tableNameC="testcjcC";
-        JsonTable jsonTable = new JsonTable();
-        Map<String, String> consistencyInfo = new HashMap<>();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
         fields.put("emp_name", "text");
         fields.put("emp_id", "text");
         fields.put("emp_salary", "varint");
-        consistencyInfo.put("type", "eventual");
-        jsonTable.setConsistencyInfo(consistencyInfo);
         jsonTable.setKeyspaceName(keyspaceName);
         jsonTable.setPrimaryKey("emp_name");
         jsonTable.setTableName(tableNameC);
@@ -1009,15 +973,12 @@ public class TestRestMusicQAPI {
     @Test
     public void Test8_createQ_primaryKey_with_empty_partitionKey() throws Exception {
         String tableNameC="testcjcC";
-        JsonTable jsonTable = new JsonTable();
-        Map<String, String> consistencyInfo = new HashMap<>();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
         fields.put("emp_name", "text");
         fields.put("emp_id", "text");
         fields.put("emp_salary", "varint");
-        consistencyInfo.put("type", "eventual");
-        jsonTable.setConsistencyInfo(consistencyInfo);
         jsonTable.setKeyspaceName(keyspaceName);
         jsonTable.setPrimaryKey("  ");
         jsonTable.setTableName(tableNameC);
