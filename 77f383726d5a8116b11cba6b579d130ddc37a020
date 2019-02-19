@@ -1,0 +1,157 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5bc14c44_860f1ec2",
+        "filename": "src/main/java/org/onap/music/datastore/jsonobjects/CassaKeyspaceObject.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-02-19T20:17:33Z",
+      "side": 1,
+      "message": "please remove the tabs in this file (ONAP guideline uses spaces)",
+      "revId": "77f383726d5a8116b11cba6b579d130ddc37a020",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3e6ebbff_48b7a4f4",
+        "filename": "src/main/java/org/onap/music/datastore/jsonobjects/CassaKeyspaceObject.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-02-19T20:17:33Z",
+      "side": 1,
+      "message": "Consistency is a music thing. It should not be set here.\nKeyspace object should not have a consistency in the data object, it should be set in the musicCore",
+      "revId": "77f383726d5a8116b11cba6b579d130ddc37a020",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "92627af0_582431a4",
+        "filename": "src/main/java/org/onap/music/datastore/jsonobjects/CassaTableObject.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-02-19T20:17:33Z",
+      "side": 1,
+      "message": "Same issue as with keyspace object, please remove from this object",
+      "revId": "77f383726d5a8116b11cba6b579d130ddc37a020",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d4d58227_bd94abf2",
+        "filename": "src/main/java/org/onap/music/datastore/jsonobjects/CassaTableObject.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 313,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-02-19T20:17:33Z",
+      "side": 1,
+      "message": "fix whitespace/indentations here. a couple more similar errors in this file",
+      "revId": "77f383726d5a8116b11cba6b579d130ddc37a020",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "a467280e_0982e317",
+        "filename": "src/main/java/org/onap/music/service/MusicCoreService.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 114,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-02-19T20:17:33Z",
+      "side": 1,
+      "message": "can you put a comment here\n//Core Music Data Methods\n\nand move the createTable function down here as well",
+      "revId": "77f383726d5a8116b11cba6b579d130ddc37a020",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "15893d10_d2d2d2fa",
+        "filename": "src/main/java/org/onap/music/service/impl/MusicDataAPIServiceImpl.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 111,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-02-19T20:17:33Z",
+      "side": 1,
+      "message": "consistency is no longer needed here. It should be moved into set Keyspace.\nAlso, remove the consistency field from the keyspace object. The client shouldn\u0027t set it in that object",
+      "revId": "77f383726d5a8116b11cba6b579d130ddc37a020",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "50f7d148_7f37b448",
+        "filename": "src/main/java/org/onap/music/service/impl/MusicDataAPIServiceImpl.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 292,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-02-19T20:17:33Z",
+      "side": 1,
+      "message": "Same as with createKeyspace. consistency should be set in music core",
+      "revId": "77f383726d5a8116b11cba6b579d130ddc37a020",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "058a3695_04b42977",
+        "filename": "src/main/java/org/onap/music/service/impl/MusicDataAPIServiceImpl.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 294,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-02-19T20:17:33Z",
+      "side": 1,
+      "message": "pls remove this block comment",
+      "revId": "77f383726d5a8116b11cba6b579d130ddc37a020",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5dbc029f_6e97a577",
+        "filename": "src/main/java/org/onap/music/service/impl/MusicDataAPIServiceImpl.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 537,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-02-19T20:17:33Z",
+      "side": 1,
+      "message": "remove consistency here, set in musicCore",
+      "revId": "77f383726d5a8116b11cba6b579d130ddc37a020",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
