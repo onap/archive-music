@@ -34,17 +34,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.apache.commons.jcs.access.CacheAccess;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
-import org.onap.music.main.CachingUtil;
 import org.onap.music.main.MusicUtil;
 
-import com.codahale.metrics.JmxReporter;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ColumnDefinitions;
 import com.datastax.driver.core.ColumnDefinitions.Definition;
@@ -54,16 +51,13 @@ import com.datastax.driver.core.HostDistance;
 import com.datastax.driver.core.KeyspaceMetadata;
 import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.PoolingOptions;
-import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
-import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
-import com.sun.jersey.core.util.Base64;
 
 /**
  * @author nelson24
@@ -161,10 +155,8 @@ public class MusicDataStore {
      */
     private void connectToCassaCluster() {
         Iterator<String> it = getAllPossibleLocalIps().iterator();
-        String address = "localhost";
-        String[] addresses = null;
-        address = MusicUtil.getMyCassaHost();
-        addresses = address.split(",");
+        String address = MusicUtil.getMyCassaHost();
+        String[] addresses = address.split(",");
 
         logger.info(EELFLoggerDelegate.applicationLogger,
                         "Connecting to cassa cluster: Iterating through possible ips:"
@@ -239,13 +231,6 @@ public class MusicDataStore {
                         .withPoolingOptions(poolingOptions)
                         .addContactPoints(addresses).build();
         }
-        
-        // JmxReporter reporter =
-        //         JmxReporter.forRegistry(cluster.getMetrics().getRegistry())
-        //             .inDomain(cluster.getClusterName() + "-metrics")
-        //             .build();
-
-        //     reporter.start();
             
         Metadata metadata = cluster.getMetadata();
         logger.info(EELFLoggerDelegate.applicationLogger, "Connected to cassa cluster "
@@ -321,7 +306,7 @@ public class MusicDataStore {
         }
     }
 
-    public byte[] getBlobValue(Row row, String colName, DataType colType) {
+    public byte[] getBlobValue(Row row, String colName) {
         ByteBuffer bb = row.getBytes(colName);
         return bb.array();
     }
@@ -334,7 +319,7 @@ public class MusicDataStore {
             DataType colType = colInfo.getType(colName);
             Object columnValue = getColValue(row, colName, colType);
             Object conditionValue = MusicUtil.convertToActualDataType(colType, entry.getValue());
-            if (columnValue.equals(conditionValue) == false)
+            if (!columnValue.equals(conditionValue))
                 return false;
         }
         return true;
@@ -357,7 +342,7 @@ public class MusicDataStore {
                 if (!(("vector_ts").equals(definition.getName()))) {
                     if(definition.getType().toString().toLowerCase().contains("blob")) {
                         resultOutput.put(definition.getName(),
-                                getBlobValue(row, definition.getName(), definition.getType()));
+                                getBlobValue(row, definition.getName()));
                     }
                     else
                         resultOutput.put(definition.getName(),
@@ -373,8 +358,7 @@ public class MusicDataStore {
 
     // Prepared Statements 1802 additions
     
-    public boolean executePut(PreparedQueryObject queryObject, String consistency)
-            throws MusicServiceException, MusicQueryException {
+    public boolean executePut(PreparedQueryObject queryObject, String consistency) throws MusicServiceException, MusicQueryException {
         return executePut(queryObject, consistency, 0);
     }
     /**
@@ -387,10 +371,9 @@ public class MusicDataStore {
      * @throws MusicServiceException
      * @throws MusicQueryException
      */
-    public boolean executePut(PreparedQueryObject queryObject, String consistency,long timeSlot)
-                    throws MusicServiceException, MusicQueryException {
+    public boolean executePut(PreparedQueryObject queryObject, String consistency,long timeSlot) throws MusicServiceException, MusicQueryException {
 
-        boolean result = false;
+        boolean result;
         long timeOfWrite = System.currentTimeMillis();
         if (!MusicUtil.isValidQueryObject(!queryObject.getValues().isEmpty(), queryObject)) {
             logger.error(EELFLoggerDelegate.errorLogger, queryObject.getQuery(),AppMessages.QUERYERROR, ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
@@ -401,23 +384,7 @@ public class MusicDataStore {
                         "In preprared Execute Put: the actual insert query:"
                                         + queryObject.getQuery() + "; the values"
                                         + queryObject.getValues());
-/*<<<<<<< HEAD
-        PreparedStatement preparedInsert = null;
-        try {
-            
-                preparedInsert = session.prepare(queryObject.getQuery());
-            
-        } catch(InvalidQueryException iqe) {
-            logger.error("Exception", iqe);
-            logger.error(EELFLoggerDelegate.errorLogger, iqe.getMessage(),AppMessages.QUERYERROR, ErrorSeverity.CRITICAL, ErrorTypes.QUERYERROR);
-            throw new MusicQueryException(iqe.getMessage());
-        }catch(Exception e) {
-            logger.error("Exception", e);
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.QUERYERROR, ErrorSeverity.CRITICAL, ErrorTypes.QUERYERROR);
-            throw new MusicQueryException(e.getMessage());
-        }
-        
-=======*/
+
         SimpleStatement preparedInsert = null;
 
         try {
@@ -459,82 +426,6 @@ public class MusicDataStore {
         return result;
     }
 
- /*   *//**
-     * This method performs DDL operations on Cassandra using consistency level ONE.
-     *
-     * @param queryObject Object containing cassandra prepared query and values.
-     * @return ResultSet
-     * @throws MusicServiceException
-     * @throws MusicQueryException
-     *//*
-    public ResultSet executeEventualGet(PreparedQueryObject queryObject)
-                    throws MusicServiceException, MusicQueryException {
-        CacheAccess<String, PreparedStatement> queryBank = CachingUtil.getStatementBank();
-        PreparedStatement preparedEventualGet = null;
-        if (!MusicUtil.isValidQueryObject(!queryObject.getValues().isEmpty(), queryObject)) {
-            logger.error(EELFLoggerDelegate.errorLogger, "",AppMessages.QUERYERROR+ " [" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
-            throw new MusicQueryException("Ill formed queryObject for the request = " + "["
-                            + queryObject.getQuery() + "]");
-        }
-        logger.info(EELFLoggerDelegate.applicationLogger,
-                        "Executing Eventual  get query:" + queryObject.getQuery());
-
-        ResultSet results = null;
-        try {
-            if(queryBank.get(queryObject.getQuery()) != null )
-                preparedEventualGet=queryBank.get(queryObject.getQuery());
-            else {
-                preparedEventualGet = session.prepare(queryObject.getQuery());
-                CachingUtil.updateStatementBank(queryObject.getQuery(), preparedEventualGet);
-            }
-            if(queryObject.getConsistency() == null) {
-                preparedEventualGet.setConsistencyLevel(ConsistencyLevel.ONE);
-            }
-           else {
-               preparedEventualGet.setConsistencyLevel(MusicUtil.getConsistencyLevel(queryObject.getConsistency()));
-           }
-           results = session.execute(preparedEventualGet.bind(queryObject.getValues().toArray()));
-
-        } catch (Exception ex) {
-            logger.error("Exception", ex);
-            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.UNKNOWNERROR+ "[" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
-            throw new MusicServiceException(ex.getMessage());
-        }
-        return results;
-    }
-
-    *//**
-     *
-     * This method performs DDL operation on Cassandra using consistency level QUORUM.
-     *
-     * @param queryObject Object containing cassandra prepared query and values.
-     * @return ResultSet
-     * @throws MusicServiceException
-     * @throws MusicQueryException
-     *//*
-    public ResultSet executeCriticalGet(PreparedQueryObject queryObject)
-                    throws MusicServiceException, MusicQueryException {
-        if (!MusicUtil.isValidQueryObject(!queryObject.getValues().isEmpty(), queryObject)) {
-            logger.error(EELFLoggerDelegate.errorLogger, "",AppMessages.QUERYERROR+ " [" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
-            throw new MusicQueryException("Error processing Prepared Query Object for the request = " + "["
-                            + queryObject.getQuery() + "]");
-        }
-        logger.info(EELFLoggerDelegate.applicationLogger,
-                        "Executing Critical get query:" + queryObject.getQuery());
-        PreparedStatement preparedEventualGet = session.prepare(queryObject.getQuery());
-        preparedEventualGet.setConsistencyLevel(ConsistencyLevel.QUORUM);
-        ResultSet results = null;
-        try {
-            results = session.execute(preparedEventualGet.bind(queryObject.getValues().toArray()));
-        } catch (Exception ex) {
-            logger.error("Exception", ex);
-            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.UNKNOWNERROR+ "[" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
-            throw new MusicServiceException(ex.getMessage());
-        }
-        return results;
-
-    }
-    */
     public ResultSet executeGet(PreparedQueryObject queryObject,String consistencyLevel) throws MusicQueryException, MusicServiceException {
         if (!MusicUtil.isValidQueryObject(!queryObject.getValues().isEmpty(), queryObject)) {
             logger.error(EELFLoggerDelegate.errorLogger, "",AppMessages.QUERYERROR+ " [" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
