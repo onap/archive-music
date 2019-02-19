@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2019 Samsung
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -25,25 +27,24 @@ package org.onap.music.unittests.jsonobjects;
 import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 
 public class JsonDeleteTest {
-    
+
     JsonDelete jd = null;
-    
+
     @Before
     public void init() {
         jd = new JsonDelete();
     }
-    
-    
+
     @Test
     public void testGetConditions() {
         Map<String,Object>  mapSo = new HashMap<>();
-        mapSo = new HashMap<>();
         mapSo.put("key1","one");
         mapSo.put("key2","two");
         jd.setConditions(mapSo);
@@ -53,7 +54,6 @@ public class JsonDeleteTest {
     @Test
     public void testGetConsistencyInfo() {
         Map<String,String>  mapSs = new HashMap<>();
-        mapSs = new HashMap<>();
         mapSs.put("key3","three");
         mapSs.put("key4","four");
         jd.setConsistencyInfo(mapSs);
@@ -62,8 +62,7 @@ public class JsonDeleteTest {
 
     @Test
     public void testGetColumns() {
-        ArrayList<String> ary = new ArrayList<>();
-        ary = new ArrayList<>();
+        List<String> ary = new ArrayList<>();
         ary.add("e1");
         ary.add("e2");
         ary.add("e3");
