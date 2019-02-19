@@ -34,15 +34,14 @@ import org.junit.Test;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 
 public class JsonDeleteTest {
-    
+
     JsonDelete jd = null;
-    
+
     @Before
     public void init() {
         jd = new JsonDelete();
     }
-    
-    
+
     @Test
     public void testGetConditions() {
         Map<String,Object>  mapSo = new HashMap<>();
