@@ -3,6 +3,7 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *  Modifications Copyright (C) 2019 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,7 +29,6 @@ import java.util.Map;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.MusicUtil;
-import org.onap.music.service.impl.MusicZKCore;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.TableMetadata;
@@ -66,7 +66,7 @@ public class MusicDataStoreHandle {
        long start = System.currentTimeMillis();
        if (mDstoreHandle == null) {
            // Quick Fix - Best to put this into every call to getDSHandle?
-           if (! MusicUtil.getMyCassaHost().equals("localhost") ) {
+           if (!"localhost".equals(MusicUtil.getMyCassaHost())) {
                mDstoreHandle = new MusicDataStore(MusicUtil.getMyCassaHost());
            } else {
                mDstoreHandle = new MusicDataStore();
