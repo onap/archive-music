@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2019 Samsung
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -22,7 +24,7 @@
 
 package org.onap.music.datastore.jsonobjects;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -34,7 +36,7 @@ import io.swagger.annotations.ApiModelProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonDelete {
 
-    private ArrayList<String> columns = null;
+    private List<String> columns = null;
     private Map<String, String> consistencyInfo;
     private Map<String, Object> conditions;
     String ttl, timestamp;
@@ -59,11 +61,11 @@ public class JsonDelete {
     }
 
     @ApiModelProperty(value = "Column values")
-    public ArrayList<String> getColumns() {
+    public List<String> getColumns() {
         return columns;
     }
 
-    public void setColumns(ArrayList<String> columns) {
+    public void setColumns(List<String> columns) {
         this.columns = columns;
     }
 

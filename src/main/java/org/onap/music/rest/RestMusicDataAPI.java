@@ -25,12 +25,10 @@
 package org.onap.music.rest;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -41,7 +39,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -73,7 +70,6 @@ import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
 import org.onap.music.response.jsonobjects.JsonResponse;
-import org.onap.music.service.impl.MusicZKCore;
 
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
@@ -1204,7 +1200,7 @@ public class RestMusicDataAPI {
         StringBuilder columnString = new StringBuilder();
 
         int counter = 0;
-        ArrayList<String> columnList = delObj.getColumns();
+        List<String> columnList = delObj.getColumns();
         if (columnList != null) {
             for (String column : columnList) {
                 columnString.append(column);
