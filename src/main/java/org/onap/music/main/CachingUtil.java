@@ -4,7 +4,7 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
- *  Modifications Copyright (c) 2018 IBM
+ *  Modifications Copyright (c) 2019 IBM
  *  Modifications Copyright (c) 2019 Samsung
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -100,9 +100,7 @@ public class CachingUtil implements Runnable {
 
    
     public boolean isCacheRefreshNeeded() {
-        if (aafCache.get("initBlankMap") == null)
-            return true;
-        return false;
+        return aafCache.get("initBlankMap") == null;
     }
     
     public static void updateCallbackNotifyList(List<String> notifyList) {
@@ -181,8 +179,7 @@ public class CachingUtil implements Runnable {
                 return true;
             } else {
                 // call AAF update cache with new password
-                if (userAttempts.get(nameSpace) == null)
-                    userAttempts.put(nameSpace, 0);
+                userAttempts.putIfAbsent(nameSpace, 0);
                 if ((Integer) userAttempts.get(nameSpace) >= 3) {
                     logger.info(EELFLoggerDelegate.applicationLogger,"Reached max attempts. Checking if time out..");
                     logger.info(EELFLoggerDelegate.applicationLogger,"Failed time: "+lastFailedTime.get(nameSpace).getTime());
@@ -230,8 +227,6 @@ public class CachingUtil implements Runnable {
             throw new Exception("AAF endpoint is not set. Please specify in the properties file.");
         }
         Client client = Client.create();
-        // WebResource webResource =
-        // client.resource("https://aaftest.test.att.com:8095/proxy/authz/nss/"+nameSpace);
         WebResource webResource = client.resource(MusicUtil.getAafEndpointUrl().concat(nameSpace));
         String plainCreds = userId + ":" + password;
         byte[] plainCredsBytes = plainCreds.getBytes();
@@ -243,8 +238,7 @@ public class CachingUtil implements Runnable {
                         .header("content-type", "application/json").get(ClientResponse.class);
         logger.info(EELFLoggerDelegate.applicationLogger, "aaf response: "+response.toString());
         if (response.getStatus() != 200) {
-            if (userAttempts.get(nameSpace) == null)
-                userAttempts.put(nameSpace, 0);
+            userAttempts.putIfAbsent(nameSpace, 0);
             if ((Integer) userAttempts.get(nameSpace) >= 2) {
                 lastFailedTime.put(nameSpace, Calendar.getInstance());
                 userAttempts.put(nameSpace, ((Integer) userAttempts.get(nameSpace) + 1));
