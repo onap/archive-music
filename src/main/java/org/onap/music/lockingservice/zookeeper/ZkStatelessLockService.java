@@ -72,6 +72,7 @@ public class ZkStatelessLockService extends ProtocolSupport {
             });
         }catch (InterruptedException e) {
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+            Thread.currentThread().interrupt();
         }catch (KeeperException e) {
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
@@ -83,6 +84,7 @@ public class ZkStatelessLockService extends ProtocolSupport {
             zookeeper.close();
         }catch (InterruptedException e) {
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -97,6 +99,7 @@ public class ZkStatelessLockService extends ProtocolSupport {
             });
         }catch (InterruptedException e) {
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+            Thread.currentThread().interrupt();
         }catch (KeeperException e) {
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
@@ -112,6 +115,7 @@ public class ZkStatelessLockService extends ProtocolSupport {
 
         }catch (InterruptedException e) {
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+            Thread.currentThread().interrupt();
         }catch (KeeperException e) {
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.KEEPERERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
@@ -173,7 +177,7 @@ public class ZkStatelessLockService extends ProtocolSupport {
      * @throws RuntimeException throws a runtime exception if it cannot connect to zookeeper.
      * @throws NoNodeException 
      */
-    public synchronized void unlock(String lockId) throws RuntimeException, KeeperException.NoNodeException {
+    public synchronized void unlock(String lockId) throws NoNodeException {
         final String id = lockId;
         if (!isClosed() && id != null) {
             try {
