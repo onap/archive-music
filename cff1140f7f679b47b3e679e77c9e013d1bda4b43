@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ee2e2d0f_3318beb6",
+        "filename": "src/main/java/org/onap/music/datastore/MusicDataStoreHandle.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 5100
+      },
+      "writtenOn": "2019-02-20T12:49:02Z",
+      "side": 1,
+      "message": "Any advantage over empty constructor ? (barring possible reflection misuse)",
+      "range": {
+        "startLine": 40,
+        "startChar": 8,
+        "endLine": 40,
+        "endChar": 57
+      },
+      "revId": "cff1140f7f679b47b3e679e77c9e013d1bda4b43",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
