@@ -27,7 +27,6 @@ package org.onap.music.unittests;
  * 
  */
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -35,7 +34,6 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -47,36 +45,42 @@ import org.onap.music.datastore.PreparedQueryObject;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 public class CassandraCQL {
-
+	public static final String createAdminKeyspace = "CREATE KEYSPACE admin WITH REPLICATION = "
+			+ "{'class' : 'SimpleStrategy' , 'replication_factor': 1} AND DURABLE_WRITES = true";
+	
+	public static final String createAdminTable = "CREATE TABLE admin.keyspace_master (" + "  uuid uuid, keyspace_name text,"
+			+ "  application_name text, is_api boolean,"
+			+ "  password text, username text,"
+			+ "  is_aaf boolean, PRIMARY KEY (uuid)\n" + ");";
+	
     public static final String createKeySpace =
-                    "CREATE KEYSPACE IF NOT EXISTS testCassa WITH replication = "
+                    "CREATE KEYSPACE IF NOT EXISTS testcassa WITH replication = "
                     +"{'class':'SimpleStrategy','replication_factor':1} AND durable_writes = true;";
 
-    public static final String dropKeyspace = "DROP KEYSPACE IF EXISTS testCassa";
+    public static final String dropKeyspace = "DROP KEYSPACE IF EXISTS testcassa";
 
     public static final String createTableEmployees =
-                    "CREATE TABLE IF NOT EXISTS testCassa.employees "
-                    + "(vector_ts text,empId uuid,empName text,empSalary varint,address Map<text,text>,PRIMARY KEY (empName)) "
+                    "CREATE TABLE IF NOT EXISTS testcassa.employees "
+                    + "(vector_ts text,empid uuid,empname text,empsalary varint,address Map<text,text>,PRIMARY KEY (empname)) "
                     + "WITH comment='Financial Info of employees' "
                     + "AND compression={'sstable_compression':'DeflateCompressor','chunk_length_kb':64} "
                     + "AND compaction={'class':'SizeTieredCompactionStrategy','min_threshold':6};";
 
     public static final String insertIntoTablePrepared1 =
-                    "INSERT INTO testCassa.employees (vector_ts,empId,empName,empSalary) VALUES (?,?,?,?); ";
+                    "INSERT INTO testcassa.employees (vector_ts,empid,empname,empsalary) VALUES (?,?,?,?); ";
 
     public static final String insertIntoTablePrepared2 =
-                    "INSERT INTO testCassa.employees (vector_ts,empId,empName,empSalary,address) VALUES (?,?,?,?,?);";
+                    "INSERT INTO testcassa.employees (vector_ts,empid,empname,empsalary,address) VALUES (?,?,?,?,?);";
 
-    public static final String selectALL = "SELECT *  FROM testCassa.employees;";
+    public static final String selectALL = "SELECT *  FROM testcassa.employees;";
 
     public static final String selectSpecific =
-                    "SELECT *  FROM testCassa.employees WHERE empName= ?;";
+                    "SELECT *  FROM testcassa.employees WHERE empname= ?;";
 
     public static final String updatePreparedQuery =
-                    "UPDATE testCassa.employees  SET vector_ts=?,address= ? WHERE empName= ?;";
+                    "UPDATE testcassa.employees  SET vector_ts=?,address= ? WHERE empname= ?;";
 
     public static final String deleteFromTable = " ";
 
@@ -223,33 +227,17 @@ public class CassandraCQL {
         return allPossibleIps;
     }
 
-    public static MusicDataStore connectToEmbeddedCassandra() {
-        Iterator<String> it = getAllPossibleLocalIps().iterator();
+    public static MusicDataStore connectToEmbeddedCassandra() throws Exception {
+    	System.setProperty("log4j.configuration", "log4j.properties");
+    	
         String address = "localhost";
 
-        Cluster cluster = null;
-        Session session = null;
-        while (it.hasNext()) {
-            try {
-
-                try {
-                     EmbeddedCassandraServerHelper.startEmbeddedCassandra();
-                } catch (Exception e) {
-                         e.printStackTrace();
-                }
-                cluster = new Cluster.Builder().withoutJMXReporting().withoutMetrics().addContactPoint(address).withPort(9142).build();
-                cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(5000);
-                session = cluster.connect();
-
-                break;
-            } catch (NoHostAvailableException e) {
-                address = it.next();
-                System.out.println(e.getMessage());
-
-            }
-        }
+        EmbeddedCassandraServerHelper.startEmbeddedCassandra();
+        Cluster cluster = new Cluster.Builder().withoutJMXReporting().withoutMetrics().addContactPoint(address).withPort(9142).build();
+        cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(5000);
+        Session session = cluster.connect();
+        
         return new MusicDataStore(cluster, session);
-
     }
 
 }

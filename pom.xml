@@ -306,14 +306,19 @@
             <groupId>com.att.eelf</groupId>
             <artifactId>eelf-core</artifactId>
             <version>1.0.1-oss</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.powermock</groupId>
+                    <artifactId>powermock-api-mockito</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.powermock</groupId>
+	            <artifactId>powermock-module-junit4</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <!-- End Logging -->
         <!-- Cassandra -->
-        <dependency>
-            <groupId>com.codahale.metrics</groupId>
-            <artifactId>metrics-core</artifactId>
-            <version>3.0.2</version>
-        </dependency>
         <dependency>
         <groupId>io.dropwizard.metrics</groupId>
         <artifactId>metrics-core</artifactId>
@@ -416,13 +421,26 @@
         <version>3.5.0.1</version>
         <scope>test</scope>
         <exclusions>
-        <exclusion>
-
-                    <groupId>org.cassandraunit</groupId>
-
-                    <artifactId>cassandra-unit</artifactId>
-
-                </exclusion>
+            <exclusion>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-core</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>org.cassandraunit</groupId>
+                <artifactId>cassandra-unit</artifactId>
+            </exclusion>
+            <exclusion>
+                <groupId>io.dropwizard.metrics</groupId>
+                <artifactId>metrics-core</artifactId>
+            </exclusion>
         </exclusions>
     </dependency>
     <dependency>
@@ -430,6 +448,11 @@
             <artifactId>cassandra-unit-shaded</artifactId>
             <version>3.5.0.1</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+            <version>3.1.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.curator</groupId>
@@ -449,8 +472,8 @@
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <version>1.9.0</version>
+            <artifactId>mockito-core</artifactId>
+            <version>2.23.4</version>
             <scope>test</scope>
         </dependency>
         <!--  /Testing -->

@@ -112,6 +112,8 @@ public class RestMusicAdminAPI {
                         .build();
             }
         } catch (Exception e) {
+        	logger.error(EELFLoggerDelegate.errorLogger, "Unable to authenticate", e);
+        	response.status(Status.UNAUTHORIZED);
             return response.entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
         }
         if (appName == null || userId == null || isAAF == null || password == null) {

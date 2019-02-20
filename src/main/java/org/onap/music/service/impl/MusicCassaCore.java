@@ -226,7 +226,6 @@ public class MusicCassaCore implements MusicCoreService {
 
                 String tabQuery = "CREATE TABLE IF NOT EXISTS "+keyspace+"."+table
                         + " ( key text,PRIMARY KEY (key) );";
-                System.out.println(tabQuery);
                 PreparedQueryObject queryObject = new PreparedQueryObject();
 
                 queryObject.appendQueryString(tabQuery);
