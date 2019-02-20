@@ -22,6 +22,30 @@
       "revId": "cff1140f7f679b47b3e679e77c9e013d1bda4b43",
       "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3de8a36c_4290e3db",
+        "filename": "src/main/java/org/onap/music/datastore/MusicDataStoreHandle.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 5094
+      },
+      "writtenOn": "2019-02-20T13:07:22Z",
+      "side": 1,
+      "message": "\"Utility classes, which are collections of static members, are not meant to be instantiated. Even abstract utility classes, which can be extended, should not have public constructors.\"\nThis overrides default public constructor and doesn\u0027t allow to instantiate object.",
+      "parentUuid": "ee2e2d0f_3318beb6",
+      "range": {
+        "startLine": 40,
+        "startChar": 8,
+        "endLine": 40,
+        "endChar": 57
+      },
+      "revId": "cff1140f7f679b47b3e679e77c9e013d1bda4b43",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
     }
   ]
 }
