@@ -2,6 +2,23 @@
   "comments": [
     {
       "key": {
+        "uuid": "7e481180_4b5ccc96",
+        "filename": "src/main/java/org/onap/music/datastore/jsonobjects/CassaKeyspaceObject.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 49,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-02-21T18:34:43Z",
+      "side": 1,
+      "message": "This should be a boolean",
+      "revId": "31047079c2e6275dd225f8493b9eebcb3a2fff5a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "91f6bbbb_cd31fc29",
         "filename": "src/main/java/org/onap/music/datastore/jsonobjects/CassaTableObject.java",
         "patchSetId": 2
