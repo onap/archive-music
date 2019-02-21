@@ -152,6 +152,29 @@ public class TstRestMusicDataAPI {
 		System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
 		assertEquals(200, response.getStatus());
 	}
+	
+	@Test
+    public void test3_createTableNoName() throws Exception {
+        System.out.println("Testing create table without name");
+        JsonTable jsonTable = new JsonTable();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        Map<String, String> fields = new HashMap<>();
+        fields.put("uuid", "text");
+        fields.put("emp_name", "text");
+        fields.put("emp_salary", "varint");
+        fields.put("PRIMARY KEY", "(emp_name)");
+        consistencyInfo.put("type", "eventual");
+        jsonTable.setConsistencyInfo(consistencyInfo);
+        jsonTable.setKeyspaceName(keyspaceName);
+        jsonTable.setPrimaryKey("emp_name");
+        jsonTable.setTableName("");
+        jsonTable.setFields(fields);
+        Response response = data.createTable("1", "1", "1",
+                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",appName, authorization, 
+                jsonTable, keyspaceName, "");
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+        assertEquals(400, response.getStatus());
+    }
 
 
 	@Test
@@ -464,6 +487,41 @@ public class TstRestMusicDataAPI {
 
 		assertEquals(200, response.getStatus());
 	}
+	
+	// create index without table name
+    @Test
+    public void test3_createTableIndexNoName() throws Exception {
+        System.out.println("Testing index in create table w/o tablename");
+        String tableNameC ="testTableCinx";
+        JsonTable jsonTable = new JsonTable();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        Map<String, String> fields = new HashMap<>();
+        fields.put("uuid", "text");
+        fields.put("emp_name", "text");
+        fields.put("emp_salary", "varint");
+        fields.put("PRIMARY KEY", "((emp_name),emp_salary)");
+        consistencyInfo.put("type", "eventual");
+        jsonTable.setConsistencyInfo(consistencyInfo);
+        jsonTable.setKeyspaceName(keyspaceName);
+        jsonTable.setTableName(tableNameC);
+        jsonTable.setClusteringOrder("emp_salary ASC");
+        jsonTable.setFields(fields);
+        Response response = data.createTable("1", "1", "1",
+                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
+                jsonTable, keyspaceName, tableNameC);
+        // if 200 print to log otherwise fail assertEquals(200, response.getStatus());
+        // info.setQueryParameters("index_name=inx_uuid");
+        Map<String,String> queryParametersMap =new HashMap<String, String>();
+
+        queryParametersMap.put("index_name","inxuuid");
+        Mockito.when(info.getQueryParameters()).thenReturn(new MultivaluedHashMap<String, String>(queryParametersMap));
+        response = data.createIndex("1", "1", "1",
+                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
+                "", "","uuid",info);
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+
+        assertEquals(400, response.getStatus());
+    }
 
 	@Test
 	public void test4_insertIntoTable() throws Exception {
@@ -486,6 +544,50 @@ public class TstRestMusicDataAPI {
 
 		assertEquals(200, response.getStatus());
 	}
+	
+	@Test
+    public void test4_insertIntoTableCriticalNoLockID() throws Exception {
+        System.out.println("Testing atomic insert into table without lockid");
+        createTable();
+        JsonInsert jsonInsert = new JsonInsert();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        Map<String, Object> values = new HashMap<>();
+        values.put("uuid", "cfd66ccc-d857-4e90-b1e5-df98a3d40cd6");
+        values.put("emp_name", "testname");
+        values.put("emp_salary", 500);
+        consistencyInfo.put("type", "critical");
+        jsonInsert.setConsistencyInfo(consistencyInfo);
+        jsonInsert.setKeyspaceName(keyspaceName);
+        jsonInsert.setTableName(tableName);
+        jsonInsert.setValues(values);
+        Response response = data.insertIntoTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
+                appName, authorization, jsonInsert, keyspaceName, tableName);
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+
+        assertEquals(400, response.getStatus());
+    }
+	
+	@Test
+    public void test4_insertIntoTableNoName() throws Exception {
+        System.out.println("Testing insert into table w/o table name");
+        createTable();
+        JsonInsert jsonInsert = new JsonInsert();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        Map<String, Object> values = new HashMap<>();
+        values.put("uuid", "cfd66ccc-d857-4e90-b1e5-df98a3d40cd6");
+        values.put("emp_name", "testname");
+        values.put("emp_salary", 500);
+        consistencyInfo.put("type", "eventual");
+        jsonInsert.setConsistencyInfo(consistencyInfo);
+        jsonInsert.setKeyspaceName(keyspaceName);
+        jsonInsert.setTableName(tableName);
+        jsonInsert.setValues(values);
+        Response response = data.insertIntoTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
+                appName, authorization, jsonInsert, "", "");
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+
+        assertEquals(400, response.getStatus());
+    }
 
 	@Test
 	public void test4_insertIntoTable2() throws Exception {
@@ -582,7 +684,32 @@ public class TstRestMusicDataAPI {
 		System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
 		
 		assertEquals(200, response.getStatus());
-	} 
+	}
+	
+	@Test
+    public void test5_updateTableNoName() throws Exception {
+        System.out.println("Testing update table without tablename");
+        createTable();
+        
+        JsonUpdate jsonUpdate = new JsonUpdate();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        MultivaluedMap<String, String> row = new MultivaluedMapImpl();
+        Map<String, Object> values = new HashMap<>();
+        row.add("emp_name", "testname");
+        values.put("emp_salary", 2500);
+        consistencyInfo.put("type", "atomic");
+        jsonUpdate.setConsistencyInfo(consistencyInfo);
+        jsonUpdate.setKeyspaceName(keyspaceName);
+        jsonUpdate.setTableName(tableName);
+        jsonUpdate.setValues(values);
+        Mockito.when(info.getQueryParameters()).thenReturn(row);
+        Response response = data.updateTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
+                authorization, jsonUpdate, "", "", info);
+        
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+        
+        assertEquals(400, response.getStatus());
+    }
 
 	// need mock code to create error for MusicCore methods
 	@Test

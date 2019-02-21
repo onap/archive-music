@@ -43,7 +43,8 @@ import com.datastax.driver.core.Row;
 import com.sun.jersey.core.util.Base64;
 
 @RunWith(Suite.class)
-@SuiteClasses({ TstRestMusicDataAPI.class, TstRestMusicLockAPI.class, TstRestMusicAdminAPI.class })
+@SuiteClasses({ TstRestMusicDataAPI.class, TstRestMusicLockAPI.class, TstRestMusicAdminAPI.class,
+    TstRestMusicConditionalAPI.class})
 public class TestAPISuite {
 
 	static String appName = "TestApp";
