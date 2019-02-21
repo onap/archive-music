@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6503721c_28da4510",
+        "filename": "src/main/java/org/onap/music/service/impl/MusicCassaCore.java",
+        "patchSetId": 3
+      },
+      "lineNbr": 628,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-02-21T21:12:21Z",
+      "side": 1,
+      "message": "We need to at least log an error here",
+      "revId": "3783f81e94b95dd36602d2c48eb7c5b56aa78e63",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0899a507_463c6278",
+        "filename": "src/main/java/org/onap/music/service/impl/MusicCassaCore.java",
+        "patchSetId": 3
+      },
+      "lineNbr": 647,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-02-21T21:12:21Z",
+      "side": 1,
+      "message": "and log an error here",
+      "revId": "3783f81e94b95dd36602d2c48eb7c5b56aa78e63",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
