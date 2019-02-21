@@ -451,7 +451,31 @@ public class TstRestMusicDataAPI {
 
 		assertEquals(400, response.getStatus());
 	}
-
+	
+	@Ignore
+	@Test
+    public void test3_createTablePartitionKey() throws Exception {
+        System.out.println("Testing create table with a partitionKey");
+        JsonTable jsonTable = new JsonTable();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        Map<String, String> fields = new HashMap<>();
+        fields.put("uuid", "text");
+        fields.put("emp_name", "text");
+        fields.put("emp_salary", "varint");
+        fields.put("PRIMARY KEY", "(emp_name)");
+        consistencyInfo.put("type", "eventual");
+        jsonTable.setConsistencyInfo(consistencyInfo);
+        jsonTable.setKeyspaceName(keyspaceName);
+        jsonTable.setPrimaryKey("emp_name");
+        jsonTable.setTableName(tableName);
+        jsonTable.setFields(fields);
+        jsonTable.setPartitionKey("emp_salary");
+        Response response = data.createTable("1", "1", "1",
+                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",appName, authorization, 
+                jsonTable, keyspaceName, tableName);
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+        assertEquals(200, response.getStatus());
+    }
 
 	// good clustering key, need to pass queryparameter
 	@Test
@@ -659,7 +683,29 @@ public class TstRestMusicDataAPI {
 		assertEquals(400, response.getStatus());
 	}
 
+	@Test
+    public void test4_insertBlobIntoTable() throws Exception {
+        System.out.println("Testing insert a blob into table");
+        createTable();
+        JsonInsert jsonInsert = new JsonInsert();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        Map<String, Object> values = new HashMap<>();
+        values.put("uuid", "cfd66ccc-d857-4e90-b1e5-df98a3d40cd6");
+        values.put("emp_name", "testname");
+        values.put("emp_salary", 500);
+        values.put("binary", "somestuffhere");
+        consistencyInfo.put("type", "eventual");
+        jsonInsert.setConsistencyInfo(consistencyInfo);
+        jsonInsert.setKeyspaceName(keyspaceName);
+        jsonInsert.setTableName(tableName);
+        jsonInsert.setValues(values);
+        Response response = data.insertIntoTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
+                appName, authorization, jsonInsert, keyspaceName, tableName);
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
 
+        assertEquals(200, response.getStatus());
+    }
+	
 	@Test
 	public void test5_updateTable() throws Exception {
 		System.out.println("Testing update table");
@@ -934,40 +980,6 @@ public class TstRestMusicDataAPI {
 
 		assertEquals(400, response.getStatus());
 	}
-	
-	private static void createAdminTable() throws Exception {
-		testObject = new PreparedQueryObject();
-		testObject.appendQueryString(CassandraCQL.createAdminKeyspace);
-		MusicCore.eventualPut(testObject);
-		testObject = new PreparedQueryObject();
-		testObject.appendQueryString(CassandraCQL.createAdminTable);
-		MusicCore.eventualPut(testObject);
-
-		testObject = new PreparedQueryObject();
-		testObject.appendQueryString(
-				"INSERT INTO admin.keyspace_master (uuid, keyspace_name, application_name, is_api, "
-						+ "password, username, is_aaf) VALUES (?,?,?,?,?,?,?)");
-		testObject.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), uuid));
-		testObject.addValue(MusicUtil.convertToActualDataType(DataType.text(),
-				MusicUtil.DEFAULTKEYSPACENAME));
-		testObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), appName));
-		testObject.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), "True"));
-		testObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), BCrypt.hashpw(password, BCrypt.gensalt())));
-		testObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
-		testObject.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), isAAF));
-		MusicCore.eventualPut(testObject);
-
-		testObject = new PreparedQueryObject();
-		testObject.appendQueryString(
-				"select uuid from admin.keyspace_master where application_name = ? allow filtering");
-		testObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), appName));
-		ResultSet rs = MusicCore.get(testObject);
-		List<Row> rows = rs.all();
-		if (rows.size() > 0) {
-			System.out.println("#######UUID is:" + rows.get(0).getUUID("uuid"));
-		}
-	}
-	
 
 	private static void createKeyspace() throws Exception {
 		//shouldn't really be doing this here, but create keyspace is currently turned off
@@ -1019,6 +1031,7 @@ public class TstRestMusicDataAPI {
 		fields.put("uuid", "text");
 		fields.put("emp_name", "text");
 		fields.put("emp_salary", "varint");
+		fields.put("binary", "blob");
 		fields.put("PRIMARY KEY", "(emp_name)");
 		consistencyInfo.put("type", "eventual");
 		jsonTable.setConsistencyInfo(consistencyInfo);
@@ -1045,6 +1058,7 @@ public class TstRestMusicDataAPI {
 		values.put("uuid", "cfd66ccc-d857-4e90-b1e5-df98a3d40cd6");
 		values.put("emp_name", "testname");
 		values.put("emp_salary", 500);
+		values.put("binary", "binarydatahere");
 		consistencyInfo.put("type", "eventual");
 		jsonInsert.setConsistencyInfo(consistencyInfo);
 		jsonInsert.setKeyspaceName(keyspaceName);
