@@ -39,6 +39,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
+import org.onap.music.datastore.jsonobjects.JsonLeasedLock;
 import org.onap.music.datastore.jsonobjects.JsonTable;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.lockingservice.cassandra.CassaLockStore;
@@ -124,8 +125,22 @@ public class TstRestMusicLockAPI {
     }
     
     @Test
+    public void test_accquireLockWLease() throws Exception {
+        System.out.println("Testing acquire lock with lease");
+        createAndInsertIntoTable();
+        String lockRef = createLockReference();
+
+        JsonLeasedLock jsonLock = new JsonLeasedLock();
+        jsonLock.setLeasePeriod(10000); //10 second lease period?
+        Response response = lock.accquireLockWithLease(jsonLock, lockRef, "1", "1", authorization,
+                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+        assertEquals(200, response.getStatus());
+    }
+    
+    @Test
     public void test_accquireBadLock() throws Exception {
-    	System.out.println("Testing acquire lock");
+    	System.out.println("Testing acquire lock that is not lock-holder");
 		createAndInsertIntoTable();
 
     	String lockRef1 = createLockReference();
@@ -140,7 +155,7 @@ public class TstRestMusicLockAPI {
     
     @Test
     public void test_currentLockHolder() throws Exception {
-    	System.out.println("Testing acquire lock");
+    	System.out.println("Testing get current lock holder");
 		createAndInsertIntoTable();
 
     	String lockRef = createLockReference();
@@ -155,7 +170,7 @@ public class TstRestMusicLockAPI {
     
     @Test
     public void test_unLock() throws Exception {
-    	System.out.println("Testing acquire lock");
+    	System.out.println("Testing unlock");
 		createAndInsertIntoTable();
     	String lockRef = createLockReference();
 
@@ -163,6 +178,34 @@ public class TstRestMusicLockAPI {
     			"abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
     	System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
     	assertEquals(200, response.getStatus());
+    }
+    
+    @Test
+    public void test_getLockState() throws Exception {
+        System.out.println("Testing get lock state");
+        createAndInsertIntoTable();
+
+        String lockRef = createLockReference();
+
+        Response response = lock.currentLockState(lockName, "1", "1", authorization,
+                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+        assertEquals(200, response.getStatus());
+        Map<String,Object> respMap = (Map<String, Object>) response.getEntity();
+        assertEquals(lockRef, ((Map<String,String>) respMap.get("lock")).get("lock-holder"));
+    }
+    
+    @Test
+    public void test_deleteLock() throws Exception {
+        System.out.println("Testing get lock state");
+        createAndInsertIntoTable();
+
+        String lockRef = createLockReference();
+
+        Response response = lock.deleteLock(lockName, "1", "1",
+                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", authorization, appName);
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+        assertEquals(200, response.getStatus());
     }
 	
 	/**
