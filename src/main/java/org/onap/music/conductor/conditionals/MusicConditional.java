@@ -233,6 +233,7 @@ public class MusicConditional {
         Map<String, String> returnMap = new HashMap<>();
         Object key = casscadeColumnData.get("key");
         String setStatus = "";
+        System.out.println(casscadeColumnData.get("value"));
         Map<String, String> value = (Map<String, String>) casscadeColumnData.get("value");
 
         if (isExists)

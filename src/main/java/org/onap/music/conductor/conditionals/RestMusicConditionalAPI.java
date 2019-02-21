@@ -82,8 +82,8 @@ public class RestMusicConditionalAPI {
             @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
             @ApiParam(value = "Application namespace", required = true) @HeaderParam(NS) String ns,
             @ApiParam(value = "Authorization", required = true) @HeaderParam("Authorization") String authorization,
-            @ApiParam(value = "Major Version", required = true) @PathParam("keyspace") String keyspace,
-            @ApiParam(value = "Major Version", required = true) @PathParam("tablename") String tablename,
+            @ApiParam(value = "Keyspace Name", required = true) @PathParam("keyspace") String keyspace,
+            @ApiParam(value = "Table Name", required = true) @PathParam("tablename") String tablename,
             JsonConditional jsonObj) throws Exception {
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
         String primaryKey = jsonObj.getPrimaryKey();
