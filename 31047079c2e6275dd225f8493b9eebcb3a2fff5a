@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "91f6bbbb_cd31fc29",
+        "filename": "src/main/java/org/onap/music/datastore/jsonobjects/CassaTableObject.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-02-21T18:29:57Z",
+      "side": 1,
+      "message": "This should be a list of columns, not just a single column\n\nsee: https://docs.datastax.com/en/cql/3.3/cql/cql_reference/cqlCreateTable.html#cqlCreateTable",
+      "revId": "31047079c2e6275dd225f8493b9eebcb3a2fff5a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "c25c3b46_383e0a6f",
+        "filename": "src/main/java/org/onap/music/datastore/jsonobjects/CassaTableObject.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-02-21T18:29:57Z",
+      "side": 1,
+      "message": "There is no sortingKey in create table. This must be from old code, please remove this field",
+      "revId": "31047079c2e6275dd225f8493b9eebcb3a2fff5a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "c8e02440_2c96eeb9",
+        "filename": "src/main/java/org/onap/music/datastore/jsonobjects/CassaTableObject.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-02-21T18:29:57Z",
+      "side": 1,
+      "message": "partitionKey is the same as primaryKey. This is duplicated information",
+      "revId": "31047079c2e6275dd225f8493b9eebcb3a2fff5a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "375b2348_76395549",
+        "filename": "src/main/java/org/onap/music/datastore/jsonobjects/CassaTableObject.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-02-21T18:29:57Z",
+      "side": 1,
+      "message": "clustering key can be a list of columns. Please make this a list",
+      "revId": "31047079c2e6275dd225f8493b9eebcb3a2fff5a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d784f3a0_04066ba4",
+        "filename": "src/main/java/org/onap/music/datastore/jsonobjects/CassaTableObject.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-02-21T18:29:57Z",
+      "side": 1,
+      "message": "What is this filteringKey?",
+      "revId": "31047079c2e6275dd225f8493b9eebcb3a2fff5a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
