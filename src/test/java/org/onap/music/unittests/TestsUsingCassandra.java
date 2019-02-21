@@ -44,8 +44,9 @@ import com.sun.jersey.core.util.Base64;
 
 @RunWith(Suite.class)
 @SuiteClasses({ TstRestMusicDataAPI.class, TstRestMusicLockAPI.class, TstRestMusicAdminAPI.class,
-    TstRestMusicConditionalAPI.class})
-public class TestAPISuite {
+    TstRestMusicConditionalAPI.class, TstCachingUtil.class})
+//@SuiteClasses({TstCachingUtil.class})
+public class TestsUsingCassandra {
 
 	static String appName = "TestApp";
 	static String userId = "TestUser";

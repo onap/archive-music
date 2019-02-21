@@ -78,13 +78,6 @@ public class JsonTableTest {
    }
 
     @Test
-    public void testGetSortingKey() {
-        String sortKey = "sortkey";
-        jt.setSortingKey(sortKey);
-        assertEquals(sortKey,jt.getSortingKey());
-    }
-
-    @Test
     public void testGetClusteringOrder() {
         String clusteringOrder = "clusteringOrder";
         jt.setClusteringOrder(clusteringOrder);
