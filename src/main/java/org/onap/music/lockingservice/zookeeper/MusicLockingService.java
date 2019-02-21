@@ -3,6 +3,7 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *  Modifications Copyright (C) 2019 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -64,6 +65,7 @@ public class MusicLockingService implements Watcher {
         } catch (InterruptedException e) {
             logger.error("Error", e);
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+            Thread.currentThread().interrupt();
             throw new MusicServiceException("Exception Occured " + e.getMessage());
         }
     }
@@ -79,6 +81,7 @@ public class MusicLockingService implements Watcher {
         }catch( InterruptedException e) {
             logger.error("Error", e);
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+            Thread.currentThread().interrupt();
         }catch(Exception e) {
             logger.error("Error", e);
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
@@ -111,8 +114,9 @@ public class MusicLockingService implements Watcher {
         }catch (Exception ex){
             logger.error(EELFLoggerDelegate.errorLogger, ex,AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
         }
-        if(data !=null)
-        return MusicLockState.deSerialize(data);
+        if(data !=null) {
+            return MusicLockState.deSerialize(data);
+        }
         else {
             logger.error(EELFLoggerDelegate.errorLogger,"Invalid lock or acquire failed",AppMessages.INVALIDLOCK, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
             throw new  MusicLockingException("Invalid lock or acquire failed");
@@ -136,6 +140,7 @@ public class MusicLockingService implements Watcher {
         }catch( InterruptedException e) {
             logger.error("Error", e);
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.EXECUTIONINTERRUPTED, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
+            Thread.currentThread().interrupt();
         }catch(Exception e) {
             logger.error("Error", e);
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.LOCKINGERROR);
