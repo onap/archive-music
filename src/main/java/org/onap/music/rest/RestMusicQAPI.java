@@ -377,8 +377,7 @@ public class RestMusicQAPI {
     else {
 
       try {
-        queryObject = new RestMusicDataAPI().selectSpecificQuery(version, minorVersion,
-                patchVersion, aid, ns, userId, password, keyspace, tablename, info, limit);
+        queryObject = new RestMusicDataAPI().selectSpecificQuery(keyspace, tablename, info, limit);
       } catch (MusicServiceException ex) {
         logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.UNKNOWNERROR,
                 ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);

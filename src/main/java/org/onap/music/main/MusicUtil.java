@@ -48,7 +48,6 @@ import java.util.concurrent.ConcurrentMap;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
-
 import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
@@ -815,7 +814,6 @@ public class MusicUtil {
 
 
     public static void setIsCadi(boolean isCadi) {
-        // TODO Auto-generated method stub
         MusicUtil.isCadi = isCadi;
     }
 
@@ -857,6 +855,16 @@ public class MusicUtil {
     
     public static boolean getIsCadi() {
         return MusicUtil.isCadi;
+    }
+
+
+    /**
+     * @return a random uuid
+     */
+    public static String generateUUID() {
+        String uuid = UUID.randomUUID().toString();
+        logger.info(EELFLoggerDelegate.applicationLogger,"New AID generated: "+uuid);
+        return uuid;
     }
 
 }

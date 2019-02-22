@@ -23,28 +23,28 @@
  * ====================================================================
  */
 
-package org.onap.music.main;
+package org.onap.music.authentication;
 
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-
 import javax.ws.rs.core.MediaType;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.jcs.JCS;
 import org.apache.commons.jcs.access.CacheAccess;
 import org.mindrot.jbcrypt.BCrypt;
+import org.onap.music.authentication.MusicAuthenticator.Operation;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicServiceException;
-
+import org.onap.music.main.MusicCore;
+import org.onap.music.main.MusicUtil;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
@@ -348,12 +348,7 @@ public class CachingUtil implements Runnable {
         return appName;
     }
 
-    public static String generateUUID() {
-        String uuid = UUID.randomUUID().toString();
-        logger.info(EELFLoggerDelegate.applicationLogger,"New AID generated: "+uuid);
-        return uuid;
-    }
-
+    @Deprecated
     public static Map<String, Object> validateRequest(String nameSpace, String userId,
                     String password, String keyspace, String aid, String operation) {
         Map<String, Object> resultMap = new HashMap<>();
@@ -363,9 +358,19 @@ public class CachingUtil implements Runnable {
             }
         }
         return resultMap;
-
     }
 
+    public static Map<String, Object> validateRequest(String nameSpace, String userId,
+            String password, String keyspace, String aid, Operation operation) {
+        Map<String, Object> resultMap = new HashMap<>();
+        if (Operation.CREATE_KEYSPACE!=operation) {
+            if (nameSpace == null) {
+                resultMap.put("Exception", "Application namespace is mandatory.");
+            }
+        }
+        return resultMap;
+    }
+    
     public static Map<String, Object> verifyOnboarding(String ns, String userId, String password) {
         Map<String, Object> resultMap = new HashMap<>();
         if (ns == null || userId == null || password == null) {

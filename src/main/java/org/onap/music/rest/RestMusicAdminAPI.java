@@ -46,7 +46,9 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
 import org.mindrot.jbcrypt.BCrypt;
+import org.onap.music.authentication.CachingUtil;
 import org.onap.music.authentication.MusicAuthentication;
+import org.onap.music.authentication.MusicAuthenticator;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonOnboard;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
@@ -54,8 +56,6 @@ import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicServiceException;
-//import org.onap.music.main.CacheAccess;
-import org.onap.music.main.CachingUtil;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
@@ -80,6 +80,8 @@ public class RestMusicAdminAPI {
                     EELFLoggerDelegate.getLogger(RestMusicAdminAPI.class);
     // Set to true in env like ONAP. Where access to creating and dropping keyspaces exist.    
     private static final boolean KEYSPACE_ACTIVE = false;
+    
+    private MusicAuthenticator authenticator = new MusicAuthentication();
 
     /*
      * API to onboard an application with MUSIC. This is the mandatory first step.
@@ -95,27 +97,22 @@ public class RestMusicAdminAPI {
         logger.info(EELFLoggerDelegate.errorLogger, "oboarding app");
         ResponseBuilder response =
                         Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
+        if (!authenticator.authenticateAdmin(authorization)) {
+            logger.error(EELFLoggerDelegate.errorLogger, "Unauthorized: Please check admin username,password and try again", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.CRITICAL,
+                    ErrorTypes.AUTHENTICATIONERROR);
+            return response.status(Status.UNAUTHORIZED)
+                    .entity(new JsonResponse(ResultType.FAILURE)
+                            .setError("Unauthorized: Please check admin username,password and try again").toMap())
+                    .build();
+        }
+
         Map<String, Object> resultMap = new HashMap<>();
         String appName = jsonObj.getAppname();
         String userId = jsonObj.getUserId();
         String isAAF = jsonObj.getIsAAF();
         String password = jsonObj.getPassword();
         String keyspace_name = jsonObj.getKeyspace();
-        try {
-            if (!MusicAuthentication.authenticateAdmin(authorization)) {
-                logger.error(EELFLoggerDelegate.errorLogger, "Unauthorized: Please check admin username,password and try again", AppMessages.MISSINGDATA, ErrorSeverity.CRITICAL,
-                        ErrorTypes.AUTHENTICATIONERROR);
-                response.status(Status.UNAUTHORIZED);
-                return response
-                        .entity(new JsonResponse(ResultType.FAILURE)
-                                .setError("Unauthorized: Please check admin username,password and try again").toMap())
-                        .build();
-            }
-        } catch (Exception e) {
-        	logger.error(EELFLoggerDelegate.errorLogger, "Unable to authenticate", e);
-        	response.status(Status.UNAUTHORIZED);
-            return response.entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
-        }
+        
         if (appName == null || userId == null || isAAF == null || password == null) {
             logger.error(EELFLoggerDelegate.errorLogger, "Unauthorized: Please check the request parameters. Some of the required values appName(ns), userId, password, isAAF are missing.", AppMessages.MISSINGINFO,
                             ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
@@ -137,7 +134,7 @@ public class RestMusicAdminAPI {
          * " has already been onboarded. Please contact admin.").toMap()).build(); }
          */
         //pQuery = new PreparedQueryObject();
-        String uuid = CachingUtil.generateUUID();
+        String uuid = MusicUtil.generateUUID();
         pQuery.appendQueryString(
                         "INSERT INTO admin.keyspace_master (uuid, keyspace_name, application_name, is_api, "
                                         + "password, username, is_aaf) VALUES (?,?,?,?,?,?,?)");
@@ -171,24 +168,20 @@ public class RestMusicAdminAPI {
     public Response getOnboardedInfoSearch(JsonOnboard jsonObj,
             @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization) throws Exception {
         ResponseBuilder response = Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
+        
+        if (!authenticator.authenticateAdmin(authorization)) {
+            logger.error(EELFLoggerDelegate.errorLogger, "Unauthorized: Please check admin username,password and try again", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.CRITICAL,
+                    ErrorTypes.AUTHENTICATIONERROR);
+            return response.status(Status.UNAUTHORIZED)
+                    .entity(new JsonResponse(ResultType.FAILURE)
+                            .setError("Unauthorized: Please check admin username,password and try again").toMap())
+                    .build();
+        }
+        
         Map<String, Object> resultMap = new HashMap<>();
         String appName = jsonObj.getAppname();
         String uuid = jsonObj.getAid();
         String isAAF = jsonObj.getIsAAF();
-
-        try {
-            if (!MusicAuthentication.authenticateAdmin(authorization)) {
-                logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA, ErrorSeverity.CRITICAL,
-                        ErrorTypes.AUTHENTICATIONERROR);
-                response.status(Status.UNAUTHORIZED);
-                return response
-                        .entity(new JsonResponse(ResultType.FAILURE)
-                                .setError("Unauthorized: Please check admin username,password and try again").toMap())
-                        .build();
-            }
-        } catch (Exception e) {
-            return response.entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
-        }
         if (appName == null && uuid == null && isAAF == null) {
             logger.error(EELFLoggerDelegate.errorLogger, "Unauthorized: Please check the request parameters. Enter atleast one of the following parameters: appName(ns), aid, isAAF.", AppMessages.MISSINGINFO,
                             ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
@@ -248,24 +241,21 @@ public class RestMusicAdminAPI {
     public Response deleteOnboardApp(JsonOnboard jsonObj,
             @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization) throws Exception {
         ResponseBuilder response = Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
+        
+        if (!authenticator.authenticateAdmin(authorization)) {
+            logger.error(EELFLoggerDelegate.errorLogger, "Unauthorized: Please check admin username,password and try again", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.CRITICAL,
+                    ErrorTypes.AUTHENTICATIONERROR);
+            return response.status(Status.UNAUTHORIZED)
+                    .entity(new JsonResponse(ResultType.FAILURE)
+                            .setError("Unauthorized: Please check admin username,password and try again").toMap())
+                    .build();
+        }
+        
         Map<String, Object> resultMap = new HashMap<>();
         String appName = jsonObj.getAppname();
         String aid = jsonObj.getAid();
         PreparedQueryObject pQuery = new PreparedQueryObject();
-        String consistency = MusicUtil.EVENTUAL;;
-        try {
-            if (!MusicAuthentication.authenticateAdmin(authorization)) {
-                logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA, ErrorSeverity.CRITICAL,
-                        ErrorTypes.AUTHENTICATIONERROR);
-                response.status(Status.UNAUTHORIZED);
-                return response
-                        .entity(new JsonResponse(ResultType.FAILURE)
-                                .setError("Unauthorized: Please check admin username,password and try again").toMap())
-                        .build();
-            }
-        } catch (Exception e) {
-            return response.entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
-        }
+        String consistency = MusicUtil.EVENTUAL;
         if (appName == null && aid == null) {
             logger.error(EELFLoggerDelegate.errorLogger, "Please make sure either appName(ns) or Aid is present", AppMessages.MISSINGINFO,
                             ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
@@ -358,6 +348,15 @@ public class RestMusicAdminAPI {
     public Response updateOnboardApp(JsonOnboard jsonObj,
             @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization) throws Exception {
         ResponseBuilder response = Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
+        if (!authenticator.authenticateAdmin(authorization)) {
+            logger.error(EELFLoggerDelegate.errorLogger, "Unauthorized: Please check admin username,password and try again", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.CRITICAL,
+                    ErrorTypes.AUTHENTICATIONERROR);
+            return response.status(Status.UNAUTHORIZED)
+                    .entity(new JsonResponse(ResultType.FAILURE)
+                            .setError("Unauthorized: Please check admin username,password and try again").toMap())
+                    .build();
+        }
+        
         Map<String, Object> resultMap = new HashMap<>();
         String aid = jsonObj.getAid();
         String appName = jsonObj.getAppname();
@@ -366,19 +365,7 @@ public class RestMusicAdminAPI {
         String password = jsonObj.getPassword();
         String consistency = "eventual";
         PreparedQueryObject pQuery;
-        try {
-            if (!MusicAuthentication.authenticateAdmin(authorization)) {
-                logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA, ErrorSeverity.CRITICAL,
-                        ErrorTypes.AUTHENTICATIONERROR);
-                response.status(Status.UNAUTHORIZED);
-                return response
-                        .entity(new JsonResponse(ResultType.FAILURE)
-                                .setError("Unauthorized: Please check admin username,password and try again").toMap())
-                        .build();
-            }
-        } catch (Exception e) {
-            return response.entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
-        }
+        
         if (aid == null) {
             resultMap.put("Exception", "Please make sure Aid is present");
             logger.error(EELFLoggerDelegate.errorLogger, "Please make sure Aid is present", AppMessages.MISSINGDATA,
@@ -458,6 +445,12 @@ public class RestMusicAdminAPI {
         List<Application> appList = new ArrayList<>();
         ResponseBuilder response =
                 Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
+        if (!authenticator.authenticateAdmin(authorization)) {
+            logger.error(EELFLoggerDelegate.errorLogger, "Unauthorized: Please check admin username,password and try again", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.CRITICAL,
+                    ErrorTypes.AUTHENTICATIONERROR);
+            return appList;
+        }
+        
         PreparedQueryObject queryObject = new PreparedQueryObject();
         queryObject.appendQueryString("SELECT *  FROM " + "admin" + "." + "keyspace_master" + ";");
         ResultSet results = MusicCore.get(queryObject);
@@ -484,6 +477,11 @@ public class RestMusicAdminAPI {
             @ApiParam(value = "uuid", required = true) @HeaderParam("uuid") String uuid) throws Exception {
         ResponseBuilder response =
                 Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
+        if (!authenticator.authenticateAdmin(authorization)) {
+            logger.error(EELFLoggerDelegate.errorLogger, "Unauthorized: Please check admin username,password and try again", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.CRITICAL,
+                    ErrorTypes.AUTHENTICATIONERROR);
+            return false;
+        }
         PreparedQueryObject queryObject = new PreparedQueryObject();
         queryObject.appendQueryString("delete from admin.keyspace_master where uuid=?");
         queryObject.addValue(MusicUtil.convertToActualDataType(DataType.uuid(),uuid));
@@ -494,16 +492,5 @@ public class RestMusicAdminAPI {
             return false;
         }
         return true;
-    }
-    
-    
-    @GET
-    @Path("/login")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    public boolean login(@ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization) throws Exception {
-       
-        boolean result =  MusicAuthentication.authenticateAdmin(authorization);
-        return result;
     }
 }

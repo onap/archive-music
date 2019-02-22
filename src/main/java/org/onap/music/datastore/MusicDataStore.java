@@ -35,13 +35,13 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.apache.commons.jcs.access.CacheAccess;
+import org.onap.music.authentication.CachingUtil;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
-import org.onap.music.main.CachingUtil;
 import org.onap.music.main.MusicUtil;
 
 import com.codahale.metrics.JmxReporter;

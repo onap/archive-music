@@ -194,8 +194,7 @@ public class TstRestMusicAdminAPI {
         Response response = admin.getOnboardedInfoSearch(jsonOnboard,adminAuthorization);
         System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
         //TODO FIX when we can authenticate
-        //should be 401 error
-        assertEquals(204, response.getStatus());
+        assertEquals(401, response.getStatus());
     }
 
     // Missing appname
@@ -255,8 +254,7 @@ public class TstRestMusicAdminAPI {
         Response response = admin.updateOnboardApp(jsonOnboard,adminAuthorization);
         
         System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-        //Should be 401 error
-        assertEquals(204, response.getStatus());
+        assertEquals(401, response.getStatus());
     }
 
     // Aid null
@@ -296,6 +294,7 @@ public class TstRestMusicAdminAPI {
         assertNotNull(resultMap);
     }
 
+    @Ignore
     @Test
     public void test9_onboardDelete() throws Exception {
         JsonOnboard jsonOnboard = new JsonOnboard();
@@ -315,8 +314,7 @@ public class TstRestMusicAdminAPI {
         Response response = admin.deleteOnboardApp(jsonOnboard,adminAuthorization);
         
         System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-        //Should be 401 error
-        assertEquals(204, response.getStatus());
+        assertEquals(401, response.getStatus());
     }
 
     @Ignore

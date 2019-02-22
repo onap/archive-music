@@ -34,10 +34,10 @@ import org.junit.runners.MethodSorters;
 import org.mockito.Mock;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
-import org.onap.music.main.CachingUtil;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.onap.music.authentication.CachingUtil;
 import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.PreparedQueryObject;
 
