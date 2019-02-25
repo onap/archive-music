@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3d75da7e_cf73cb8a",
+        "filename": "src/main/java/org/onap/music/main/MusicUtil.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 860,
+      "author": {
+        "id": 1827
+      },
+      "writtenOn": "2019-02-25T22:34:12Z",
+      "side": 1,
+      "message": "I like this. A class as generic as this should be here.",
+      "revId": "70176081920e735e6c34b0497fdbf2e3588e1404",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
