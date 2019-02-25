@@ -44,7 +44,7 @@ import com.sun.jersey.core.util.Base64;
 
 @RunWith(Suite.class)
 @SuiteClasses({ TstRestMusicDataAPI.class, TstRestMusicLockAPI.class, TstRestMusicAdminAPI.class,
-    TstRestMusicConditionalAPI.class})
+    TstRestMusicConditionalAPI.class, TstCachingUtil.class})
 public class TestAPISuite {
 
 	static String appName = "TestApp";
@@ -60,6 +60,7 @@ public class TestAPISuite {
 	static String tableName = "employees";
 	static String xLatestVersion = "X-latestVersion";
 	static String onboardUUID = null;
+	static String aid = "abc66ccc-d857-4e90-b1e5-df98a3d40ce6";
 	
 	@BeforeClass
 	public static void beforeClass() throws Exception {
@@ -91,7 +92,7 @@ public class TestAPISuite {
 						+ "password, username, is_aaf) VALUES (?,?,?,?,?,?,?)");
 		testObject.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), uuid));
 		testObject.addValue(MusicUtil.convertToActualDataType(DataType.text(),
-				MusicUtil.DEFAULTKEYSPACENAME));
+		        keyspaceName));
 		testObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), appName));
 		testObject.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), "True"));
 		testObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), BCrypt.hashpw(password, BCrypt.gensalt())));

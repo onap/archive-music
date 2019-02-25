@@ -33,10 +33,8 @@ import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicServiceException;
-import org.onap.music.lockingservice.zookeeper.MusicLockingService;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
-import org.onap.music.service.impl.MusicZKCore;
 import org.onap.music.main.MusicCore;
 
 import com.datastax.driver.core.ConsistencyLevel;
@@ -50,7 +48,6 @@ public class MusicHealthCheck {
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicUtil.class);
 
     private String cassandrHost;
-    private String zookeeperHost;
 
     public String getCassandraStatus(String consistency) {
         logger.info(EELFLoggerDelegate.applicationLogger, "Getting Status for Cassandra");
@@ -67,7 +64,7 @@ public class MusicHealthCheck {
                     try {
                         result = getAdminKeySpace(consistency);
                     } catch (MusicServiceException e1) {
-                      logger.error(EELFLoggerDelegate.errorLogger, e1.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.UNKNOWN);
+                      logger.error(EELFLoggerDelegate.errorLogger, e1, AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.UNKNOWN);
                     }
             } else {
                 logger.error("Error", e);
@@ -98,27 +95,9 @@ public class MusicHealthCheck {
         try {
             rs = MusicCore.nonKeyRelatedPut(pQuery, ConsistencyLevel.ONE.toString());
         } catch (MusicServiceException e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.UNKNOWN);
+            logger.error(EELFLoggerDelegate.errorLogger, e, AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.UNKNOWN);
         }
         return rs != null && rs.getResult().toLowerCase().contains("success");
-    }
-
-    public String getZookeeperStatus() {
-
-        String host = MusicUtil.getMyZkHost();
-        logger.info(EELFLoggerDelegate.applicationLogger, "Getting Status for Zookeeper Host: " + host);
-        try {
-            MusicLockingService lockingService = MusicZKCore.getLockingServiceHandle();
-            // additionally need to call the ZK to create,aquire and delete lock
-        } catch (MusicLockingException e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), AppMessages.LOCKINGERROR,
-                    ErrorTypes.CONNECTIONERROR, ErrorSeverity.CRITICAL);
-            return "INACTIVE";
-        }
-
-        logger.info(EELFLoggerDelegate.applicationLogger, "Zookeeper is Active and Running");
-        return "ACTIVE";
-
     }
 
     public String getCassandrHost() {
@@ -127,14 +106,6 @@ public class MusicHealthCheck {
 
     public void setCassandrHost(String cassandrHost) {
         this.cassandrHost = cassandrHost;
-    }
-
-    public String getZookeeperHost() {
-        return zookeeperHost;
-    }
-
-    public void setZookeeperHost(String zookeeperHost) {
-        this.zookeeperHost = zookeeperHost;
     }
 
 }

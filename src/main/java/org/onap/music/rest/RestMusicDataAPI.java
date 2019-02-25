@@ -713,15 +713,8 @@ public class RestMusicDataAPI {
         Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
         String userId = userCredentials.get(MusicUtil.USERID);
         String password = userCredentials.get(MusicUtil.PASSWORD);
-        Map<String, Object> authMap = null;
-
-        try {
-            authMap = MusicAuthentication.autheticateUser(ns, userId, password, keyspace,
-                          aid, "insertIntoTable");
-        } catch (Exception e) {
-          logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.MISSINGINFO  ,ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
-          return response.status(Status.UNAUTHORIZED).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
-        }
+        Map<String, Object> authMap = authMap = MusicAuthentication.autheticateUser(ns, userId, password, keyspace,
+                aid, "insertIntoTable");
         if (authMap.containsKey("aid"))
             authMap.remove("aid");
         if (!authMap.isEmpty()) {
@@ -880,10 +873,6 @@ public class RestMusicDataAPI {
                 result = MusicCore.atomicPut(keyspace, tablename, primaryKey, queryObject, null);
 
             }
-            else if (consistency.equalsIgnoreCase(MusicUtil.ATOMICDELETELOCK)) {
-                result = MusicCore.atomicPutWithDeleteLock(keyspace, tablename, primaryKey, queryObject, null);
-
-            }
         } catch (Exception ex) {
             logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
@@ -945,14 +934,8 @@ public class RestMusicDataAPI {
         Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
         String userId = userCredentials.get(MusicUtil.USERID);
         String password = userCredentials.get(MusicUtil.PASSWORD);
-        Map<String, Object> authMap;
-        try {
-            authMap = MusicAuthentication.autheticateUser(ns, userId, password, keyspace,
-                          aid, "updateTable");
-        } catch (Exception e) {
-              logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
-              return response.status(Status.UNAUTHORIZED).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
-        }
+        Map<String, Object> authMap = authMap = MusicAuthentication.autheticateUser(ns, userId, password, keyspace,
+                aid, "updateTable");
         if (authMap.containsKey("aid"))
             authMap.remove("aid");
         if (!authMap.isEmpty()) {
@@ -1276,11 +1259,7 @@ public class RestMusicDataAPI {
             } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
                     operationResult = MusicCore.atomicPut(keyspace, tablename, rowId.primarKeyValue,
                                     queryObject, conditionInfo);
-            }
-            else if (consistency.equalsIgnoreCase(MusicUtil.ATOMICDELETELOCK)) {
-                    operationResult = MusicCore.atomicPutWithDeleteLock(keyspace, tablename, rowId.primarKeyValue,
-                                    queryObject, conditionInfo);
-            }else if(consistency.equalsIgnoreCase(MusicUtil.EVENTUAL_NB)) {
+            } else if(consistency.equalsIgnoreCase(MusicUtil.EVENTUAL_NB)) {
                 
                 operationResult = MusicCore.eventualPut_nb(queryObject, keyspace, tablename, rowId.primarKeyValue);
             }
@@ -1441,10 +1420,6 @@ public class RestMusicDataAPI {
                             lockId);
         } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
             results = MusicCore.atomicGet(keyspace, tablename, rowId.primarKeyValue, queryObject);
-        }
-
-        else if (consistency.equalsIgnoreCase(MusicUtil.ATOMICDELETELOCK)) {
-            results = MusicCore.atomicGetWithDeleteLock(keyspace, tablename, rowId.primarKeyValue, queryObject);
         }
         if(results!=null && results.getAvailableWithoutFetching() >0) {
             return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setDataResult(MusicDataStoreHandle.marshallResults(results)).toMap()).build();

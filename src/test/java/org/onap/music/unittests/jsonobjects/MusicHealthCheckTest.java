@@ -44,11 +44,5 @@ public class MusicHealthCheckTest {
         musicHealthCheck.setCassandrHost("9042");
         assertEquals("9042", musicHealthCheck.getCassandrHost());
     }
-    
-    @Test
-    public void testZookeeperHost()
-    {
-        musicHealthCheck.setZookeeperHost("ZookeeperHost");
-        assertEquals("ZookeeperHost", musicHealthCheck.getZookeeperHost());
-    }
+
 }

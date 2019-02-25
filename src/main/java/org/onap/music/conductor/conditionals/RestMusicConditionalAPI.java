@@ -52,7 +52,6 @@ import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
 import org.onap.music.response.jsonobjects.JsonResponse;
 import org.onap.music.rest.RestMusicAdminAPI;
-import org.onap.music.service.impl.MusicZKCore;
 import org.onap.music.authentication.MusicAuthentication;
 import org.onap.music.conductor.*;
 
