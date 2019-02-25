@@ -109,8 +109,7 @@ public class TstRestMusicAdminAPI {
 		System.out.println("Testing RestMusicAdmin class");
 		//PowerMockito.mockStatic(MusicAuthentication.class);
     	try {
-    		MusicDataStoreHandle.mDstoreHandle = CassandraCQL.connectToEmbeddedCassandra();
-			createAdminTable();
+    		//MusicDataStoreHandle.mDstoreHandle = CassandraCQL.connectToEmbeddedCassandra();
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new Exception("Unable to initialize before TestRestMusicData test class. " + e.getMessage());
@@ -324,39 +323,5 @@ public class TstRestMusicAdminAPI {
         Map<String, Object> resultMap = (Map<String, Object>) admin.deleteOnboardApp(jsonOnboard,adminAuthorization).getEntity();
         assertNotNull(resultMap);
     }
-    
-    
-    private static void createAdminTable() throws Exception {
-		testObject = new PreparedQueryObject();
-		testObject.appendQueryString(CassandraCQL.createAdminKeyspace);
-		MusicCore.eventualPut(testObject);
-		testObject = new PreparedQueryObject();
-		testObject.appendQueryString(CassandraCQL.createAdminTable);
-		MusicCore.eventualPut(testObject);
-
-		testObject = new PreparedQueryObject();
-		testObject.appendQueryString(
-				"INSERT INTO admin.keyspace_master (uuid, keyspace_name, application_name, is_api, "
-						+ "password, username, is_aaf) VALUES (?,?,?,?,?,?,?)");
-		testObject.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), uuid));
-		testObject.addValue(MusicUtil.convertToActualDataType(DataType.text(),
-				MusicUtil.DEFAULTKEYSPACENAME));
-		testObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), appName));
-		testObject.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), "True"));
-		testObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), BCrypt.hashpw(password, BCrypt.gensalt())));
-		testObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
-		testObject.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), isAAF));
-		MusicCore.eventualPut(testObject);
-
-		testObject = new PreparedQueryObject();
-		testObject.appendQueryString(
-				"select uuid from admin.keyspace_master where application_name = ? allow filtering");
-		testObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), appName));
-		ResultSet rs = MusicCore.get(testObject);
-		List<Row> rows = rs.all();
-		if (rows.size() > 0) {
-			System.out.println("#######UUID is:" + rows.get(0).getUUID("uuid"));
-		}
-	}
    
 }

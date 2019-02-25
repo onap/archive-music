@@ -38,7 +38,6 @@ public class JsonTable {
     private Map<String, String> fields;
     private Map<String, Object> properties;
     private String primaryKey;
-    private String sortingKey;
     private String partitionKey;
     private String clusteringKey;
     private String filteringKey;
@@ -88,15 +87,6 @@ public class JsonTable {
 
     public void setTableName(String tableName) {
         this.tableName = tableName;
-    }
-
-    @ApiModelProperty(value = "Sorting Key")
-    public String getSortingKey() {
-        return sortingKey;
-    }
-
-    public void setSortingKey(String sortingKey) {
-        this.sortingKey = sortingKey;
     }
 
     @ApiModelProperty(value = "Clustering Order", notes = "")

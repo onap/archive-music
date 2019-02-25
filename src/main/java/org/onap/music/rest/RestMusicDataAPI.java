@@ -444,90 +444,90 @@ public class RestMusicDataAPI {
                   else fieldsString.append("," + entry.getKey() + " " + entry.getValue() + "");
             }
 
-             if (counter != (fields.size() - 1) ) {
-              
-              counter = counter + 1; 
-             } else {
-        
-               if((primaryKey != null) && (partitionKey == null)) {
-                  primaryKey = primaryKey.trim();
-                  int count1 = StringUtils.countMatches(primaryKey, ')');
-                  int count2 = StringUtils.countMatches(primaryKey, '(');
-                  if (count1 != count2) {
+            if (counter != (fields.size() - 1) ) {
+
+                counter = counter + 1; 
+            } else {
+
+                if((primaryKey != null) && (partitionKey == null)) {
+                    primaryKey = primaryKey.trim();
+                    int count1 = StringUtils.countMatches(primaryKey, ')');
+                    int count2 = StringUtils.countMatches(primaryKey, '(');
+                    if (count1 != count2) {
                         return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
-                             .setError("Create Table Error: primary key '(' and ')' do not match, primary key=" + primaryKey)
-                                   .toMap()).build();
-                  }
-
-                if ( primaryKey.indexOf('(') == -1  || ( count2 == 1 && (primaryKey.lastIndexOf(')') +1) ==  primaryKey.length() ) )
-                  {
-                         if (primaryKey.contains(",") ) {
-                            partitionKey= primaryKey.substring(0,primaryKey.indexOf(','));
-                             partitionKey=partitionKey.replaceAll("[\\(]+","");
-                             clusterKey=primaryKey.substring(primaryKey.indexOf(',')+1);  // make sure index
-                             clusterKey=clusterKey.replaceAll("[)]+", "");
-                         } else {
-                          partitionKey=primaryKey;
-                          partitionKey=partitionKey.replaceAll("[\\)]+","");
-                             partitionKey=partitionKey.replaceAll("[\\(]+","");
-                          clusterKey="";
+                                .setError("Create Table Error: primary key '(' and ')' do not match, primary key=" + primaryKey)
+                                .toMap()).build();
                     }
-                } else {   // not null and has ) before the last char
-                       partitionKey= primaryKey.substring(0,primaryKey.indexOf(')'));
-                       partitionKey=partitionKey.replaceAll("[\\(]+","");
-                       partitionKey = partitionKey.trim();
-                       clusterKey= primaryKey.substring(primaryKey.indexOf(')'));
-                       clusterKey=clusterKey.replaceAll("[\\(]+","");
-                       clusterKey=clusterKey.replaceAll("[\\)]+","");
-                       clusterKey = clusterKey.trim();
-                       if (clusterKey.indexOf(',') == 0) clusterKey=clusterKey.substring(1);
-                       clusterKey = clusterKey.trim();
-                       if (clusterKey.equals(",") ) clusterKey=""; // print error if needed    ( ... ),)
-              }
 
-              if (!(partitionKey.isEmpty() || clusterKey.isEmpty())
-                    && (partitionKey.equalsIgnoreCase(clusterKey) ||
-                      clusterKey.contains(partitionKey) || partitionKey.contains(clusterKey)) )
-               {
-                  logger.error("DataAPI createTable partition/cluster key ERROR: partitionKey="+partitionKey+", clusterKey=" + clusterKey + " and primary key=" + primaryKey );
-                      return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(
-                            "Create Table primary key error: clusterKey(" + clusterKey + ") equals/contains/overlaps partitionKey(" +partitionKey+ ")  of"
-                                    + " primary key=" + primaryKey)
-                              .toMap()).build();
+                    if ( primaryKey.indexOf('(') == -1  || ( count2 == 1 && (primaryKey.lastIndexOf(')') +1) ==  primaryKey.length() ) )
+                    {
+                        if (primaryKey.contains(",") ) {
+                            partitionKey= primaryKey.substring(0,primaryKey.indexOf(','));
+                            partitionKey=partitionKey.replaceAll("[\\(]+","");
+                            clusterKey=primaryKey.substring(primaryKey.indexOf(',')+1);  // make sure index
+                            clusterKey=clusterKey.replaceAll("[)]+", "");
+                        } else {
+                            partitionKey=primaryKey;
+                            partitionKey=partitionKey.replaceAll("[\\)]+","");
+                            partitionKey=partitionKey.replaceAll("[\\(]+","");
+                            clusterKey="";
+                        }
+                    } else {   // not null and has ) before the last char
+                        partitionKey= primaryKey.substring(0,primaryKey.indexOf(')'));
+                        partitionKey=partitionKey.replaceAll("[\\(]+","");
+                        partitionKey = partitionKey.trim();
+                        clusterKey= primaryKey.substring(primaryKey.indexOf(')'));
+                        clusterKey=clusterKey.replaceAll("[\\(]+","");
+                        clusterKey=clusterKey.replaceAll("[\\)]+","");
+                        clusterKey = clusterKey.trim();
+                        if (clusterKey.indexOf(',') == 0) clusterKey=clusterKey.substring(1);
+                        clusterKey = clusterKey.trim();
+                        if (clusterKey.equals(",") ) clusterKey=""; // print error if needed    ( ... ),)
+                    }
 
-            }
+                    if (!(partitionKey.isEmpty() || clusterKey.isEmpty())
+                            && (partitionKey.equalsIgnoreCase(clusterKey) ||
+                                    clusterKey.contains(partitionKey) || partitionKey.contains(clusterKey)) )
+                    {
+                        logger.error("DataAPI createTable partition/cluster key ERROR: partitionKey="+partitionKey+", clusterKey=" + clusterKey + " and primary key=" + primaryKey );
+                        return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(
+                                "Create Table primary key error: clusterKey(" + clusterKey + ") equals/contains/overlaps partitionKey(" +partitionKey+ ")  of"
+                                        + " primary key=" + primaryKey)
+                                .toMap()).build();
 
-            if (partitionKey.isEmpty() )  primaryKey="";
-            else  if (clusterKey.isEmpty() ) primaryKey=" (" + partitionKey  + ")";
-            else  primaryKey=" (" + partitionKey + ")," + clusterKey;
+                    }
 
-            
-            if (primaryKey != null) fieldsString.append(", PRIMARY KEY (" + primaryKey + " )");
+                    if (partitionKey.isEmpty() )  primaryKey="";
+                    else  if (clusterKey.isEmpty() ) primaryKey=" (" + partitionKey  + ")";
+                    else  primaryKey=" (" + partitionKey + ")," + clusterKey;
 
-      } // end of length > 0
-              else {
-                 if (!(partitionKey.isEmpty() || clusterKey.isEmpty())
-                        && (partitionKey.equalsIgnoreCase(clusterKey) ||
-                          clusterKey.contains(partitionKey) || partitionKey.contains(clusterKey)) )
-                   {
-                     logger.error("DataAPI createTable partition/cluster key ERROR: partitionKey="+partitionKey+", clusterKey=" + clusterKey);
-                     return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(
+
+                    if (primaryKey != null) fieldsString.append(", PRIMARY KEY (" + primaryKey + " )");
+
+                } // end of length > 0
+                else {
+                    if (!(partitionKey.isEmpty() || clusterKey.isEmpty())
+                            && (partitionKey.equalsIgnoreCase(clusterKey) ||
+                                    clusterKey.contains(partitionKey) || partitionKey.contains(clusterKey)) )
+                    {
+                        logger.error("DataAPI createTable partition/cluster key ERROR: partitionKey="+partitionKey+", clusterKey=" + clusterKey);
+                        return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(
                                 "Create Table primary key error: clusterKey(" + clusterKey + ") equals/contains/overlaps partitionKey(" +partitionKey+ ")")
                                 .toMap()).build();
+                    }
+
+                    if (partitionKey.isEmpty() )  primaryKey="";
+                    else  if (clusterKey.isEmpty() ) primaryKey=" (" + partitionKey  + ")";
+                    else  primaryKey=" (" + partitionKey + ")," + clusterKey;
+
+
+                    if (primaryKey != null) fieldsString.append(", PRIMARY KEY (" + primaryKey + " )");
                 }
+                fieldsString.append(")");
 
-                if (partitionKey.isEmpty() )  primaryKey="";
-                else  if (clusterKey.isEmpty() ) primaryKey=" (" + partitionKey  + ")";
-                else  primaryKey=" (" + partitionKey + ")," + clusterKey;
+            } // end of last field check
 
-                
-                if (primaryKey != null) fieldsString.append(", PRIMARY KEY (" + primaryKey + " )");
-            }
-      fieldsString.append(")");
-
-     } // end of last field check
-
-    } // end of for each
+        } // end of for each
         // information about the name-value style properties
         Map<String, Object> propertiesMap = tableObj.getProperties();
         StringBuilder propertiesString = new StringBuilder();
@@ -555,40 +555,40 @@ public class RestMusicDataAPI {
         String clusteringOrder = tableObj.getClusteringOrder();
 
         if (clusteringOrder != null && !(clusteringOrder.isEmpty())) {
-           String[] arrayClusterOrder = clusteringOrder.split("[,]+");
+            String[] arrayClusterOrder = clusteringOrder.split("[,]+");
 
-        for (int i = 0; i < arrayClusterOrder.length; i++) {
-        String[] clusterS = arrayClusterOrder[i].trim().split("[ ]+");
-        if ( (clusterS.length ==2)  && (clusterS[1].equalsIgnoreCase("ASC") || clusterS[1].equalsIgnoreCase("DESC"))) {
-            continue;
-        } else {
-            return response.status(Status.BAD_REQUEST)
-                .entity(new JsonResponse(ResultType.FAILURE)
-                .setError("createTable/Clustering Order vlaue ERROR: valid clustering order is ASC or DESC or expecting colname  order; please correct clusteringOrder:"+ clusteringOrder+".")
-                .toMap()).build();
-        }
+            for (int i = 0; i < arrayClusterOrder.length; i++) {
+                String[] clusterS = arrayClusterOrder[i].trim().split("[ ]+");
+                if ( (clusterS.length ==2)  && (clusterS[1].equalsIgnoreCase("ASC") || clusterS[1].equalsIgnoreCase("DESC"))) {
+                    continue;
+                } else {
+                    return response.status(Status.BAD_REQUEST)
+                            .entity(new JsonResponse(ResultType.FAILURE)
+                                    .setError("createTable/Clustering Order vlaue ERROR: valid clustering order is ASC or DESC or expecting colname  order; please correct clusteringOrder:"+ clusteringOrder+".")
+                                    .toMap()).build();
+                }
                 // add validation for column names in cluster key
-        }
-
-       if (!(clusterKey.isEmpty())) {
-            clusteringOrder = "CLUSTERING ORDER BY (" +clusteringOrder +")";
-            //cjc check if propertiesString.length() >0 instead propertiesMap
-            if (propertiesMap != null) {
-                propertiesString.append(" AND  "+ clusteringOrder);
-            } else {
-                propertiesString.append(clusteringOrder);
             }
-       } else {
+
+            if (!(clusterKey.isEmpty())) {
+                clusteringOrder = "CLUSTERING ORDER BY (" +clusteringOrder +")";
+                //cjc check if propertiesString.length() >0 instead propertiesMap
+                if (propertiesMap != null) {
+                    propertiesString.append(" AND  "+ clusteringOrder);
+                } else {
+                    propertiesString.append(clusteringOrder);
+                }
+            } else {
                 logger.warn("Skipping clustering order=("+clusteringOrder+ ") since clustering key is empty ");
-       }
-    } //if non empty
+            }
+        } //if non empty
 
-    queryObject.appendQueryString(
-        "CREATE TABLE " + keyspace + "." + tablename + " " + fieldsString);
+        queryObject.appendQueryString(
+                "CREATE TABLE " + keyspace + "." + tablename + " " + fieldsString);
 
 
-    if (propertiesString != null &&  propertiesString.length()>0 )
-        queryObject.appendQueryString(" WITH " + propertiesString);
+        if (propertiesString != null &&  propertiesString.length()>0 )
+            queryObject.appendQueryString(" WITH " + propertiesString);
         queryObject.appendQueryString(";");
         ResultType result = ResultType.FAILURE;
         try {
