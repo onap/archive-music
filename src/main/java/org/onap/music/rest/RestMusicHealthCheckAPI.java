@@ -91,24 +91,6 @@ public class RestMusicHealthCheckAPI {
     }
     
     @GET
-    @Path("/pingZookeeper")
-    @ApiOperation(value = "Get Health Status", response = Map.class)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response ZKStatus(@Context HttpServletResponse response) {
-        logger.info(EELFLoggerDelegate.applicationLogger,"Replying to request for MUSIC Health Check status for Zookeeper");
-        Map<String, Object> resultMap = new HashMap<>();
-        MusicHealthCheck ZKHealthCheck = new MusicHealthCheck();
-        String status = ZKHealthCheck.getZookeeperStatus();
-        if(status.equals(ACTIVE_STATUS)) {
-            resultMap.put(ACTIVE_STATUS, "Zookeeper is Active and Running");
-            return Response.status(Status.OK).entity(resultMap).build();
-        }else {
-            resultMap.put("INACTIVE", "Zookeeper is not responding");
-            return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
-        }
-    }
-    
-    @GET
     @Path("/musicHealthCheck")
     @ApiOperation(value = "Get Health Status", response = Map.class)
     @Produces(MediaType.APPLICATION_JSON)
@@ -116,13 +98,8 @@ public class RestMusicHealthCheckAPI {
         logger.info(EELFLoggerDelegate.applicationLogger,"Replying to request for Health Check status for MUSIC");
         Map<String, Object> resultMap = new HashMap<>();
         MusicHealthCheck healthCheck = new MusicHealthCheck();
-        String status = healthCheck.getZookeeperStatus();
-        if(status.equals(ACTIVE_STATUS)) {
-            resultMap.put("ZooKeeper", "Active");
-        }else {
-            resultMap.put("ZooKeeper", "Inactive");
-        }
-        status = healthCheck.getCassandraStatus(ConsistencyLevel.ANY.toString());
+
+        String status = healthCheck.getCassandraStatus(ConsistencyLevel.ANY.toString());
         if(status.equals(ACTIVE_STATUS)) {
             resultMap.put("Cassandra", "Active");
         } else {

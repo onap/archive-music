@@ -64,11 +64,12 @@ public class CachingUtil implements Runnable {
 
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(CachingUtil.class);
 
+    /** keyspace & ns */
     private static CacheAccess<String, String> musicCache = JCS.getInstance("musicCache");
-    private static CacheAccess<String, Map<String, String>> aafCache = JCS.getInstance("aafCache");
+    /** cache to hold isaaf application */
     private static CacheAccess<String, String> appNameCache = JCS.getInstance("appNameCache");
+    /** hold user creds for namespace */
     private static CacheAccess<String, Map<String, String>> musicValidateCache = JCS.getInstance("musicValidateCache");
-    private static CacheAccess<String, List<String>> callbackNotifyList = JCS.getInstance("eternalCache");
     private static Map<String, Number> userAttempts = new HashMap<>();
     private static Map<String, Calendar> lastFailedTime = new HashMap<>();
     private static CacheAccess<String, PreparedStatement> queryBank = JCS.getInstance("statementBank");
@@ -98,26 +99,6 @@ public class CachingUtil implements Runnable {
     private static final String USERNAME="username";
     private static final String PASSWORD="password";
 
-   
-    public boolean isCacheRefreshNeeded() {
-        if (aafCache.get("initBlankMap") == null)
-            return true;
-        return false;
-    }
-    
-    public static void updateCallbackNotifyList(List<String> notifyList) {
-        logger.info("callbackNotifyList: updating cache.....");
-        callbackNotifyList.put("callbackNotify", notifyList);
-    }
-    
-    public static List<String> getCallbackNotifyList() {
-        return callbackNotifyList.get("callbackNotify");
-    }
-    
-    public void initializeMusicCache() {
-        logger.info(EELFLoggerDelegate.applicationLogger,"Initializing Music Cache...");
-        musicCache.put("isInitialized", "true");
-    }
 
     public void initializeAafCache() throws MusicServiceException {
         logger.info(EELFLoggerDelegate.applicationLogger,"Resetting and initializing AAF Cache...");
@@ -145,7 +126,7 @@ public class CachingUtil implements Runnable {
                 if (responseObj) {
                     map = new HashMap<>();
                     map.put(userId, password);
-                    aafCache.put(nameSpace, map);
+                    musicValidateCache.put(nameSpace, map);
                     musicCache.put(keySpace, nameSpace);
                     logger.debug("Cronjob: Cache Updated with AAF response for namespace "
                                     + nameSpace);
@@ -171,10 +152,10 @@ public class CachingUtil implements Runnable {
     public static boolean authenticateAAFUser(String nameSpace, String userId, String password,
                     String keySpace) throws Exception {
 
-        if (aafCache.get(nameSpace) != null && musicCache.get(keySpace)!=null) {
+        if (musicValidateCache.get(nameSpace) != null && musicCache.get(keySpace)!=null) {
             if (keySpace != null && !musicCache.get(keySpace).equals(nameSpace)) {
                 logger.info(EELFLoggerDelegate.applicationLogger,"Create new application for the same namespace.");
-            } else if (aafCache.get(nameSpace).get(userId).equals(password)) {
+            } else if (musicValidateCache.get(nameSpace).get(userId).equals(password)) {
                 logger.info(EELFLoggerDelegate.applicationLogger,"Authenticated with cache value..");
                 // reset invalid attempts to 0
                 userAttempts.put(nameSpace, 0);
@@ -214,7 +195,7 @@ public class CachingUtil implements Runnable {
             logger.info(EELFLoggerDelegate.applicationLogger,"Valid user. Cache is updated for "+nameSpace);
                 Map<String, String> map = new HashMap<>();
                 map.put(userId, password);
-                aafCache.put(nameSpace, map);
+                musicValidateCache.put(nameSpace, map);
                 musicCache.put(keySpace, nameSpace);
                 return true;
         }
@@ -474,17 +455,5 @@ public class CachingUtil implements Runnable {
         CachingUtil.updateMusicCache(keyspace, nameSpace);
         CachingUtil.updateMusicValidateCache(nameSpace, userId, pwd);
         return resultMap;
-    }
-
-    public static void deleteKeysFromDB(String deleteKeys) {
-        PreparedQueryObject pQuery = new PreparedQueryObject();
-        pQuery.appendQueryString(
-                        "DELETE FROM admin.locks WHERE lock_id IN ("+deleteKeys+")");
-        try {
-            MusicCore.nonKeyRelatedPut(pQuery, "eventual");
-        } catch (Exception e) {
-            logger.error(EELFLoggerDelegate.errorLogger,  e.getMessage(), "Deleting keys from "
-                + "DB failed.");
-        }
     }
 }

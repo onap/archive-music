@@ -57,7 +57,6 @@ import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 import org.onap.music.response.jsonobjects.JsonResponse;
-import org.onap.music.service.impl.MusicZKCore;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

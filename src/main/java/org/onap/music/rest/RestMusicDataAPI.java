@@ -862,10 +862,6 @@ public class RestMusicDataAPI {
                 result = MusicCore.atomicPut(keyspace, tablename, primaryKey, queryObject, null);
 
             }
-            else if (consistency.equalsIgnoreCase(MusicUtil.ATOMICDELETELOCK)) {
-                result = MusicCore.atomicPutWithDeleteLock(keyspace, tablename, primaryKey, queryObject, null);
-
-            }
         } catch (Exception ex) {
             logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
@@ -1238,11 +1234,7 @@ public class RestMusicDataAPI {
             } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
                     operationResult = MusicCore.atomicPut(keyspace, tablename, rowId.primarKeyValue,
                                     queryObject, conditionInfo);
-            }
-            else if (consistency.equalsIgnoreCase(MusicUtil.ATOMICDELETELOCK)) {
-                    operationResult = MusicCore.atomicPutWithDeleteLock(keyspace, tablename, rowId.primarKeyValue,
-                                    queryObject, conditionInfo);
-            }else if(consistency.equalsIgnoreCase(MusicUtil.EVENTUAL_NB)) {
+            } else if(consistency.equalsIgnoreCase(MusicUtil.EVENTUAL_NB)) {
                 
                 operationResult = MusicCore.eventualPut_nb(queryObject, keyspace, tablename, rowId.primarKeyValue);
             }
@@ -1396,10 +1388,6 @@ public class RestMusicDataAPI {
                             lockId);
         } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
             results = MusicCore.atomicGet(keyspace, tablename, rowId.primarKeyValue, queryObject);
-        }
-
-        else if (consistency.equalsIgnoreCase(MusicUtil.ATOMICDELETELOCK)) {
-            results = MusicCore.atomicGetWithDeleteLock(keyspace, tablename, rowId.primarKeyValue, queryObject);
         }
         if(results!=null && results.getAvailableWithoutFetching() >0) {
             return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setDataResult(MusicDataStoreHandle.marshallResults(results)).toMap()).build();

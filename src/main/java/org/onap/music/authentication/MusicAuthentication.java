@@ -62,8 +62,7 @@ public class MusicAuthentication implements MusicAuthenticator {
      */
      @Deprecated
     public static Map<String, Object> autheticateUser(String nameSpace, String userId,
-                    String password, String keyspace, String aid, String operation)
-                    throws Exception {
+                    String password, String keyspace, String aid, String operation) {
         logger.info(EELFLoggerDelegate.applicationLogger,"Inside User Authentication.......");
         Map<String, Object> resultMap = new HashMap<>();
         String uuid = null;
@@ -132,10 +131,17 @@ public class MusicAuthentication implements MusicAuthenticator {
             PreparedQueryObject pQuery = new PreparedQueryObject();
             pQuery.appendQueryString(
                             "select uuid from admin.keyspace_master where application_name=? and username=? and keyspace_name=? allow filtering");
-            pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), nameSpace));
-            pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
-            pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(),
-                            MusicUtil.DEFAULTKEYSPACENAME));
+            try {
+                pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), nameSpace));
+                pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
+                pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(),
+                                MusicUtil.DEFAULTKEYSPACENAME));
+            } catch (Exception e1) {
+                logger.error(EELFLoggerDelegate.errorLogger, e1, "Can not authenticate for createkeyspace", AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
+                resultMap.put("Exception", "Cannot authenticate for createKeyspace");
+                return resultMap;
+            }
+           
 
             try {
                 Row rs = MusicCore.get(pQuery).one();

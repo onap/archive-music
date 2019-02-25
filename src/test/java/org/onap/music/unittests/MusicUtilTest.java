@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.apache.cassandra.exceptions.PreparedQueryNotFoundException;
 import org.junit.Test;
+import org.onap.music.authentication.CachingUtil;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.MusicUtil;
@@ -203,5 +204,15 @@ public class MusicUtilTest {
         assertTrue(result.contains("name"));
         assertTrue(result.contains("value"));
     }
+    
+    @Test
+    public void test_generateUUID() {
+        //this function shouldn't be in cachingUtil
+        System.out.println("Testing getUUID");
+        String uuid1 = MusicUtil.generateUUID();
+        String uuid2 = MusicUtil.generateUUID();
+        assertFalse(uuid1==uuid2);
+    }
+
 
 }

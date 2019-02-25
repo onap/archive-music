@@ -58,7 +58,6 @@ import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.service.MusicCoreService;
 import org.onap.music.service.impl.MusicCassaCore;
-import org.onap.music.service.impl.MusicZKCore;
 
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.DataType;
@@ -94,7 +93,6 @@ public class MusicUtil {
     public static final String USERID = "userId";
     public static final String PASSWORD = "password";
     public static final String CASSANDRA = "cassandra";
-    public static final String ZOOKEEPER = "zookeeper";
 
     public static final String AUTHORIZATION = "Authorization";
 
@@ -788,8 +786,6 @@ public class MusicUtil {
     public static MusicCoreService  getMusicCoreService() {
         if(getLockUsing().equals(MusicUtil.CASSANDRA))
             return MusicCassaCore.getInstance();
-        else if (getLockUsing().equals(MusicUtil.ZOOKEEPER))
-            return MusicZKCore.getInstance();
         else
             return MusicCassaCore.getInstance();
     }
