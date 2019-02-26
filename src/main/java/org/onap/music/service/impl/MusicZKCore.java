@@ -6,6 +6,8 @@
  * ===================================================================
  *  Modifications Copyright (c) 2019 Samsung
  * ===================================================================
+ *  Modifications Copyright (c) 2019 IBM
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -33,6 +35,9 @@ import java.util.StringTokenizer;
 import org.apache.zookeeper.KeeperException;
 import org.apache.zookeeper.KeeperException.NoNodeException;
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.datastore.jsonobjects.CassaIndexObject;
+import org.onap.music.datastore.jsonobjects.CassaKeyspaceObject;
+import org.onap.music.datastore.jsonobjects.CassaTableObject;
 import org.onap.music.datastore.jsonobjects.JsonKeySpace;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
@@ -881,6 +886,36 @@ public class MusicZKCore implements MusicCoreService {
             String primaryKey) {
         return eventualPut(queryObject);
     }
+	@Override
+	public ResultType createTable(CassaTableObject cassaTableObject, String consistencyInfo)
+			throws MusicServiceException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public ResultType dropTable(CassaTableObject cassaTableObject, String consistencyInfo)
+			throws MusicServiceException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public ResultType createKeyspace(CassaKeyspaceObject cassaKeyspaceObject, String consistencyInfo)
+			throws MusicServiceException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public ResultType dropKeyspace(CassaKeyspaceObject cassaKeyspaceObject, String consistencyInfo)
+			throws MusicServiceException {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public ResultType createIndex(CassaIndexObject cassaIndexObject, String consistencyInfo)
+			throws MusicServiceException {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 
 
