@@ -4,7 +4,7 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
- * Modifications Copyright (C) 2018 IBM.
+ * Modifications Copyright (C) 2019 IBM.
  * ================================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -68,12 +68,8 @@ import com.datastax.driver.core.Row;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-//import java.util.Base64.Encoder;
-//import java.util.Base64.Decoder;
 
 @Path("/v2/admin")
-// @Path("/v{version: [0-9]+}/admin")
-// @Path("/admin")
 @Api(value = "Admin Api", hidden = true)
 public class RestMusicAdminAPI {
     private static EELFLoggerDelegate logger =
@@ -122,18 +118,7 @@ public class RestMusicAdminAPI {
         }
 
         PreparedQueryObject pQuery = new PreparedQueryObject();
-        /*
-         * pQuery.appendQueryString(
-         * "select uuid from admin.keyspace_master where application_name = ? allow filtering"
-         * ); pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(),
-         * appName)); ResultSet rs = MusicCore.get(pQuery); if (!rs.all().isEmpty()) {
-         * logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA
-         * ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
-         * response.status(Status.BAD_REQUEST); return response.entity(new
-         * JsonResponse(ResultType.FAILURE).setError("Application " + appName +
-         * " has already been onboarded. Please contact admin.").toMap()).build(); }
-         */
-        //pQuery = new PreparedQueryObject();
+
         String uuid = MusicUtil.generateUUID();
         pQuery.appendQueryString(
                         "INSERT INTO admin.keyspace_master (uuid, keyspace_name, application_name, is_api, "
@@ -443,8 +428,6 @@ public class RestMusicAdminAPI {
     @Consumes(MediaType.APPLICATION_JSON)
     public List<Application> getall(@ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization) throws MusicServiceException{
         List<Application> appList = new ArrayList<>();
-        ResponseBuilder response =
-                Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
         if (!authenticator.authenticateAdmin(authorization)) {
             logger.error(EELFLoggerDelegate.errorLogger, "Unauthorized: Please check admin username,password and try again", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.CRITICAL,
                     ErrorTypes.AUTHENTICATIONERROR);
@@ -465,9 +448,6 @@ public class RestMusicAdminAPI {
             appList.add(app);
         }
         return appList;
-        
-        //return app;
-        
     }
     @DELETE
     @Path("/delete")
@@ -475,8 +455,6 @@ public class RestMusicAdminAPI {
     @Consumes(MediaType.APPLICATION_JSON)
     public boolean delete(@ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
             @ApiParam(value = "uuid", required = true) @HeaderParam("uuid") String uuid) throws Exception {
-        ResponseBuilder response =
-                Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
         if (!authenticator.authenticateAdmin(authorization)) {
             logger.error(EELFLoggerDelegate.errorLogger, "Unauthorized: Please check admin username,password and try again", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.CRITICAL,
                     ErrorTypes.AUTHENTICATIONERROR);
@@ -485,9 +463,8 @@ public class RestMusicAdminAPI {
         PreparedQueryObject queryObject = new PreparedQueryObject();
         queryObject.appendQueryString("delete from admin.keyspace_master where uuid=?");
         queryObject.addValue(MusicUtil.convertToActualDataType(DataType.uuid(),uuid));
-        ResultType result;
         try {
-         result = MusicCore.nonKeyRelatedPut(queryObject, "eventual");
+            MusicCore.nonKeyRelatedPut(queryObject, "eventual");
         }catch(Exception ex) {
             return false;
         }
