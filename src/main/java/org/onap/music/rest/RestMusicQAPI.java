@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2019 IBM
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -39,6 +41,8 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
+
+import org.onap.music.datastore.jsonobjects.CassaTableObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
 import org.onap.music.datastore.jsonobjects.JsonTable;
@@ -94,7 +98,7 @@ public class RestMusicQAPI {
           @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
           @ApiParam(value = "Application namespace", required = true) @HeaderParam("ns") String ns,
           @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-          JsonTable tableObj, 
+          CassaTableObject tableObj, 
           @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
           @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename)
           throws Exception {
