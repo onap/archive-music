@@ -1,7 +1,12 @@
 /*
- * ============LICENSE_START========================================== org.onap.music
- * =================================================================== Copyright (c) 2017 AT&T Intellectual Property
- * =================================================================== Licensed under the Apache License, Version 2.0
+ * ============LICENSE_START========================================== 
+ * org.onap.music
+ * =================================================================== 
+ * Copyright (c) 2017 AT&T Intellectual Property
+ * =================================================================== 
+ * Modifications Copyright (c) 2019 IBM
+ * ===================================================================
+ * Licensed under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the
  * License at
  * 
@@ -44,6 +49,7 @@ import org.onap.music.conductor.conditionals.JsonConditional;
 import org.onap.music.conductor.conditionals.RestMusicConditionalAPI;
 import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.datastore.jsonobjects.CassaTableObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
 import org.onap.music.datastore.jsonobjects.JsonKeySpace;
@@ -320,7 +326,7 @@ public class TstRestMusicConditionalAPI {
      * @throws Exception
      */
     private void createTable() throws Exception {
-        JsonTable jsonTable = new JsonTable();
+    	CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("id", "text");
