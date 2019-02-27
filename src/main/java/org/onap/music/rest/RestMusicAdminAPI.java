@@ -118,7 +118,7 @@ public class RestMusicAdminAPI {
                             ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
             resultMap.put("Exception",
                             "Unauthorized: Please check the request parameters. Some of the required values appName(ns), userId, password, isAAF are missing.");
-            return response.status(Status.UNAUTHORIZED).entity(resultMap).build();
+            return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
 
         PreparedQueryObject pQuery = new PreparedQueryObject();

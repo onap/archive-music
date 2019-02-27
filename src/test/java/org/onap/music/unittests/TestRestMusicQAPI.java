@@ -214,8 +214,8 @@ public class TestRestMusicQAPI {
         testObject = new PreparedQueryObject();
         testObject.appendQueryString("DROP KEYSPACE IF EXISTS admin");
         MusicCore.eventualPut(testObject);
-        if (MusicDataStoreHandle.mDstoreHandle!=null)
-            MusicDataStoreHandle.mDstoreHandle.close();
+        if (MusicDataStoreHandle.mDstoreHandle!=null) {}
+            //MusicDataStoreHandle.mDstoreHandle.close();
         if (zkServer!=null)
             zkServer.stop();
     }

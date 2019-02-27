@@ -67,7 +67,7 @@ public class MusicDataStoreTest {
         testObject = new PreparedQueryObject();
         testObject.appendQueryString(CassandraCQL.dropKeyspace);
         dataStore.executePut(testObject, "eventual");
-        dataStore.close();
+        //dataStore.close();
         //CachingUtil.resetStatementBank();
     }
 

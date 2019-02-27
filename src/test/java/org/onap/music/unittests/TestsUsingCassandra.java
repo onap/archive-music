@@ -24,7 +24,6 @@ package org.onap.music.unittests;
 
 import java.util.List;
 import java.util.UUID;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
@@ -108,6 +107,7 @@ public class TestsUsingCassandra {
 		List<Row> rows = rs.all();
 		if (rows.size() > 0) {
 			System.out.println("#######UUID is:" + rows.get(0).getUUID("uuid"));
+			onboardUUID = rows.get(0).getUUID("uuid").toString();
 		}
 	}
 }
