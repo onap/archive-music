@@ -30,6 +30,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
 import org.onap.aaf.cadi.PropAccess;
+import org.onap.music.authentication.CadiAuthFilter;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.PropertiesLoader;
 import org.springframework.beans.factory.annotation.Autowired;

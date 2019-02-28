@@ -47,7 +47,7 @@ import javax.ws.rs.core.Response.Status;
 
 import org.mindrot.jbcrypt.BCrypt;
 import org.onap.music.authentication.CachingUtil;
-import org.onap.music.authentication.MusicAuthentication;
+import org.onap.music.authentication.MusicAAFAuthentication;
 import org.onap.music.authentication.MusicAuthenticator;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonOnboard;
@@ -81,7 +81,7 @@ public class RestMusicAdminAPI {
     // Set to true in env like ONAP. Where access to creating and dropping keyspaces exist.    
     private static final boolean KEYSPACE_ACTIVE = false;
     
-    private MusicAuthenticator authenticator = new MusicAuthentication();
+    private MusicAuthenticator authenticator = new MusicAAFAuthentication();
 
     /*
      * API to onboard an application with MUSIC. This is the mandatory first step.

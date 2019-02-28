@@ -49,7 +49,7 @@ import javax.ws.rs.core.UriInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.mindrot.jbcrypt.BCrypt;
 import org.onap.music.authentication.CachingUtil;
-import org.onap.music.authentication.MusicAuthentication;
+import org.onap.music.authentication.MusicAAFAuthentication;
 import org.onap.music.authentication.MusicAuthenticator;
 import org.onap.music.authentication.MusicAuthenticator.Operation;
 import org.onap.music.datastore.PreparedQueryObject;
@@ -117,7 +117,7 @@ public class RestMusicDataAPI {
     private static final String XPATCHVERSION = "X-patchVersion";
     private static final String NS = "ns";
     private static final String VERSION = "v2";
-    private MusicAuthenticator authenticator = new MusicAuthentication();
+    private MusicAuthenticator authenticator = new MusicAAFAuthentication();
     // Set to true in env like ONAP. Where access to creating and dropping keyspaces exist.    
     private static final boolean KEYSPACE_ACTIVE = false;
 
@@ -174,34 +174,21 @@ public class RestMusicDataAPI {
                 response.status(Status.UNAUTHORIZED);
                 return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Exception"))).toMap()).build();
             }
-            if(kspObject == null || kspObject.getReplicationInfo() == null) {
-                response.status(Status.BAD_REQUEST);
-                return response.entity(new JsonResponse(ResultType.FAILURE).setError(ResultType.BODYMISSING.getResult()).toMap()).build();
-            }
     
-    
-            try {
-                authMap = MusicAuthentication.autheticateUser(ns, userId, password, keyspaceName, aid,
-                                "createKeySpace");
-            } catch (Exception e) {
-                logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
-                response.status(Status.BAD_REQUEST);
-                return response.entity(new JsonResponse(ResultType.FAILURE).setError("Unable to authenticate.").toMap()).build();
-            }
-            String newAid = null;
-            if (!authMap.isEmpty()) {
-                if (authMap.containsKey("aid")) {
-                    newAid = (String) authMap.get("aid");
-                } else {
-                    logger.error(EELFLoggerDelegate.errorLogger,String.valueOf(authMap.get("Exception")), AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
-                    response.status(Status.UNAUTHORIZED);
-                    return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Exception"))).toMap()).build();
-                }
-            }
+            if (!authenticator.authenticateUser(ns, authorization, keyspaceName, aid, Operation.CREATE_KEYSPACE)) {
+                return response.status(Status.UNAUTHORIZED)
+                        .entity(new JsonResponse(ResultType.FAILURE)
+                                .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
+                                .toMap()).build();
+            }  
     
             String consistency = MusicUtil.EVENTUAL;// for now this needs only
                                                     // eventual consistency
     
+            if(kspObject == null || kspObject.getReplicationInfo() == null) {
+                response.status(Status.BAD_REQUEST);
+                return response.entity(new JsonResponse(ResultType.FAILURE).setError(ResultType.BODYMISSING.getResult()).toMap()).build();
+            }
             PreparedQueryObject queryObject = new PreparedQueryObject();
             if(consistency.equalsIgnoreCase(MusicUtil.EVENTUAL) && kspObject.getConsistencyInfo().get("consistency") != null) {
                 if(MusicUtil.isValidConsistency(kspObject.getConsistencyInfo().get("consistency")))
@@ -260,7 +247,7 @@ public class RestMusicDataAPI {
                 queryObject.appendQueryString(
                             "INSERT into admin.keyspace_master (uuid, keyspace_name, application_name, is_api, "
                                             + "password, username, is_aaf) values (?,?,?,?,?,?,?)");
-                queryObject.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), newAid));
+                queryObject.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), aid));
                 queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), keyspaceName));
                 queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), ns));
                 queryObject.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), "True"));
@@ -312,17 +299,12 @@ public class RestMusicDataAPI {
         EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspaceName+" ) ");
         logger.info(EELFLoggerDelegate.applicationLogger,"In Drop Keyspace " + keyspaceName);
         if ( KEYSPACE_ACTIVE ) {
-            Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
-            String userId = userCredentials.get(MusicUtil.USERID);
-            String password = userCredentials.get(MusicUtil.PASSWORD);
-            Map<String, Object> authMap = MusicAuthentication.autheticateUser(ns, userId, password,keyspaceName, aid, "dropKeySpace");
-            if (authMap.containsKey("aid"))
-                authMap.remove("aid");
-            if (!authMap.isEmpty()) {
-                logger.error(EELFLoggerDelegate.errorLogger,authMap.get("Exception").toString(), AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
-                response.status(Status.UNAUTHORIZED);
-                return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Exception"))).toMap()).build();
-            }
+            if (!authenticator.authenticateUser(ns, authorization, keyspaceName, aid, Operation.DROP_KEYSPACE)) {
+                return response.status(Status.UNAUTHORIZED)
+                        .entity(new JsonResponse(ResultType.FAILURE)
+                                .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
+                                .toMap()).build();
+            }  
     
             String consistency = MusicUtil.EVENTUAL;// for now this needs only
                                                     // eventual

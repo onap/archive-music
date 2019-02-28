@@ -20,7 +20,7 @@
  * ====================================================================
  */
 
-package org.onap.music;
+package org.onap.music.authentication;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;

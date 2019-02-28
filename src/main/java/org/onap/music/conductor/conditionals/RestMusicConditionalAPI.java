@@ -52,7 +52,9 @@ import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
 import org.onap.music.response.jsonobjects.JsonResponse;
 import org.onap.music.rest.RestMusicAdminAPI;
-import org.onap.music.authentication.MusicAuthentication;
+import org.onap.music.authentication.MusicAAFAuthentication;
+import org.onap.music.authentication.MusicAuthenticator;
+import org.onap.music.authentication.MusicAuthenticator.Operation;
 import org.onap.music.conductor.*;
 
 import com.datastax.driver.core.DataType;
@@ -69,6 +71,8 @@ public class RestMusicConditionalAPI {
     private static final String XPATCHVERSION = "X-patchVersion";
     private static final String NS = "ns";
     private static final String VERSION = "v2";
+    
+    private MusicAuthenticator authenticator = new MusicAAFAuthentication();
 
     @POST
     @Path("/insert/keyspaces/{keyspace}/tables/{tablename}")
@@ -85,6 +89,14 @@ public class RestMusicConditionalAPI {
             @ApiParam(value = "Table Name", required = true) @PathParam("tablename") String tablename,
             JsonConditional jsonObj) throws Exception {
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
+        
+        if (!authenticator.authenticateUser(ns, authorization, keyspace, aid, Operation.INSERT_INTO_TABLE)) {
+            return response.status(Status.UNAUTHORIZED)
+                    .entity(new JsonResponse(ResultType.FAILURE)
+                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
+                            .toMap()).build();
+        }
+        
         String primaryKey = jsonObj.getPrimaryKey();
         String primaryKeyValue = jsonObj.getPrimaryKeyValue();
         String casscadeColumnName = jsonObj.getCasscadeColumnName();
@@ -99,28 +111,6 @@ public class RestMusicConditionalAPI {
             return response.status(Status.UNAUTHORIZED).entity(new JsonResponse(ResultType.FAILURE)
                     .setError(String.valueOf("One or more input values missing")).toMap()).build();
 
-        }
-        Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
-        String userId = userCredentials.get(MusicUtil.USERID);
-        String password = userCredentials.get(MusicUtil.PASSWORD);
-
-        Map<String, Object> authMap = null;
-        try {
-            authMap = MusicAuthentication.autheticateUser(ns, userId, password, keyspace, aid, "insertIntoTable");
-        } catch (Exception e) {
-            logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGINFO, ErrorSeverity.CRITICAL,
-                    ErrorTypes.AUTHENTICATIONERROR);
-            return response.status(Status.UNAUTHORIZED)
-                    .entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
-        }
-        if (authMap.containsKey("aid"))
-            authMap.remove("aid");
-        if (!authMap.isEmpty()) {
-            logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGINFO, ErrorSeverity.CRITICAL,
-                    ErrorTypes.AUTHENTICATIONERROR);
-            return response.status(Status.UNAUTHORIZED).entity(
-                    new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Exception"))).toMap())
-                    .build();
         }
 
         Map<String, Object> valuesMap = new LinkedHashMap<>();
@@ -156,7 +146,14 @@ public class RestMusicConditionalAPI {
             @ApiParam(value = "Major Version", required = true) @PathParam("tablename") String tablename,
             JsonConditional upObj) throws Exception {
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-
+        
+        if (!authenticator.authenticateUser(ns, authorization, keyspace, aid, Operation.INSERT_INTO_TABLE)) {
+            return response.status(Status.UNAUTHORIZED)
+                    .entity(new JsonResponse(ResultType.FAILURE)
+                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
+                            .toMap()).build();
+        }
+        
         String primaryKey = upObj.getPrimaryKey();
         String primaryKeyValue = upObj.getPrimaryKeyValue();
         String casscadeColumnName = upObj.getCasscadeColumnName();
@@ -170,28 +167,6 @@ public class RestMusicConditionalAPI {
             return response.status(Status.UNAUTHORIZED).entity(new JsonResponse(ResultType.FAILURE)
                     .setError(String.valueOf("One or more input values missing")).toMap()).build();
 
-        }
-        Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
-        String userId = userCredentials.get(MusicUtil.USERID);
-        String password = userCredentials.get(MusicUtil.PASSWORD);
-
-        Map<String, Object> authMap = null;
-        try {
-            authMap = MusicAuthentication.autheticateUser(ns, userId, password, keyspace, aid, "updateTable");
-        } catch (Exception e) {
-            logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGINFO, ErrorSeverity.CRITICAL,
-                    ErrorTypes.AUTHENTICATIONERROR);
-            return response.status(Status.UNAUTHORIZED)
-                    .entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
-        }
-        if (authMap.containsKey("aid"))
-            authMap.remove("aid");
-        if (!authMap.isEmpty()) {
-            logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGINFO, ErrorSeverity.CRITICAL,
-                    ErrorTypes.AUTHENTICATIONERROR);
-            return response.status(Status.UNAUTHORIZED).entity(
-                    new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Exception"))).toMap())
-                    .build();
         }
 
         String planId = casscadeColumnData.get("key").toString();

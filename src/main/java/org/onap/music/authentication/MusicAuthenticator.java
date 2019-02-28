@@ -33,7 +33,11 @@ public interface MusicAuthenticator {
         DELETE_FROM_TABLE,
         DROP_TABLE,
         SELECT_CRITICAL,
-        SELECT
+        SELECT,
+        CREATE_LOCKREF,
+        ACQUIRE_LOCK,
+        CURRENT_LOCK,
+        DELETE_LOCK
     }
     
     /**
