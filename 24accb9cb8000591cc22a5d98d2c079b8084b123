@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5481f3ab_4269859c",
+        "filename": "src/test/java/org/onap/music/unittests/TestRestMusicQAPI.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 217,
+      "author": {
+        "id": 1827
+      },
+      "writtenOn": "2019-02-28T20:15:53Z",
+      "side": 1,
+      "message": "Why even keep this?",
+      "revId": "24accb9cb8000591cc22a5d98d2c079b8084b123",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9144b1f5_895948bb",
+        "filename": "src/test/java/org/onap/music/unittests/TestRestMusicQAPI.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 219,
+      "author": {
+        "id": 1827
+      },
+      "writtenOn": "2019-02-28T20:15:53Z",
+      "side": 1,
+      "message": "ZK stuff can be removed.",
+      "revId": "24accb9cb8000591cc22a5d98d2c079b8084b123",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
