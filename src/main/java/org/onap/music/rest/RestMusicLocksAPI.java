@@ -37,7 +37,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
-import org.onap.music.authentication.MusicAuthentication;
+import org.onap.music.authentication.MusicAAFAuthentication;
+import org.onap.music.authentication.MusicAuthenticator;
+import org.onap.music.authentication.MusicAuthenticator.Operation;
 import org.onap.music.datastore.jsonobjects.JsonLeasedLock;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
@@ -63,6 +65,8 @@ public class RestMusicLocksAPI {
     private static final String XMINORVERSION = "X-minorVersion";
     private static final String XPATCHVERSION = "X-patchVersion";
     private static final String VERSION = "v2";
+    
+    private MusicAuthenticator authenticator = new MusicAAFAuthentication();
 
     /**
      * Puts the requesting process in the q for this lock. The corresponding
@@ -96,21 +100,16 @@ public class RestMusicLocksAPI {
             response.status(Status.BAD_REQUEST);
             return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
         }
-        Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
-        String userId = userCredentials.get(MusicUtil.USERID);
-        String password = userCredentials.get(MusicUtil.PASSWORD);
         String keyspaceName = (String) resultMap.get("keyspace");
         EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspaceName+" ) ");
-        resultMap.remove("keyspace");
-        resultMap = MusicAuthentication.autheticateUser(ns, userId, password, keyspaceName, aid,
-                "createLockReference");
-        if (resultMap.containsKey("aid"))
-            resultMap.remove("aid");
-        if (!resultMap.isEmpty()) {
-            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
-            response.status(Status.UNAUTHORIZED);
-            return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
+        
+        if (!authenticator.authenticateUser(ns, authorization, keyspaceName, aid, Operation.CREATE_LOCKREF)) {
+            return response.status(Status.UNAUTHORIZED)
+                    .entity(new JsonResponse(ResultType.FAILURE)
+                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
+                            .toMap()).build();
         }
+        
         ResultType status = ResultType.SUCCESS;
         String lockId = MusicCore.createLockReference(lockName);
         
@@ -155,21 +154,17 @@ public class RestMusicLocksAPI {
             response.status(Status.BAD_REQUEST);
             return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
         }
-        Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
-        String userId = userCredentials.get(MusicUtil.USERID);
-        String password = userCredentials.get(MusicUtil.PASSWORD);
+        
         String keyspaceName = (String) resultMap.get("keyspace");
         EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspaceName+" ) ");
-        resultMap.remove("keyspace");
-        resultMap = MusicAuthentication.autheticateUser(ns, userId, password, keyspaceName, aid,
-                "accquireLock");
-        if (resultMap.containsKey("aid"))
-            resultMap.remove("aid");
-        if (!resultMap.isEmpty()) {
-            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
-            response.status(Status.UNAUTHORIZED);
-            return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
+        
+        if (!authenticator.authenticateUser(ns, authorization, keyspaceName, aid, Operation.ACQUIRE_LOCK)) {
+            return response.status(Status.UNAUTHORIZED)
+                    .entity(new JsonResponse(ResultType.FAILURE)
+                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
+                            .toMap()).build();
         }
+        
         try {
             String lockName = lockId.substring(lockId.indexOf('$')+1, lockId.lastIndexOf('$'));
             ReturnType lockStatus = MusicCore.acquireLock(lockName,lockId);
@@ -212,22 +207,16 @@ public class RestMusicLocksAPI {
             response.status(Status.BAD_REQUEST);
             return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
         }
-        Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
-        String userId = userCredentials.get(MusicUtil.USERID);
-        String password = userCredentials.get(MusicUtil.PASSWORD);
         String keyspaceName = (String) resultMap.get("keyspace");
         EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspaceName+" ) ");
         resultMap.remove("keyspace");
-        resultMap = MusicAuthentication.autheticateUser(ns, userId, password, keyspaceName, aid,
-                "accquireLockWithLease");
-
-        if (resultMap.containsKey("aid"))
-            resultMap.remove("aid");
-        if (!resultMap.isEmpty()) {
-            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
-            response.status(Status.UNAUTHORIZED);
-            return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
+        if (!authenticator.authenticateUser(ns, authorization, keyspaceName, aid, Operation.ACQUIRE_LOCK)) {
+            return response.status(Status.UNAUTHORIZED)
+                    .entity(new JsonResponse(ResultType.FAILURE)
+                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
+                            .toMap()).build();
         }
+        
         String lockName = lockId.substring(lockId.indexOf('$')+1, lockId.lastIndexOf('$'));
         ReturnType lockLeaseStatus = MusicCore.acquireLockWithLease(lockName, lockId, lockObj.getLeasePeriod());
         if ( lockLeaseStatus.getResult().equals(ResultType.SUCCESS)) {
@@ -266,21 +255,17 @@ public class RestMusicLocksAPI {
             response.status(Status.BAD_REQUEST);
             return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
         }
-        Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
-        String userId = userCredentials.get(MusicUtil.USERID);
-        String password = userCredentials.get(MusicUtil.PASSWORD);
+
         String keyspaceName = (String) resultMap.get("keyspace");
         EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspaceName+" ) ");
         resultMap.remove("keyspace");
-        resultMap = MusicAuthentication.autheticateUser(ns, userId, password, keyspaceName, aid,
-                "currentLockHolder");
-        if (resultMap.containsKey("aid"))
-            resultMap.remove("aid");
-        if (!resultMap.isEmpty()) {
-            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
-            response.status(Status.UNAUTHORIZED);
-            return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
+        if (!authenticator.authenticateUser(ns, authorization, keyspaceName, aid, Operation.CURRENT_LOCK)) {
+            return response.status(Status.UNAUTHORIZED)
+                    .entity(new JsonResponse(ResultType.FAILURE)
+                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
+                            .toMap()).build();
         }
+        
         String who = MusicCore.whoseTurnIsIt(lockName);
         ResultType status = ResultType.SUCCESS;
         String error = "";
@@ -321,18 +306,11 @@ public class RestMusicLocksAPI {
         String keyspaceName = (String) resultMap.get("keyspace");
         EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspaceName+" ) ");
         resultMap.remove("keyspace");
-        Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
-        String userId = userCredentials.get(MusicUtil.USERID);
-        String password = userCredentials.get(MusicUtil.PASSWORD);
-        resultMap.remove("keyspace");
-        resultMap = MusicAuthentication.autheticateUser(ns, userId, password, keyspaceName, aid,
-                "currentLockHolder");
-        if (resultMap.containsKey("aid"))
-            resultMap.remove("aid");
-        if (!resultMap.isEmpty()) {
-            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
-            response.status(Status.UNAUTHORIZED);
-            return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
+        if (!authenticator.authenticateUser(ns, authorization, keyspaceName, aid, Operation.CURRENT_LOCK)) {
+            return response.status(Status.UNAUTHORIZED)
+                    .entity(new JsonResponse(ResultType.FAILURE)
+                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
+                            .toMap()).build();
         }
         
         String who = MusicCore.whoseTurnIsIt(lockName);
@@ -394,21 +372,17 @@ public class RestMusicLocksAPI {
             response.status(Status.BAD_REQUEST);
             return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
         }
-        Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
-        String userId = userCredentials.get(MusicUtil.USERID);
-        String password = userCredentials.get(MusicUtil.PASSWORD);
+
         String keyspaceName = (String) resultMap.get("keyspace");
         EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspaceName+" ) ");
         resultMap.remove("keyspace");
-        resultMap = MusicAuthentication.autheticateUser(ns, userId, password, keyspaceName, aid,
-                "unLock");
-        if (resultMap.containsKey("aid"))
-            resultMap.remove("aid");
-        if (!resultMap.isEmpty()) {
-            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
-            response.status(Status.UNAUTHORIZED);
-            return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
+        if (!authenticator.authenticateUser(ns, authorization, keyspaceName, aid, Operation.DELETE_LOCK)) {
+            return response.status(Status.UNAUTHORIZED)
+                    .entity(new JsonResponse(ResultType.FAILURE)
+                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
+                            .toMap()).build();
         }
+        
         boolean voluntaryRelease = true; 
         MusicLockState mls = MusicCore.releaseLock(lockId,voluntaryRelease);
         if(mls.getErrorMessage() != null) {
@@ -458,21 +432,17 @@ public class RestMusicLocksAPI {
             response.status(Status.BAD_REQUEST);
             return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
         }
-        Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
-        String userId = userCredentials.get(MusicUtil.USERID);
-        String password = userCredentials.get(MusicUtil.PASSWORD);
+
         String keyspaceName = (String) resultMap.get("keyspace");
         EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspaceName+" ) ");
         resultMap.remove("keyspace");
-        resultMap = MusicAuthentication.autheticateUser(ns, userId, password, keyspaceName, aid,
-                "deleteLock");
-        if (resultMap.containsKey("aid"))
-            resultMap.remove("aid");
-        if (!resultMap.isEmpty()) {
-            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
-            response.status(Status.UNAUTHORIZED);
-            return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
+        if (!authenticator.authenticateUser(ns, authorization, keyspaceName, aid, Operation.DELETE_LOCK)) {
+            return response.status(Status.UNAUTHORIZED)
+                    .entity(new JsonResponse(ResultType.FAILURE)
+                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
+                            .toMap()).build();
         }
+        
         try{
             MusicCore.deleteLock(lockName);
         }catch (Exception e) {

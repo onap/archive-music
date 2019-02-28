@@ -49,7 +49,7 @@ import javax.ws.rs.core.UriInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.mindrot.jbcrypt.BCrypt;
 import org.onap.music.authentication.CachingUtil;
-import org.onap.music.authentication.MusicAuthentication;
+import org.onap.music.authentication.MusicAAFAuthentication;
 import org.onap.music.authentication.MusicAuthenticator;
 import org.onap.music.authentication.MusicAuthenticator.Operation;
 import org.onap.music.datastore.PreparedQueryObject;
@@ -117,7 +117,7 @@ public class RestMusicDataAPI {
     private static final String XPATCHVERSION = "X-patchVersion";
     private static final String NS = "ns";
     private static final String VERSION = "v2";
-    private MusicAuthenticator authenticator = new MusicAuthentication();
+    private MusicAuthenticator authenticator = new MusicAAFAuthentication();
     // Set to true in env like ONAP. Where access to creating and dropping keyspaces exist.    
     private static final boolean KEYSPACE_ACTIVE = false;
 
@@ -181,7 +181,7 @@ public class RestMusicDataAPI {
     
     
             try {
-                authMap = MusicAuthentication.autheticateUser(ns, userId, password, keyspaceName, aid,
+                authMap = MusicAAFAuthentication.autheticateUser(ns, userId, password, keyspaceName, aid,
                                 "createKeySpace");
             } catch (Exception e) {
                 logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
@@ -315,7 +315,7 @@ public class RestMusicDataAPI {
             Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
             String userId = userCredentials.get(MusicUtil.USERID);
             String password = userCredentials.get(MusicUtil.PASSWORD);
-            Map<String, Object> authMap = MusicAuthentication.autheticateUser(ns, userId, password,keyspaceName, aid, "dropKeySpace");
+            Map<String, Object> authMap = MusicAAFAuthentication.autheticateUser(ns, userId, password,keyspaceName, aid, "dropKeySpace");
             if (authMap.containsKey("aid"))
                 authMap.remove("aid");
             if (!authMap.isEmpty()) {

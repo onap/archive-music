@@ -44,9 +44,9 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 
-public class MusicAuthentication implements MusicAuthenticator {
+public class MusicAAFAuthentication implements MusicAuthenticator {
     
-     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicAuthentication.class);
+     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicAAFAuthentication.class);
     
     /**
      * authenticate user logic
@@ -60,7 +60,7 @@ public class MusicAuthentication implements MusicAuthenticator {
      * @return
      * @throws Exception
      */
-     @Deprecated
+    @Deprecated
     public static Map<String, Object> autheticateUser(String nameSpace, String userId,
                     String password, String keyspace, String aid, String operation) {
         logger.info(EELFLoggerDelegate.applicationLogger,"Inside User Authentication.......");

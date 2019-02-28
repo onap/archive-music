@@ -40,7 +40,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.internal.util.reflection.FieldSetter;
-import org.onap.music.authentication.MusicAuthentication;
+import org.onap.music.authentication.MusicAAFAuthentication;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonOnboard;
 import org.onap.music.main.MusicCore;
@@ -53,7 +53,7 @@ public class TstRestMusicAdminAPI {
     static PreparedQueryObject testObject;
     
     @Mock
-    MusicAuthentication authMock;
+    MusicAAFAuthentication authMock;
     
     static String appName = "TestApp";
     static String userId = "TestUser";
@@ -423,7 +423,7 @@ public class TstRestMusicAdminAPI {
      * @throws NoSuchFieldException
      */
     public void authenticateAdminTrue() throws NoSuchFieldException {
-        authMock = Mockito.mock(MusicAuthentication.class);
+        authMock = Mockito.mock(MusicAAFAuthentication.class);
         FieldSetter.setField(admin, admin.getClass().getDeclaredField("authenticator"), authMock);
         
         Mockito.when(authMock.authenticateAdmin(Mockito.matches(adminAuthorization))).thenReturn(true);

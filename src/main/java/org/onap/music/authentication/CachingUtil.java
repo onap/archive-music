@@ -72,7 +72,6 @@ public class CachingUtil implements Runnable {
     private static CacheAccess<String, Map<String, String>> musicValidateCache = JCS.getInstance("musicValidateCache");
     private static Map<String, Number> userAttempts = new HashMap<>();
     private static Map<String, Calendar> lastFailedTime = new HashMap<>();
-    private static CacheAccess<String, PreparedStatement> queryBank = JCS.getInstance("statementBank");
     private static CacheAccess<String, String> adminUserCache = JCS.getInstance("adminUserCache");
     
     public static CacheAccess<String, String> getAdminUserCache() {
@@ -82,19 +81,6 @@ public class CachingUtil implements Runnable {
     public static void updateAdminUserCache(String authorization,String userId) {
         adminUserCache.put(authorization,userId);
     }
-    
-    
-    public static  void updateStatementBank(String query,PreparedStatement statement) {
-        queryBank.put(query, statement);
-    }
-    
-    public static void resetStatementBank() {
-        queryBank.clear();
-    }
-    
-     public static CacheAccess<String, PreparedStatement> getStatementBank() {
-            return queryBank;
-        }
     
     private static final String USERNAME="username";
     private static final String PASSWORD="password";
