@@ -3,7 +3,7 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
- *  Modifications Copyright (c) 2018 IBM. 
+ *  Modifications Copyright (c) 2019 IBM.
  * ===================================================================
  *  Modifications Copyright (c) 2019 Samsung
  * ===================================================================
@@ -58,9 +58,8 @@ import org.onap.music.datastore.*;
 
 public class MusicCassaCore implements MusicCoreService {
 
-    public static CassaLockStore mLockHandle = null;;
+    public static CassaLockStore mLockHandle = null;
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicCassaCore.class);
-    private static boolean unitTestRun=true;
     private static MusicCassaCore musicCassaCoreInstance = null;
 
     private MusicCassaCore() {
@@ -163,9 +162,9 @@ public class MusicCassaCore implements MusicCoreService {
         String[] splitString = lockId.split("\\.");
         String keyspace = splitString[0].substring(1);//remove '$'
         String table = splitString[1];
-        String primaryKeyValue = splitString[2].substring(0, splitString[2].lastIndexOf("$"));
-        String localFullyQualifiedKey = lockId.substring(1, lockId.lastIndexOf("$"));
-        String lockRef = lockId.substring(lockId.lastIndexOf("$")+1); //lockRef is "$" to end
+        String primaryKeyValue = splitString[2].substring(0, splitString[2].lastIndexOf('$'));
+        String localFullyQualifiedKey = lockId.substring(1, lockId.lastIndexOf('$'));
+        String lockRef = lockId.substring(lockId.lastIndexOf('$')+1); //lockRef is "$" to end
 
         ReturnType result = isTopOfLockStore(keyspace, table, primaryKeyValue, lockRef);
 
@@ -178,7 +177,7 @@ public class MusicCassaCore implements MusicCoreService {
         PreparedQueryObject readQueryObject = new PreparedQueryObject();
         readQueryObject.appendQueryString(query);
         ResultSet results = MusicDataStoreHandle.getDSHandle().executeQuorumConsistencyGet(readQueryObject);
-        if (results.all().size() != 0) {
+        if (!results.all().isEmpty()) {
             logger.info("In acquire lock: Since there was a forcible release, need to sync quorum!");
             try {
                 syncQuorum(keyspace, table, primaryKeyValue);
@@ -216,10 +215,8 @@ public class MusicCassaCore implements MusicCoreService {
             try {
                 //create shadow locking table
                 result = getLockingServiceHandle().createLockQueue(keyspace, table);
-                if(result == false)
+                if(!result)
                     return ResultType.FAILURE;
-
-                result = false;
 
                 //create table to track unsynced_keys
                 table = "unsyncedKeys_"+table;
@@ -229,8 +226,7 @@ public class MusicCassaCore implements MusicCoreService {
                 PreparedQueryObject queryObject = new PreparedQueryObject();
 
                 queryObject.appendQueryString(tabQuery);
-                result = false;
-                result = MusicDataStoreHandle.getDSHandle().executePut(queryObject, "eventual");
+                MusicDataStoreHandle.getDSHandle().executePut(queryObject, "eventual");
 
 
                 //create actual table
@@ -313,7 +309,7 @@ public class MusicCassaCore implements MusicCoreService {
     @Override
     public void destroyLockRef(String lockId) {
         long start = System.currentTimeMillis();
-        String fullyQualifiedKey = lockId.substring(1, lockId.lastIndexOf("$"));
+        String fullyQualifiedKey = lockId.substring(1, lockId.lastIndexOf('$'));
         String lockRef = lockId.substring(lockId.lastIndexOf('$')+1);
         String[] splitString = fullyQualifiedKey.split("\\.");
         String keyspace = splitString[0];
@@ -346,7 +342,7 @@ public class MusicCassaCore implements MusicCoreService {
 
     @Override
     public MusicLockState releaseLock(String lockId, boolean voluntaryRelease) {
-        String fullyQualifiedKey = lockId.substring(1, lockId.lastIndexOf("$"));
+        String fullyQualifiedKey = lockId.substring(1, lockId.lastIndexOf('$'));
         String lockRef = lockId.substring(lockId.lastIndexOf('$')+1);
         if (voluntaryRelease) {
             return voluntaryReleaseLock(fullyQualifiedKey, lockRef);
@@ -475,13 +471,13 @@ public class MusicCassaCore implements MusicCoreService {
         long start = System.currentTimeMillis();
         try {
         ReturnType result = isTopOfLockStore(keyspace, table, primaryKeyValue,
-                lockId.substring(lockId.lastIndexOf("$")+1));
+                lockId.substring(lockId.lastIndexOf('$')+1));
         if(result.getResult().equals(ResultType.FAILURE))
                 return result;//not top of the lock store q
 
         if (conditionInfo != null)
             try {
-              if (conditionInfo.testCondition() == false)
+              if (!conditionInfo.testCondition())
                   return new ReturnType(ResultType.FAILURE,
                                   "Lock acquired but the condition is not true");
             } catch (Exception e) {
@@ -492,7 +488,7 @@ public class MusicCassaCore implements MusicCoreService {
 
           String query = queryObject.getQuery();
           long timeOfWrite = System.currentTimeMillis();
-          long lockOrdinal = Long.parseLong(lockId.substring(lockId.lastIndexOf("$")+1));
+          long lockOrdinal = Long.parseLong(lockId.substring(lockId.lastIndexOf('$')+1));
           long ts = MusicUtil.v2sTimeStampInMicroseconds(lockOrdinal, timeOfWrite);
           // TODO: use Statement instead of modifying query
             if (!queryObject.getQuery().contains("USING TIMESTAMP")) {
@@ -576,7 +572,7 @@ public class MusicCassaCore implements MusicCoreService {
 
         try {
             ReturnType result = isTopOfLockStore(keyspace, table, primaryKeyValue,
-                    lockId.substring(lockId.lastIndexOf("$")+1));
+                    lockId.substring(lockId.lastIndexOf('$')+1));
             if(result.getResult().equals(ResultType.FAILURE))
                     return null;//not top of the lock store q
                 results = MusicDataStoreHandle.getDSHandle().executeQuorumConsistencyGet(queryObject);
@@ -614,7 +610,7 @@ public class MusicCassaCore implements MusicCoreService {
         }
 
         logger.info(EELFLoggerDelegate.applicationLogger,"acquired lock with id " + lockId);
-        String lockRef = lockId.substring(lockId.lastIndexOf("$"));
+        String lockRef = lockId.substring(lockId.lastIndexOf('$'));
         ReturnType criticalPutResult = criticalPut(keyspaceName, tableName, primaryKey,
                         queryObject, lockRef, conditionInfo);
         long criticalPutTime = System.currentTimeMillis();
@@ -647,11 +643,10 @@ public class MusicCassaCore implements MusicCoreService {
                     PreparedQueryObject queryObject) throws MusicServiceException, MusicLockingException, MusicQueryException {
         String fullyQualifiedKey = keyspaceName + "." + tableName + "." + primaryKey;
         String lockId = createLockReference(fullyQualifiedKey);
-        long leasePeriod = MusicUtil.getDefaultLockLeasePeriod();
         ReturnType lockAcqResult = acquireLock(fullyQualifiedKey, lockId);
         if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
             logger.info(EELFLoggerDelegate.applicationLogger,"acquired lock with id " + lockId);
-            String lockRef = lockId.substring(lockId.lastIndexOf("$"));
+            String lockRef = lockId.substring(lockId.lastIndexOf('$'));
             ResultSet result =
                             criticalGet(keyspaceName, tableName, primaryKey, queryObject, lockRef);
             voluntaryReleaseLock(fullyQualifiedKey,lockId);
