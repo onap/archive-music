@@ -29,6 +29,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Base64;
 
 import javax.ws.rs.core.MediaType;
 
@@ -66,13 +67,11 @@ public class VotingApp {
         if (!namespace.equals("")) {
             builder.header("ns", namespace);
         }
-        if (!userId.equals("")) {
-            builder.header("userId", userId);
+        if (!userId.equals("") && !password.equals("")) {
+            String authString = Base64.getEncoder().encodeToString((userId + ":" + password).getBytes());
+            builder.header("Authorization", "Basic " + authString);
         }
-        if (!password.equals("")) {
-            builder.header("password", password);
-        }
-        
+
         return builder;
     }
     
