@@ -32,25 +32,19 @@ MUSIC is to be installed in a single Dir.
 /opt/app/music/etc
 /opt/app/music/logs
 ```
-When installing Tomcat, Cassandra and Zookeeper they should also be installed here. 
+When installing Cassandra it should also be installed here. 
 ```bash
 /opt/app/music/apache-cassandra-n.n.n
-/opt/app/music/zookeeper-n.n.n
-/opt/app/music/apache-tomcat-n.n.n
 ```
 Its suggested you create links from install dirs to a common name ie:
 ```bash 
 ln -s /opt/app/music/apache-cassandra-n.n.n cassandra
-ln -s /opt/app/music/zookeeper-n.n.n zookeeper
-ln -s /opt/app/music/apache-tomcat-n.n.n tomcat
 ```
  
-Cassandra and Zookeeper have data dirs. 
+Cassandra has data dirs. 
 ```bash
 # For cassandra it should be (This is the default) 
 /opt/app/music/cassandra/data
-# For Zookeeper it should be 
-/opt/app/music/var/zookeeper/
 ```
  
 If you are using a VM make sure it has at least 8 GB of RAM (It may work with 4 GB, but with 2 GB it
@@ -69,7 +63,6 @@ does give issues).
 - Ensure you have java jdk 8 or above working on your machine.
 - Download apache Apache Cassandra 3.2, install into /opt/app/music and follow these instructions http://cassandra.apache.org/doc/latest/getting_started/installing.html till and including Step
 - By the end of this you should have Cassandra working.
-- Download Apache Zookeeper 3.4.6, install into /opt/app/music and follow these instructions https://zookeeper.apache.org/doc/trunk/zookeeperStarted.html pertaining to the standalone operation. By the end of this you should have Zookeeper working.
 - Create a music.properties file and place it in /opt/app/music/etc/. Here is a sample of the file:
 
 ```properties 
@@ -80,7 +73,6 @@ all.public.ips=localhost
 #######################################
 # Optional current values are defaults
 #######################################
-#zookeeper.host=localhost
 #cassandra.host=localhost
 #music.ip=localhost
 #debug=true
@@ -92,10 +84,11 @@ aaf.endpoint.url=http://aafendpoint/proxy/authz/nss/
 ```
 
 - Make a dir /opt/app/music/logs MUSIC dir with MUSIC logs will be created in this dir after MUSIC starts.
-- Download the latest Apache Tomcat and install it using these instructions http://tecadmin.net/install-tomcat-9-on-ubuntu/ (this is for version 9).
-- Build the MUSIC.war (or download it from https://github.com/att/music/blob/master/MUSIC.war) and place it within the webapps folder of the tomcat installation.
 - Authentications/AAF Setup For Authentication setup.
-- Start tomcat and you should now have MUSIC running.
+- Start MUSIC using the jar built in distribution/music folder
+```bash
+java -jar music.jar
+```
 
  
 Extra Cassandra information for Authentication:
@@ -207,50 +200,6 @@ cassandra.password=<new_password>
 
 To access keyspace through cqlsh, login with credentials that are passed to MUSIC while creating the keyspace.
 
-#### Zookeeper:
-
-Once zookeeper has been installed on all the nodes, modify the  zk_install_location/conf/zoo.cfg on all the nodes with the following lines:
-```properties
-tickTime=2000
-dataDir=/opt/app/music/var/zookeeper
-clientPort=2181
-initLimit=5
-syncLimit=2
-quorumListenOnAllIPs=true
-server.1=public IP of node 1:2888:3888
-server.2=public IP of node 2:2888:3888
-server.3=public IP of node 3:2888:3888
-```
-In /opt/app/music/var/zookeeper in all the machines, create a file called myid that contains the id of the machine. The machine running node.i will contain just the number i in the file myid.
-
-Start each of the nodes one by one from the zk_install_location/bin folder using the command:
-```bash
-./zkServer.sh start
-```
-On each node check the file zookeeper.out in the  zk_install_location/ bin to make sure all the machines are talking to each other and there are no errors. Note that while the machines are yet to come up there maybe error messages saying that connection has not yet been established. Clearly, this is ok.
-
-If there are no errors, then from zk_install_location/bin simply run the following to get command line access to zookeeper.   ./zkCli.sh
-
-Run these commands on different machines to make sure the zk nodes are syncing.
-```bash
-[zkshell] ls /
-[zookeeper]
-```
-Next, create a new znode by running
-```bash
-create /zk_test my_data.
-```
-This creates a new znode and associates the string "my_data" with the node. You should see:
-```bash
-[zkshell] create /zk_test my_data
-Created /zk_test
-```
-Issue another ls / command to see what the directory looks like:
-```bash
-[zkshell] ls /
-[zookeeper, zk_test]
-```
-
 #### MUSIC
 
 Create a music.properties file and place it in /opt/app/music/etc at each node. Here is a sample of the file: If this location is to be changed please update the file project.properties in the src/main/resources directory before compiling MUSIC to a war.
@@ -263,7 +212,6 @@ all.public.ips=public IP of node 0:public IP of node 1:public IP of node 2
 #######################################
 # Optional current values are defaults
 #######################################
-#zookeeper.host=localhost
 #cassandra.host=localhost
 #music.ip=localhost
 #debug=true

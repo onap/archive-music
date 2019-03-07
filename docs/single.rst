@@ -15,8 +15,6 @@ Instructions
 - Ensure you have OpenJDK 8 on your machine.
 - Download Apache Cassandra 3.0, install into /opt/app/music and follow these instructions http://cassandra.apache.org/doc/latest/getting_started/installing.html till and including Step
 - By the end of this you should have Cassandra working.
-- Download Apache Zookeeper 3.4.6, install into /opt/app/music and follow these instructions https://zookeeper.apache.org/doc/r3.4.6/zookeeperStarted.html pertaining to the standalone operation. By the end of this you should have Zookeeper working.
-- Download the Version 8.5 Apache Tomcat and install it using these instructions https://tomcat.apache.org/download-80.cgi (this is for version 8.5).
 - Create a music.properties file and place it in /opt/app/music/etc/. Here is a sample of the file:
 
 music.properties::
@@ -30,7 +28,6 @@ music.properties::
     # Optional current values are defaults
     ######################################
     # If using docker this would point to the specific docker name.
-    #zookeeper.host=localhost
     #cassandra.host=localhost
     #music.ip=localhost
  

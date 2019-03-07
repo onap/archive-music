@@ -37,9 +37,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class PropertiesLoader implements InitializingBean {
 
-    @Value("${zookeeper.host}")
-    private String zookeeperHost;
-    
     @Value("${cassandra.host}")
     public String cassandraHost;
     
@@ -168,8 +165,6 @@ public class PropertiesLoader implements InitializingBean {
         logger.info("#### Cassandra Host: " + MusicUtil.getMyCassaHost());
         if(myId != null && !myId.equals("${my.id}")) 
             MusicUtil.setMyId(Integer.parseInt(myId));
-        if(zookeeperHost != null && !zookeeperHost.equals("${zookeeper.host}"))
-            MusicUtil.setMyZkHost(zookeeperHost);
         if(notifyInterval != null && !notifyInterval.equals("${notify.interval}")) 
             MusicUtil.setNotifyInterval(Integer.parseInt(notifyInterval));
         if(notifyTimeout != null && !notifyTimeout.equals("${notify.timeout}"))

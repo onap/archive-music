@@ -35,7 +35,7 @@ import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 
-// the state variable that will be stored in zookeeper, capturing the transitions of
+// the state variable that will be stored in the locking service, capturing the transitions of
 public class MusicLockState implements Serializable {
     public enum LockStatus {
         UNLOCKED, BEING_LOCKED, LOCKED

@@ -964,7 +964,7 @@
           "Lock Api"
         ],
         "summary": "Create Lock",
-        "description": "Puts the requesting process in the q for this lock. The corresponding node will be created in zookeeper if it did not already exist. Lock Name is the \"key\" of the form keyspaceName.tableName.rowId",
+        "description": "Puts the requesting process in the q for this lock. The corresponding lock will be created if it did not already exist. Lock Name is the \"key\" of the form keyspaceName.tableName.rowId",
         "operationId": "createLockReference",
         "produces": [
           "application/json"

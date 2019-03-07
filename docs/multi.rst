@@ -72,63 +72,6 @@ To access keyspace through cqlsh, login with credentials that are passed to MUSI
 
 
 
-Zookeeper:
-----------
-Once zookeeper has been installed on all the nodes, modify the  **zk_install_location/conf/zoo.cfg** on all the nodes with the following lines:
-
-::
-
-    tickTime=2000
-    dataDir=/opt/app/music/var/zookeeper
-    clientPort=2181
-    initLimit=5
-    syncLimit=2
-    quorumListenOnAllIPs=true
-    server.1=public IP of node 1:2888:3888
-    server.2=public IP of node 2:2888:3888
-    server.3=public IP of node 3:2888:3888
-
-Create the directory /var/zookeeper in all the machines and within that create a file called myid that contains the id of the machine. The machine running node.i will contain just the number i in the file myid.
-
-Start each of the nodes one by one from the zk_install_location/bin folder using the command:
-
-
-
- ./zkServer.sh start
-
-On each node check the file zookeeper.out in the  zk_install_location/ bin to make sure all the machines are talking to each other and there are no errors. Note that while the machines are yet to come up there maybe error messages saying that connection has not yet been established. Clearly, this is ok.
-
-
-If there are no errors, then from zk_install_location/bin simply run the following to get command line access to zookeeper.   ./zkCli.sh
-
-
-Run these commands on different machines to make sure the zk nodes are syncing.
-
-::
-
-    [zkshell] ls /
-    [zookeeper]
-
-Next, create a new znode by running
-
-::
-
-    create /zk_test my_data.
-
-This creates a new znode and associates the string "my_data" with the node. You should see:
-
-::
-
-    [zkshell] create /zk_test my_data
-    Created /zk_test
-
-Issue another ls / command to see what the directory looks like:
-
-::
-
-    [zkshell] ls /
-    [zookeeper, zk_test]
-
 MUSIC
 Create a music.properties file and place it in /opt/app/music/etc at each node. Here is a sample of the file: 
 cassandra.yaml::

@@ -55,10 +55,10 @@ public enum AppMessages {
      * [ERR402E] Ill formed queryObject for the request
      * [ERR403E] Error processing Prepared Query Object  
      * 
-     * 500-599 - Zookeepr/Locking Related
+     * 500-599 - Locking Related
      * [ERR500E] Invalid lock
      * [ERR501E] Locking Error has occured
-     * [ERR502E] Zookeeper error has occured
+     * [ERR502E] Deprecated
      * [ERR503E] Failed to aquire lock store handle  
      * [ERR504E] Failed to create Lock Reference
      * [ERR505E] Lock does not exist
@@ -68,7 +68,7 @@ public enum AppMessages {
      * [ERR509E] Lock not destroyed 
      * [ERR510E] Lock not released 
      * [ERR511E] Lock not deleted 
-     * [ERR512E] Failed to get ZK Lock Handle
+     * [ERR512E] Deprecated
      * 
      * 
      * 600 - 699 - Music Service Errors
@@ -113,7 +113,6 @@ public enum AppMessages {
     
     INVALIDLOCK("[ERR500E]"," Invalid lock or acquire failed",""," Lock is not valid to aquire"),
     LOCKINGERROR("[ERR501E]"," Locking Error has occured",""," Locking Error has occured"),
-    KEEPERERROR("[ERR502E]"," Zookeeper error has occured","","Please check zookeeper details"),
     LOCKHANDLE("[ERR503E]","Failed to aquire lock store handle",""," Failed to aquire lock store handle"),
     CREATELOCK("[ERR504E]","Failed to aquire lock store handle  ","","Failed to aquire lock store handle  "),
     LOCKSTATE("[ERR508E]"," Lock state not set",""," Lock state not set"),
