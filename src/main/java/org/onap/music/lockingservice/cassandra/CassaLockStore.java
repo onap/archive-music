@@ -3,6 +3,7 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *  Modifications Copyright (C) 2019 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -115,14 +116,13 @@ public class CassaLockStore {
 
         long prevGuard = 0;
         long lockRef = 1;
-        if (latestGuardRow.size() > 0) {
+        if (!latestGuardRow.isEmpty()) {
             prevGuard = latestGuardRow.get(0).getLong(0);
             lockRef = prevGuard + 1;
         }
 
         long lockEpochMillis = System.currentTimeMillis();
 
-//        System.out.println("guard(" + lockName + "): " + prevGuard + "->" + lockRef);
         logger.info(EELFLoggerDelegate.applicationLogger,
                 "Created lock reference for " +  keyspace + "." + lockTable + "." + lockName + ":" + lockRef);
 
@@ -143,8 +143,8 @@ public class CassaLockStore {
         queryObject.addValue(String.valueOf(lockEpochMillis));
         queryObject.addValue("0");
         queryObject.appendQueryString(insQuery);
-        boolean pResult = dsHandle.executePut(queryObject, "critical");
-        return "$"+keyspace+"."+table+"."+lockName+"$"+String.valueOf(lockRef);
+        dsHandle.executePut(queryObject, "critical");
+        return "$"+keyspace+"."+table+"."+lockName+"$"+ lockRef;
     }
     
     /**
@@ -233,7 +233,7 @@ public class CassaLockStore {
     public void deQueueLockRef(String keyspace, String table, String key, String lockReference) throws MusicServiceException, MusicQueryException{
         table = table_prepend_name+table; 
         PreparedQueryObject queryObject = new PreparedQueryObject();
-        Long lockReferenceL = Long.parseLong(lockReference.substring(lockReference.lastIndexOf("$")+1));
+        Long lockReferenceL = Long.parseLong(lockReference.substring(lockReference.lastIndexOf('$')+1));
         String deleteQuery = "delete from "+keyspace+"."+table+" where key='"+key+"' AND lockReference ="+lockReferenceL+" IF EXISTS;";
         queryObject.appendQueryString(deleteQuery);
         dsHandle.executePut(queryObject, "critical");    
