@@ -3,6 +3,7 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *  Modifications Copyright (C) 2019 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -52,6 +53,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import com.datastax.driver.core.ResultSet;
+import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
@@ -62,8 +64,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 
-// import io.swagger.models.Response;
-// @Path("/v{version: [0-9]+}/priorityq/")
 @Path("/v2/priorityq/")
 @Api(value = "Q Api")
 public class RestMusicQAPI {
@@ -95,14 +95,11 @@ public class RestMusicQAPI {
           @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
           JsonTable tableObj, 
           @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
-          @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename)
-          throws Exception {
-    //logger.info(logger, "cjc before start in q 1** major version=" + version);
-
+          @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename) throws Exception {
     ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
 
     Map<String, String> fields = tableObj.getFields();
-    if (fields == null) { // || (!fields.containsKey("order")) ){
+    if (fields == null) {
       logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA,
               ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
       return response.status(Status.BAD_REQUEST)
@@ -240,7 +237,7 @@ public class RestMusicQAPI {
           JsonInsert insObj,
           @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
           @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename)
-          throws Exception {
+           {
     ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
     if (insObj.getValues().isEmpty()) {
       logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGDATA,
@@ -278,7 +275,7 @@ public class RestMusicQAPI {
           JsonUpdate updateObj,
           @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
           @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename,
-          @Context UriInfo info) throws Exception {
+          @Context UriInfo info) throws MusicServiceException, MusicQueryException {
 
     ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
     if (updateObj.getValues().isEmpty()) {
@@ -324,7 +321,7 @@ public class RestMusicQAPI {
           JsonDelete delObj,
           @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
           @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename,
-          @Context UriInfo info) throws Exception {
+          @Context UriInfo info) throws MusicServiceException, MusicQueryException {
     // added checking as per RestMusicDataAPI
     ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
     if (delObj == null) {
@@ -362,7 +359,7 @@ public class RestMusicQAPI {
           @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
           @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
           @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename,
-          @Context UriInfo info) throws Exception {
+          @Context UriInfo info)  {
     int limit =1; //peek must return just the top row
     Map<String ,String> auth = new HashMap<>();
     String userId =auth.get(MusicUtil.USERID);
@@ -448,8 +445,7 @@ public class RestMusicQAPI {
           @ApiParam(value = "Application namespace", required = true) @HeaderParam("ns") String ns,
           @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
           @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
-          @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename)
-          throws Exception {
+          @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename) throws Exception {
 
     return new RestMusicDataAPI().dropTable(version, minorVersion, patchVersion, aid, ns, authorization, keyspace, tablename);
   }
