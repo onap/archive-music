@@ -35,7 +35,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import org.apache.curator.test.TestingServer;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -85,7 +84,6 @@ public class TestRestMusicQAPI {
     RestMusicLocksAPI lock = new RestMusicLocksAPI(); 
     RestMusicQAPI qData = new RestMusicQAPI();
     static PreparedQueryObject testObject;
-    static TestingServer zkServer;
 
     @Mock
     static HttpServletResponse http;
@@ -216,8 +214,6 @@ public class TestRestMusicQAPI {
         MusicCore.eventualPut(testObject);
         if (MusicDataStoreHandle.mDstoreHandle!=null) {}
             //MusicDataStoreHandle.mDstoreHandle.close();
-        if (zkServer!=null)
-            zkServer.stop();
     }
 
     

@@ -118,7 +118,7 @@ public class MusicUtil {
     private static String musicRestIp = LOCALHOST;
     private static String musicPropertiesFilePath = PROPERTIES_FILE;
     private static long defaultLockLeasePeriod = 6000;
-    private static final String[] propKeys = new String[] { "zookeeper.host", "cassandra.host", "music.ip", "debug",
+    private static final String[] propKeys = new String[] { "cassandra.host", "music.ip", "debug",
             "version", "music.rest.ip", "music.properties", "lock.lease.period", "id", "all.ids", "public.ip",
             "all.pubic.ips", "cassandra.user", "cassandra.password", "aaf.endpoint.url","admin.username","admin.password","aaf.admin.url",
             "music.namespace","admin.aaf.role","cassandra.port","lock.using"};
@@ -428,25 +428,6 @@ public class MusicUtil {
     }
 
     /**
-     * Get MyZkHost - Zookeeper Hostname - Default = localhost property file
-     * value - zookeeper.host
-     *
-     * @return
-     */
-    public static String getMyZkHost() {
-        return myZkHost;
-    }
-
-    /**
-     * Set MyZkHost - Zookeeper Hostname
-     *
-     * @param myZkHost
-     */
-    public static void setMyZkHost(String myZkHost) {
-        MusicUtil.myZkHost = myZkHost;
-    }
-
-    /**
      * Get MyCassHost - Cassandra Hostname - Default = localhost property file
      * value - cassandra.host
      *
@@ -734,8 +715,6 @@ public class MusicUtil {
         }
         // get the property value and return it
         MusicUtil.setMyCassaHost(prop.getProperty("cassandra.host"));
-        String zkHosts = prop.getProperty("zookeeper.host");
-        MusicUtil.setMyZkHost(zkHosts);
         MusicUtil.setCassName(prop.getProperty("cassandra.user"));
         MusicUtil.setCassPwd(prop.getProperty("cassandra.password"));
         MusicUtil.setCassandraPort(Integer.parseInt(prop.getProperty("cassandra.port")));

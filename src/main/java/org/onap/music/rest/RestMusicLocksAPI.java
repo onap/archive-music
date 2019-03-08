@@ -70,7 +70,7 @@ public class RestMusicLocksAPI {
 
     /**
      * Puts the requesting process in the q for this lock. The corresponding
-     * node will be created in zookeeper if it did not already exist
+     * node will be created if it did not already exist
      * 
      * @param lockName
      * @return
@@ -80,7 +80,7 @@ public class RestMusicLocksAPI {
     @Path("/create/{lockname}")
     @ApiOperation(value = "Create Lock",
         notes = "Puts the requesting process in the q for this lock." +
-        " The corresponding node will be created in zookeeper if it did not already exist." +
+        " The corresponding lock will be created if it did not already exist." +
         " Lock Name is the \"key\" of the form keyspaceName.tableName.rowId",
         response = Map.class)
     @Produces(MediaType.APPLICATION_JSON)    

@@ -6,7 +6,6 @@ all.public.ips=12.13.14.45:12.13.14.46:12.13.14.47
 #######################################
 # Optional current values are defaults
 #######################################
-#zookeeper.host=localhost
 #cassandra.host=localhost
 #music.ip=localhost
 #debug=true

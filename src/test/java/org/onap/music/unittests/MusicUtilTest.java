@@ -92,7 +92,7 @@ public class MusicUtilTest {
 
     @Test
     public void testGetPropkeys() {
-        assertEquals(MusicUtil.getPropkeys()[2],"music.ip");
+        assertEquals(MusicUtil.getPropkeys()[2],"debug");
     }
 
     @Test
