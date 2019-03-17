@@ -133,6 +133,14 @@
                 </includes>
             </resource>
         </resources>
+        <testResources>
+            <testResource>
+                <directory>${project.basedir}/src/test/resources</directory>
+            </testResource>
+            <!-- <testResource>
+                <directory>${project.basedir}/src/main/resources</directory>
+            </testResource> -->
+        </testResources>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -141,7 +149,7 @@
                     <mainClass>org.onap.music.MusicApplication</mainClass>
                     <outputDirectory>./distribution/music/</outputDirectory>
                     <addResources>true</addResources>
-                 </configuration>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
@@ -206,7 +214,7 @@
 
     <dependencies>
         <!-- Springboot -->
-         <dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
@@ -228,11 +236,11 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-          <groupId>org.springframework.boot</groupId>
-          <artifactId>spring-boot-starter-actuator</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.springframework/spring-webmvc -->
-         <dependency>
+        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-aop</artifactId>
             <scope>compile</scope>
@@ -328,16 +336,16 @@
         <artifactId>cassandra-driver-core</artifactId>
         <version>3.6.0</version>
         </dependency>
-         <dependency>
+        <dependency>
             <groupId>com.datastax.cassandra</groupId>
             <artifactId>cassandra-driver-core</artifactId>
             <version>${cassandra.version}</version>
-           <exclusions>
+            <exclusions>
         <!-- <exclusion>
         <groupId>io.netty</groupId>
         <artifactId>*</artifactId>
         </exclusion> -->
-    </exclusions>
+            </exclusions>
         </dependency> 
         <!-- /Cassandra -->
         <!-- Jersey -->

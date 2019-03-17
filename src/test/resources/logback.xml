@@ -292,7 +292,7 @@
   
   <root level="INFO">
     <appender-ref ref="asyncEELF" />
-    <appender-ref ref="STDOUT" />
+    <!-- <appender-ref ref="STDOUT" /> -->
   </root>
 
   <!-- Conductor Specific additions to squash WARNING and INFO -->
