@@ -106,6 +106,7 @@ public class MusicCassaCore implements MusicCoreService {
             lockReference = "" + getLockingServiceHandle().genLockRefandEnQueue(keyspace, table, lockName);
         } catch (MusicLockingException | MusicServiceException | MusicQueryException e) {
             e.printStackTrace();
+            logger.error(EELFLoggerDelegate.applicationLogger, e);
         }
         long end = System.currentTimeMillis();
         logger.info(EELFLoggerDelegate.applicationLogger,"Time taken to create lock reference:" + (end - start) + " ms");
@@ -184,7 +185,8 @@ public class MusicCassaCore implements MusicCoreService {
                 syncQuorum(keyspace, table, primaryKeyValue);
             } catch (Exception e) {
                 StringWriter sw = new StringWriter();
-                   logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), "[ERR506E] Failed to aquire lock ",ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+                   logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), "[ERR506E] Failed to aquire lock ",
+                       ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR, e);
                 String exceptionAsString = sw.toString();
                 return new ReturnType(ResultType.FAILURE, "Exception thrown while syncing key:\n" + exceptionAsString);
             }
@@ -236,7 +238,8 @@ public class MusicCassaCore implements MusicCoreService {
                 //create actual table
                 result = MusicDataStoreHandle.getDSHandle().executePut(tableQueryObject, consistency);
             } catch (MusicQueryException | MusicServiceException | MusicLockingException ex) {
-                logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
+                logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity
+                    .WARN, ErrorTypes.MUSICSERVICEERROR, ex);
                 throw new MusicServiceException(ex.getMessage());
             }
             return result?ResultType.SUCCESS:ResultType.FAILURE;
@@ -274,7 +277,8 @@ public class MusicCassaCore implements MusicCoreService {
         try {
             results = MusicDataStoreHandle.getDSHandle().executeQuorumConsistencyGet(query);
         } catch (MusicServiceException | MusicQueryException e) {
-            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR ,ErrorSeverity.MAJOR, ErrorTypes.GENERALSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR ,ErrorSeverity
+                .MAJOR, ErrorTypes.GENERALSERVICEERROR, e);
 
         }
         return results;
@@ -295,7 +299,8 @@ public class MusicCassaCore implements MusicCoreService {
             return "$" + fullyQualifiedKey + "$"
                     + getLockingServiceHandle().peekLockQueue(keyspace, table, primaryKeyValue).lockRef;
         } catch (MusicLockingException | MusicServiceException | MusicQueryException e) {
-             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.LOCKINGERROR+fullyQualifiedKey ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.LOCKINGERROR+fullyQualifiedKey
+                 ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR, e);
         }
         return null;
     }
@@ -322,7 +327,8 @@ public class MusicCassaCore implements MusicCoreService {
         try {
             getLockingServiceHandle().deQueueLockRef(keyspace, table, primaryKeyValue, lockRef);
         } catch (MusicLockingException | MusicServiceException | MusicQueryException e) {
-            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.DESTROYLOCK+lockRef  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.DESTROYLOCK+lockRef  ,
+                ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR, e);
         }
         long end = System.currentTimeMillis();
         logger.info(EELFLoggerDelegate.applicationLogger,"Time taken to destroy lock reference:" + (end - start) + " ms");
@@ -337,7 +343,8 @@ public class MusicCassaCore implements MusicCoreService {
         try {
             getLockingServiceHandle().deQueueLockRef(keyspace, table, primaryKeyValue, lockReference);
         } catch (MusicLockingException | MusicServiceException | MusicQueryException e) {
-            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.DESTROYLOCK+lockReference  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.DESTROYLOCK+lockReference  ,
+                ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR, e);
         }
         long end = System.currentTimeMillis();
         logger.info(EELFLoggerDelegate.applicationLogger,"Time taken to destroy lock reference:" + (end - start) + " ms");
@@ -375,7 +382,7 @@ public class MusicCassaCore implements MusicCoreService {
             MusicDataStoreHandle.getDSHandle().executePut(queryObject, "critical");
         } catch (Exception e) {
             logger.error("Cannot forcibly release lock: " + fullyQualifiedKey + " " + lockReference + ". "
-                        + e.getMessage());
+                        + e.getMessage(), e);
         }
 
         //now release the lock
@@ -445,13 +452,13 @@ public class MusicCassaCore implements MusicCoreService {
             }
 
         } catch (MusicServiceException | MusicQueryException e) {
-            logger.error(EELFLoggerDelegate.applicationLogger,e.getMessage());
+            logger.error(EELFLoggerDelegate.applicationLogger,e.getMessage(), e);
         }
         try {
             result = MusicDataStoreHandle.getDSHandle().executePut(queryObject, MusicUtil.EVENTUAL);
         } catch (MusicServiceException | MusicQueryException ex) {
             logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), "[ERR512E] Failed to get ZK Lock Handle "  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
-            logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage() + "  " + ex.getCause() + " " + ex);
+            logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage() + "  " + ex.getCause(), ex);
             return new ReturnType(ResultType.FAILURE, ex.getMessage());
         }
         if (result) {
@@ -485,6 +492,7 @@ public class MusicCassaCore implements MusicCoreService {
                   return new ReturnType(ResultType.FAILURE,
                                   "Lock acquired but the condition is not true");
             } catch (Exception e) {
+              logger.error(EELFLoggerDelegate.errorLogger, e);
               return new ReturnType(ResultType.FAILURE,
                       "Exception thrown while checking the condition, check its sanctity:\n"
                                       + e.getMessage());
@@ -509,7 +517,7 @@ public class MusicCassaCore implements MusicCoreService {
           long end = System.currentTimeMillis();
           logger.info(EELFLoggerDelegate.applicationLogger,"Time taken for the critical put:" + (end - start) + " ms");
         }catch (MusicQueryException | MusicServiceException | MusicLockingException  e) {
-            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), e);
             return new ReturnType(ResultType.FAILURE,
                             "Exception thrown while doing the critical put\n"
                                             + e.getMessage());
@@ -535,7 +543,7 @@ public class MusicCassaCore implements MusicCoreService {
             result = MusicDataStoreHandle.getDSHandle().executePut(queryObject, consistency);
         } catch (MusicQueryException | MusicServiceException ex) {
             logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(), AppMessages.UNKNOWNERROR,
-                    ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
+                    ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR, ex);
             throw new MusicServiceException(ex.getMessage());
         }
         return result ? ResultType.SUCCESS : ResultType.FAILURE;
@@ -553,7 +561,7 @@ public class MusicCassaCore implements MusicCoreService {
         try {
             results = MusicDataStoreHandle.getDSHandle().executeOneConsistencyGet(queryObject);
         } catch (MusicQueryException | MusicServiceException e) {
-            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), e);
             throw new MusicServiceException(e.getMessage());
         }
         return results;
@@ -581,7 +589,8 @@ public class MusicCassaCore implements MusicCoreService {
                     return null;//not top of the lock store q
                 results = MusicDataStoreHandle.getDSHandle().executeQuorumConsistencyGet(queryObject);
         } catch (MusicQueryException | MusicServiceException | MusicLockingException e) {
-                logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
+                logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity
+                    .WARN, ErrorTypes.MUSICSERVICEERROR, e);
         }
         return results;
     }
