@@ -28,7 +28,6 @@ package org.onap.music.authentication;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import javax.ws.rs.core.MediaType;
 
@@ -46,7 +45,6 @@ import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import com.datastax.driver.core.DataType;
-import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
@@ -56,7 +54,7 @@ import com.sun.jersey.api.client.WebResource;
 
 /**
  * All Caching related logic is handled by this class and a schedule cron runs to update cache.
- * 
+ *
  * @author Vikram
  *
  */
@@ -73,15 +71,15 @@ public class CachingUtil implements Runnable {
     private static Map<String, Number> userAttempts = new HashMap<>();
     private static Map<String, Calendar> lastFailedTime = new HashMap<>();
     private static CacheAccess<String, String> adminUserCache = JCS.getInstance("adminUserCache");
-    
+
     public static CacheAccess<String, String> getAdminUserCache() {
         return adminUserCache;
     }
-    
+
     public static void updateAdminUserCache(String authorization,String userId) {
         adminUserCache.put(authorization,userId);
     }
-    
+
     private static final String USERNAME="username";
     private static final String PASSWORD="password";
 
@@ -95,7 +93,8 @@ public class CachingUtil implements Runnable {
         try {
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), false));
         } catch (Exception e1) {
-            logger.error(EELFLoggerDelegate.errorLogger, e1.getMessage(),AppMessages.CACHEERROR, ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger, e1.getMessage(),AppMessages.CACHEERROR, ErrorSeverity
+                .CRITICAL, ErrorTypes.GENERALSERVICEERROR, e1);
         }
         ResultSet rs = MusicCore.get(pQuery);
         Iterator<Row> it = rs.iterator();
@@ -118,7 +117,8 @@ public class CachingUtil implements Runnable {
                                     + nameSpace);
                 }
             } catch (Exception e) {
-                logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.INFO, ErrorTypes.GENERALSERVICEERROR);
+                logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity
+                    .INFO, ErrorTypes.GENERALSERVICEERROR, e);
                 logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),"Something at AAF was changed for ns: " + nameSpace+" So not updating Cache for the namespace. ");
             }
         }
@@ -131,7 +131,8 @@ public class CachingUtil implements Runnable {
         try {
             initializeAafCache();
         } catch (MusicServiceException e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.INFO, ErrorTypes.GENERALSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.UNKNOWNERROR, ErrorSeverity.INFO,
+                ErrorTypes.GENERALSERVICEERROR, e);
         }
     }
 
@@ -173,7 +174,7 @@ public class CachingUtil implements Runnable {
         try {
             responseObj = triggerAAF(nameSpace, userId, password);
         }catch (Exception ex) {
-            logger.info("Exception while trigger aaf");
+            logger.info("Exception while trigger aaf", ex);
             logger.info("Exception: " + ex.getMessage());
             throw new Exception("Exception raised while triggering AAF authentication" +ex.getMessage());
         }
@@ -197,8 +198,6 @@ public class CachingUtil implements Runnable {
             throw new Exception("AAF endpoint is not set. Please specify in the properties file.");
         }
         Client client = Client.create();
-        // WebResource webResource =
-        // client.resource("https://aaftest.test.att.com:8095/proxy/authz/nss/"+nameSpace);
         WebResource webResource = client.resource(MusicUtil.getAafEndpointUrl().concat(nameSpace));
         String plainCreds = userId + ":" + password;
         byte[] plainCredsBytes = plainCreds.getBytes();
@@ -230,7 +229,7 @@ public class CachingUtil implements Runnable {
         response.bufferEntity();
         String x = response.getEntity(String.class);
         AAFResponse responseObj = new ObjectMapper().readValue(x, AAFResponse.class);*/
-        
+
         return true;
     }
 
@@ -242,18 +241,18 @@ public class CachingUtil implements Runnable {
     public static void updateCadiCache(String user, String keyspace) {
         musicCache.put(user, keyspace);
     }
-    
+
     public static String getKSFromCadiCache(String user) {
         return musicCache.get(user);
     }
-    
+
     public static void updateMusicValidateCache(String nameSpace, String userId, String password) {
         logger.info(EELFLoggerDelegate.applicationLogger,"Updating musicCache for nameSpacce " + nameSpace + " with userId " + userId);
         Map<String, String> map = new HashMap<>();
         map.put(userId, password);
         musicValidateCache.put(nameSpace, map);
     }
-    
+
     public static void updateisAAFCache(String namespace, String isAAF) {
         appNameCache.put(namespace, isAAF);
     }
@@ -269,7 +268,8 @@ public class CachingUtil implements Runnable {
             try {
                 rs = MusicCore.get(pQuery).one();
             } catch(InvalidQueryException e) {
-                logger.error(EELFLoggerDelegate.errorLogger,"Exception admin keyspace not configured."+e.getMessage());
+                logger.error(EELFLoggerDelegate.errorLogger,"Exception admin keyspace not configured."+ e.getMessage
+                    (), e);
                 throw new MusicServiceException("Please make sure admin.keyspace_master table is configured.");
             }
             try {
@@ -277,7 +277,8 @@ public class CachingUtil implements Runnable {
                 if(isAAF != null)
                     appNameCache.put(namespace, isAAF);
             } catch (Exception e) {
-                logger.error(EELFLoggerDelegate.errorLogger,  e.getMessage(), AppMessages.QUERYERROR,ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
+                logger.error(EELFLoggerDelegate.errorLogger,  e.getMessage(), AppMessages.QUERYERROR,ErrorSeverity
+                    .ERROR, ErrorTypes.QUERYERROR, e);
             }
         }
         return isAAF;
@@ -294,7 +295,8 @@ public class CachingUtil implements Runnable {
             try {
                 uuid = rs.getUUID("uuid").toString();
             } catch (Exception e) {
-                logger.error(EELFLoggerDelegate.errorLogger,"Exception occurred during uuid retrieval from DB."+e.getMessage());
+                logger.error(EELFLoggerDelegate.errorLogger,"Exception occurred during uuid retrieval from DB."+e
+                    .getMessage(), e);
             }
         }
         return uuid;
@@ -310,7 +312,8 @@ public class CachingUtil implements Runnable {
         try {
             appName = rs.getString("application_name");
         } catch (Exception e) {
-            logger.error(EELFLoggerDelegate.errorLogger,  e.getMessage(), AppMessages.QUERYERROR, ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,  e.getMessage(), AppMessages.QUERYERROR, ErrorSeverity
+                .ERROR, ErrorTypes.QUERYERROR, e);
         }
         return appName;
     }
@@ -337,7 +340,7 @@ public class CachingUtil implements Runnable {
         }
         return resultMap;
     }
-    
+
     public static Map<String, Object> verifyOnboarding(String ns, String userId, String password) {
         Map<String, Object> resultMap = new HashMap<>();
         if (ns == null || userId == null || password == null) {
@@ -362,11 +365,11 @@ public class CachingUtil implements Runnable {
             rs = MusicCore.get(queryObject).one();
         } catch (MusicServiceException e) {
             String errorMsg = "Unable to process operation. Error is "+e.getMessage();
-            logger.error(EELFLoggerDelegate.errorLogger, errorMsg);
+            logger.error(EELFLoggerDelegate.errorLogger, errorMsg, e);
             resultMap.put("Exception", errorMsg);
             return resultMap;
         } catch (InvalidQueryException e) {
-            logger.error(EELFLoggerDelegate.errorLogger,"Exception admin keyspace not configured."+e.getMessage());
+            logger.error(EELFLoggerDelegate.errorLogger,"Exception admin keyspace not configured."+e.getMessage(), e);
             resultMap.put("Exception", "Please make sure admin.keyspace_master table is configured.");
             return resultMap;
         }
@@ -388,7 +391,7 @@ public class CachingUtil implements Runnable {
            String keyspace) {
         Map<String, Object> resultMap = new HashMap<>();
         String pwd = null;
-        if((musicCache.get(keyspace) != null) && (musicValidateCache.get(nameSpace) != null) 
+        if((musicCache.get(keyspace) != null) && (musicValidateCache.get(nameSpace) != null)
                 && (musicValidateCache.get(nameSpace).containsKey(userId))) {
             if(!musicCache.get(keyspace).equals(nameSpace)) {
                 resultMap.put("Exception", "Namespace and keyspace doesn't match");
@@ -406,14 +409,14 @@ public class CachingUtil implements Runnable {
         try {
             queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), keyspace));
         } catch (Exception e) {
-            logger.error(EELFLoggerDelegate.errorLogger,"Adding value to query object failed: " + e.getMessage());
+            logger.error(EELFLoggerDelegate.errorLogger,"Adding value to query object failed: " + e.getMessage(), e);
         }
         Row rs = null;
         try {
             rs = MusicCore.get(queryObject).one();
         } catch (MusicServiceException e) {
             String errMsg = "Unable to process operation. Error is "+e.getMessage();
-            logger.error(EELFLoggerDelegate.errorLogger, errMsg);
+            logger.error(EELFLoggerDelegate.errorLogger, errMsg, e);
             resultMap.put("Exception", errMsg);
             return resultMap;
         }
