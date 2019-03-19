@@ -202,7 +202,8 @@ public class RestMusicDataAPI {
             try {
                 repString = "{" + MusicUtil.jsonMaptoSqlString(replicationInfo, ",") + "}";
             } catch (Exception e) {
-                logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
+                logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.MISSINGDATA  ,ErrorSeverity
+                    .CRITICAL, ErrorTypes.DATAERROR, e);
     
             }
             queryObject.appendQueryString(
@@ -222,7 +223,8 @@ public class RestMusicDataAPI {
                 result = MusicCore.nonKeyRelatedPut(queryObject, consistency);
                 logger.info(EELFLoggerDelegate.applicationLogger, "result = " + result);
             } catch ( MusicServiceException ex) {
-                logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
+                logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity
+                    .WARN, ErrorTypes.MUSICSERVICEERROR, ex);
                 return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("err:" + ex.getMessage()).toMap()).build();
             }
     
@@ -237,7 +239,8 @@ public class RestMusicDataAPI {
                 queryObject.appendQueryString(";");
                 MusicCore.nonKeyRelatedPut(queryObject, consistency);
             } catch (Exception e) {
-                logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
+                logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR,ErrorSeverity
+                    .WARN, ErrorTypes.MUSICSERVICEERROR, e);
             }
     
             try {
@@ -258,7 +261,8 @@ public class RestMusicDataAPI {
                 CachingUtil.updateMusicValidateCache(ns, userId, hashedpwd);
                 MusicCore.eventualPut(queryObject);
             } catch (Exception e) {
-                logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
+                logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR,ErrorSeverity
+                    .WARN, ErrorTypes.MUSICSERVICEERROR, e);
                 return response.status(Response.Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
             }
     
@@ -576,7 +580,8 @@ public class RestMusicDataAPI {
         try {
             result = MusicCore.createTable(keyspace, tablename, queryObject, consistency);
         } catch (MusicServiceException ex) {
-            logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.MUSICSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity
+                .CRITICAL, ErrorTypes.MUSICSERVICEERROR, ex);
             response.status(Status.BAD_REQUEST);
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
         }
@@ -639,7 +644,8 @@ public class RestMusicDataAPI {
         try {
             result = MusicCore.nonKeyRelatedPut(query, "eventual");
         } catch (MusicServiceException ex) {
-            logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity
+                .CRITICAL, ErrorTypes.GENERALSERVICEERROR, ex);
             response.status(Status.BAD_REQUEST);
             return response.entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
         }
@@ -725,7 +731,8 @@ public class RestMusicDataAPI {
             try {
                 colType = tableInfo.getColumn(entry.getKey()).getType();
             } catch(NullPointerException ex) {
-                logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage() +" Invalid column name : "+entry.getKey(), AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
+                logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage() +" Invalid column name : "+entry.getKey
+                    (), AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR, ex);
                 return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Invalid column name : "+entry.getKey()).toMap()).build();
             }
 
@@ -845,7 +852,8 @@ public class RestMusicDataAPI {
 
             }
         } catch (Exception ex) {
-            logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity
+                .WARN, ErrorTypes.MUSICSERVICEERROR, ex);
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
         }
 
@@ -925,7 +933,8 @@ public class RestMusicDataAPI {
         try {
             tableInfo = MusicDataStoreHandle.returnColumnMetadata(keyspace, tablename);
         } catch (MusicServiceException e) {
-            logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes
+                .GENERALSERVICEERROR, e);
               return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
         }
         if (tableInfo == null) {
@@ -945,7 +954,7 @@ public class RestMusicDataAPI {
             try {
                 colType = tableInfo.getColumn(entry.getKey()).getType();
             } catch(NullPointerException ex) {
-                logger.error(EELFLoggerDelegate.errorLogger, ex, "Invalid column name : "+entry.getKey());
+                logger.error(EELFLoggerDelegate.errorLogger, ex, "Invalid column name : "+entry.getKey(), ex);
                 return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Invalid column name : "+entry.getKey()).toMap()).build();
             }
             Object valueString = null;
@@ -992,7 +1001,8 @@ public class RestMusicDataAPI {
                         .setError("Mandatory WHERE clause is missing. Please check the input request.").toMap()).build();
             }
         } catch (MusicServiceException ex) {
-            logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes
+                .GENERALSERVICEERROR, ex);
               return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
         }
 
@@ -1040,7 +1050,8 @@ public class RestMusicDataAPI {
               operationResult = MusicCore.atomicPutWithDeleteLock(keyspace, tablename,
                               rowId.primarKeyValue, queryObject, conditionInfo);
             } catch (MusicLockingException e) {
-                logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
+                logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN,
+                    ErrorTypes.GENERALSERVICEERROR, e);
                   return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
             }
         } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
@@ -1048,7 +1059,8 @@ public class RestMusicDataAPI {
               operationResult = MusicCore.atomicPut(keyspace, tablename, rowId.primarKeyValue,
                               queryObject, conditionInfo);
             } catch (MusicLockingException e) {
-                logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
+                logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN,
+                    ErrorTypes.GENERALSERVICEERROR, e);
                 return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
             }
         }else if(consistency.equalsIgnoreCase(MusicUtil.EVENTUAL_NB)) {
@@ -1155,7 +1167,8 @@ public class RestMusicDataAPI {
         try {
             rowId = getRowIdentifier(keyspace, tablename, info.getQueryParameters(), queryObject);
         } catch (MusicServiceException ex) {
-            logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes
+                .GENERALSERVICEERROR, ex);
               return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
         }
         String rowSpec = rowId.rowIdString.toString();
@@ -1221,7 +1234,8 @@ public class RestMusicDataAPI {
                 operationResult = MusicCore.eventualPut_nb(queryObject, keyspace, tablename, rowId.primarKeyValue);
             }
         } catch (MusicLockingException e) {
-            logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes
+                .GENERALSERVICEERROR, e);
               return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
                     .setError("Unable to perform Delete operation. Exception from music").toMap()).build();
         }
@@ -1288,7 +1302,8 @@ public class RestMusicDataAPI {
         try {
             return response.status(Status.OK).entity(new JsonResponse(MusicCore.nonKeyRelatedPut(query, consistency)).toMap()).build();
         } catch (MusicServiceException ex) {
-            logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger, ex, AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes
+                .GENERALSERVICEERROR);
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
         }
         } finally {
@@ -1349,7 +1364,8 @@ public class RestMusicDataAPI {
         try {
             rowId = getRowIdentifier(keyspace, tablename, info.getQueryParameters(), queryObject);
         } catch (MusicServiceException ex) {
-            logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes
+                .GENERALSERVICEERROR, ex);
               return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
         }
         queryObject.appendQueryString(
@@ -1433,7 +1449,8 @@ public class RestMusicDataAPI {
             try {
                 queryObject = selectSpecificQuery(keyspace, tablename, info, limit);
             } catch (MusicServiceException ex) {
-                logger.error(EELFLoggerDelegate.errorLogger, ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
+                logger.error(EELFLoggerDelegate.errorLogger, ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN,
+                    ErrorTypes.GENERALSERVICEERROR, ex);
                 return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
             }
         }
@@ -1445,7 +1462,8 @@ public class RestMusicDataAPI {
             }
             return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setDataResult(MusicDataStoreHandle.marshallResults(results)).setError("No data found").toMap()).build();
         } catch (MusicServiceException ex) {
-            logger.error(EELFLoggerDelegate.errorLogger, ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.ERROR, ErrorTypes.MUSICSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger, ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.ERROR,
+                ErrorTypes.MUSICSERVICEERROR, ex);
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
         }
         } finally {

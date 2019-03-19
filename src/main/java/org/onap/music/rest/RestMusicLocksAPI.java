@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2019 Samsung
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -175,7 +177,8 @@ public class RestMusicLocksAPI {
             }
             return response.entity(new JsonResponse(lockStatus.getResult()).setLock(lockId).setMessage(lockStatus.getMessage()).toMap()).build();
         } catch (Exception e) {
-            logger.error(EELFLoggerDelegate.errorLogger,AppMessages.INVALIDLOCK + lockId, ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+            logger.error(EELFLoggerDelegate.errorLogger,AppMessages.INVALIDLOCK + lockId, ErrorSeverity.CRITICAL,
+                ErrorTypes.LOCKINGERROR, e);
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Unable to aquire lock").toMap()).build();
         }
         } finally {
@@ -446,6 +449,7 @@ public class RestMusicLocksAPI {
         try{
             MusicCore.deleteLock(lockName);
         }catch (Exception e) {
+            logger.error(EELFLoggerDelegate.errorLogger, e);
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
         }
         return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).toMap()).build();
