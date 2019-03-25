@@ -20,6 +20,7 @@ import io.swagger.jaxrs.config.BeanConfig;
 import io.swagger.jaxrs.listing.ApiListingResource;
 import io.swagger.jaxrs.listing.SwaggerSerializers;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.onap.music.exceptions.MusicExceptionMapper;
 import org.onap.music.rest.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -32,6 +33,7 @@ import javax.annotation.PostConstruct;
 
     public JerseyConfig() {
         this.registerEndpoints();
+        register(MusicExceptionMapper.class);
     }
 
     @PostConstruct public void init() {
