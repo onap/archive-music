@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2019 IBM
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -25,14 +27,17 @@ package org.onap.music.service;
 import java.util.List;
 import java.util.Map;
 
+import org.onap.music.datastore.Condition;
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.datastore.jsonobjects.CassaIndexObject;
+import org.onap.music.datastore.jsonobjects.CassaKeyspaceObject;
+import org.onap.music.datastore.jsonobjects.CassaTableObject;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.lockingservice.cassandra.MusicLockState;
 import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
-import org.onap.music.datastore.*;
 
 import com.datastax.driver.core.ResultSet;
 
@@ -80,9 +85,6 @@ public interface MusicCoreService {
     public ReturnType acquireLock(String key, String lockReference)
             throws MusicLockingException, MusicQueryException, MusicServiceException; // key,lock id
 
-    public ResultType createTable(String keyspace, String table, PreparedQueryObject tableQueryObject,
-            String consistency) throws MusicServiceException;
-
     public ResultSet quorumGet(PreparedQueryObject query);
 
     public String whoseTurnIsIt(String fullyQualifiedKey);// lock name
@@ -107,4 +109,21 @@ public interface MusicCoreService {
     public Map<String, Object> validateLock(String lockName);
 
     public MusicLockState releaseLock(String lockId, boolean voluntaryRelease);
+    
+    /**
+     *  Core Music Database Methods
+     */
+    
+    public ResultType createTable(String keyspace, String table, PreparedQueryObject tableQueryObject,
+            String consistency) throws MusicServiceException;
+    
+    public ResultType createTable(CassaTableObject cassaTableObject,String consistencyInfo) throws MusicServiceException;
+    
+    public ResultType dropTable(CassaTableObject cassaTableObject, String consistencyInfo) throws MusicServiceException;
+    
+    public ResultType createKeyspace(CassaKeyspaceObject cassaKeyspaceObject,String consistencyInfo) throws MusicServiceException;
+    
+    public ResultType dropKeyspace(CassaKeyspaceObject cassaKeyspaceObject, String consistencyInfo) throws MusicServiceException;
+    
+    public ResultType createIndex(CassaIndexObject cassaIndexObject, String consistencyInfo) throws MusicServiceException;
 }

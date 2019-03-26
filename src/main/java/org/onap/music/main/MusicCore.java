@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2019 IBM
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -27,6 +29,9 @@ import java.util.Map;
 
 import org.onap.music.datastore.Condition;
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.datastore.jsonobjects.CassaIndexObject;
+import org.onap.music.datastore.jsonobjects.CassaKeyspaceObject;
+import org.onap.music.datastore.jsonobjects.CassaTableObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicQueryException;
@@ -34,7 +39,6 @@ import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.lockingservice.cassandra.CassaLockStore;
 import org.onap.music.lockingservice.cassandra.MusicLockState;
 import org.onap.music.service.MusicCoreService;
-import org.onap.music.service.impl.MusicCassaCore;
 
 import com.datastax.driver.core.ResultSet;
 
@@ -156,6 +160,26 @@ public class MusicCore {
 
     public static MusicLockState releaseLock(String lockId, boolean voluntaryRelease) {
         return musicCore.releaseLock(lockId, voluntaryRelease);
+    }
+    
+    public static ResultType createKeyspace(CassaKeyspaceObject cassaKeyspaceObject,String consistencyInfo) throws MusicServiceException {
+        return musicCore.createKeyspace(cassaKeyspaceObject,consistencyInfo);
+    }
+    
+    public static ResultType dropKeyspace(CassaKeyspaceObject cassaKeyspaceObject, String consistencyInfo) throws MusicServiceException {
+        return musicCore.dropKeyspace(cassaKeyspaceObject, consistencyInfo);
+    }
+    
+    public static ResultType createTable(CassaTableObject cassaTableObject,String consistencyInfo) throws MusicServiceException {
+        return musicCore.createTable(cassaTableObject, consistencyInfo);
+    }
+    
+    public static ResultType dropTable(CassaTableObject cassaTableObject, String consistencyInfo) throws MusicServiceException {
+        return musicCore.dropTable(cassaTableObject, consistencyInfo);
+    }
+    
+    public static ResultType createIndex(CassaIndexObject cassaIndexObject, String consistencyInfo) throws MusicServiceException {
+        return musicCore.createIndex(cassaIndexObject, consistencyInfo);
     }
     
 

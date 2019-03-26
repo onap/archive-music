@@ -40,6 +40,8 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
+
+import org.onap.music.datastore.jsonobjects.CassaTableObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
 import org.onap.music.datastore.jsonobjects.JsonTable;
@@ -93,7 +95,7 @@ public class RestMusicQAPI {
           @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
           @ApiParam(value = "Application namespace", required = true) @HeaderParam("ns") String ns,
           @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-          JsonTable tableObj, 
+          CassaTableObject tableObj, 
           @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
           @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename) throws Exception {
     ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
