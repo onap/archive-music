@@ -599,19 +599,6 @@
                                         <dockerFileDir>${project.basedir}/distribution/cassandra_job</dockerFileDir>
                                     </build>
                                 </image>
-                                <!-- Trigger -->
-                                <image>
-                                    <name>onap/music/musictrigger</name>
-                                    <alias>docker_trigger</alias>
-                                    <build>
-                                        <cleanup>true</cleanup>
-                                        <tags>
-                                            <tag>${docker.tag}</tag>
-                                            <tag>${docker.latest.tag}</tag>
-                                        </tags>
-                                        <dockerFileDir>${project.basedir}/distribution/trigger</dockerFileDir>
-                                    </build>
-                                </image>
                                 <!-- tomcat 8.5 -->
                                 <!-- <image> <name>onap/music/tomcat_music</name>
                                     <alias>docker_tomcat</alias> <build> <cleanup>true</cleanup> <tags> <tag>8.5-${timestamp}</tag>
