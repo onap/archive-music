@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ * Modifications Copyright (c) 2019 Samsung
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -134,7 +136,7 @@ public class MusicAAFAuthentication implements MusicAuthenticator {
                      isValid = CachingUtil.authenticateAAFUser(namespace, userId, password, keyspace);
                 } catch (Exception e) {
                     logger.error(EELFLoggerDelegate.errorLogger,"Error while aaf authentication for user:" + userId);
-                    logger.error(EELFLoggerDelegate.errorLogger,"Error: "+ e.getMessage());
+                    logger.error(EELFLoggerDelegate.errorLogger,"Error: "+ e.getMessage(), e);
                     logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.AUTHENTICATIONERROR  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
                     logger.error(EELFLoggerDelegate.errorLogger,"Got exception while AAF authentication for namespace " + namespace);
                     resultMap.put("Exception", e.getMessage());
@@ -170,7 +172,7 @@ public class MusicAAFAuthentication implements MusicAuthenticator {
                 uuid = rs.getUUID("uuid").toString();
                 resultMap.put("uuid", "existing");
             } catch (Exception e) {
-                logger.error(EELFLoggerDelegate.applicationLogger,"No UUID found in DB. So creating new UUID.");
+                logger.error(EELFLoggerDelegate.applicationLogger,"No UUID found in DB. So creating new UUID.", e);
                 uuid = MusicUtil.generateUUID();
                 resultMap.put("uuid", "new");
             }

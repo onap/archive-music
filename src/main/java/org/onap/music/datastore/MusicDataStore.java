@@ -5,6 +5,7 @@
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
  *  Modifications Copyright (c) 2018-2019 IBM
+ *  Modifications Copyright (c) 2019 Samsung
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -127,7 +128,7 @@ public class MusicDataStore {
         try {
             connectToCassaCluster(remoteIp);
         } catch (MusicServiceException e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), e);
         }
     }
 
@@ -148,9 +149,11 @@ public class MusicDataStore {
                 }
             }
         } catch (SocketException e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), AppMessages.CONNCECTIVITYERROR, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), AppMessages.CONNCECTIVITYERROR,
+                ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR, e);
         }catch(Exception e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), ErrorSeverity.ERROR, ErrorTypes.GENERALSERVICEERROR);
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), ErrorSeverity.ERROR, ErrorTypes
+                .GENERALSERVICEERROR, e);
         }
         return allPossibleIps;
     }
@@ -198,7 +201,8 @@ public class MusicDataStore {
                 break;
             } catch (NoHostAvailableException e) {
                 address = it.next();
-                logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.HOSTUNAVAILABLE, ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR);
+                logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.HOSTUNAVAILABLE,
+                    ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR, e);
             }
         }
     }
@@ -253,7 +257,8 @@ public class MusicDataStore {
         try {
             session = cluster.connect();
         } catch (Exception ex) {
-            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.CASSANDRACONNECTIVITY, ErrorSeverity.ERROR, ErrorTypes.SERVICEUNAVAILABLE);
+            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.CASSANDRACONNECTIVITY,
+                ErrorSeverity.ERROR, ErrorTypes.SERVICEUNAVAILABLE, ex);
             throw new MusicServiceException(
                             "Error while connecting to Cassandra cluster.. " + ex.getMessage());
         }
@@ -446,11 +451,13 @@ public class MusicDataStore {
 
         }
         catch (AlreadyExistsException ae) {
-            logger.error(EELFLoggerDelegate.errorLogger, ae.getMessage(),AppMessages.SESSIONFAILED+ " [" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
+            logger.error(EELFLoggerDelegate.errorLogger, ae.getMessage(),AppMessages.SESSIONFAILED+ " [" +
+                queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR, ae);
             throw new MusicServiceException(ae.getMessage());
         }
         catch (Exception e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.SESSIONFAILED+ " [" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.SESSIONFAILED+ " [" +
+                queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR, e);
             throw new MusicQueryException("Executing Session Failure for Request = " + "["
                             + queryObject.getQuery() + "]" + " Reason = " + e.getMessage());
         }
@@ -560,7 +567,8 @@ public class MusicDataStore {
             results = session.execute(statement);
 
         } catch (Exception ex) {
-            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.UNKNOWNERROR+ "[" + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
+            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.UNKNOWNERROR+ "[" + queryObject
+                .getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR, ex);
             throw new MusicServiceException(ex.getMessage());
         }
         

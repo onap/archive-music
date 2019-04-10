@@ -478,7 +478,7 @@ public class MusicUtil {
                                                     // line
             fileScanner.close();
         } catch (FileNotFoundException e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), e);
         }
         return testType;
 
@@ -492,7 +492,7 @@ public class MusicUtil {
         try {
             Thread.sleep(time);
         } catch (InterruptedException e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), e);
             Thread.currentThread().interrupt();
         }
     }
@@ -702,7 +702,7 @@ public class MusicUtil {
             input = MusicUtil.class.getClassLoader().getResourceAsStream("music.properties");
             prop.load(input);
         } catch (Exception ex) {
-            logger.error(EELFLoggerDelegate.errorLogger, "Unable to find properties file.");
+            logger.error(EELFLoggerDelegate.errorLogger, "Unable to find properties file.", ex);
             throw new Exception();
         } finally {
             if (input != null) {
@@ -710,6 +710,7 @@ public class MusicUtil {
                     input.close();
                 } catch (IOException e) {
                     e.printStackTrace();
+                    logger.error(EELFLoggerDelegate.errorLogger, e);
                 }
             }
         }
@@ -824,7 +825,7 @@ public class MusicUtil {
             MusicDataStoreHandle.getDSHandle().executePut(updateQuery, "critical");
         } catch (MusicServiceException | MusicQueryException e) {
             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.QUERYERROR +""+updateQuery ,
-                ErrorSeverity.MAJOR, ErrorTypes.QUERYERROR);
+                ErrorSeverity.MAJOR, ErrorTypes.QUERYERROR, e);
         }
     }
     

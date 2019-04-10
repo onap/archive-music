@@ -3,7 +3,9 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ * ===================================================================
  *  Modifications Copyright (C) 2019 IBM.
+ *  Modifications Copyright (c) 2019 Samsung
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -112,6 +114,7 @@ public class MusicConditional {
                 return lockAcqResult;
             }
         } catch (Exception e) {
+            logger.error(EELFLoggerDelegate.applicationLogger, e);
             MusicCore.destroyLockRef(lockId);
             return new ReturnType(ResultType.FAILURE, e.getMessage());
         }
@@ -130,6 +133,7 @@ public class MusicConditional {
                 try {
                     results = MusicDataStoreHandle.getDSHandle().executeQuorumConsistencyGet(queryBank.get(MusicUtil.SELECT));
                 } catch (Exception e) {
+                    logger.error(EELFLoggerDelegate.applicationLogger, e);
                     return new ReturnType(ResultType.FAILURE, e.getMessage());
                 }
                 if (results.all().isEmpty()) {
@@ -148,6 +152,7 @@ public class MusicConditional {
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
             String exceptionAsString = sw.toString();
+            logger.error(EELFLoggerDelegate.applicationLogger, e);
             return new ReturnType(ResultType.FAILURE,
                     "Exception thrown while doing the critical put, check sanctity of the row/conditions:\n"
                             + exceptionAsString);
@@ -175,6 +180,7 @@ public class MusicConditional {
 
         } catch (Exception e) {
             MusicCore.destroyLockRef(lockId);
+            logger.error(EELFLoggerDelegate.applicationLogger, e);
             return new ReturnType(ResultType.FAILURE, e.getMessage());
 
         }
@@ -202,6 +208,7 @@ public class MusicConditional {
                     try {
                         MusicDataStoreHandle.getDSHandle().executePut(update, "critical");
                     } catch (Exception ex) {
+                        logger.error(EELFLoggerDelegate.applicationLogger, ex);
                         return new ReturnType(ResultType.FAILURE, ex.getMessage());
                     }
                 }else {
@@ -219,6 +226,7 @@ public class MusicConditional {
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
             String exceptionAsString = sw.toString();
+            logger.error(EELFLoggerDelegate.applicationLogger, e);
             return new ReturnType(ResultType.FAILURE,
                     "Exception thrown while doing the critical put, check sanctity of the row/conditions:\n"
                             + exceptionAsString);
@@ -275,7 +283,8 @@ public class MusicConditional {
             try {
                 colType = tableInfo.getColumn(entry.getKey()).getType();
             } catch(NullPointerException ex) {
-                logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage() +" Invalid column name : "+entry.getKey(), AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
+                logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage() +" Invalid column name : "+entry.getKey
+                    (), AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR, ex);
                
             }
 
@@ -283,7 +292,7 @@ public class MusicConditional {
             try {
               formattedValue = MusicUtil.convertToActualDataType(colType, valueObj);
             } catch (Exception e) {
-              logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
+              logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), e);
           }
             
             valueString.append("?");

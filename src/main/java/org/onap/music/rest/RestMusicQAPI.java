@@ -3,7 +3,9 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ * ===================================================================
  *  Modifications Copyright (C) 2019 IBM.
+ *  Modifications Copyright (c) 2019 Samsung
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -376,7 +378,7 @@ public class RestMusicQAPI {
         queryObject = new RestMusicDataAPI().selectSpecificQuery(keyspace, tablename, info, limit);
       } catch (MusicServiceException ex) {
         logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.UNKNOWNERROR,
-                ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
+                ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR, ex);
         return response.status(Status.BAD_REQUEST)
                 .entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap())
                 .build();
@@ -389,7 +391,7 @@ public class RestMusicQAPI {
               .setDataResult(MusicDataStoreHandle.marshallResults(results)).toMap()).build();
     } catch (MusicServiceException ex) {
       logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.UNKNOWNERROR,
-              ErrorSeverity.ERROR, ErrorTypes.MUSICSERVICEERROR);
+              ErrorSeverity.ERROR, ErrorTypes.MUSICSERVICEERROR, ex);
       return response.status(Status.BAD_REQUEST)
               .entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap())
               .build();
