@@ -29,8 +29,10 @@ import java.util.List;
 import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
+import org.onap.music.main.MusicUtil;
 
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -98,7 +100,11 @@ public class CassaLockStore {
      * @throws MusicServiceException
      * @throws MusicQueryException
      */
-    public String genLockRefandEnQueue(String keyspace, String table, String lockName) throws MusicServiceException, MusicQueryException {
+    public String genLockRefandEnQueue(String keyspace, String table, String lockName) throws MusicServiceException, MusicQueryException, MusicLockingException {
+        return genLockRefandEnQueue(keyspace, table, lockName, 0);
+    }
+    
+    private String genLockRefandEnQueue(String keyspace, String table, String lockName, int count) throws MusicServiceException, MusicQueryException, MusicLockingException {
         logger.info(EELFLoggerDelegate.applicationLogger,
                 "Create lock reference for " +  keyspace + "." + table + "." + lockName);
         String lockTable ="";
@@ -143,9 +149,19 @@ public class CassaLockStore {
         queryObject.addValue(String.valueOf(lockEpochMillis));
         queryObject.addValue("0");
         queryObject.appendQueryString(insQuery);
-        dsHandle.executePut(queryObject, "critical");
-        return "$"+keyspace+"."+table+"."+lockName+"$"+ lockRef;
+        boolean pResult = dsHandle.executePut(queryObject, "critical");
+        if (!pResult) {//couldn't create lock ref, retry
+            count++;
+            if (count>MusicUtil.getRetryCount()) {
+                logger.warn(EELFLoggerDelegate.applicationLogger, "Unable to create lock reference");
+                throw new MusicLockingException("Unable to create lock reference");
+            }
+            return genLockRefandEnQueue(keyspace, table, lockName, count);
+        }
+        return "$" + keyspace + "." + table + "." + lockName + "$" + String.valueOf(lockRef);
     }
+    
+    
     
     /**
      * Returns a result set containing the list of clients waiting for a particular lock
@@ -200,7 +216,7 @@ public class CassaLockStore {
      * @param keyspace of the application.
      * @param table of the application.
      * @param key is the primary key of the application table
-     * @return the UUID lock reference.
+     * @return the UUID lock reference. Returns null if there is no owner or the lock doesn't exist
      * @throws MusicServiceException
      * @throws MusicQueryException
      */
@@ -213,6 +229,9 @@ public class CassaLockStore {
         queryObject.appendQueryString(selectQuery);
         ResultSet results = dsHandle.executeOneConsistencyGet(queryObject);
         Row row = results.one();
+        if (row==null || row.isNull("lockReference")) {
+            return null;
+        }
         String lockReference = "" + row.getLong("lockReference");
         String createTime = row.getString("createTime");
         String acquireTime = row.getString("acquireTime");
@@ -229,14 +248,31 @@ public class CassaLockStore {
      * @param lockReference the lock reference that needs to be dequeued.
      * @throws MusicServiceException
      * @throws MusicQueryException
+     * @throws MusicLockingException 
      */    
-    public void deQueueLockRef(String keyspace, String table, String key, String lockReference) throws MusicServiceException, MusicQueryException{
-        table = table_prepend_name+table; 
+    public void deQueueLockRef(String keyspace, String table, String key, String lockReference, int n) throws MusicServiceException, MusicQueryException, MusicLockingException{
+        String prependTable = table_prepend_name+table;
         PreparedQueryObject queryObject = new PreparedQueryObject();
-        Long lockReferenceL = Long.parseLong(lockReference.substring(lockReference.lastIndexOf('$')+1));
-        String deleteQuery = "delete from "+keyspace+"."+table+" where key='"+key+"' AND lockReference ="+lockReferenceL+" IF EXISTS;";
+        Long lockReferenceL = Long.parseLong(lockReference.substring(lockReference.lastIndexOf("$")+1));
+        String deleteQuery = "delete from "+keyspace+"."+prependTable+" where key='"+key+"' AND lockReference ="+lockReferenceL+" IF EXISTS;";
         queryObject.appendQueryString(deleteQuery);
-        dsHandle.executePut(queryObject, "critical");    
+        logger.info(EELFLoggerDelegate.applicationLogger, "Removing lock for key: "+key+ " and reference: "+lockReference);
+        try {
+        dsHandle.executePut(queryObject, "critical"); 
+        logger.info(EELFLoggerDelegate.applicationLogger, "Lock removed for key: "+key+ " and reference: "+lockReference);
+        }catch(MusicServiceException ex) {
+            logger.error(logger, ex.getMessage(),ex);
+            logger.error(EELFLoggerDelegate.applicationLogger,"Exception while deQueueLockRef for lockname: " + key + " reference:" +lockReference);
+            if(n>1) {
+                logger.info(EELFLoggerDelegate.applicationLogger, "Trying again...");
+                deQueueLockRef(keyspace, table, key, lockReference, n-1);
+            }
+            else {
+                logger.error(EELFLoggerDelegate.applicationLogger,"deQueueLockRef failed for lockname: " + key + " reference:" +lockReference);
+                logger.error(logger, ex.getMessage(),ex);
+                throw new MusicLockingException("Error while deQueueLockRef: "+ex.getMessage());
+            }
+        }
     }
     
 

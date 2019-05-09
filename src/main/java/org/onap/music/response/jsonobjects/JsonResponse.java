@@ -44,6 +44,7 @@ public class JsonResponse {
     
     /* versioning */
     private String musicVersion;
+    private String musicBuild;
     
     /* Data Fields */
     private Map<String, HashMap<String, Object>> dataResult;
@@ -65,7 +66,7 @@ public class JsonResponse {
         this.status = status;
     }
 
-     /**
+    /**
      * 
      * @return
      */
@@ -122,7 +123,7 @@ public class JsonResponse {
     
     
     /**
-     * 
+     * .
      * @return the music version
      */
     public String getMusicVersion() {
@@ -130,7 +131,7 @@ public class JsonResponse {
     }
     
     /**
-     * 
+     * .
      * @param version of music
      * @return
      */
@@ -138,6 +139,25 @@ public class JsonResponse {
         this.musicVersion = version;
         return this;
     }
+
+    /**
+     * .
+     * @return the music version
+     */
+    public String getMusicBuild() {
+        return this.musicBuild;
+    }
+    
+    /**
+     * .
+     * @param build of music
+     * @return
+     */
+    public JsonResponse setMusicBuild(String build) {
+        this.musicBuild = build;
+        return this;
+    }
+
 
     public Map<String, HashMap<String, Object>> getDataResult() {
         return this.dataResult;
@@ -227,37 +247,37 @@ public class JsonResponse {
     public Map<String, Object> toMap() {
         Map<String, Object> fullMap = new HashMap<>();
         fullMap.put("status", status);
-/*<<<<<<< HEAD
-        if (error!=null) {
-            fullMap.put("error", error);
+        if (error != null && !"".equals(error)) { 
+            fullMap.put("error", error); 
         }
-        if (message!=null) {
-            fullMap.put("message", message);
+        if (message != null) { 
+            fullMap.put("message", message); 
         }
-=======*/
-        if (error!=null && !"".equals(error)) {fullMap.put("error", error);}
-        if (message!=null) {fullMap.put("message", message);}
         
-        if (musicVersion!=null) {
+        if (musicVersion != null) {
             fullMap.put("version", musicVersion);
         }
         
-        if (dataResult!=null) {
+        if (musicBuild != null) {
+            fullMap.put("build", musicBuild);
+        }
+    
+        if (dataResult != null) {
             fullMap.put("result", dataResult);
         }
         
-        if (lock!=null) {
+        if (lock != null) {
             Map<String, Object> lockMap = new HashMap<>();
-            if (lock!=null) {
+            if (lock != null) {
                 lockMap.put("lock", lock);
             }
-            if (lockStatus!=null) {
+            if (lockStatus != null) {
                 lockMap.put("lock-status", lockStatus);
             }
-            if (lockHolder!=null) {
+            if (lockHolder != null) {
                 lockMap.put("lock-holder", lockHolder);
             }
-            if (lockLease!=null) {
+            if (lockLease != null) {
                 lockMap.put("lock-lease", lockLease);
             }
             fullMap.put("lock", lockMap);

@@ -26,12 +26,14 @@ package org.onap.music.eelf.healthcheck;
 
 import java.util.UUID;
 
+import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicLockingException;
+import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
@@ -53,8 +55,9 @@ public class MusicHealthCheck {
         logger.info(EELFLoggerDelegate.applicationLogger, "Getting Status for Cassandra");
         
         boolean result = false;
+        UUID randomUUID = UUID.randomUUID();
         try {
-            result = getAdminKeySpace(consistency);
+            result = getAdminKeySpace(consistency, randomUUID);
         } catch(Exception e) {
             if(e.getMessage().toLowerCase().contains("unconfigured table healthcheck")) {
                 logger.error("Error", e);
@@ -62,7 +65,7 @@ public class MusicHealthCheck {
                 boolean ksresult = createKeyspace();
                 if(ksresult)
                     try {
-                        result = getAdminKeySpace(consistency);
+                        result = getAdminKeySpace(consistency, randomUUID);
                     } catch (MusicServiceException e1) {
                       logger.error(EELFLoggerDelegate.errorLogger, e1, AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.UNKNOWN);
                     }
@@ -71,6 +74,12 @@ public class MusicHealthCheck {
                 return "One or more nodes are down or not responding.";
             }
         }
+        try {
+			cleanHealthCheckId(randomUUID);
+		} catch (MusicServiceException | MusicQueryException e) {
+			// TODO Auto-generated catch block
+			logger.error("Error while cleaning healthcheck record id...", e);
+		}
         if (result) {
             return "ACTIVE";
         } else {
@@ -79,14 +88,26 @@ public class MusicHealthCheck {
         }
     }
 
-    private Boolean getAdminKeySpace(String consistency) throws MusicServiceException {
+    private Boolean getAdminKeySpace(String consistency, UUID randomUUID) throws MusicServiceException {
         PreparedQueryObject pQuery = new PreparedQueryObject();
         pQuery.appendQueryString("insert into admin.healthcheck (id) values (?)");
-        pQuery.addValue(UUID.randomUUID());
+        pQuery.addValue(randomUUID);
         ResultType rs = MusicCore.nonKeyRelatedPut(pQuery, consistency);
         logger.info(rs.toString());
         return null != rs;
+        
     }
+
+	private void cleanHealthCheckId(UUID randomUUID) throws MusicServiceException, MusicQueryException {
+		String cleanQuery = "delete  from admin.healthcheck where id = ?";
+        PreparedQueryObject deleteQueryObject = new PreparedQueryObject();
+        deleteQueryObject.appendQueryString(cleanQuery);
+        deleteQueryObject.addValue(randomUUID);
+        MusicDataStoreHandle.getDSHandle().executePut(deleteQueryObject, "eventual");  
+        logger.info(EELFLoggerDelegate.applicationLogger, "Cassandra healthcheck responded and cleaned up.");
+	}
+    
+    
     
     private boolean createKeyspace() {
         PreparedQueryObject pQuery = new PreparedQueryObject();

@@ -27,6 +27,7 @@ package org.onap.music.rest;
 
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -50,8 +51,10 @@ import org.mindrot.jbcrypt.BCrypt;
 import org.onap.music.authentication.CachingUtil;
 import org.onap.music.authentication.MusicAAFAuthentication;
 import org.onap.music.authentication.MusicAuthenticator;
+import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonOnboard;
+import org.onap.music.datastore.jsonobjects.MusicResponse;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
@@ -61,10 +64,14 @@ import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 import org.onap.music.response.jsonobjects.JsonResponse;
+import org.springframework.beans.factory.config.YamlProcessor.ResolutionMethod;
 
 import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.KeyspaceMetadata;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
+import com.datastax.driver.core.TableMetadata;
+import com.sun.xml.bind.v2.TODO;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -73,8 +80,6 @@ import io.swagger.annotations.ApiParam;
 //import java.util.Base64.Decoder;
 
 @Path("/v2/admin")
-// @Path("/v{version: [0-9]+}/admin")
-// @Path("/admin")
 @Api(value = "Admin Api", hidden = true)
 public class RestMusicAdminAPI {
     private static EELFLoggerDelegate logger =
@@ -110,11 +115,10 @@ public class RestMusicAdminAPI {
         Map<String, Object> resultMap = new HashMap<>();
         String appName = jsonObj.getAppname();
         String userId = jsonObj.getUserId();
-        String isAAF = jsonObj.getIsAAF();
         String password = jsonObj.getPassword();
         String keyspace_name = jsonObj.getKeyspace();
         
-        if (appName == null || userId == null || isAAF == null || password == null) {
+        if (appName == null || userId == null ||  password == null || keyspace_name == null) {
             logger.error(EELFLoggerDelegate.errorLogger, "Unauthorized: Please check the request parameters. Some of the required values appName(ns), userId, password, isAAF are missing.", AppMessages.MISSINGINFO,
                             ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
             resultMap.put("Exception",
@@ -123,18 +127,22 @@ public class RestMusicAdminAPI {
         }
 
         PreparedQueryObject pQuery = new PreparedQueryObject();
-        /*
-         * pQuery.appendQueryString(
-         * "select uuid from admin.keyspace_master where application_name = ? allow filtering"
-         * ); pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(),
-         * appName)); ResultSet rs = MusicCore.get(pQuery); if (!rs.all().isEmpty()) {
-         * logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA
-         * ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
-         * response.status(Status.BAD_REQUEST); return response.entity(new
-         * JsonResponse(ResultType.FAILURE).setError("Application " + appName +
-         * " has already been onboarded. Please contact admin.").toMap()).build(); }
-         */
-        //pQuery = new PreparedQueryObject();
+    
+        pQuery.appendQueryString(
+            "select uuid from admin.keyspace_master where application_name = ? and keyspace_name = ? allow filtering");
+        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), appName));
+        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), keyspace_name));
+        ResultSet rs = MusicCore.get(pQuery);
+        if (!rs.all().isEmpty()) {
+            logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.INCORRECTDATA, ErrorSeverity.CRITICAL,
+                ErrorTypes.GENERALSERVICEERROR);
+            response.status(Status.BAD_REQUEST);
+            return response.entity(new JsonResponse(ResultType.FAILURE)
+                .setError("Application " + appName + " has already been onboarded. Please contact admin.").toMap())
+                .build();
+        }
+    
+        pQuery = new PreparedQueryObject();
         String uuid = MusicUtil.generateUUID();
         pQuery.appendQueryString(
                         "INSERT INTO admin.keyspace_master (uuid, keyspace_name, application_name, is_api, "
@@ -142,10 +150,10 @@ public class RestMusicAdminAPI {
         pQuery.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), uuid));
         pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(),keyspace_name));
         pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), appName));
-        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), "True"));
+        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), "False"));
         pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), BCrypt.hashpw(password, BCrypt.gensalt())));
         pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
-        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), isAAF));
+        pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), "true"));
 
         String returnStr = MusicCore.eventualPut(pQuery).toString();
         if (returnStr.contains("Failure")) {
@@ -154,7 +162,7 @@ public class RestMusicAdminAPI {
             return response.entity(new JsonResponse(ResultType.FAILURE).setError("Oops. Something wrong with onboarding process. "
                     + "Please retry later or contact admin.").toMap()).build();
         }
-        CachingUtil.updateisAAFCache(appName, isAAF);
+        //CachingUtil.updateisAAFCache(appName, isAAF);
         resultMap.put("Success", "Your application " + appName + " has been onboarded with MUSIC.");
         resultMap.put("Generated AID", uuid);
         return response.status(Status.OK).entity(resultMap).build();
@@ -258,26 +266,27 @@ public class RestMusicAdminAPI {
         PreparedQueryObject pQuery = new PreparedQueryObject();
         String consistency = MusicUtil.EVENTUAL;
         if (appName == null && aid == null) {
-            logger.error(EELFLoggerDelegate.errorLogger, "Please make sure either appName(ns) or Aid is present", AppMessages.MISSINGINFO,
-                            ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
+            logger.error(EELFLoggerDelegate.errorLogger, 
+                "Please make sure either appName(ns) or Aid is present", AppMessages.MISSINGINFO,
+                ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
             resultMap.put("Exception", "Please make sure either appName(ns) or Aid is present");
             return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
         if (aid != null) {
-            if ( KEYSPACE_ACTIVE ) {
-              pQuery.appendQueryString(
-                              "SELECT keyspace_name FROM admin.keyspace_master WHERE uuid = ?");
-              pQuery.addValue(MusicUtil.convertToActualDataType(DataType.uuid(),
-                              UUID.fromString(aid)));
-              Row row = MusicCore.get(pQuery).one();
-              if (row != null) {
-                  String ks = row.getString("keyspace_name");
-                  if (!ks.equals(MusicUtil.DEFAULTKEYSPACENAME)) {
-                      PreparedQueryObject queryObject = new PreparedQueryObject();
-                      queryObject.appendQueryString("DROP KEYSPACE IF EXISTS " + ks + ";");
-                      MusicCore.nonKeyRelatedPut(queryObject, consistency);
-                  }
-              }
+            if (MusicUtil.isKeyspaceActive()) {
+                pQuery.appendQueryString(
+                            "SELECT keyspace_name FROM admin.keyspace_master WHERE uuid = ?");
+                pQuery.addValue(MusicUtil.convertToActualDataType(DataType.uuid(),
+                            UUID.fromString(aid)));
+                Row row = MusicCore.get(pQuery).one();
+                if (row != null) {
+                    String ks = row.getString("keyspace_name");
+                    if (!ks.equals(MusicUtil.DEFAULTKEYSPACENAME)) {
+                        PreparedQueryObject queryObject = new PreparedQueryObject();
+                        queryObject.appendQueryString("DROP KEYSPACE IF EXISTS " + ks + ";");
+                        MusicCore.nonKeyRelatedPut(queryObject, consistency);
+                    }
+                }
             }
             pQuery = new PreparedQueryObject();
             pQuery.appendQueryString("delete from admin.keyspace_master where uuid = ? IF EXISTS");
@@ -288,9 +297,11 @@ public class RestMusicAdminAPI {
                 resultMap.put("Success", "Your application has been deleted successfully");
             } else {
                 resultMap.put("Exception",
-                                "Oops. Something went wrong. Please make sure Aid is correct or Application is onboarded");
-                logger.error(EELFLoggerDelegate.errorLogger, "Oops. Something went wrong. Please make sure Aid is correct or Application is onboarded", AppMessages.INCORRECTDATA,
-                                ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
+                    "Oops. Something went wrong. Please make sure Aid is correct or Application is onboarded");
+                logger.error(EELFLoggerDelegate.errorLogger, 
+                    "Oops. Something went wrong. Please make sure Aid is correct or Application is onboarded", 
+                    AppMessages.INCORRECTDATA,
+                    ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
                 return response.status(Status.BAD_REQUEST).entity(resultMap).build();
 
             }
@@ -362,8 +373,7 @@ public class RestMusicAdminAPI {
         String aid = jsonObj.getAid();
         String appName = jsonObj.getAppname();
         String userId = jsonObj.getUserId();
-        String isAAF = jsonObj.getIsAAF();
-        String password = jsonObj.getPassword();
+        String cassandraKeyspace=jsonObj.getKeyspace();
         String consistency = "eventual";
         PreparedQueryObject pQuery;
         
@@ -374,7 +384,7 @@ public class RestMusicAdminAPI {
             return response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
 
-        if (appName == null && userId == null && password == null && isAAF == null) {
+        if (appName == null || userId == null || cassandraKeyspace == null) {
             resultMap.put("Exception",
                             "No parameters found to update. Please update atleast one parameter.");
             logger.error(EELFLoggerDelegate.errorLogger, "No parameters found to update. Please update atleast one parameter.", AppMessages.MISSINGDATA,
@@ -388,10 +398,10 @@ public class RestMusicAdminAPI {
                             "select uuid from admin.keyspace_master where application_name = ? allow filtering");
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), appName));
             ResultSet rs = MusicCore.get(pQuery);
-            if (!rs.all().isEmpty()) {
+            if (rs.all().isEmpty()) {
                 resultMap.put("Exception", "Application " + appName
-                                + " has already been onboarded. Please contact admin.");
-                logger.error(EELFLoggerDelegate.errorLogger, "Application " + appName+"has already been onboarded. Please contact admin.", AppMessages.ALREADYEXIST,
+                                + " not found. Please contact admin.");
+                logger.error(EELFLoggerDelegate.errorLogger, "Application " + appName+"not found. Please contact admin.", AppMessages.ALREADYEXIST,
                                 ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
                 return response.status(Status.BAD_REQUEST).entity(resultMap).build();
             }
@@ -403,10 +413,8 @@ public class RestMusicAdminAPI {
             preCql.append(" application_name = ?,");
         if (userId != null)
             preCql.append(" username = ?,");
-        if (password != null)
-            preCql.append(" password = ?,");
-        if (isAAF != null)
-            preCql.append(" is_aaf = ?,");
+        if (cassandraKeyspace != null)
+            preCql.append(" keyspace_name = ?,");
         preCql.deleteCharAt(preCql.length() - 1);
         preCql.append(" WHERE uuid = ? IF EXISTS");
         pQuery.appendQueryString(preCql.toString());
@@ -414,10 +422,8 @@ public class RestMusicAdminAPI {
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), appName));
         if (userId != null)
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
-        if (password != null)
-            pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), BCrypt.hashpw(password, BCrypt.gensalt())));
-        if (isAAF != null)
-            pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), isAAF));
+        if (cassandraKeyspace != null)
+            pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), cassandraKeyspace));
 
         pQuery.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), UUID.fromString(aid)));
         ResultType result = MusicCore.nonKeyRelatedPut(pQuery, consistency);
@@ -438,22 +444,24 @@ public class RestMusicAdminAPI {
     
     
   //Dashboard related calls
+  //TODO Make return object Response.
+    
     @GET
     @Path("/getall")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public List<Application> getall(@ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization) throws MusicServiceException{
-        List<Application> appList = new ArrayList<>();
-        ResponseBuilder response =
-                Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
+    public MusicResponse getall(@ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization) throws MusicServiceException{
+        MusicResponse response  = new MusicResponse();
         if (!authenticator.authenticateAdmin(authorization)) {
-            logger.error(EELFLoggerDelegate.errorLogger, "Unauthorized: Please check admin username,password and try again", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.CRITICAL,
+            logger.info(EELFLoggerDelegate.errorLogger, "Unauthorized: Please check admin username,password and try again", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.CRITICAL,
                     ErrorTypes.AUTHENTICATIONERROR);
-            return appList;
+            response.setResposne("fail", "Auth failed for admin");
+            return response;
         }
         
         PreparedQueryObject queryObject = new PreparedQueryObject();
         queryObject.appendQueryString("SELECT *  FROM " + "admin" + "." + "keyspace_master" + ";");
+        try {
         ResultSet results = MusicCore.get(queryObject);
         for(Row row : results) {
             Application app = new Application();
@@ -463,36 +471,165 @@ public class RestMusicAdminAPI {
             app.setUsername(row.getString("username"));
             app.setKeyspace_name(row.getString("keyspace_name"));
             app.setUuid(row.getUUID("uuid").toString());
-            appList.add(app);
+            response.addAppToList(app);
         }
-        return appList;
-        
-        //return app;
+        }catch(Exception ex) {
+        	response.setResposne("fail", ex.getMessage());
+        }
+        return response;
         
     }
+    
+    
     @DELETE
     @Path("/delete")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public boolean delete(@ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
+    public MusicResponse delete(@ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
             @ApiParam(value = "uuid", required = true) @HeaderParam("uuid") String uuid) throws Exception {
-        ResponseBuilder response =
-                Response.noContent().header("X-latestVersion", MusicUtil.getVersion());
+    	MusicResponse response = new MusicResponse();
         if (!authenticator.authenticateAdmin(authorization)) {
-            logger.error(EELFLoggerDelegate.errorLogger, "Unauthorized: Please check admin username,password and try again", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.CRITICAL,
+            logger.info(EELFLoggerDelegate.errorLogger, "Unauthorized: Please check admin username,password and try again", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.CRITICAL,
                     ErrorTypes.AUTHENTICATIONERROR);
-            return false;
+            response.setResposne("fail", "Auth failed for admin");
+            return response;
         }
         PreparedQueryObject queryObject = new PreparedQueryObject();
         queryObject.appendQueryString("delete from admin.keyspace_master where uuid=?");
         queryObject.addValue(MusicUtil.convertToActualDataType(DataType.uuid(),uuid));
         ResultType result;
         try {
-         result = MusicCore.nonKeyRelatedPut(queryObject, "eventual");
+            result = MusicCore.nonKeyRelatedPut(queryObject, "eventual");
+            response.setResposne("success", "Application deleted successfully. Please contact ops team to delete keyspace");
         }catch(Exception ex) {
             logger.error(EELFLoggerDelegate.errorLogger, ex);
-            return false;
+            response.setResposne("fail", ex.getMessage());
+            return response;
         }
-        return true;
+        return response;
     }
+    
+    @POST
+    @Path("/onboard")
+    @ApiOperation(value = "Onboard application", response = String.class)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public MusicResponse onboard(JsonOnboard jsonObj,
+            @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization) throws Exception {
+        logger.info(EELFLoggerDelegate.errorLogger, "oboarding app");
+        MusicResponse response = new MusicResponse();
+        if (!authenticator.authenticateAdmin(authorization)) {
+            logger.info(EELFLoggerDelegate.errorLogger, "Unauthorized: Please check admin username,password and try again", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.CRITICAL,
+                    ErrorTypes.AUTHENTICATIONERROR);
+            response.setResposne("fail", "auth error");
+        }
+        PreparedQueryObject pQurey = new PreparedQueryObject();
+        pQurey.appendQueryString("Describe keyspace + ?");
+        pQurey.addValue(MusicUtil.convertToActualDataType(DataType.text(),jsonObj.getKeyspace()));
+        KeyspaceMetadata keyspaceInfo = null;
+        //authenticator.checkOnbaordUserAccess(jsonObj.getUserId(), jsonObj.getAppname());
+        try {
+            keyspaceInfo = MusicDataStoreHandle.returnkeyspaceMetadata(jsonObj.getKeyspace());
+        }catch (Exception e) {
+			logger.info(EELFLoggerDelegate.applicationLogger,"Application onbaord failed for "+ jsonObj.getKeyspace());
+			
+		}
+        if(keyspaceInfo == null) {
+            logger.info(EELFLoggerDelegate.applicationLogger,"Keyspace does not exist, contact music support to create a keyspace and onbaord again");
+            response.setResposne("fail", "Keyspace does not exist, contact music support to create a keyspace and onboard again");
+            return response;
+        }
+        Response result = null;
+        try {
+            result = onboardAppWithMusic(jsonObj, authorization);
+            if(result.getStatus()!= 200) {
+                response.setResposne("fail", result.getEntity().toString());
+            }else {
+                response.setResposne("success", "Onboard Success");
+            }
+        }catch(Exception ex) {
+            response.setResposne("fail", ex.getMessage());
+            return response;
+    
+        }
+        return response;
+    }
+    
+    @POST
+    @Path("/disable")
+    @ApiOperation(value = "Onboard application", response = String.class)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public MusicResponse disableApplicationAccess(@ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
+            @ApiParam(value = "uuid", required = true) @HeaderParam("uuid") String uuid) throws Exception {
+        logger.info(EELFLoggerDelegate.errorLogger, "oboarding app");
+        MusicResponse response = new MusicResponse();
+        if (!authenticator.authenticateAdmin(authorization)) {
+            logger.info(EELFLoggerDelegate.errorLogger, "Unauthorized: Please check admin username,password and try again", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.CRITICAL,
+                    ErrorTypes.AUTHENTICATIONERROR);
+          response.setResposne("fail", "Authorization failed for music admin");
+        }
+        PreparedQueryObject queryObject = new PreparedQueryObject();
+        queryObject.appendQueryString("SELECT * from admin.keyspace_master where uuid = ?");
+        queryObject.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), uuid));
+        Row row = MusicDataStoreHandle.getDSHandle().executeGet(queryObject, "eventual").one();
+        boolean toggleAccess = row.getBool("is_api");
+        queryObject = null;
+        queryObject = new PreparedQueryObject();
+        queryObject.appendQueryString("UPDATE admin.keyspace_master SET is_api = ? WHERE uuid = ?");
+        queryObject.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), !toggleAccess));
+        queryObject.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), uuid));
+        try {
+        	MusicDataStoreHandle.getDSHandle().executePut(queryObject, "eventual");
+        	response.setResposne("success","Access toggle success");
+        }catch(Exception ex) {
+        	response.setResposne("fail", ex.getMessage());
+        }
+        		
+        return response;
+    }
+    
+    @POST
+    @Path("/editApplication")
+    @ApiOperation(value = "Onboard application", response = String.class)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public MusicResponse editApplication(JsonOnboard jsonObj,
+            @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization) throws Exception {
+        logger.info(EELFLoggerDelegate.errorLogger, "oboarding app");
+       MusicResponse response = new MusicResponse();
+        if (!authenticator.authenticateAdmin(authorization)) {
+            logger.info(EELFLoggerDelegate.errorLogger, "Unauthorized: Please check admin username,password and try again", AppMessages.AUTHENTICATIONERROR, ErrorSeverity.CRITICAL,
+                    ErrorTypes.AUTHENTICATIONERROR);
+          response.setResposne("fail", "auth error");
+        }
+        KeyspaceMetadata keyspaceInfo = null;
+        try {
+        	keyspaceInfo = MusicDataStoreHandle.returnkeyspaceMetadata(jsonObj.getKeyspace());
+        }catch (Exception e) {
+			logger.info(EELFLoggerDelegate.applicationLogger,"Application Update failed for "+ jsonObj.getKeyspace());
+			
+		}
+        if(keyspaceInfo == null) {
+            logger.info(EELFLoggerDelegate.applicationLogger,"Keyspace does not exist, contact music support to create a keyspace and onbaord again");
+            response.setResposne("fail", "Keyspace does not exist, contact music support to create a keyspace and update again");
+            return response;
+         }
+        
+        try {
+        Response res = updateOnboardApp(jsonObj, authorization);
+        if(res.getStatus() != 200) {
+        	response.setResposne("fail", res.getEntity().toString());
+        }else
+        	response.setResposne("success", "Update success");
+        }catch(Exception ex){
+        	logger.info(EELFLoggerDelegate.errorLogger,"Exception while updating application");
+        	logger.info(EELFLoggerDelegate.errorLogger,ex.getMessage());
+        	response.setResposne("fail", ex.getMessage());
+        	
+        }
+     return response;
+    }
+    
+    
 }

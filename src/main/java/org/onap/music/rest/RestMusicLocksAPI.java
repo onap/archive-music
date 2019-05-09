@@ -47,6 +47,7 @@ import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
+import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.lockingservice.cassandra.MusicLockState;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
@@ -67,7 +68,7 @@ public class RestMusicLocksAPI {
     private static final String XMINORVERSION = "X-minorVersion";
     private static final String XPATCHVERSION = "X-patchVersion";
     private static final String VERSION = "v2";
-    
+
     private MusicAuthenticator authenticator = new MusicAAFAuthentication();
 
     /**
@@ -113,7 +114,12 @@ public class RestMusicLocksAPI {
         }
         
         ResultType status = ResultType.SUCCESS;
-        String lockId = MusicCore.createLockReference(lockName);
+        String lockId;
+        try {
+        	lockId= MusicCore.createLockReference(lockName);
+        } catch (MusicLockingException e) {
+        	return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
+        }
         
         if (lockId == null) { 
             status = ResultType.FAILURE; 
@@ -328,28 +334,13 @@ public class RestMusicLocksAPI {
         return response.status(Status.OK).entity(new JsonResponse(status).setError(error).setLock(lockName).setLockHolder(who).toMap()).build();
         } finally {
             EELFLoggerDelegate.mdcRemove("keyspace");
-        } 
-        
-        //MusicLockState mls = MusicZKCore.getMusicLockState(lockName);
-//        Map<String,Object> returnMap = null;
-//        JsonResponse jsonResponse = new JsonResponse(ResultType.FAILURE).setLock(lockName);
-//        if(mls == null) {
-//            jsonResponse.setError("");
-//            jsonResponse.setMessage("No lock object created yet..");
-//            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
-//            return response.status(Status.BAD_REQUEST).entity(jsonResponse.toMap()).build();
-//        } else { 
-//            jsonResponse.setStatus(ResultType.SUCCESS);
-//            jsonResponse.setLockStatus(mls.getLockStatus());
-//            jsonResponse.setLockHolder(mls.getLockHolder());
-//            return response.status(Status.OK).entity(jsonResponse.toMap()).build();
-//        }
+        }
 
     }
 
     /**
      * 
-     * deletes the process from the zk queue
+     * deletes the process from the lock queue
      * 
      * @param lockId
      * @throws Exception 
@@ -357,7 +348,7 @@ public class RestMusicLocksAPI {
     @DELETE
     @Path("/release/{lockreference}")
     @ApiOperation(value = "Release Lock",
-        notes = "deletes the process from the zk queue",
+        notes = "deletes the process from the lock queue",
         response = Map.class)
     @Produces(MediaType.APPLICATION_JSON)    
     public Response unLock(@PathParam("lockreference") String lockId,
@@ -447,7 +438,7 @@ public class RestMusicLocksAPI {
         }
         
         try{
-            MusicCore.deleteLock(lockName);
+            MusicCore.destroyLockRef(lockName);
         }catch (Exception e) {
             logger.error(EELFLoggerDelegate.errorLogger, e);
             return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();

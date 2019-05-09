@@ -67,7 +67,7 @@ public enum ErrorCodes {
      * [ERR509E] Lock not destroyed 
      * [ERR510E] Lock not released 
      * [ERR511E] Lock not deleted 
-     * [ERR512E] Failed to get ZK Lock Handle
+     * [ERR512E] Failed to get Lock Handle
      * 
      * 
      * 600 - 699 - Music Service Errors

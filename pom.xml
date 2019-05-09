@@ -27,12 +27,12 @@
     <groupId>org.onap.music</groupId>
     <artifactId>MUSIC</artifactId>
     <packaging>jar</packaging>
-    <version>3.2.18-SNAPSHOT</version>
+    <version>3.2.28-SNAPSHOT</version>
     <description>
             This is the MUSIC REST interface, packaged as a Springboot jar file.
     </description>
 
-      <parent>
+    <parent>
         <groupId>org.onap.oparent</groupId>
         <artifactId>oparent</artifactId>
         <version>2.0.0</version>
@@ -70,6 +70,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <!--nexus -->
         <nexusproxy>https://nexus.onap.org</nexusproxy>
+        <onap.nexus.url>https://nexus.onap.org</onap.nexus.url>
         <snapshotNexusPath>/content/repositories/snapshots/</snapshotNexusPath>
         <releaseNexusPath>/content/repositories/releases/</releaseNexusPath>
         <stagingNexusPath>/content/repositories/staging/</stagingNexusPath>
@@ -77,6 +78,8 @@
         <!--maven -->
         <timestamp>${maven.build.timestamp}</timestamp>
         <maven.build.timestamp.format>yyyy.MM.dd.HH.mm</maven.build.timestamp.format>
+        <!--skip checkstyle -->
+        <maven.check.skip>false</maven.check.skip>
         <!--docker -->
         <docker.tag>${project.version}-${timestamp}</docker.tag>
         <docker.latest.tag>${project.version}-latest</docker.latest.tag>
@@ -105,13 +108,6 @@
             <name>ONAP public Repository</name>
             <url>${nexusproxy}/content/groups/public</url>
         </repository>
-        <repository>
-            <!-- SWM repository has EELF jars -->
-            <id>att-cadi-repo</id>
-            <name>ATT CADI Repository</name>
-            <url>http://mavencentral.it.att.com:8084/nexus/content/repositories/attarch-releases/</url>
-        </repository>
-        
     </repositories>
 
     <build>
@@ -170,6 +166,14 @@
 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <configuration>
+                    <skip>${maven.check.skip}</skip>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>2.4</version>
                 <executions>
@@ -214,7 +218,7 @@
 
     <dependencies>
         <!-- Springboot -->
-        <dependency>
+         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
@@ -239,45 +243,40 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.springframework/spring-webmvc -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-aop</artifactId>
+			<scope>compile</scope>
+		</dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-aop</artifactId>
             <scope>compile</scope>
         </dependency>
-        <!--  Swagger 2 -->
-<!--         <dependency>
-            <groupId>io.springfox</groupId>
-            <artifactId>springfox-swagger2</artifactId>
-            <version>2.8.0</version>
-            <scope>compile</scope>
-        </dependency>
- -->
-<!--         <dependency>
-            <groupId>io.springfox</groupId>
-            <artifactId>springfox-swagger-ui</artifactId>
-            <version>2.8.0</version>
-            <scope>compile</scope>
-        </dependency>
-  -->
-        <!-- End Swagger -->
         <dependency>
             <groupId>org.aspectj</groupId>
             <artifactId>aspectjweaver</artifactId>
             <scope>compile</scope>
         </dependency>
-        
         <!-- Springboot -->
         <!-- Development -->
-        <dependency>
+		<dependency>
+			<groupId>org.aspectj</groupId>
+			<artifactId>aspectjweaver</artifactId>
+			<scope>compile</scope>
+		</dependency>
+		
+        <!-- Springboot -->
+        <!-- Development -->
+		<dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
             <version>2.4</version>
             <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-autoconfigure</artifactId>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
@@ -340,12 +339,6 @@
             <groupId>com.datastax.cassandra</groupId>
             <artifactId>cassandra-driver-core</artifactId>
             <version>${cassandra.version}</version>
-            <exclusions>
-        <!-- <exclusion>
-        <groupId>io.netty</groupId>
-        <artifactId>*</artifactId>
-        </exclusion> -->
-            </exclusions>
         </dependency> 
         <!-- /Cassandra -->
         <!-- Jersey -->
@@ -393,10 +386,10 @@
             <version>4.12</version>
             <scope>test</scope>
         </dependency>
-        <!-- <dependency>
+        <dependency>
             <groupId>org.cassandraunit</groupId>
-            <artifactId>cassandra-unit</artifactId>
-            <version>3.3.0.2</version>
+            <artifactId>cassandra-unit-spring</artifactId>
+            <version>3.5.0.1</version>
             <scope>test</scope>
             <exclusions>
                 <exclusion>
@@ -408,7 +401,7 @@
                     <artifactId>reporter-config-base</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency> -->
+        </dependency> 
         <dependency>
         <groupId>org.cassandraunit</groupId>
         <artifactId>cassandra-unit-spring</artifactId>
@@ -465,19 +458,28 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            </dependency>
+            <version>2.9.8</version>
+        </dependency>
         <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-core</artifactId>
-                </dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.9.8</version>
+        </dependency>
         <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-annotations</artifactId>
-                </dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>2.9.8</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
         </dependency>
+            
+<!--    <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-jersey2-jaxrs</artifactId>
+            <version>1.5.18</version>
+        </dependency> -->
         <dependency>
             <groupId>io.swagger</groupId>
             <artifactId>swagger-jersey-jaxrs</artifactId>
@@ -488,14 +490,55 @@
             <artifactId>guava</artifactId>
         </dependency>
         <dependency>
+            <groupId>de.svenkubiak</groupId>
+            <artifactId>jBCrypt</artifactId>
+            <version>0.4.1</version>
+        </dependency>
+       <!-- <dependency>
             <groupId>org.mindrot</groupId>
             <artifactId>jbcrypt</artifactId>
             <version>0.4</version>
+        </dependency>-->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-handler</artifactId>
+            <version>4.1.33.Final</version>
         </dependency>
-     <dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-buffer</artifactId>
+            <version>4.1.33.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec</artifactId>
+            <version>4.1.33.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-common</artifactId>
+            <version>4.1.33.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-resolver</artifactId>
+            <version>4.1.33.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-transport</artifactId>
+            <version>4.1.33.Final</version>
+        </dependency>
+    <dependency>
         <groupId>org.onap.aaf.authz</groupId>
         <artifactId>aaf-cadi-aaf</artifactId>
         <version>2.1.7</version>
+        <exclusions>
+            <exclusion>
+                <groupId>log4j</groupId>
+                <artifactId>log4j</artifactId>
+            </exclusion>
+        </exclusions>
     </dependency>
     <dependency>
         <groupId>org.onap.aaf.authz</groupId>
@@ -641,15 +684,8 @@
             </build>
         </profile>
         <profile> 
-              <id>default</id> 
-              <repositories> 
-                  <repository> 
-                    <id>nexus</id> 
-                    <name>attarch-releases</name> 
-                    <url>http://mavencentral.it.att.com:8084/nexus/content/repositories/attarch-releases</url> 
-                </repository> 
-            </repositories> 
-          </profile>
+            <id>default</id> 
+        </profile>
     </profiles>
     <distributionManagement>
         <repository>

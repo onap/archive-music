@@ -83,7 +83,7 @@ public class PreparedQueryObject {
         this.consistency = consistency;
     }
 
-    /**
+	/**
      * 
      */
     public PreparedQueryObject() {
@@ -122,7 +122,4 @@ public class PreparedQueryObject {
     public String getQuery() {
         return this.query.toString();
     }
-
-
-
 }
