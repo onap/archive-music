@@ -34,6 +34,10 @@ import javax.ws.rs.core.MediaType;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.jcs.JCS;
 import org.apache.commons.jcs.access.CacheAccess;
+import org.apache.commons.jcs.engine.CompositeCacheAttributes;
+import org.apache.commons.jcs.engine.ElementAttributes;
+import org.apache.commons.jcs.engine.behavior.ICompositeCacheAttributes;
+import org.apache.commons.jcs.engine.behavior.IElementAttributes;
 import org.mindrot.jbcrypt.BCrypt;
 import org.onap.music.authentication.MusicAuthenticator.Operation;
 import org.onap.music.datastore.PreparedQueryObject;
@@ -54,7 +58,7 @@ import com.sun.jersey.api.client.WebResource;
 
 /**
  * All Caching related logic is handled by this class and a schedule cron runs to update cache.
- *
+ * 
  * @author Vikram
  *
  */
@@ -71,15 +75,15 @@ public class CachingUtil implements Runnable {
     private static Map<String, Number> userAttempts = new HashMap<>();
     private static Map<String, Calendar> lastFailedTime = new HashMap<>();
     private static CacheAccess<String, String> adminUserCache = JCS.getInstance("adminUserCache");
-
+    
     public static CacheAccess<String, String> getAdminUserCache() {
         return adminUserCache;
     }
-
+    
     public static void updateAdminUserCache(String authorization,String userId) {
         adminUserCache.put(authorization,userId);
     }
-
+    
     private static final String USERNAME="username";
     private static final String PASSWORD="password";
 
@@ -93,8 +97,8 @@ public class CachingUtil implements Runnable {
         try {
             pQuery.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), false));
         } catch (Exception e1) {
-            logger.error(EELFLoggerDelegate.errorLogger, e1.getMessage(),AppMessages.CACHEERROR, ErrorSeverity
-                .CRITICAL, ErrorTypes.GENERALSERVICEERROR, e1);
+            logger.error(EELFLoggerDelegate.errorLogger, e1.getMessage(),AppMessages.CACHEERROR, 
+                ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR, e1);
         }
         ResultSet rs = MusicCore.get(pQuery);
         Iterator<Row> it = rs.iterator();
@@ -229,7 +233,7 @@ public class CachingUtil implements Runnable {
         response.bufferEntity();
         String x = response.getEntity(String.class);
         AAFResponse responseObj = new ObjectMapper().readValue(x, AAFResponse.class);*/
-
+        
         return true;
     }
 
@@ -241,18 +245,18 @@ public class CachingUtil implements Runnable {
     public static void updateCadiCache(String user, String keyspace) {
         musicCache.put(user, keyspace);
     }
-
+    
     public static String getKSFromCadiCache(String user) {
         return musicCache.get(user);
     }
-
+    
     public static void updateMusicValidateCache(String nameSpace, String userId, String password) {
         logger.info(EELFLoggerDelegate.applicationLogger,"Updating musicCache for nameSpacce " + nameSpace + " with userId " + userId);
         Map<String, String> map = new HashMap<>();
         map.put(userId, password);
         musicValidateCache.put(nameSpace, map);
     }
-
+    
     public static void updateisAAFCache(String namespace, String isAAF) {
         appNameCache.put(namespace, isAAF);
     }
@@ -340,7 +344,7 @@ public class CachingUtil implements Runnable {
         }
         return resultMap;
     }
-
+    
     public static Map<String, Object> verifyOnboarding(String ns, String userId, String password) {
         Map<String, Object> resultMap = new HashMap<>();
         if (ns == null || userId == null || password == null) {
@@ -388,10 +392,10 @@ public class CachingUtil implements Runnable {
     }
 
     public static Map<String, Object> authenticateAIDUser(String nameSpace, String userId, String password,
-           String keyspace) {
+            String keyspace) {
         Map<String, Object> resultMap = new HashMap<>();
         String pwd = null;
-        if((musicCache.get(keyspace) != null) && (musicValidateCache.get(nameSpace) != null)
+        if((musicCache.get(keyspace) != null) && (musicValidateCache.get(nameSpace) != null) 
                 && (musicValidateCache.get(nameSpace).containsKey(userId))) {
             if(!musicCache.get(keyspace).equals(nameSpace)) {
                 resultMap.put("Exception", "Namespace and keyspace doesn't match");

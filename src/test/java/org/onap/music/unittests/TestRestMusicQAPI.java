@@ -1,16 +1,20 @@
 /*
- * ============LICENSE_START========================================== org.onap.music
- * =================================================================== Copyright (c) 2017 AT&T
- * Intellectual Property ===================================================================
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- * in compliance with the License. You may obtain a copy of the License at
+ * ============LICENSE_START==========================================
+ * org.onap.music
+ * ===================================================================
+ *  Copyright (c) 2017 AT&T Intellectual Property
+ * ===================================================================
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
  * 
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  * 
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
  * 
  * ============LICENSE_END=============================================
  * ====================================================================
@@ -79,7 +83,7 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
 @RunWith(MockitoJUnitRunner.class)
 public class TestRestMusicQAPI {
 
-   
+    
     RestMusicAdminAPI admin = new RestMusicAdminAPI();
     RestMusicLocksAPI lock = new RestMusicLocksAPI(); 
     RestMusicQAPI qData = new RestMusicQAPI();
@@ -90,7 +94,7 @@ public class TestRestMusicQAPI {
 
     @Mock
     UriInfo info;
-  
+    
     static String appName = "TestApp";
     static String userId = "TestUser";
     static String password = "TestPassword";
@@ -127,14 +131,14 @@ public class TestRestMusicQAPI {
             MusicDataStoreHandle.mDstoreHandle = CassandraCQL.connectToEmbeddedCassandra();
             MusicCore.mLockHandle = new CassaLockStore(MusicDataStoreHandle.mDstoreHandle);
 
-           // System.out.println("before class keysp");
+            // System.out.println("before class keysp");
             //resp=data.createKeySpace(majorV,minorV,patchV,aid,appName,userId,password,kspObject,keyspaceName);
             //System.out.println("after keyspace="+keyspaceName);
         } catch (Exception e) {
-          System.out.println("before class exception ");
+            System.out.println("before class exception ");
             e.printStackTrace();
         }
-      // admin keyspace and table
+        // admin keyspace and table
         testObject = new PreparedQueryObject();
         testObject.appendQueryString("CREATE KEYSPACE admin WITH REPLICATION = "
                         + "{'class' : 'SimpleStrategy' , "
@@ -186,7 +190,7 @@ public class TestRestMusicQAPI {
         if (rows.size() > 0) {
             System.out.println("#######UUID is:" + rows.get(0).getUUID("uuid"));
         }
-          
+            
         JsonKeySpace jsonKeyspace = new JsonKeySpace();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, Object> replicationInfo = new HashMap<>();
@@ -243,7 +247,7 @@ public class TestRestMusicQAPI {
         System.out.println("Entity" + response.getEntity());
         assertEquals(200, response.getStatus());
     }*/
-  
+    
     @Test
     public void Test1_createQ_FieldsEmpty() throws Exception {
         JsonTable jsonTable = new JsonTable();
@@ -298,7 +302,7 @@ public class TestRestMusicQAPI {
         System.out.println("Entity" + response.getEntity());
         assertEquals(200, response.getStatus());
     }*/
-   
+    
 /*    @Test
     public void Test1_createQ_ClusterOrderGood1() throws Exception {
         String tableNameC="testcjcO";
@@ -474,7 +478,7 @@ public class TestRestMusicQAPI {
     
     @Test
     public void Test3_createQ_0() throws Exception {
-         //duplicate testing ...
+        //duplicate testing ...
         JsonTable jsonTable = new JsonTable();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
@@ -668,7 +672,7 @@ public class TestRestMusicQAPI {
                         jsonInsert, keyspaceName, "wrong");
         assertEquals(401, response.getStatus());
     }
-      
+    
 /*    @Test
     public void Test5_updateQ() throws Exception {
         JsonUpdate jsonUpdate = new JsonUpdate();
@@ -690,25 +694,25 @@ public class TestRestMusicQAPI {
         assertEquals(200, response.getStatus());
     }*/
     
-  @Test
-  public void Test5_updateQEmptyValues() throws Exception {
-      JsonUpdate jsonUpdate = new JsonUpdate();
-      Map<String, String> consistencyInfo = new HashMap<>();
-      MultivaluedMap<String, String> row = new MultivaluedMapImpl();
-      Map<String, Object> values = new HashMap<>();
-      row.add("emp_name", "testName");
-      //values.put("emp_salary", 2500);
-      consistencyInfo.put("type", "atomic");
-      jsonUpdate.setConsistencyInfo(consistencyInfo);
-      jsonUpdate.setKeyspaceName(keyspaceName);
-      jsonUpdate.setTableName(tableName);
-      jsonUpdate.setValues(values);
-      //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-      //Mockito.when(info.getQueryParameters()).thenReturn(row);
-      Response response = qData.updateQ(majorV, minorV,patchV, "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
-              authorization, jsonUpdate, keyspaceName, tableName, info);
-      assertNotEquals(200, response.getStatus());
-  }
+    @Test
+    public void Test5_updateQEmptyValues() throws Exception {
+        JsonUpdate jsonUpdate = new JsonUpdate();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        MultivaluedMap<String, String> row = new MultivaluedMapImpl();
+        Map<String, Object> values = new HashMap<>();
+        row.add("emp_name", "testName");
+        //values.put("emp_salary", 2500);
+        consistencyInfo.put("type", "atomic");
+        jsonUpdate.setConsistencyInfo(consistencyInfo);
+        jsonUpdate.setKeyspaceName(keyspaceName);
+        jsonUpdate.setTableName(tableName);
+        jsonUpdate.setValues(values);
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        //Mockito.when(info.getQueryParameters()).thenReturn(row);
+        Response response = qData.updateQ(majorV, minorV,patchV, "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
+            authorization, jsonUpdate, keyspaceName, tableName, info);
+        assertNotEquals(200, response.getStatus());
+    }
 
 /*    @Test
     public void Test6_filterQ() throws Exception {  //select
@@ -758,7 +762,7 @@ public class TestRestMusicQAPI {
         jsonSelect.setConsistencyInfo(consistencyInfo);
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         UriInfo infoe= mockUriInfo("/peek?");//empty queryParam: cause exception
-       // infoe.setQueryParameters("");
+        // infoe.setQueryParameters("");
         System.out.println("uriinfo="+infoe.getQueryParameters());
         Mockito.when(infoe.getQueryParameters()).thenReturn(row);
         Response response = qData.peek(majorV, minorV,patchV,"abc66ccc-d857-4e90-b1e5-df98a3d40ce6", 
@@ -798,8 +802,8 @@ public class TestRestMusicQAPI {
         //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Mockito.when(info.getQueryParameters()).thenReturn(row);
         Response response = qData.deleteFromQ(majorV, minorV,patchV,
-                        "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
-                        jsonDelete, keyspaceName, tableName, info);
+            "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
+            jsonDelete, keyspaceName, tableName, info);
         assertEquals(400, response.getStatus());
     }
 
@@ -829,17 +833,17 @@ public class TestRestMusicQAPI {
         Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
         Response response = qData.dropQ(majorV, minorV,patchV,
                         "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
-                         keyspaceName, tableName);
+                        keyspaceName, tableName);
         assertEquals(200, response.getStatus());
     }*/
-   
+    
     private UriInfo mockUriInfo(String urix) throws URISyntaxException {
-      String uri="http://localhost:8080/MUSIC/rest/v"+majorV+"/priorityq/keyspaces/"+keyspaceName+"/"+tableName+urix;
-      UriInfo uriInfo = Mockito.mock(UriInfo.class);
-      System.out.println("mock urix="+urix+" uri="+uri);
-      Mockito.when(uriInfo.getRequestUri()).thenReturn(new URI(uri));
-      return uriInfo;
-      }
+        String uri="http://localhost:8080/MUSIC/rest/v"+majorV+"/priorityq/keyspaces/"+keyspaceName+"/"+tableName+urix;
+        UriInfo uriInfo = Mockito.mock(UriInfo.class);
+        System.out.println("mock urix="+urix+" uri="+uri);
+        Mockito.when(uriInfo.getRequestUri()).thenReturn(new URI(uri));
+        return uriInfo;
+    }
     
 
     //Empty Fields
@@ -891,7 +895,7 @@ public class TestRestMusicQAPI {
         assertEquals(400, response.getStatus());
     }
 
-  //Clustering key null
+    //Clustering key null
     @Test
     public void Test8_createQ_ClusteringKey_empty() throws Exception {
         String tableNameC="testcjcC";
@@ -945,7 +949,7 @@ public class TestRestMusicQAPI {
         assertEquals(400, response.getStatus());
     }
 
-  //Invalid primary key
+    //Invalid primary key
     @Test
     public void Test8_createQ_primaryKey_invalid() throws Exception {
         String tableNameC="testcjcC";
