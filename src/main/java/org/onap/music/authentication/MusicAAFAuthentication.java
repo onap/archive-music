@@ -47,17 +47,13 @@ import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 
 public class MusicAAFAuthentication implements MusicAuthenticator {
-    
+            
      private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicAAFAuthentication.class);
-    
+
     @Override
     public boolean authenticateAdmin(String authorization) {
         logger.info(EELFLoggerDelegate.applicationLogger, "MusicCore.authenticateAdmin: ");
         String userId = MusicUtil.extractBasicAuthentication(authorization).get(MusicUtil.USERID);
-        if(MusicUtil.getIsCadi()) {
-            CachingUtil.updateAdminUserCache(authorization, userId);
-            return true;
-        }
         CacheAccess<String, String> adminCache = CachingUtil.getAdminUserCache();
         if (authorization == null) {
             logger.error(EELFLoggerDelegate.errorLogger, "Authorization cannot be empty...");
@@ -108,8 +104,8 @@ public class MusicAAFAuthentication implements MusicAuthenticator {
                 isAAFApp= CachingUtil.isAAFApplication(namespace);
             } catch(MusicServiceException e) {
                 logger.error(e.getErrorMessage(), e);
-               resultMap.put("Exception", e.getMessage());
-               return false;
+                resultMap.put("Exception", e.getMessage());
+                return false;
             }
             if(isAAFApp == null) {
                 resultMap.put("Exception", "Namespace: "+namespace+" doesn't exist. Please make sure ns(appName)"
@@ -133,7 +129,7 @@ public class MusicAAFAuthentication implements MusicAuthenticator {
             if (isAAF && namespace != null && userId != null && password != null) {
                 boolean isValid = true;
                 try {
-                     isValid = CachingUtil.authenticateAAFUser(namespace, userId, password, keyspace);
+                    isValid = CachingUtil.authenticateAAFUser(namespace, userId, password, keyspace);
                 } catch (Exception e) {
                     logger.error(EELFLoggerDelegate.errorLogger,"Error while aaf authentication for user:" + userId);
                     logger.error(EELFLoggerDelegate.errorLogger,"Error: "+ e.getMessage(), e);

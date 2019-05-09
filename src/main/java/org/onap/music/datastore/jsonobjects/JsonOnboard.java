@@ -37,16 +37,16 @@ public class JsonOnboard {
     private String aid;
     private String keyspace;
 
-    @ApiModelProperty(value = "Application Keyspace")
+	@ApiModelProperty(value = "Application Keyspace")
     public String getKeyspace() {
-        return keyspace;
-    }
+		return keyspace;
+	}
 
-    public void setKeyspace_name(String keyspace) {
-        this.keyspace = keyspace;
-    }
+	public void setKeyspace_name(String keyspace) {
+		this.keyspace = keyspace;
+	}
 
-    @ApiModelProperty(value = "Application Password")
+	@ApiModelProperty(value = "Application Password")
     public String getPassword() {
         return password;
     }

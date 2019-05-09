@@ -48,6 +48,9 @@ public class PropertiesLoader implements InitializingBean {
     
     @Value("${version}")
     public String version;
+
+    @Value("${build}")
+    public String build;
     
     @Value("${music.rest.ip}")
     public String musicRestIp;
@@ -106,6 +109,12 @@ public class PropertiesLoader implements InitializingBean {
     @Value("${cadi}")
     public String isCadi;
     
+    @Value("${keyspace.active}")
+    public String isKeyspaceActive;
+
+    @Value("${retry.count}")
+    public String rertryCount;
+    
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(PropertiesLoader.class);
     
     @Bean
@@ -117,23 +126,30 @@ public class PropertiesLoader implements InitializingBean {
         return pspc;
     }
     
-    public void loadProperties () {
-        if(aafAdminUrl != null && !aafAdminUrl.equals("${aaf.admin.url}"))
+    /**
+     * .
+     */
+    public void loadProperties() {
+        if (aafAdminUrl != null && !aafAdminUrl.equals("${aaf.admin.url}")) {
             MusicUtil.setAafAdminUrl(aafAdminUrl);
-        if(aafEndpointUrl != null && !aafEndpointUrl.equals("${aaf.endpoint.url}"))
+        }
+        if (aafEndpointUrl != null && !aafEndpointUrl.equals("${aaf.endpoint.url}")) {
             MusicUtil.setAafEndpointUrl(aafEndpointUrl);
-        if(adminAafRole != null && !adminAafRole.equals("${admin.aaf.role}"))
+        }
+        if (adminAafRole != null && !adminAafRole.equals("${admin.aaf.role}")) {
             MusicUtil.setAdminAafRole(adminAafRole);
-        //MusicUtil.setAdminId(adminId);
-        if(adminPassword != null && !adminPassword.equals("${admin.password}"))
+        }
+        if (adminPassword != null && !adminPassword.equals("${admin.password}")) {
             MusicUtil.setAdminPass(adminPassword);
-        if(adminUsername != null && !adminUsername.equals("${admin.username}"))
+        }
+        if (adminUsername != null && !adminUsername.equals("${admin.username}")) {
             MusicUtil.setAdminId(adminUsername);
-        if(allIds != null && !allIds.equals("${all.ids}")) {
+        }
+        if (allIds != null && !allIds.equals("${all.ids}")) {
             String[] ids = allIds.split(":");
             MusicUtil.setAllIds(new ArrayList<String>(Arrays.asList(ids)));
         }
-        if(allPublicIps != null && !allPublicIps.equals("${all.public.ips}")) {
+        if (allPublicIps != null && !allPublicIps.equals("${all.public.ips}")) {
             String[] ips = allPublicIps.split(":");
             if (ips.length == 1) {
                 // Future use
@@ -142,39 +158,63 @@ public class PropertiesLoader implements InitializingBean {
                                 new ArrayList<String>(Arrays.asList(ips)));
             }
         }
-        if(cassandraPort != null && !cassandraPort.equals("${cassandra.port}"))
+        if (cassandraPort != null && !cassandraPort.equals("${cassandra.port}")) {
             MusicUtil.setCassandraPort(Integer.parseInt(cassandraPort));
-        if(cassandraUser != null && !cassandraUser.equals("${cassandra.user}"))
+        }
+        if (cassandraUser != null && !cassandraUser.equals("${cassandra.user}")) {
             MusicUtil.setCassName(cassandraUser);
-        if(cassandraPassword != null && !cassandraPassword.equals("${cassandra.password}"))
+        }
+        if (cassandraPassword != null && !cassandraPassword.equals("${cassandra.password}")) {
             MusicUtil.setCassPwd(cassandraPassword);
-        if(debug != null && !debug.equals("${debug}"))
+        }
+        if (debug != null && !debug.equals("${debug}")) {
             MusicUtil.setDebug(Boolean.parseBoolean(debug));
-        if(lockLeasePeriod != null && !lockLeasePeriod.equals("${lock.lease.period}"))
+        }
+        if (lockLeasePeriod != null && !lockLeasePeriod.equals("${lock.lease.period}")) {
             MusicUtil.setDefaultLockLeasePeriod(Long.parseLong(lockLeasePeriod));
-        if(musicIp != null && !musicIp.equals("${music.ip}"))
+        }
+        if (musicIp != null && !musicIp.equals("${music.ip}")) {
             MusicUtil.setDefaultMusicIp(musicIp);
-        if(musicNamespace != null && !musicNamespace.equals("${music.namespace}"))
+        }
+        if (musicNamespace != null && !musicNamespace.equals("${music.namespace}")) {
             MusicUtil.setMusicNamespace(musicNamespace);
-        if(musicProperties != null && !musicProperties.equals("${music.properties}"))
+        }
+        if (musicProperties != null && !musicProperties.equals("${music.properties}")) {
             MusicUtil.setMusicPropertiesFilePath(musicProperties);
-        if(musicRestIp != null && !musicRestIp.equals("${music.rest.ip}"))
+        }
+        if (musicRestIp != null && !musicRestIp.equals("${music.rest.ip}")) {
             MusicUtil.setMusicRestIp(musicRestIp);
-        if(cassandraHost != null && !cassandraHost.equals("${cassandra.host}")) 
+        }
+        if (cassandraHost != null && !cassandraHost.equals("${cassandra.host}")) {
             MusicUtil.setMyCassaHost(cassandraHost);
-        logger.info("#### Cassandra Host: " + MusicUtil.getMyCassaHost());
-        if(myId != null && !myId.equals("${my.id}")) 
+        }
+        if (myId != null && !myId.equals("${my.id}")) {
             MusicUtil.setMyId(Integer.parseInt(myId));
-        if(notifyInterval != null && !notifyInterval.equals("${notify.interval}")) 
+        }
+        if (notifyInterval != null && !notifyInterval.equals("${notify.interval}")) {
             MusicUtil.setNotifyInterval(Integer.parseInt(notifyInterval));
-        if(notifyTimeout != null && !notifyTimeout.equals("${notify.timeout}"))
+        }
+        if (notifyTimeout != null && !notifyTimeout.equals("${notify.timeout}")) {
             MusicUtil.setNotifyTimeOut(Integer.parseInt(notifyTimeout));
-        if(allPublicIps != null && !allPublicIps.equals("${public.ip}"))
+        }
+        if (allPublicIps != null && !allPublicIps.equals("${public.ip}")) {
             MusicUtil.setPublicIp(allPublicIps);
-        if(version != null && !version.equals("${version}"))
+        }
+        if (version != null && !version.equals("${version}")) {
             MusicUtil.setVersion(version);
-        if(isCadi != null && !isCadi.equals("${cadi}"))
+        }
+        if (build != null && !version.equals("${build}")) {
+            MusicUtil.setBuild(build);
+        }
+        if (isCadi != null && !isCadi.equals("${cadi}")) {
             MusicUtil.setIsCadi(Boolean.parseBoolean(isCadi));
+        }
+        if (rertryCount != null && !rertryCount.equals("${retry.count}")) {
+            MusicUtil.setRetryCount(Integer.parseInt(rertryCount));
+        }
+        if (isKeyspaceActive != null && !isKeyspaceActive.equals("${keyspace.active}")) {
+            MusicUtil.setKeyspaceActive(Boolean.parseBoolean(isKeyspaceActive));
+        }
     }
     
     

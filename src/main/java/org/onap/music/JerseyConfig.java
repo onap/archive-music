@@ -19,39 +19,52 @@ package org.onap.music;
 import io.swagger.jaxrs.config.BeanConfig;
 import io.swagger.jaxrs.listing.ApiListingResource;
 import io.swagger.jaxrs.listing.SwaggerSerializers;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.onap.music.exceptions.MusicExceptionMapper;
-import org.onap.music.rest.*;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 
-@Component public class JerseyConfig extends ResourceConfig {
+import org.glassfish.jersey.server.ResourceConfig;
+import org.onap.music.conductor.conditionals.RestMusicConditionalAPI;
+import org.onap.music.exceptions.MusicExceptionMapper;
+import org.onap.music.rest.RestMusicAdminAPI;
+import org.onap.music.rest.RestMusicDataAPI;
+import org.onap.music.rest.RestMusicHealthCheckAPI;
+import org.onap.music.rest.RestMusicLocksAPI; 
+import org.onap.music.rest.RestMusicQAPI; 
+import org.onap.music.rest.RestMusicTestAPI; 
+import org.onap.music.rest.RestMusicVersionAPI;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
-    @Value("${spring.jersey.application-path:/}") private String apiPath;
+@Component 
+public class JerseyConfig extends ResourceConfig {
 
-    public JerseyConfig() {
+    @Value("${spring.jersey.application-path:/}") 
+    private String apiPath;
+
+    public JerseyConfig() { 
         this.registerEndpoints();
         register(MusicExceptionMapper.class);
-    }
+    } 
 
-    @PostConstruct public void init() {
+    @PostConstruct
+    public void init() {
         this.configureSwagger();
     }
 
     private void registerEndpoints() {
-        register(RestMusicAdminAPI.class);
+        register(RestMusicAdminAPI.class); 
         register(RestMusicDataAPI.class);
-        register(RestMusicLocksAPI.class);
-        register(RestMusicQAPI.class);
-        register(RestMusicTestAPI.class);
+        register(RestMusicLocksAPI.class); 
+        register(RestMusicConditionalAPI.class); 
+        register(RestMusicQAPI.class); 
+        register(RestMusicTestAPI.class); 
         register(RestMusicVersionAPI.class);
         register(RestMusicHealthCheckAPI.class);
+
     }
 
     private void configureSwagger() {
-        //Available at localhost:port/swagger.json
+        // Available at localhost:port/swagger.json
         this.register(ApiListingResource.class);
         this.register(SwaggerSerializers.class);
 

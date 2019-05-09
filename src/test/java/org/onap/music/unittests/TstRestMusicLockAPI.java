@@ -60,107 +60,86 @@ import com.sun.jersey.core.util.Base64;
 @RunWith(MockitoJUnitRunner.class)
 public class TstRestMusicLockAPI {
 
-	RestMusicLocksAPI lock = new RestMusicLocksAPI();
-	RestMusicDataAPI data = new RestMusicDataAPI();
-	static PreparedQueryObject testObject;
+    RestMusicLocksAPI lock = new RestMusicLocksAPI();
+    RestMusicDataAPI data = new RestMusicDataAPI();
+    static PreparedQueryObject testObject;
 
-	static String appName = "TestApp";
-	static String userId = "TestUser";
-	static String password = "TestPassword";
-	static String authData = userId+":"+password;
-	static String wrongAuthData = userId+":"+"pass";
-	static String authorization = new String(Base64.encode(authData.getBytes()));
-	static String wrongAuthorization = new String(Base64.encode(wrongAuthData.getBytes()));
-	static boolean isAAF = false;
-	static UUID uuid = UUID.fromString("abc66ccc-d857-4e90-b1e5-df98a3d40ce6");
-	static String keyspaceName = "testcassa";
-	static String tableName = "employees";
-	static String onboardUUID = null;
-	static String lockName = "testcassa.employees.testname";
-	static String malformedLock = "malformedLock";
+    static String appName = "TestApp";
+    static String userId = "TestUser";
+    static String password = "TestPassword";
+    static String authData = userId+":"+password;
+    static String wrongAuthData = userId+":"+"pass";
+    static String authorization = new String(Base64.encode(authData.getBytes()));
+    static String wrongAuthorization = new String(Base64.encode(wrongAuthData.getBytes()));
+    static boolean isAAF = false;
+    static UUID uuid = UUID.fromString("abc66ccc-d857-4e90-b1e5-df98a3d40ce6");
+    static String keyspaceName = "testcassa";
+    static String tableName = "employees";
+    static String onboardUUID = null;
+    static String lockName = "testcassa.employees.testname";
 
-	@BeforeClass
-	public static void init() throws Exception {
-		System.out.println("Testing RestMusicLock class");
-		try {
-			createKeyspace();
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new Exception("Unable to initialize before TestRestMusicData test class. " + e.getMessage());
-		}
-	}
-	
-	@After
-	public void afterEachTest( ) throws MusicServiceException {
-		clearAllTablesFromKeyspace();
-	}
+    @BeforeClass
+    public static void init() throws Exception {
+        System.out.println("Testing RestMusicLock class");
+        try {
+            createKeyspace();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new Exception("Unable to initialize before TestRestMusicData test class. " + e.getMessage());
+        }
+    }
+    
+    @After
+    public void afterEachTest( ) throws MusicServiceException {
+        clearAllTablesFromKeyspace();
+    }
 
-	@AfterClass
-	public static void tearDownAfterClass() throws Exception {
-		testObject = new PreparedQueryObject();
-		testObject.appendQueryString("DROP KEYSPACE IF EXISTS " + keyspaceName);
-		MusicCore.eventualPut(testObject);
-	}
+    @AfterClass
+    public static void tearDownAfterClass() throws Exception {
+        testObject = new PreparedQueryObject();
+        testObject.appendQueryString("DROP KEYSPACE IF EXISTS " + keyspaceName);
+        MusicCore.eventualPut(testObject);
+    }
 
     @SuppressWarnings("unchecked")
-	@Test
+    @Test
     public void test_createLockReference() throws Exception {
-    	System.out.println("Testing create lockref");
-    	createAndInsertIntoTable();
-    	Response response =lock.createLockReference(lockName,"1","1",authorization,
-    			"abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
-		Map<String,Object> respMap = (Map<String, Object>) response.getEntity();
-    	System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-
-    	assertEquals(200, response.getStatus());
-    	assertTrue(respMap.containsKey("lock"));
-    	assertTrue(((Map<String,String>) respMap.get("lock")).containsKey("lock"));
-    }
-    
-    @Test
-    public void test_createLockReference_wrongAuth() throws Exception {
-        System.out.println("Testing create lockref with wrong auth");
+        System.out.println("Testing create lockref");
         createAndInsertIntoTable();
-        Response response =lock.createLockReference(lockName,"1","1", wrongAuthorization,
+        Response response =lock.createLockReference(lockName,"1","1",authorization,
                 "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
+        Map<String,Object> respMap = (Map<String, Object>) response.getEntity();
         System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
 
-        assertEquals(401, response.getStatus());
-    }
-    
-    @Test
-    public void test_createLockReference_malformedLockName() throws Exception {
-        System.out.println("Testing create lockref w/ malformed lock");
-        createAndInsertIntoTable();
-        Response response =lock.createLockReference(malformedLock,"1","1",authorization,
-                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
-        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-
-        assertEquals(400, response.getStatus());
+        assertEquals(200, response.getStatus());
+        assertTrue(respMap.containsKey("lock"));
+        assertTrue(((Map<String,String>) respMap.get("lock")).containsKey("lock"));
     }
 
     @Test
     public void test_accquireLock() throws Exception {
-    	System.out.println("Testing acquire lock");
-		createAndInsertIntoTable();
-    	String lockRef = createLockReference();
-
-    	Response response = lock.accquireLock(lockRef, "1", "1", authorization,
-    			"abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
-    	System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-    	assertEquals(200, response.getStatus());
-    }
-    
-    @Test
-    public void test_accquireLock_wrongAuth() throws Exception {
-        System.out.println("Testing acquire lock w/ wrong auth");
+        System.out.println("Testing acquire lock");
         createAndInsertIntoTable();
         String lockRef = createLockReference();
 
-        Response response = lock.accquireLock(lockRef, "1", "1", wrongAuthorization,
+        Response response = lock.accquireLock(lockRef, "1", "1", authorization,
                 "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
         System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-        assertEquals(401, response.getStatus());
+        assertEquals(200, response.getStatus());
+    }
+    
+    @Test
+    public void test_accquireLockWLease() throws Exception {
+        System.out.println("Testing acquire lock with lease");
+        createAndInsertIntoTable();
+        String lockRef = createLockReference();
+
+        JsonLeasedLock jsonLock = new JsonLeasedLock();
+        jsonLock.setLeasePeriod(10000); //10 second lease period?
+        Response response = lock.accquireLockWithLease(jsonLock, lockRef, "1", "1", authorization,
+                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+        assertEquals(200, response.getStatus());
     }
     
     @Test
@@ -179,133 +158,30 @@ public class TstRestMusicLockAPI {
     }
     
     @Test
-    public void test_accquireLock_malformedLock() throws Exception {
-        System.out.println("Testing acquire lock w/ malformedLock");
+    public void test_currentLockHolder() throws Exception {
+        System.out.println("Testing get current lock holder");
         createAndInsertIntoTable();
 
-        Response response = lock.accquireLock(malformedLock, "1", "1", wrongAuthorization,
-                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
-        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-        assertEquals(400, response.getStatus());
-    }
-    
-    @Test
-    public void test_accquireLockWLease() throws Exception {
-        System.out.println("Testing acquire lock with lease");
-        createAndInsertIntoTable();
         String lockRef = createLockReference();
 
-        JsonLeasedLock jsonLock = new JsonLeasedLock();
-        jsonLock.setLeasePeriod(10000); //10 second lease period?
-        Response response = lock.accquireLockWithLease(jsonLock, lockRef, "1", "1", authorization,
+        Response response = lock.currentLockHolder(lockName, "1", "1", authorization,
                 "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
         System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
         assertEquals(200, response.getStatus());
-    }
-    
-    @Test
-    public void test_accquireLockWLease_wrongAuth() throws Exception {
-        System.out.println("Testing acquire lock with lease w/ wrong Auth");
-        createAndInsertIntoTable();
-        String lockRef = createLockReference();
-
-        JsonLeasedLock jsonLock = new JsonLeasedLock();
-        jsonLock.setLeasePeriod(10000); //10 second lease period?
-        Response response = lock.accquireLockWithLease(jsonLock, lockRef, "1", "1", wrongAuthorization,
-                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
-        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-        assertEquals(401, response.getStatus());
-    }
-    
-    @Test
-    public void test_accquireLockWLease_malformedLock() throws Exception {
-        System.out.println("Testing acquire lock with lease w/ malformed lock");
-        createAndInsertIntoTable();
-        String lockRef = createLockReference();
-
-        JsonLeasedLock jsonLock = new JsonLeasedLock();
-        jsonLock.setLeasePeriod(10000); //10 second lease period?
-        Response response = lock.accquireLockWithLease(jsonLock, malformedLock, "1", "1",
-                wrongAuthorization, "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
-        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-        assertEquals(400, response.getStatus());
-    }
-    
-    @Test
-    public void test_currentLockHolder() throws Exception {
-    	System.out.println("Testing get current lock holder");
-		createAndInsertIntoTable();
-
-    	String lockRef = createLockReference();
-
-    	Response response = lock.currentLockHolder(lockName, "1", "1", authorization,
-    			"abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
-    	System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-    	assertEquals(200, response.getStatus());
-    	Map<String,Object> respMap = (Map<String, Object>) response.getEntity();
-    	assertEquals(lockRef, ((Map<String,String>) respMap.get("lock")).get("lock-holder"));
-    }
-    
-    @Test
-    public void test_currentLockHolder_wrongAuth() throws Exception {
-        System.out.println("Testing get current lock holder w/ wrong Auth");
-        createAndInsertIntoTable();
-
-        String lockRef = createLockReference();
-
-        Response response = lock.currentLockHolder(lockName, "1", "1", wrongAuthorization,
-                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
-        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-        assertEquals(401, response.getStatus());
-    }
-    
-    @Test
-    public void test_currentLockHolder_malformedLock() throws Exception {
-        System.out.println("Testing get current lock holder w/ malformed lock");
-        createAndInsertIntoTable();
-
-        String lockRef = createLockReference();
-
-        Response response = lock.currentLockHolder(malformedLock, "1", "1", wrongAuthorization,
-                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
-        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-        assertEquals(400, response.getStatus());
+        Map<String,Object> respMap = (Map<String, Object>) response.getEntity();
+        assertEquals(lockRef, ((Map<String,String>) respMap.get("lock")).get("lock-holder"));
     }
     
     @Test
     public void test_unLock() throws Exception {
-    	System.out.println("Testing unlock");
-		createAndInsertIntoTable();
-    	String lockRef = createLockReference();
-
-    	Response response = lock.unLock(lockRef, "1", "1", authorization,
-    			"abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
-    	System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-    	assertEquals(200, response.getStatus());
-    }
-    
-    @Test
-    public void test_unLock_wrongAuth() throws Exception {
-        System.out.println("Testing unlock w/ wrong auth");
+        System.out.println("Testing unlock");
         createAndInsertIntoTable();
         String lockRef = createLockReference();
 
-        Response response = lock.unLock(lockRef, "1", "1", wrongAuthorization,
+        Response response = lock.unLock(lockRef, "1", "1", authorization,
                 "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
         System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-        assertEquals(401, response.getStatus());
-    }
-    
-    @Test
-    public void test_unLock_malformedLock() throws Exception {
-        System.out.println("Testing unlock w/ malformedLock");
-        createAndInsertIntoTable();
-        String lockRef = createLockReference();
-
-        Response response = lock.unLock("malformedLock", "1", "1", wrongAuthorization,
-                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
-        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-        assertEquals(400, response.getStatus());
+        assertEquals(200, response.getStatus());
     }
     
     @Test
@@ -322,36 +198,12 @@ public class TstRestMusicLockAPI {
         Map<String,Object> respMap = (Map<String, Object>) response.getEntity();
         assertEquals(lockRef, ((Map<String,String>) respMap.get("lock")).get("lock-holder"));
     }
-    
+
+    // Ignoring since this is now a duplicate of delete lock ref.
     @Test
-    public void test_getLockState_wrongAuth() throws Exception {
-        System.out.println("Testing get lock state w/ wrong auth");
-        createAndInsertIntoTable();
-
-        String lockRef = createLockReference();
-
-        Response response = lock.currentLockState(lockName, "1", "1", wrongAuthorization,
-                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
-        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-        assertEquals(401, response.getStatus());
-    }
-    
-    @Test
-    public void test_getLockState_malformedLock() throws Exception {
-        System.out.println("Testing get lock state w/ malformedLock");
-        createAndInsertIntoTable();
-
-        String lockRef = createLockReference();
-
-        Response response = lock.currentLockState(malformedLock, "1", "1", wrongAuthorization,
-                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
-        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-        assertEquals(400, response.getStatus());
-    }
-    
-    @Test
+    @Ignore
     public void test_deleteLock() throws Exception {
-        System.out.println("Testing delete lock");
+        System.out.println("Testing get lock state");
         createAndInsertIntoTable();
 
         String lockRef = createLockReference();
@@ -362,55 +214,29 @@ public class TstRestMusicLockAPI {
         assertEquals(200, response.getStatus());
     }
     
-    @Test
-    public void test_deleteLock_wrongAuth() throws Exception {
-        System.out.println("Testing delete lock w/ wrong auth");
-        createAndInsertIntoTable();
-
-        String lockRef = createLockReference();
-
-        Response response = lock.deleteLock(lockName, "1", "1",
-                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", wrongAuthorization, appName);
-        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-        assertEquals(401, response.getStatus());
+    /**
+    * Create table and lock reference
+    * @return the lock ref created
+    * @throws Exception - .
+    */
+    @SuppressWarnings("unchecked")
+    private String createLockReference() throws Exception {
+        Response response = lock.createLockReference(lockName,"1","1",authorization,
+            "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
+        Map<String,Object> respMap = (Map<String, Object>) response.getEntity();
+        return ((Map<String,String>) respMap.get("lock")).get("lock");
     }
-    
-    @Test
-    public void test_deleteLock_malformedLock() throws Exception {
-        System.out.println("Testing delete lock w/ malformed lock");
-        createAndInsertIntoTable();
 
-        String lockRef = createLockReference();
 
-        Response response = lock.deleteLock(malformedLock, "1", "1",
-                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", wrongAuthorization, appName);
-        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-        assertEquals(400, response.getStatus());
-    }
-	
-	/**
-	 * Create table and lock reference
-	 * @return the lock ref created
-	 * @throws Exception 
-	 */
-	@SuppressWarnings("unchecked")
-	private String createLockReference() throws Exception {
-    	Response response =lock.createLockReference(lockName,"1","1",authorization,
-    			"abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
-    	Map<String,Object> respMap = (Map<String, Object>) response.getEntity();
-		return ((Map<String,String>) respMap.get("lock")).get("lock");
-	}
 
-	
-	
 
-	private static void createKeyspace() throws Exception {
-		//shouldn't really be doing this here, but create keyspace is currently turned off
-		PreparedQueryObject query = new PreparedQueryObject();
-		query.appendQueryString(CassandraCQL.createKeySpace);
-		MusicCore.eventualPut(query);
-		
-		boolean isAAF = false;
+    private static void createKeyspace() throws Exception {
+        //shouldn't really be doing this here, but create keyspace is currently turned off
+        PreparedQueryObject query = new PreparedQueryObject();
+        query.appendQueryString(CassandraCQL.createKeySpace);
+        MusicCore.eventualPut(query);
+        
+        boolean isAAF = false;
         String hashedpwd = BCrypt.hashpw(password, BCrypt.gensalt());
         query = new PreparedQueryObject();
         query.appendQueryString(
@@ -426,66 +252,66 @@ public class TstRestMusicLockAPI {
         CachingUtil.updateMusicCache(keyspaceName, appName);
         CachingUtil.updateMusicValidateCache(appName, userId, hashedpwd);
         MusicCore.eventualPut(query);
-	}
-	
-	private void clearAllTablesFromKeyspace() throws MusicServiceException {
-		ArrayList<String> tableNames = new ArrayList<>();
-		PreparedQueryObject query = new PreparedQueryObject();
-		query.appendQueryString("SELECT table_name FROM system_schema.tables WHERE keyspace_name = '"+keyspaceName+"';");
-		ResultSet rs = MusicCore.get(query);
-		for (Row row: rs) {
-			tableNames.add(row.getString("table_name"));
-		}
-		for (String table: tableNames) {
-			query = new PreparedQueryObject();
-			query.appendQueryString("DROP TABLE " + keyspaceName + "." + table);
-			MusicCore.eventualPut(query);
-		}
-	}
-	
-	/**
-	 * Create a table {@link tableName} in {@link keyspaceName}
-	 * @throws Exception
-	 */
-	private void createTable() throws Exception {
-		JsonTable jsonTable = new JsonTable();
-		Map<String, String> consistencyInfo = new HashMap<>();
-		Map<String, String> fields = new HashMap<>();
-		fields.put("uuid", "text");
-		fields.put("emp_name", "text");
-		fields.put("emp_salary", "varint");
-		fields.put("PRIMARY KEY", "(emp_name)");
-		consistencyInfo.put("type", "eventual");
-		jsonTable.setConsistencyInfo(consistencyInfo);
-		jsonTable.setKeyspaceName(keyspaceName);
-		jsonTable.setPrimaryKey("emp_name");
-		jsonTable.setTableName(tableName);
-		jsonTable.setFields(fields);
-		//Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-		Response response = data.createTable("1", "1", "1",
-				"abc66ccc-d857-4e90-b1e5-df98a3d40ce6",appName, authorization, 
-				jsonTable, keyspaceName, tableName);
-	}
-	
-	/**
-	 * Create table {@link createTable} and insert into said table
-	 * @throws Exception
-	 */
-	private void createAndInsertIntoTable() throws Exception {
-		createTable();
-		
-		JsonInsert jsonInsert = new JsonInsert();
-		Map<String, String> consistencyInfo = new HashMap<>();
-		Map<String, Object> values = new HashMap<>();
-		values.put("uuid", "cfd66ccc-d857-4e90-b1e5-df98a3d40cd6");
-		values.put("emp_name", "testname");
-		values.put("emp_salary", 500);
-		consistencyInfo.put("type", "eventual");
-		jsonInsert.setConsistencyInfo(consistencyInfo);
-		jsonInsert.setKeyspaceName(keyspaceName);
-		jsonInsert.setTableName(tableName);
-		jsonInsert.setValues(values);
-		Response response = data.insertIntoTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
-				appName, authorization, jsonInsert, keyspaceName, tableName);
-	}
+    }
+    
+    private void clearAllTablesFromKeyspace() throws MusicServiceException {
+        ArrayList<String> tableNames = new ArrayList<>();
+        PreparedQueryObject query = new PreparedQueryObject();
+        query.appendQueryString("SELECT table_name FROM system_schema.tables WHERE keyspace_name = '"+keyspaceName+"';");
+        ResultSet rs = MusicCore.get(query);
+        for (Row row: rs) {
+            tableNames.add(row.getString("table_name"));
+        }
+        for (String table: tableNames) {
+            query = new PreparedQueryObject();
+            query.appendQueryString("DROP TABLE " + keyspaceName + "." + table);
+            MusicCore.eventualPut(query);
+        }
+    }
+    
+    /**
+     * Create a table {@link tableName} in {@link keyspaceName}
+     * @throws Exception
+     */
+    private void createTable() throws Exception {
+        JsonTable jsonTable = new JsonTable();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        Map<String, String> fields = new HashMap<>();
+        fields.put("uuid", "text");
+        fields.put("emp_name", "text");
+        fields.put("emp_salary", "varint");
+        fields.put("PRIMARY KEY", "(emp_name)");
+        consistencyInfo.put("type", "eventual");
+        jsonTable.setConsistencyInfo(consistencyInfo);
+        jsonTable.setKeyspaceName(keyspaceName);
+        jsonTable.setPrimaryKey("emp_name");
+        jsonTable.setTableName(tableName);
+        jsonTable.setFields(fields);
+        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        Response response = data.createTable("1", "1", "1",
+                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",appName, authorization, 
+                jsonTable, keyspaceName, tableName);
+    }
+    
+    /**
+     * Create table {@link createTable} and insert into said table
+     * @throws Exception
+     */
+    private void createAndInsertIntoTable() throws Exception {
+        createTable();
+        
+        JsonInsert jsonInsert = new JsonInsert();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        Map<String, Object> values = new HashMap<>();
+        values.put("uuid", "cfd66ccc-d857-4e90-b1e5-df98a3d40cd6");
+        values.put("emp_name", "testname");
+        values.put("emp_salary", 500);
+        consistencyInfo.put("type", "eventual");
+        jsonInsert.setConsistencyInfo(consistencyInfo);
+        jsonInsert.setKeyspaceName(keyspaceName);
+        jsonInsert.setTableName(tableName);
+        jsonInsert.setValues(values);
+        Response response = data.insertIntoTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
+                appName, authorization, jsonInsert, keyspaceName, tableName);
+    }
 }

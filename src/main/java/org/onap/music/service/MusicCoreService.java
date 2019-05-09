@@ -47,47 +47,47 @@ public interface MusicCoreService {
     public  ReturnType eventualPut_nb(PreparedQueryObject queryObject,String keyspace,String tablename,String primaryKey);
 
     public ReturnType criticalPut(String keyspaceName, String tableName, String primaryKey,
-            PreparedQueryObject queryObject, String lockId, Condition conditionInfo);
+        PreparedQueryObject queryObject, String lockId, Condition conditionInfo);
 
     public ResultType nonKeyRelatedPut(PreparedQueryObject queryObject, String consistency)
-            throws MusicServiceException;
+        throws MusicServiceException;
 
     public ResultSet get(PreparedQueryObject queryObject) throws MusicServiceException;
 
     public ResultSet atomicGet(String keyspaceName, String tableName, String primaryKey,
-            PreparedQueryObject queryObject) throws MusicServiceException, MusicLockingException, MusicQueryException;
+        PreparedQueryObject queryObject) throws MusicServiceException, MusicLockingException, MusicQueryException;
 
     public ReturnType atomicPutWithDeleteLock(String keyspaceName, String tableName, String primaryKey,
-            PreparedQueryObject queryObject, Condition conditionInfo) throws MusicLockingException;
+        PreparedQueryObject queryObject, Condition conditionInfo) throws MusicLockingException;
     
     public  ResultSet atomicGetWithDeleteLock(String keyspaceName, String tableName, String primaryKey,
-            PreparedQueryObject queryObject) throws MusicServiceException, MusicLockingException;
+        PreparedQueryObject queryObject) throws MusicServiceException, MusicLockingException;
 
     public ReturnType atomicPut(String keyspaceName, String tableName, String primaryKey,
-            PreparedQueryObject queryObject, Condition conditionInfo)
-            throws MusicLockingException, MusicQueryException, MusicServiceException;
+        PreparedQueryObject queryObject, Condition conditionInfo)
+        throws MusicLockingException, MusicQueryException, MusicServiceException;
 
     public ResultSet criticalGet(String keyspaceName, String tableName, String primaryKey,
-            PreparedQueryObject queryObject, String lockId) throws MusicServiceException;
+        PreparedQueryObject queryObject, String lockId) throws MusicServiceException;
 
     // Core Music Locking Service Methods
 
-    public String createLockReference(String fullyQualifiedKey); // lock name
+    public String createLockReference(String fullyQualifiedKey) throws MusicLockingException; // lock name
 
     public ReturnType acquireLockWithLease(String key, String lockReference, long leasePeriod)
-            throws MusicLockingException, MusicQueryException, MusicServiceException; // key,lock id,time
+        throws MusicLockingException, MusicQueryException, MusicServiceException; // key,lock id,time
 
     public ReturnType acquireLock(String key, String lockReference)
-            throws MusicLockingException, MusicQueryException, MusicServiceException; // key,lock id
+        throws MusicLockingException, MusicQueryException, MusicServiceException; // key,lock id
 
     public ResultType createTable(String keyspace, String table, PreparedQueryObject tableQueryObject,
-            String consistency) throws MusicServiceException;
+        String consistency) throws MusicServiceException;
 
     public ResultSet quorumGet(PreparedQueryObject query);
 
     public String whoseTurnIsIt(String fullyQualifiedKey);// lock name
 
-    public void destroyLockRef(String lockId);
+    public void destroyLockRef(String lockId) throws MusicLockingException;
     
     //public MusicLockState destroyLockRef(String fullyQualifiedKey, String lockReference); // lock name, lock id
 
@@ -99,12 +99,12 @@ public interface MusicCoreService {
     //public MusicLockState  forciblyReleaseLock(String fullyQualifiedKey, String lockReference) throws MusicLockingException, MusicServiceException, MusicQueryException;
 
     public List<String> getLockQueue(String fullyQualifiedKey)
-            throws MusicServiceException, MusicQueryException, MusicLockingException;
+        throws MusicServiceException, MusicQueryException, MusicLockingException;
     
-     public long getLockQueueSize(String fullyQualifiedKey)
-                throws MusicServiceException, MusicQueryException, MusicLockingException;
+    public long getLockQueueSize(String fullyQualifiedKey)
+        throws MusicServiceException, MusicQueryException, MusicLockingException;
 
     public Map<String, Object> validateLock(String lockName);
 
-    public MusicLockState releaseLock(String lockId, boolean voluntaryRelease);
+    public MusicLockState releaseLock(String lockId, boolean voluntaryRelease) throws MusicLockingException;
 }

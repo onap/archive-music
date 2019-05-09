@@ -66,7 +66,7 @@ public class MusicCore {
         return musicCore.acquireLockWithLease(key, lockId, leasePeriod);
     }
     
-    public static String createLockReference(String fullyQualifiedKey) {
+    public static String createLockReference(String fullyQualifiedKey) throws MusicLockingException {
         return musicCore.createLockReference(fullyQualifiedKey);
     }
     
@@ -83,7 +83,7 @@ public class MusicCore {
         return musicCore.whoseTurnIsIt(fullyQualifiedKey);
     }
     
-    public static void destroyLockRef(String lockId) {
+    public static void destroyLockRef(String lockId) throws MusicLockingException {
         musicCore.destroyLockRef(lockId);
     }
     
@@ -154,7 +154,7 @@ public class MusicCore {
         return musicCore.validateLock(lockName);
     }
 
-    public static MusicLockState releaseLock(String lockId, boolean voluntaryRelease) {
+    public static MusicLockState releaseLock(String lockId, boolean voluntaryRelease) throws MusicLockingException {
         return musicCore.releaseLock(lockId, voluntaryRelease);
     }
     
