@@ -65,13 +65,13 @@ import io.swagger.annotations.ApiParam;
 
 @Path("/v2/conditional")
 @Api(value = "Conditional Api", hidden = true)
-public class RestMusicConditionalAPI {
+    public class RestMusicConditionalAPI {
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(RestMusicAdminAPI.class);
     private static final String XMINORVERSION = "X-minorVersion";
     private static final String XPATCHVERSION = "X-patchVersion";
     private static final String NS = "ns";
     private static final String VERSION = "v2";
-    
+
     private MusicAuthenticator authenticator = new MusicAAFAuthentication();
 
     @POST
@@ -146,7 +146,7 @@ public class RestMusicConditionalAPI {
             @ApiParam(value = "Major Version", required = true) @PathParam("tablename") String tablename,
             JsonConditional upObj) throws Exception {
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        
+
         if (!authenticator.authenticateUser(ns, authorization, keyspace, aid, Operation.INSERT_INTO_TABLE)) {
             return response.status(Status.UNAUTHORIZED)
                     .entity(new JsonResponse(ResultType.FAILURE)
@@ -188,7 +188,6 @@ public class RestMusicConditionalAPI {
         if (result.getResult() == ResultType.SUCCESS) {
             return response.status(Status.OK)
                     .entity(new JsonResponse(result.getResult()).setMessage(result.getMessage()).toMap()).build();
-
         }
         return response.status(Status.BAD_REQUEST)
                 .entity(new JsonResponse(result.getResult()).setMessage(result.getMessage()).toMap()).build();

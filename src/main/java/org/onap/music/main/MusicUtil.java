@@ -112,19 +112,25 @@ public class MusicUtil {
     private static int cacheObjectMaxLife = -1;
     private static String lockUsing = MusicUtil.CASSANDRA;
     private static boolean isCadi = false;
+    private static boolean isKeyspaceActive = false;
     
     private static boolean debug = true;
-    private static String version = "2.3.0";
+    private static String version = "0.0.0";
+    private static String build = "";
     private static String musicRestIp = LOCALHOST;
     private static String musicPropertiesFilePath = PROPERTIES_FILE;
     private static long defaultLockLeasePeriod = 6000;
+    private static int retryCount = 3;
     private static final String[] propKeys = new String[] { "cassandra.host", "music.ip", "debug",
-            "version", "music.rest.ip", "music.properties", "lock.lease.period", "id", "all.ids", "public.ip",
-            "all.pubic.ips", "cassandra.user", "cassandra.password", "aaf.endpoint.url","admin.username","admin.password","aaf.admin.url",
-            "music.namespace","admin.aaf.role","cassandra.port","lock.using"};
+        "version", "music.rest.ip", "music.properties", "lock.lease.period", "id", "all.ids", 
+        "public.ip","all.pubic.ips", "cassandra.user", "cassandra.password", "aaf.endpoint.url",
+        "admin.username","admin.password","aaf.admin.url","music.namespace","admin.aaf.role",
+        "cassandra.port","lock.using","retry.count"};
     private static final String[] cosistencyLevel = new String[] {
-            "ALL","EACH_QUORUM","QUORUM","LOCAL_QUORUM","ONE","TWO","THREE","LOCAL_ONE","ANY","SERIAL","LOCAL_SERIAL"};
+        "ALL","EACH_QUORUM","QUORUM","LOCAL_QUORUM","ONE","TWO",
+        "THREE","LOCAL_ONE","ANY","SERIAL","LOCAL_SERIAL"};
     private static final Map<String,ConsistencyLevel> consistencyName = new HashMap<>();
+
     static {
         consistencyName.put("ONE",ConsistencyLevel.ONE);
         consistencyName.put("TWO",ConsistencyLevel.TWO);
@@ -145,8 +151,8 @@ public class MusicUtil {
     private static String adminId = "username";
     private static String adminPass= "password";
     private static String aafAdminUrl= null;
-    private static String musicNamespace= "com.att.music.api";
-    private static String adminAafRole= "com.att.music.api.admin_api";
+    private static String musicNamespace= "org.onap.music.api";
+    private static String adminAafRole= "org.onap.music.api.admin_api";
     
     public static final long MusicEternityEpochMillis = 1533081600000L; // Wednesday, August 1, 2018 12:00:00 AM
 
@@ -212,7 +218,6 @@ public class MusicUtil {
     public static void setAdminPass(String adminPass) {
         MusicUtil.adminPass = adminPass;
     }
-
 
     private MusicUtil() {
         throw new IllegalStateException("Utility Class");
@@ -419,12 +424,29 @@ public class MusicUtil {
     }
 
     /**
-     * Return the version property file value - version
+     * Return the version property file value - version.
      *
      * @return
      */
     public static String getVersion() {
         return version;
+    }
+
+    /**
+     * Set the build of project which is a combination of the 
+     * version and the date.
+     * 
+     * @param build - version-date.
+     */
+    public static void setBuild(String build) {
+        MusicUtil.build = build;
+    }
+
+    /**
+     * Return the build version-date.
+     */
+    public static String getBuild() {
+        return build;
     }
 
     /**
@@ -440,7 +462,7 @@ public class MusicUtil {
     /**
      * Set MyCassHost - Cassandra Hostname
      *
-     * @param myCassaHost
+     * @param myCassaHost .
      */
     public static void setMyCassaHost(String myCassaHost) {
         MusicUtil.myCassaHost = myCassaHost;
@@ -458,15 +480,48 @@ public class MusicUtil {
     /**
      * Set DefaultMusicIp
      *
-     * @param defaultMusicIp
+     * @param defaultMusicIp .
      */
     public static void setDefaultMusicIp(String defaultMusicIp) {
         MusicUtil.defaultMusicIp = defaultMusicIp;
     }
+    
+    /**
+     * Gey default retry count
+     * @return
+     */
+    public static int getRetryCount() {
+        return retryCount;
+    }
 
     /**
-     *
-     * @return
+     * Set retry count
+     * @param retryCount .
+     */
+    public static void setRetryCount(int retryCount) {
+        MusicUtil.retryCount = retryCount;
+    }
+
+
+    /**
+     * This is used to turn keyspace creation api on/off.
+     * 
+     */
+    public static void setKeyspaceActive(Boolean keyspaceActive) {
+        MusicUtil.isKeyspaceActive = keyspaceActive;
+    }
+
+    /**
+     * This is used to turn keyspace creation api on/off.
+     * @return boolean isKeyspaceActive
+     */
+    public static boolean isKeyspaceActive() {
+        return isKeyspaceActive;
+    }
+
+    /**
+     * .
+     * @return String
      */
     public static String getTestType() {
         String testType = "";
@@ -474,8 +529,7 @@ public class MusicUtil {
             Scanner fileScanner = new Scanner(new File(""));
             testType = fileScanner.next();// ignore the my id line
             @SuppressWarnings("unused")
-            String batchSize = fileScanner.next();// ignore the my public ip
-                                                    // line
+            String batchSize = fileScanner.next();// ignore the my public ip line
             fileScanner.close();
         } catch (FileNotFoundException e) {
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), e);
@@ -592,8 +646,8 @@ public class MusicUtil {
     }
 
     public static ByteBuffer convertToActualDataType(DataType colType, byte[] valueObj) {
-         ByteBuffer buffer = ByteBuffer.wrap(valueObj);
-         return buffer;
+        ByteBuffer buffer = ByteBuffer.wrap(valueObj);
+        return buffer;
     }
 
     /**

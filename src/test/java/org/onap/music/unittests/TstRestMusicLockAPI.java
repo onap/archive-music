@@ -350,12 +350,13 @@ public class TstRestMusicLockAPI {
     }
     
     @Test
+    @Ignore //deprecated function
     public void test_deleteLock() throws Exception {
         System.out.println("Testing delete lock");
         createAndInsertIntoTable();
 
         String lockRef = createLockReference();
-
+        
         Response response = lock.deleteLock(lockName, "1", "1",
                 "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", authorization, appName);
         System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
@@ -363,6 +364,7 @@ public class TstRestMusicLockAPI {
     }
     
     @Test
+    @Ignore //deprecated function
     public void test_deleteLock_wrongAuth() throws Exception {
         System.out.println("Testing delete lock w/ wrong auth");
         createAndInsertIntoTable();
@@ -376,6 +378,7 @@ public class TstRestMusicLockAPI {
     }
     
     @Test
+    @Ignore //deprecated function
     public void test_deleteLock_malformedLock() throws Exception {
         System.out.println("Testing delete lock w/ malformed lock");
         createAndInsertIntoTable();

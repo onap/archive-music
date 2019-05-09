@@ -92,7 +92,12 @@ public class MusicConditional {
         
         
         String key = keyspace + "." + tablename + "." + primaryKey;
-        String lockId = MusicCore.createLockReference(key);
+        String lockId;
+        try {
+        	lockId = MusicCore.createLockReference(key);
+        } catch (MusicLockingException e) {
+        	return new ReturnType(ResultType.FAILURE, e.getMessage());
+        }
         long leasePeriod = MusicUtil.getDefaultLockLeasePeriod();
         ReturnType lockAcqResult = MusicCore.acquireLockWithLease(key, lockId, leasePeriod);
 
@@ -160,7 +165,10 @@ public class MusicConditional {
 
     }
 
-    public static ReturnType update(Map<String,PreparedQueryObject> queryBank, String keyspace, String tableName, String primaryKey,String primaryKeyValue,String planId,String cascadeColumnName,Map<String,String> cascadeColumnValues) throws MusicLockingException, MusicQueryException, MusicServiceException {
+	public static ReturnType update(Map<String, PreparedQueryObject> queryBank, String keyspace, String tableName,
+			String primaryKey, String primaryKeyValue, String planId, String cascadeColumnName,
+			Map<String, String> cascadeColumnValues)
+			throws MusicLockingException, MusicQueryException, MusicServiceException {
 
         String key = keyspace + "." + tableName + "." + primaryKeyValue;
         String lockId = MusicCore.createLockReference(key);
@@ -266,8 +274,8 @@ public class MusicConditional {
         queryObject.addValue(vector);
         if(casscadeColumn!=null && casscadeColumnValues!=null) {
             fieldsString.append(casscadeColumn).append(" ,");
-          valueString.append("?,");
-          queryObject.addValue(casscadeColumnValues);
+            valueString.append("?,");
+            queryObject.addValue(casscadeColumnValues);
         }
         
         int counter = 0;
@@ -276,24 +284,23 @@ public class MusicConditional {
             fieldsString.append(entry.getKey());
             Object valueObj = entry.getValue();
             if (primaryKeyName.equals(entry.getKey())) {
-              localPrimaryKey = entry.getValue() + "";
-              localPrimaryKey = localPrimaryKey.replace("'", "''");
+                localPrimaryKey = entry.getValue() + "";
+                localPrimaryKey = localPrimaryKey.replace("'", "''");
             }
             DataType colType = null;
             try {
                 colType = tableInfo.getColumn(entry.getKey()).getType();
             } catch(NullPointerException ex) {
-                logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage() +" Invalid column name : "+entry.getKey
-                    (), AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR, ex);
-               
+                logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage() +" Invalid column name : "+entry.getKey(), 
+                    AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR, ex);
             }
 
             Object formattedValue = null;
             try {
-              formattedValue = MusicUtil.convertToActualDataType(colType, valueObj);
+                formattedValue = MusicUtil.convertToActualDataType(colType, valueObj);
             } catch (Exception e) {
-              logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), e);
-          }
+                logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), e);
+            }
             
             valueString.append("?");
             queryObject.addValue(formattedValue);
