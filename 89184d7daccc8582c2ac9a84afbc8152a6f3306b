@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "a608c297_517055e0",
+        "filename": "README.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1827
+      },
+      "writtenOn": "2019-05-10T21:15:16Z",
+      "side": 1,
+      "message": "OK, NP",
+      "parentUuid": "46516bd2_0c314a89",
+      "revId": "89184d7daccc8582c2ac9a84afbc8152a6f3306b",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "f81a87b8_4f03d231",
         "filename": "src/main/java/org/onap/music/authentication/CachingUtil.java",
         "patchSetId": 1
@@ -30,6 +48,24 @@
       "writtenOn": "2019-05-10T20:10:03Z",
       "side": 1,
       "message": "This should be removed",
+      "revId": "89184d7daccc8582c2ac9a84afbc8152a6f3306b",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "a62f895d_bff19989",
+        "filename": "src/main/java/org/onap/music/authentication/CachingUtil.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 128,
+      "author": {
+        "id": 1827
+      },
+      "writtenOn": "2019-05-10T21:15:16Z",
+      "side": 1,
+      "message": "In the next push this file will not exist.",
+      "parentUuid": "f81a87b8_4f03d231",
       "revId": "89184d7daccc8582c2ac9a84afbc8152a6f3306b",
       "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
       "unresolved": false
@@ -70,6 +106,24 @@
     },
     {
       "key": {
+        "uuid": "5d1760b3_0af05dae",
+        "filename": "src/main/java/org/onap/music/main/MusicUtil.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 154,
+      "author": {
+        "id": 1827
+      },
+      "writtenOn": "2019-05-10T21:15:16Z",
+      "side": 1,
+      "message": "SO much for trying to fix it :)",
+      "parentUuid": "2c42f59e_3463ed5a",
+      "revId": "89184d7daccc8582c2ac9a84afbc8152a6f3306b",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "aa561f52_16f4c05c",
         "filename": "src/main/java/org/onap/music/main/MusicUtil.java",
         "patchSetId": 1
@@ -87,6 +141,24 @@
     },
     {
       "key": {
+        "uuid": "b7e5b1aa_15019808",
+        "filename": "src/main/java/org/onap/music/main/MusicUtil.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 155,
+      "author": {
+        "id": 1827
+      },
+      "writtenOn": "2019-05-10T21:15:16Z",
+      "side": 1,
+      "message": "Ditto",
+      "parentUuid": "aa561f52_16f4c05c",
+      "revId": "89184d7daccc8582c2ac9a84afbc8152a6f3306b",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "4e06a2f1_3196053b",
         "filename": "src/test/java/org/onap/music/unittests/jsonobjects/MusicTriggerProps.java",
         "patchSetId": 1
@@ -98,6 +170,24 @@
       "writtenOn": "2019-05-10T20:10:03Z",
       "side": 1,
       "message": "Is this needed? Music trigger is no longer in scope",
+      "revId": "89184d7daccc8582c2ac9a84afbc8152a6f3306b",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "eac97c8b_85717804",
+        "filename": "src/test/java/org/onap/music/unittests/jsonobjects/MusicTriggerProps.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 1827
+      },
+      "writtenOn": "2019-05-10T21:15:16Z",
+      "side": 1,
+      "message": "Must have snuck in...",
+      "parentUuid": "4e06a2f1_3196053b",
       "revId": "89184d7daccc8582c2ac9a84afbc8152a6f3306b",
       "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
       "unresolved": false
