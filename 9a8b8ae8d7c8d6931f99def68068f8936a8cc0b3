@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d972c363_a79c0ac4",
+        "filename": "src/test/java/org/onap/music/unittests/TstRestMusicLockAPI.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-05-10T20:10:03Z",
+      "side": 0,
+      "message": "This new file is missing a lot of the newer tests",
+      "revId": "9a8b8ae8d7c8d6931f99def68068f8936a8cc0b3",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}

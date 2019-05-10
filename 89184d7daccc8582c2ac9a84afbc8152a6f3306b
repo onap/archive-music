@@ -1,0 +1,106 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "46516bd2_0c314a89",
+        "filename": "README.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-05-10T20:10:03Z",
+      "side": 1,
+      "message": "We want the old file here. The new one contains deprecated zookeeper and tomcat info",
+      "revId": "89184d7daccc8582c2ac9a84afbc8152a6f3306b",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f81a87b8_4f03d231",
+        "filename": "src/main/java/org/onap/music/authentication/CachingUtil.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 128,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-05-10T20:10:03Z",
+      "side": 1,
+      "message": "This should be removed",
+      "revId": "89184d7daccc8582c2ac9a84afbc8152a6f3306b",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "11379048_0e85fe31",
+        "filename": "src/main/java/org/onap/music/main/MusicUtil.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 118,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-05-10T20:10:03Z",
+      "side": 1,
+      "message": "Should this version be set? I know the build info has been added a lot elsewhere",
+      "revId": "89184d7daccc8582c2ac9a84afbc8152a6f3306b",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2c42f59e_3463ed5a",
+        "filename": "src/main/java/org/onap/music/main/MusicUtil.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 154,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-05-10T20:10:03Z",
+      "side": 1,
+      "message": "should be org.onap",
+      "revId": "89184d7daccc8582c2ac9a84afbc8152a6f3306b",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "aa561f52_16f4c05c",
+        "filename": "src/main/java/org/onap/music/main/MusicUtil.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 155,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-05-10T20:10:03Z",
+      "side": 1,
+      "message": "should be org.onap",
+      "revId": "89184d7daccc8582c2ac9a84afbc8152a6f3306b",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4e06a2f1_3196053b",
+        "filename": "src/test/java/org/onap/music/unittests/jsonobjects/MusicTriggerProps.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-05-10T20:10:03Z",
+      "side": 1,
+      "message": "Is this needed? Music trigger is no longer in scope",
+      "revId": "89184d7daccc8582c2ac9a84afbc8152a6f3306b",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
