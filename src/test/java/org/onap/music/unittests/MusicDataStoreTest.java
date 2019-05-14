@@ -37,7 +37,6 @@ import org.onap.music.exceptions.MusicServiceException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.onap.music.authentication.CachingUtil;
 import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.PreparedQueryObject;
 
@@ -84,7 +83,7 @@ public class MusicDataStoreTest {
         assertEquals(true, result);
 
     }
-
+    
     @Test
     public void Test2_ExecutePut_eventual_insert() throws MusicServiceException, MusicQueryException {
         testObject = CassandraCQL.setPreparedInsertQueryObject1();

@@ -30,74 +30,77 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 import org.mindrot.jbcrypt.BCrypt;
+import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.lockingservice.cassandra.CassaLockStore;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
-
+import org.springframework.test.util.ReflectionTestUtils;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.sun.jersey.core.util.Base64;
 
 @RunWith(Suite.class)
-@SuiteClasses({ TstRestMusicDataAPI.class, TstRestMusicLockAPI.class, TstRestMusicAdminAPI.class,
-    TstRestMusicConditionalAPI.class, TstCachingUtil.class})
+@SuiteClasses({ TstRestMusicDataAPI.class, TstRestMusicLockAPI.class,
+    TstRestMusicConditionalAPI.class})
 public class TestsUsingCassandra {
 
-	static String appName = "TestApp";
-	static String userId = "TestUser";
-	static String password = "TestPassword";
-	static String authData = userId+":"+password;
-	static String wrongAuthData = userId+":"+"pass";
-	static String authorization = new String(Base64.encode(authData.getBytes()));
-	static String wrongAuthorization = new String(Base64.encode(wrongAuthData.getBytes()));
-	static boolean isAAF = false;
-	static UUID uuid = UUID.fromString("abc66ccc-d857-4e90-b1e5-df98a3d40ce6");
-	static String keyspaceName = "testcassa";
-	static String tableName = "employees";
-	static String xLatestVersion = "X-latestVersion";
-	static String onboardUUID = null;
-	static String aid = "abc66ccc-d857-4e90-b1e5-df98a3d40ce6";
-	
-	@BeforeClass
-	public static void beforeClass() throws Exception {
-		MusicDataStoreHandle.mDstoreHandle = CassandraCQL.connectToEmbeddedCassandra();
-		MusicCore.mLockHandle = new CassaLockStore(MusicDataStoreHandle.mDstoreHandle);
-		createAdminTable();
-	}
-	
-	@AfterClass
-	public static void afterClass() {
-		PreparedQueryObject testObject = new PreparedQueryObject();
-		testObject.appendQueryString("DROP KEYSPACE IF EXISTS admin");
-		MusicCore.eventualPut(testObject);
-		if(MusicDataStoreHandle.mDstoreHandle!=null)
-			MusicDataStoreHandle.mDstoreHandle.close();
-	}
-	
-	private static void createAdminTable() throws Exception {
-		PreparedQueryObject testObject = new PreparedQueryObject();
-		testObject.appendQueryString(CassandraCQL.createAdminKeyspace);
-		MusicCore.eventualPut(testObject);
-		testObject = new PreparedQueryObject();
-		testObject.appendQueryString(CassandraCQL.createAdminTable);
-		MusicCore.eventualPut(testObject);
+    static String appName = "TestApp";
+    static String userId = "TestUser";
+    static String password = "TestPassword";
+    static String authData = userId+":"+password;
+    static String wrongAuthData = userId+":"+"pass";
+    static String authorization = new String(Base64.encode(authData.getBytes()));
+    static String wrongAuthorization = new String(Base64.encode(wrongAuthData.getBytes()));
+    static boolean isAAF = false;
+    static UUID uuid = UUID.fromString("abc66ccc-d857-4e90-b1e5-df98a3d40ce6");
+    static String keyspaceName = "testcassa";
+    static String tableName = "employees";
+    static String xLatestVersion = "X-latestVersion";
+    static String onboardUUID = null;
+    static String aid = "abc66ccc-d857-4e90-b1e5-df98a3d40ce6";
+    
+    @BeforeClass
+    public static void beforeClass() throws Exception {
+        ReflectionTestUtils.setField(MusicDataStoreHandle.class, "mDstoreHandle",
+                CassandraCQL.connectToEmbeddedCassandra());
+        MusicCore.mLockHandle = new CassaLockStore(MusicDataStoreHandle.getDSHandle());
+        createAdminTable();
+    }
+    
+    @AfterClass
+    public static void afterClass() {
+        PreparedQueryObject testObject = new PreparedQueryObject();
+        testObject.appendQueryString("DROP KEYSPACE IF EXISTS admin");
+        MusicCore.eventualPut(testObject);
+        MusicDataStore mds = (MusicDataStore) ReflectionTestUtils.getField(MusicDataStoreHandle.class, "mDstoreHandle");
+        if (mds != null)
+            mds.close();
+    }
+    
+    private static void createAdminTable() throws Exception {
+        PreparedQueryObject testObject = new PreparedQueryObject();
+        testObject.appendQueryString(CassandraCQL.createAdminKeyspace);
+        MusicCore.eventualPut(testObject);
+        testObject = new PreparedQueryObject();
+        testObject.appendQueryString(CassandraCQL.createAdminTable);
+        MusicCore.eventualPut(testObject);
 
-		testObject = new PreparedQueryObject();
-		testObject.appendQueryString(
-				"INSERT INTO admin.keyspace_master (uuid, keyspace_name, application_name, is_api, "
-						+ "password, username, is_aaf) VALUES (?,?,?,?,?,?,?)");
-		testObject.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), uuid));
-		testObject.addValue(MusicUtil.convertToActualDataType(DataType.text(),
-		        keyspaceName));
-		testObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), appName));
-		testObject.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), "True"));
-		testObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), BCrypt.hashpw(password, BCrypt.gensalt())));
-		testObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
-		testObject.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), isAAF));
-		MusicCore.eventualPut(testObject);
+        testObject = new PreparedQueryObject();
+        testObject.appendQueryString(
+                "INSERT INTO admin.keyspace_master (uuid, keyspace_name, application_name, is_api, "
+                        + "password, username, is_aaf) VALUES (?,?,?,?,?,?,?)");
+        testObject.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), uuid));
+        testObject.addValue(MusicUtil.convertToActualDataType(DataType.text(),
+                keyspaceName));
+        testObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), appName));
+        testObject.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), "True"));
+        testObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), BCrypt.hashpw(password, BCrypt.gensalt())));
+        testObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
+        testObject.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), isAAF));
+        MusicCore.eventualPut(testObject);
 
 		testObject = new PreparedQueryObject();
 		testObject.appendQueryString(

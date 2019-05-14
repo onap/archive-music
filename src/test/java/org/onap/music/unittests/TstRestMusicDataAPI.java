@@ -44,7 +44,6 @@ import org.mindrot.jbcrypt.BCrypt;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.onap.music.authentication.CachingUtil;
 import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
@@ -264,51 +263,6 @@ public class TstRestMusicDataAPI {
         assertEquals("Table " + keyspaceName + "." + tableNameDup + " already exists", respMap.get("error"));
     }
 
-    // Improper Auth
-    @Test
-    public void test3_createTable1() throws Exception {
-        System.out.println("Testing create table w/ improper authentication");
-        JsonTable jsonTable = new JsonTable();
-        Map<String, String> consistencyInfo = new HashMap<>();
-        Map<String, String> fields = new HashMap<>();
-        fields.put("uuid", "text");
-        fields.put("emp_name", "text");
-        fields.put("emp_salary", "varint");
-        fields.put("PRIMARY KEY", "(emp_name)");
-        consistencyInfo.put("type", "eventual");
-        jsonTable.setConsistencyInfo(consistencyInfo);
-        jsonTable.setKeyspaceName(keyspaceName);
-        jsonTable.setPrimaryKey("emp_name");
-        jsonTable.setTableName(tableName);
-        jsonTable.setFields(fields);
-        Response response = data.createTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
-                wrongAuthorization, jsonTable, keyspaceName, tableName);
-        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-        assertEquals(401, response.getStatus());
-    }
-
-    // Improper keyspace
-    @Test
-    public void test3_createTable3() throws Exception {
-        System.out.println("Testing create table for wrong keyspace");
-        JsonTable jsonTable = new JsonTable();
-        Map<String, String> consistencyInfo = new HashMap<>();
-        Map<String, String> fields = new HashMap<>();
-        fields.put("uuid", "text");
-        fields.put("emp_name", "text");
-        fields.put("emp_salary", "varint");
-        fields.put("PRIMARY KEY", "(emp_name)");
-        consistencyInfo.put("type", "eventual");
-        jsonTable.setConsistencyInfo(consistencyInfo);
-        jsonTable.setKeyspaceName(keyspaceName);
-        jsonTable.setPrimaryKey("emp_name");
-        jsonTable.setTableName(tableName);
-        jsonTable.setFields(fields);
-        Response response = data.createTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
-                authorization, jsonTable, "wrong", tableName);
-        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-        assertEquals(401, response.getStatus());
-    }
 
     // Improper parenthesis in key field
     @Test
@@ -479,38 +433,6 @@ public class TstRestMusicDataAPI {
 
         assertEquals(200, response.getStatus());
     }
-
- // good clustering key, need to pass queryparameter
-    @Test
-    public void test3_createTableIndex_badAuth() throws Exception {
-        System.out.println("Testing index in create table w/ wrong authorization");
-        String tableNameC = "testTableCinx";
-        JsonTable jsonTable = new JsonTable();
-        Map<String, String> consistencyInfo = new HashMap<>();
-        Map<String, String> fields = new HashMap<>();
-        fields.put("uuid", "text");
-        fields.put("emp_name", "text");
-        fields.put("emp_salary", "varint");
-        fields.put("PRIMARY KEY", "((emp_name),emp_salary)");
-        consistencyInfo.put("type", "eventual");
-        jsonTable.setConsistencyInfo(consistencyInfo);
-        jsonTable.setKeyspaceName(keyspaceName);
-        jsonTable.setTableName(tableNameC);
-        jsonTable.setClusteringOrder("emp_salary ASC");
-        jsonTable.setFields(fields);
-        Response response = data.createTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
-                authorization, jsonTable, keyspaceName, tableNameC);
-        // if 200 print to log otherwise fail assertEquals(200, response.getStatus());
-        // info.setQueryParameters("index_name=inx_uuid");
-        Map<String, String> queryParametersMap = new HashMap<String, String>();
-
-        queryParametersMap.put("index_name", "inxuuid");
-        response = data.createIndex("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
-                wrongAuthorization, keyspaceName, tableNameC, "uuid", info);
-        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-
-        assertEquals(401, response.getStatus());
-    }
     
     // create index without table name
     @Test
@@ -654,29 +576,6 @@ public class TstRestMusicDataAPI {
         assertEquals(200, response.getStatus());
     }
 
-    // Auth Error
-    @Test
-    public void test4_insertIntoTable3() throws Exception {
-        System.out.println("Testing insert into table with bad credentials");
-        createTable();
-        JsonInsert jsonInsert = new JsonInsert();
-        Map<String, String> consistencyInfo = new HashMap<>();
-        Map<String, Object> values = new HashMap<>();
-        values.put("uuid", "cfd66ccc-d857-4e90-b1e5-df98a3d40cd6");
-        values.put("emp_name", "test1");
-        values.put("emp_salary", 1500);
-        consistencyInfo.put("type", "eventual");
-        jsonInsert.setConsistencyInfo(consistencyInfo);
-        jsonInsert.setKeyspaceName(keyspaceName);
-        jsonInsert.setTableName(tableName);
-        jsonInsert.setValues(values);
-        Response response = data.insertIntoTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
-                wrongAuthorization, jsonInsert, keyspaceName, tableName);
-        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-
-        assertEquals(401, response.getStatus());
-    }
-
     // Table wrong
     @Test
     public void test4_insertIntoTable4() throws Exception {
@@ -748,28 +647,6 @@ public class TstRestMusicDataAPI {
         assertEquals(200, response.getStatus());
     }
     
-    @Test
-    public void test5_updateTable_wrongAuth() throws Exception {
-        System.out.println("Testing update table w/ wrong credentials");
-        createTable();
-
-        JsonUpdate jsonUpdate = new JsonUpdate();
-        Map<String, String> consistencyInfo = new HashMap<>();
-        Map<String, Object> values = new HashMap<>();
-        values.put("emp_salary", 2500);
-        consistencyInfo.put("type", "atomic");
-        jsonUpdate.setConsistencyInfo(consistencyInfo);
-        jsonUpdate.setKeyspaceName(keyspaceName);
-        jsonUpdate.setTableName(tableName);
-        jsonUpdate.setValues(values);
-        Response response = data.updateTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
-                wrongAuthorization, jsonUpdate, keyspaceName, tableName, info);
-
-        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-
-        assertEquals(401, response.getStatus());
-    }
-
     @Test
     public void test5_updateTable_tableDNE() throws Exception {
         System.out.println("Testing update table that does not exist");
@@ -843,62 +720,6 @@ public class TstRestMusicDataAPI {
         assertEquals(200, response.getStatus());
     }
 
-    @Ignore
-    @Test
-    public void test5_updateTableAuthException1() throws Exception {
-        System.out.println("Testing update table authentication error");
-        createTable();
-        JsonUpdate jsonUpdate = new JsonUpdate();
-        Map<String, String> consistencyInfo = new HashMap<>();
-        MultivaluedMap<String, String> row = new MultivaluedMapImpl();
-        Map<String, Object> values = new HashMap<>();
-        row.add("emp_name", "testname");
-        values.put("emp_salary", 2500);
-        consistencyInfo.put("type", "atomic");
-        jsonUpdate.setConsistencyInfo(consistencyInfo);
-        jsonUpdate.setKeyspaceName(keyspaceName);
-        jsonUpdate.setTableName(tableName);
-        jsonUpdate.setValues(values);
-
-        Mockito.when(info.getQueryParameters()).thenReturn(row);
-        String authDatax = ":";
-        String authorizationx = new String(Base64.encode(authDatax.getBytes()));
-        Response response = data.updateTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
-                authorizationx, jsonUpdate, keyspaceName, tableName, info);
-        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-
-        assertEquals(401, response.getStatus());
-    }
-
-    @Ignore
-    @Test
-    public void test5_updateTableAuthEmpty() throws Exception {
-        System.out.println("Testing update table without authentication");
-        createTable();
-
-        JsonUpdate jsonUpdate = new JsonUpdate();
-        Map<String, String> consistencyInfo = new HashMap<>();
-        MultivaluedMap<String, String> row = new MultivaluedMapImpl();
-        Map<String, Object> values = new HashMap<>();
-        row.add("emp_name", "testname");
-        values.put("emp_salary", 2500);
-        consistencyInfo.put("type", "atomic");
-        jsonUpdate.setConsistencyInfo(consistencyInfo);
-        jsonUpdate.setKeyspaceName(keyspaceName);
-        jsonUpdate.setTableName(tableName);
-        jsonUpdate.setValues(values);
-
-        Mockito.when(info.getQueryParameters()).thenReturn(row);
-        String authDatax = ":" + password;
-        String authorizationx = new String(Base64.encode(authDatax.getBytes()));
-        String appNamex = "xx";
-        Response response = data.updateTable("1", "1", "1", "", appNamex, authorizationx, jsonUpdate, keyspaceName,
-                tableName, info);
-        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-
-        assertEquals(401, response.getStatus());
-    }
-
 	@Test
 	public void test6_critical_selectAtomic() throws Exception {
 		System.out.println("Testing critical select atomic");
@@ -942,21 +763,6 @@ public class TstRestMusicDataAPI {
     }
 	
 	@Test
-    public void test6_critical_select_wrongAuth() throws Exception {
-        System.out.println("Testing critical select w/ wrong authentication");
-        createAndInsertIntoTable();
-        JsonInsert jsonInsert = new JsonInsert();
-        Map<String, String> consistencyInfo = new HashMap<>();
-        consistencyInfo.put("type", "atomic");
-        jsonInsert.setConsistencyInfo(consistencyInfo);
-        Response response = data.selectCritical("1", "1", "1","abc66ccc-d857-4e90-b1e5-df98a3d40ce6", 
-                appName, wrongAuthorization, jsonInsert, keyspaceName, tableName,info);
-        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-        
-        assertEquals(401, response.getStatus());
-    }
-	
-	@Test
     public void test6_critical_select_nulltable() throws Exception {
         System.out.println("Testing critical select w/ null tablename");
         createAndInsertIntoTable();
@@ -994,21 +800,6 @@ public class TstRestMusicDataAPI {
     }
     
     @Test
-    public void test6_select_wrongAuth() throws Exception {
-        System.out.println("Testing select w/ wrong authentication");
-        createAndInsertIntoTable();
-        JsonSelect jsonSelect = new JsonSelect();
-        Map<String, String> consistencyInfo = new HashMap<>();
-        consistencyInfo.put("type", "atomic");
-        jsonSelect.setConsistencyInfo(consistencyInfo);
-        Response response = data.select("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
-                appName, wrongAuthorization, keyspaceName, tableName, info);
-        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-
-        assertEquals(401, response.getStatus());
-    }
-    
-    @Test
     public void test6_select_nullTablename() throws Exception {
         System.out.println("Testing select w/ null tablename");
         createAndInsertIntoTable();
@@ -1040,20 +831,6 @@ public class TstRestMusicDataAPI {
         assertEquals(200, response.getStatus());
     }
     
-    @Test
-    public void test6_deleteFromTable_wrongAuth() throws Exception {
-        System.out.println("Testing delete from table");
-        createAndInsertIntoTable();
-        JsonDelete jsonDelete = new JsonDelete();
-        Map<String, String> consistencyInfo = new HashMap<>();
-        consistencyInfo.put("type", "atomic");
-        jsonDelete.setConsistencyInfo(consistencyInfo);
-        Response response = data.deleteFromTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
-                wrongAuthorization, jsonDelete, keyspaceName, tableName, info);
-        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-        assertEquals(401, response.getStatus());
-    }
-
     @Test
     public void test6_deleteFromTable_missingTablename() throws Exception {
         System.out.println("Testing delete from table w/ null tablename");
@@ -1120,21 +897,6 @@ public class TstRestMusicDataAPI {
     }
     
     @Test
-    public void test7_dropTable_wrongAuth() throws Exception {
-        System.out.println("Testing drop table w/ wrong auth");
-        createTable();
-        JsonTable jsonTable = new JsonTable();
-        Map<String, String> consistencyInfo = new HashMap<>();
-        consistencyInfo.put("type", "atomic");
-        jsonTable.setConsistencyInfo(consistencyInfo);
-        Response response = data.dropTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
-                wrongAuthorization, keyspaceName, tableName);
-        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
-
-        assertEquals(401, response.getStatus());
-    }
-    
-    @Test
     public void test7_dropTable_nullTablename() throws Exception {
         System.out.println("Testing drop table w/ null tablename");
         createTable();
@@ -1189,8 +951,6 @@ public class TstRestMusicDataAPI {
         query.addValue(MusicUtil.convertToActualDataType(DataType.text(), hashedpwd));
         query.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
         query.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), isAAF));
-        CachingUtil.updateMusicCache(keyspaceName, appName);
-        CachingUtil.updateMusicValidateCache(appName, userId, hashedpwd);
         MusicCore.eventualPut(query);
     }
 

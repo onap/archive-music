@@ -439,7 +439,7 @@
             "description": "",
             "collectionId": "a7ff2cf7-0a5a-1b0b-a393-829a672c80d6",
             "responses": [],
-            "rawModeData": "{\n    \"values\": {\n        \"emp_id\": \"cfd66ccc-d857-4e90-b1e5-df98a3d40cd6\",\n        \"emp_name\": \"bharath\",\n        \"emp_salary\": 50,\n        \"address\":{ \"street\" : \"att way\", \"city\" : \"bedminster\" }\n    },\n    \"consistencyInfo\": {\n        \"type\": \"atomic\",\n        \"lockId\": \"$testks.employees$x-95351186188533762-0000000000\"\n    }\n}"
+            "rawModeData": "{\n    \"values\": {\n        \"emp_id\": \"cfd66ccc-d857-4e90-b1e5-df98a3d40cd6\",\n        \"emp_name\": \"bharath\",\n        \"emp_salary\": 50,\n        \"address\":{ \"street\" : \"Smith Way\", \"city\" : \"Bedminster\" }\n    },\n    \"consistencyInfo\": {\n        \"type\": \"atomic\",\n        \"lockId\": \"$testks.employees$x-95351186188533762-0000000000\"\n    }\n}"
         },
         {
             "id": "b667b219-8eec-2267-1994-7f0fb97b77ce",

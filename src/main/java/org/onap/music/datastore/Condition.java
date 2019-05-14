@@ -30,8 +30,8 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 
 public class Condition {
-        Map<String, Object> conditions;
-        PreparedQueryObject selectQueryForTheRow;
+        private Map<String, Object> conditions;
+        private PreparedQueryObject selectQueryForTheRow;
 
         public Condition(Map<String, Object> conditions, PreparedQueryObject selectQueryForTheRow) {
             this.conditions = conditions;

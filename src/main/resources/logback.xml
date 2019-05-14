@@ -40,7 +40,7 @@
     <property name="debugLogName" value="debug" />
     <property name="defaultPattern" value="%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n" />
     <!-- <property name="applicationLoggerPattern" value="%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %msg%n" /> -->
-    <property name="applicationLoggerPattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5level %X{keyspace} - %msg%n" />
+    <property name="applicationLoggerPattern" value="%d{yyyy-MM-dd HH:mm:ss} %-5level %X{keyspace} [transactionId:%X{transactionId}] - %msg%n" />
     <property name="auditLoggerPattern" value="%X{BeginTimestamp}|%X{EndTimestamp}|%X{RequestId}|%X{ServiceInstanceId}|%thread|%X{VirtualServerName}|%X{ServiceName}|%X{PartnerName}|%X{StatusCode}|%X{ResponseCode}|%X{ResponseDescription}|%X{InstanceUUID}|%.-5level|%X{AlertSeverity}|%X{ServerIPAddress}|%X{ElapsedTime}|%X{ServerFQDN}|%X{RemoteHost}|%X{ClassName}|%X{Unused}|%X{ProcessKey}|%X{CustomField1}|%X{CustomField2}|%X{CustomField3}|%X{CustomField4}| %msg%n" />
     <property name="metricsLoggerPattern" value="%X{BeginTimestamp}|%X{EndTimestamp}|%X{RequestId}|%X{ServiceInstanceId}|%thread|%X{VirtualServerName}|%X{ServiceName}|%X{PartnerName}|%X{TargetEntity}|%X{TargetServiceName}|%X{StatusCode}|%X{ResponseCode}|%X{ResponseDescription}|%X{InstanceUUID}|%.-5level|%X{AlertSeverity}|%X{ServerIPAddress}|%X{ElapsedTime}|%X{ServerFQDN}|%X{RemoteHost}|%X{ClassName}|%X{Unused}|%X{ProcessKey}|%X{TargetVirtualEntity}|%X{CustomField1}|%X{CustomField2}|%X{CustomField3}|%X{CustomField4}| %msg%n" />
     <!-- <property name="errorLoggerPattern" value= "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %msg%n  " /> -->

@@ -29,6 +29,7 @@ import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
+import org.onap.music.lockingservice.cassandra.LockType;
 import org.onap.music.lockingservice.cassandra.MusicLockState;
 import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
@@ -72,8 +73,22 @@ public interface MusicCoreService {
 
     // Core Music Locking Service Methods
 
+    /**
+     * Create a lock ref in the music lock store.
+     * Default is write as this is the safest semantically
+     * 
+     * @param fullyQualifiedKey the key to create a lock on
+     * @see {@link #creatLockReference(String, LockType)}
+     */
     public String createLockReference(String fullyQualifiedKey) throws MusicLockingException; // lock name
 
+    /**
+     * Create a lock ref in the music lock store
+     * @param fullyQualifiedKey the key to create a lock on
+     * @param locktype the type of lock create, see {@link LockType}
+     */
+    public String createLockReference(String fullyQualifiedKey, LockType locktype) throws MusicLockingException;
+    
     public ReturnType acquireLockWithLease(String key, String lockReference, long leasePeriod)
         throws MusicLockingException, MusicQueryException, MusicServiceException; // key,lock id,time
 
@@ -85,7 +100,19 @@ public interface MusicCoreService {
 
     public ResultSet quorumGet(PreparedQueryObject query);
 
+    /**
+     * Gets top of queue for fullyQualifiedKey
+     * @param fullyQualifiedKey
+     * @return
+     */
     public String whoseTurnIsIt(String fullyQualifiedKey);// lock name
+    
+    /**
+     * Gets the current lockholder(s) for lockName
+     * @param lockName
+     * @return
+     */
+    public List<String> getCurrentLockHolders(String fullyQualifiedKey);
 
     public void destroyLockRef(String lockId) throws MusicLockingException;
     
@@ -107,4 +134,5 @@ public interface MusicCoreService {
     public Map<String, Object> validateLock(String lockName);
 
     public MusicLockState releaseLock(String lockId, boolean voluntaryRelease) throws MusicLockingException;
+
 }

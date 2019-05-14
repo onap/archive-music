@@ -74,6 +74,7 @@ import com.sun.jersey.core.util.Base64;
 public class MusicUtil {
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicUtil.class);
 
+    // Consistancy Constants
     public static final String ATOMIC = "atomic";
     public static final String EVENTUAL = "eventual";
     public static final String CRITICAL = "critical";
@@ -82,55 +83,54 @@ public class MusicUtil {
     public static final String QUORUM = "quorum";
     public static final String ONE = "one";
     public static final String ATOMICDELETELOCK = "atomic_delete_lock";
-    public static final String DEFAULTKEYSPACENAME = "TBD";
+
+    // Header Constants
     private static final String XLATESTVERSION = "X-latestVersion";
     private static final String XMINORVERSION = "X-minorVersion";
     private static final String XPATCHVERSION = "X-patchVersion";
+    public static final String AUTHORIZATION = "Authorization";
+
+    // CQL Constants
     public static final String SELECT = "select";
     public static final String INSERT = "insert";
     public static final String UPDATE = "update";
     public static final String UPSERT = "upsert";
     public static final String USERID = "userId";
-    public static final String PASSWORD = "password";
+    public static final String PASSWORD = "";
     public static final String CASSANDRA = "cassandra";
-
-    public static final String AUTHORIZATION = "Authorization";
 
     private static final String LOCALHOST = "localhost";
     private static final String PROPERTIES_FILE = "/opt/app/music/etc/music.properties";
+    public static final String DEFAULTKEYSPACENAME = "TBD";
 
-    private static int myId = 0;
-    private static ArrayList<String> allIds = new ArrayList<>();
-    private static String publicIp = "";
-    private static ArrayList<String> allPublicIps = new ArrayList<>();
-    private static String myZkHost = LOCALHOST;
     private static String myCassaHost = LOCALHOST;
     private static String defaultMusicIp = LOCALHOST;
     private static int cassandraPort = 9042;
     private static int notifytimeout = 30000;
     private static int notifyinterval = 5000;
+    private static long defaultLockLeasePeriod = 6000;
+    private static int retryCount = 3;
     private static int cacheObjectMaxLife = -1;
     private static String lockUsing = MusicUtil.CASSANDRA;
     private static boolean isCadi = false;
     private static boolean isKeyspaceActive = false;
-    
     private static boolean debug = true;
     private static String version = "0.0.0";
     private static String build = "";
-    private static String musicRestIp = LOCALHOST;
+
     private static String musicPropertiesFilePath = PROPERTIES_FILE;
-    private static long defaultLockLeasePeriod = 6000;
-    private static int retryCount = 3;
     private static final String[] propKeys = new String[] { "cassandra.host", "music.ip", "debug",
         "version", "music.rest.ip", "music.properties", "lock.lease.period", "id", "all.ids", 
         "public.ip","all.pubic.ips", "cassandra.user", "cassandra.password", "aaf.endpoint.url",
         "admin.username","admin.password","aaf.admin.url","music.namespace","admin.aaf.role",
-        "cassandra.port","lock.using","retry.count"};
+        "cassandra.port","lock.using","retry.count","transId.header.required",
+        "conversation.header.required","clientId.header.required","messageId.header.required",
+        "transId.header.prefix","conversation.header.prefix","clientId.header.prefix",
+        "messageId.header.prefix"};
     private static final String[] cosistencyLevel = new String[] {
         "ALL","EACH_QUORUM","QUORUM","LOCAL_QUORUM","ONE","TWO",
         "THREE","LOCAL_ONE","ANY","SERIAL","LOCAL_SERIAL"};
     private static final Map<String,ConsistencyLevel> consistencyName = new HashMap<>();
-
     static {
         consistencyName.put("ONE",ConsistencyLevel.ONE);
         consistencyName.put("TWO",ConsistencyLevel.TWO);
@@ -143,23 +143,27 @@ public class MusicUtil {
         consistencyName.put("LOCAL_ONE",ConsistencyLevel.LOCAL_ONE);
         consistencyName.put("LOCAL_SERIAL",ConsistencyLevel.LOCAL_SERIAL);
     }
-
     private static String cassName = "cassandra";
     private static String cassPwd;
     private static String aafEndpointUrl = null;
-    public static ConcurrentMap<String, Long> zkNodeMap = new ConcurrentHashMap<>();
     private static String adminId = "username";
     private static String adminPass= "password";
     private static String aafAdminUrl= null;
     private static String musicNamespace= "org.onap.music.api";
     private static String adminAafRole= "org.onap.music.api.admin_api";
-    
-    public static final long MusicEternityEpochMillis = 1533081600000L; // Wednesday, August 1, 2018 12:00:00 AM
 
+    public static final long MusicEternityEpochMillis = 1533081600000L; // Wednesday, August 1, 2018 12:00:00 AM
     public static final long MaxLockReferenceTimePart = 1000000000000L; // millis after eternity (eq sometime in 2050)
-    
     public static final long MaxCriticalSectionDurationMillis = 1L * 24 * 60 * 60 * 1000; // 1 day
 
+    private static String transIdPrefix= "false";
+	private static String conversationIdPrefix= "false";
+    private static String clientIdPrefix= "false";
+    private static String messageIdPrefix= "false";
+	private static String transIdRequired= "false";
+	private static String conversationIdRequired= "false";
+    private static String clientIdRequired= "false";
+    private static String messageIdRequired= "false";
 
     public static String getLockUsing() {
         return lockUsing;
@@ -266,69 +270,6 @@ public class MusicUtil {
         MusicUtil.aafEndpointUrl = aafEndpointUrl;
     }
 
-    /**
-     *
-     * @return
-     */
-    public static int getMyId() {
-        return myId;
-    }
-
-    /**
-     *
-     * @param myId
-     */
-    public static void setMyId(int myId) {
-        MusicUtil.myId = myId;
-    }
-
-    /**
-     *
-     * @return
-     */
-    public static List<String> getAllIds() {
-        return allIds;
-    }
-
-    /**
-     *
-     * @param allIds
-     */
-    public static void setAllIds(List<String> allIds) {
-        MusicUtil.allIds = (ArrayList<String>) allIds;
-    }
-
-    /**
-     *
-     * @return
-     */
-    public static String getPublicIp() {
-        return publicIp;
-    }
-
-    /**
-     *
-     * @param publicIp
-     */
-    public static void setPublicIp(String publicIp) {
-        MusicUtil.publicIp = publicIp;
-    }
-
-    /**
-     *
-     * @return
-     */
-    public static List<String> getAllPublicIps() {
-        return allPublicIps;
-    }
-
-    /**
-     *
-     * @param allPublicIps
-     */
-    public static void setAllPublicIps(List<String> allPublicIps) {
-        MusicUtil.allPublicIps = (ArrayList<String>) allPublicIps;
-    }
 
     /**
      * Returns An array of property names that should be in the Properties
@@ -337,25 +278,7 @@ public class MusicUtil {
      * @return
      */
     public static String[] getPropkeys() {
-        return propKeys;
-    }
-
-    /**
-     * Get MusicRestIp - default = localhost property file value - music.rest.ip
-     *
-     * @return
-     */
-    public static String getMusicRestIp() {
-        return musicRestIp;
-    }
-
-    /**
-     * Set MusicRestIp
-     *
-     * @param musicRestIp
-     */
-    public static void setMusicRestIp(String musicRestIp) {
-        MusicUtil.musicRestIp = musicRestIp;
+        return propKeys.clone();
     }
 
     /**
@@ -896,6 +819,135 @@ public class MusicUtil {
         logger.info(EELFLoggerDelegate.applicationLogger,"New AID generated: "+uuid);
         return uuid;
     }
+
+    private static String checkPrefix(String prefix){
+        if (prefix == null || "".equals(prefix) || prefix.endsWith("-")) {
+            return prefix;
+        } else {
+            return prefix + "-";
+        }
+    }
+
+    /**
+     * @return the transIdPrefix
+     */
+    public static String getTransIdPrefix() {
+        return transIdPrefix;
+    }
+
+    /**
+     * @param transIdPrefix the transIdPrefix to set
+     */
+    public static void setTransIdPrefix(String transIdPrefix) {
+        MusicUtil.transIdPrefix = checkPrefix(transIdPrefix);
+    }
+
+    /**
+     * @return the conversationIdPrefix
+     */
+    public static String getConversationIdPrefix() {
+        return conversationIdPrefix;
+    }
+
+    /**
+     * @param conversationIdPrefix the conversationIdPrefix to set
+     */
+    public static void setConversationIdPrefix(String conversationIdPrefix) {
+        MusicUtil.conversationIdPrefix = checkPrefix(conversationIdPrefix);
+    }
+
+    /**
+     * @return the clientIdPrefix
+     */
+    public static String getClientIdPrefix() {
+        return clientIdPrefix;
+    }
+
+    /**
+     * @param clientIdPrefix the clientIdPrefix to set
+     */
+    public static void setClientIdPrefix(String clientIdPrefix) {
+        MusicUtil.clientIdPrefix = checkPrefix(clientIdPrefix);
+    }
+
+    /**
+     * @return the messageIdPrefix
+     */
+    public static String getMessageIdPrefix() {
+        return messageIdPrefix;
+    }
+
+    /**
+     * @param messageIdPrefix the messageIdPrefix to set
+     */
+    public static void setMessageIdPrefix(String messageIdPrefix) {
+        MusicUtil.messageIdPrefix = checkPrefix(messageIdPrefix);
+    }
+
+        /**
+	 * @return the transIdRequired
+	 */
+	public static String getTransIdRequired() {
+		return transIdRequired;
+	}
+
+
+	/**
+	 * @param transIdRequired the transIdRequired to set
+	 */
+	public static void setTransIdRequired(String transIdRequired) {
+		MusicUtil.transIdRequired = transIdRequired;
+	}
+
+
+	/**
+	 * @return the conversationIdRequired
+	 */
+	public static String getConversationIdRequired() {
+		return conversationIdRequired;
+	}
+
+
+	/**
+	 * @param conversationIdRequired the conversationIdRequired to set
+	 */
+	public static void setConversationIdRequired(String conversationIdRequired) {
+		MusicUtil.conversationIdRequired = conversationIdRequired;
+	}
+
+
+	/**
+	 * @return the clientIdRequired
+	 */
+	public static String getClientIdRequired() {
+		return clientIdRequired;
+	}
+
+
+	/**
+	 * @param clientIdRequired the clientIdRequired to set
+	 */
+	public static void setClientIdRequired(String clientIdRequired) {
+		MusicUtil.clientIdRequired = clientIdRequired;
+	}
+
+
+	/**
+	 * @return the messageIdRequired
+	 */
+	public static String getMessageIdRequired() {
+		return messageIdRequired;
+	}
+
+
+	/**
+	 * @param messageIdRequired the messageIdRequired to set
+	 */
+	public static void setMessageIdRequired(String messageIdRequired) {
+		MusicUtil.messageIdRequired = messageIdRequired;
+	}
+
+
 
 }
 

@@ -21,25 +21,22 @@
  */
 
 package org.onap.music.authentication;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
+
+import java.io.IOException;
+
+import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
-import javax.servlet.http.HttpServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.annotation.WebFilter;
 
-import com.att.eelf.configuration.EELFLogger;
-import org.onap.aaf.cadi.CadiWrap;
-import org.onap.aaf.cadi.Permission;
 import org.onap.aaf.cadi.PropAccess;
-import org.onap.aaf.cadi.aaf.AAFPermission;
 import org.onap.aaf.cadi.filter.CadiFilter;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
-import org.onap.music.main.MusicCore;
 
+@WebFilter(urlPatterns = { "/*" })
 public class CadiAuthFilter extends CadiFilter {
 
     private static final EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(CadiAuthFilter.class);
@@ -47,64 +44,27 @@ public class CadiAuthFilter extends CadiFilter {
     public CadiAuthFilter(PropAccess access) throws ServletException {
         super(true, access);
     }
-    
+
+    public CadiAuthFilter() throws ServletException {
+        super();
+    }
+
+    @Override
     public void init(FilterConfig filterConfig) throws ServletException {
         super.init(filterConfig);
     }
 
-
-    private boolean matchPattern(String requestedPath, String includeUrl) {
-        includeUrl = includeUrl.substring(1);
-        String[] path = requestedPath.split("/");
-        if (path.length > 1) {
-            String[] roleFunctionArray = includeUrl.split("/");
-            boolean match = true;
-            for (int i = 0; i < roleFunctionArray.length; i++) {
-                if (match) {
-                    if (!"*".equals(roleFunctionArray[i])) {
-                        Pattern p = Pattern.compile(Pattern.quote(path[i]), Pattern.CASE_INSENSITIVE);
-                        Matcher m = p.matcher(roleFunctionArray[i]);
-                        match = m.matches();
-                    } else if (roleFunctionArray[i].equals("*")) {
-                        match = true;
-                    }
-
-                }
-            }
-            if (match)
-                return match;
-        } else {
-            if (requestedPath.matches(includeUrl))
-                return true;
-            else if ("*".equals(includeUrl))
-                return true;
-        }
-        return false;
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+            throws IOException, ServletException {
+            logger.info(EELFLoggerDelegate.applicationLogger, "Request is entering cadifilter");
+            
+            long startTime = System.currentTimeMillis();
+            request.setAttribute("startTime", startTime);
+            
+            super.doFilter(request, response, chain);
+            
+            //Commented by saumya (sp931a) on 04/11/19 for auth filter
+            //chain.doFilter(request, response);
     }
-    
-
-    public static List<AAFPermission> getAAFPermissions(HttpServletRequest request) { 
-        CadiWrap wrapReq = (CadiWrap) request; 
-        List<Permission> perms = wrapReq.getPermissions(wrapReq.getUserPrincipal()); 
-        List<AAFPermission> aafPermsList = new ArrayList<>(); 
-        for (Permission perm : perms) { 
-            AAFPermission aafPerm = (AAFPermission) perm; 
-            aafPermsList.add(aafPerm); 
-            logger.info(aafPerm.toString());
-            logger.info(aafPerm.getType());
-        } 
-        return aafPermsList; 
-    } 
-    
-    public static List<AAFPermission> getAAFPermissions(ServletRequest request) { 
-        CadiWrap wrapReq = (CadiWrap) request; 
-        List<Permission> perms = wrapReq.getPermissions(wrapReq.getUserPrincipal()); 
-        List<AAFPermission> aafPermsList = new ArrayList<>(); 
-        for (Permission perm : perms) { 
-            AAFPermission aafPerm = (AAFPermission) perm; 
-            aafPermsList.add(aafPerm); 
-        } 
-        return aafPermsList; 
-    }
-
 }

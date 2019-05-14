@@ -39,7 +39,6 @@ import org.mindrot.jbcrypt.BCrypt;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.onap.music.authentication.CachingUtil;
 import org.onap.music.conductor.conditionals.JsonConditional;
 import org.onap.music.conductor.conditionals.RestMusicConditionalAPI;
 import org.onap.music.datastore.MusicDataStoreHandle;
@@ -293,8 +292,6 @@ public class TstRestMusicConditionalAPI {
         query.addValue(MusicUtil.convertToActualDataType(DataType.text(), hashedpwd));
         query.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
         query.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), isAAF));
-        CachingUtil.updateMusicCache(keyspaceName, appName);
-        CachingUtil.updateMusicValidateCache(appName, userId, hashedpwd);
         MusicCore.eventualPut(query);
     }
 
