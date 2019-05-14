@@ -47,11 +47,6 @@ import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.lang3.StringUtils;
-import org.mindrot.jbcrypt.BCrypt;
-import org.onap.music.authentication.CachingUtil;
-import org.onap.music.authentication.MusicAAFAuthentication;
-import org.onap.music.authentication.MusicAuthenticator;
-import org.onap.music.authentication.MusicAuthenticator.Operation;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
@@ -75,7 +70,6 @@ import org.onap.music.response.jsonobjects.JsonResponse;
 
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
 import com.datastax.driver.core.TableMetadata;
 
 import io.swagger.annotations.Api;
@@ -117,9 +111,6 @@ public class RestMusicDataAPI {
     private static final String XPATCHVERSION = "X-patchVersion";
     private static final String NS = "ns";
     private static final String VERSION = "v2";
-    private MusicAuthenticator authenticator = new MusicAAFAuthentication();
-    // Set to true in env like ONAP. Where access to creating and dropping keyspaces exist.    
-    private static final boolean KEYSPACE_ACTIVE = false;
 
     private class RowIdentifier {
         public String primarKeyValue;
@@ -163,40 +154,22 @@ public class RestMusicDataAPI {
             ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
             EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspaceName+" ) ");
             logger.info(EELFLoggerDelegate.applicationLogger,"In Create Keyspace " + keyspaceName);
-            if ( MusicUtil.isKeyspaceActive() ) {
+            if (MusicUtil.isKeyspaceActive() ) {
                 logger.info(EELFLoggerDelegate.applicationLogger,"Creating Keyspace " + keyspaceName);
-                Map<String,String> userCredentials = MusicUtil.extractBasicAuthentication(authorization);
-                String userId = userCredentials.get(MusicUtil.USERID);
-                String password = userCredentials.get(MusicUtil.PASSWORD);
-                Map<String, Object> authMap = CachingUtil.verifyOnboarding(ns, userId, password);
-                if (!authMap.isEmpty()) {
-                    logger.error(EELFLoggerDelegate.errorLogger,authMap.get("Exception").toString(), AppMessages.MISSINGDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.AUTHENTICATIONERROR);
-                    response.status(Status.UNAUTHORIZED);
-                    return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(authMap.get("Exception"))).toMap()).build();
-                }
-        
-                if (!authenticator.authenticateUser(ns, authorization, keyspaceName, aid, Operation.CREATE_KEYSPACE)) {
-                    return response.status(Status.UNAUTHORIZED)
-                            .entity(new JsonResponse(ResultType.FAILURE)
-                                    .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
-                                    .toMap()).build();
-                }  
-        
-                String consistency = MusicUtil.EVENTUAL;// for now this needs only
-                                                        // eventual consistency
-        
+                
                 if(kspObject == null || kspObject.getReplicationInfo() == null) {
                     response.status(Status.BAD_REQUEST);
                     return response.entity(new JsonResponse(ResultType.FAILURE).setError(ResultType.BODYMISSING.getResult()).toMap()).build();
                 }
+        
+                String consistency = MusicUtil.EVENTUAL;// for now this needs only eventual consistency
+        
                 PreparedQueryObject queryObject = new PreparedQueryObject();
                 if(consistency.equalsIgnoreCase(MusicUtil.EVENTUAL) && kspObject.getConsistencyInfo().get("consistency") != null) {
-                    if (MusicUtil.isValidConsistency(kspObject.getConsistencyInfo().get("consistency"))) { 
-                        queryObject.setConsistency(kspObject.getConsistencyInfo().get("consistency")); 
-                    } else {
-                        return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.SYNTAXERROR)
-                            .setError("Invalid Consistency type").toMap()).build();
-                    }
+                    if(MusicUtil.isValidConsistency(kspObject.getConsistencyInfo().get("consistency")))
+                        queryObject.setConsistency(kspObject.getConsistencyInfo().get("consistency"));
+                    else
+                        return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.SYNTAXERROR).setError("Invalid Consistency type").toMap()).build();
                 }
                 long start = System.currentTimeMillis();
                 Map<String, Object> replicationInfo = kspObject.getReplicationInfo();
@@ -228,44 +201,6 @@ public class RestMusicDataAPI {
                     logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity
                         .WARN, ErrorTypes.MUSICSERVICEERROR, ex);
                     return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("err:" + ex.getMessage()).toMap()).build();
-                }
-        
-                try {
-                    queryObject = new PreparedQueryObject();
-                    queryObject.appendQueryString("CREATE ROLE IF NOT EXISTS '" + userId
-                                    + "' WITH PASSWORD = '" + password + "' AND LOGIN = true;");
-                    MusicCore.nonKeyRelatedPut(queryObject, consistency);
-                    queryObject = new PreparedQueryObject();
-                    queryObject.appendQueryString("GRANT ALL PERMISSIONS on KEYSPACE " + keyspaceName
-                                        + " to '" + userId + "'");
-                    queryObject.appendQueryString(";");
-                    MusicCore.nonKeyRelatedPut(queryObject, consistency);
-                } catch (Exception e) {
-                    logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR,ErrorSeverity
-                        .WARN, ErrorTypes.MUSICSERVICEERROR, e);
-                }
-        
-                try {
-                    boolean isAAF = Boolean.valueOf(CachingUtil.isAAFApplication(ns));
-                    String hashedpwd = BCrypt.hashpw(password, BCrypt.gensalt());
-                    queryObject = new PreparedQueryObject();
-                    queryObject.appendQueryString(
-                                "INSERT into admin.keyspace_master (uuid, keyspace_name, application_name, is_api, "
-                                                + "password, username, is_aaf) values (?,?,?,?,?,?,?)");
-                    queryObject.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), aid));
-                    queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), keyspaceName));
-                    queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), ns));
-                    queryObject.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), "True"));
-                    queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), hashedpwd));
-                    queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), userId));
-                    queryObject.addValue(MusicUtil.convertToActualDataType(DataType.cboolean(), isAAF));
-                    CachingUtil.updateMusicCache(keyspaceName, ns);
-                    CachingUtil.updateMusicValidateCache(ns, userId, hashedpwd);
-                    MusicCore.eventualPut(queryObject);
-                } catch (Exception e) {
-                    logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR,ErrorSeverity
-                        .WARN, ErrorTypes.MUSICSERVICEERROR, e);
-                    return response.status(Response.Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
                 }
         
                 return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setMessage("Keyspace " + keyspaceName + " Created").toMap()).build();
@@ -305,43 +240,7 @@ public class RestMusicDataAPI {
             EELFLoggerDelegate.mdcPut("keyspace", "( " + keyspaceName + " ) ");
             logger.info(EELFLoggerDelegate.applicationLogger,"In Drop Keyspace " + keyspaceName);
             if (MusicUtil.isKeyspaceActive()) {
-                if (!authenticator.authenticateUser(ns, authorization, keyspaceName, aid, Operation.DROP_KEYSPACE)) {
-                    return response.status(Status.UNAUTHORIZED)
-                        .entity(new JsonResponse(ResultType.FAILURE)
-                        .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
-                        .toMap()).build();
-                }
                 String consistency = MusicUtil.EVENTUAL;// for now this needs only
-                                                        // eventual
-                // consistency
-                String appName = CachingUtil.getAppName(keyspaceName);
-                String uuid = CachingUtil.getUuidFromMusicCache(keyspaceName);
-                PreparedQueryObject pQuery = new PreparedQueryObject();
-                pQuery.appendQueryString(
-                                "select  count(*) as count from admin.keyspace_master where application_name=? allow filtering;");
-                pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(), appName));
-                Row row = MusicCore.get(pQuery).one();
-                long count = row.getLong(0);
-        
-                if (count == 0) {
-                    logger.error(EELFLoggerDelegate.errorLogger,"Keyspace not found. Please make sure keyspace exists.", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR);
-                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Keyspace not found. Please make sure keyspace exists.").toMap()).build();
-                // Admin Functions:
-                } else if (count == 1) {
-                    pQuery = new PreparedQueryObject();
-                    pQuery.appendQueryString(
-                            "UPDATE admin.keyspace_master SET keyspace_name=? where uuid = ?;");
-                    pQuery.addValue(MusicUtil.convertToActualDataType(DataType.text(),
-                            MusicUtil.DEFAULTKEYSPACENAME));
-                    pQuery.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), uuid));
-                    MusicCore.nonKeyRelatedPut(pQuery, consistency);
-                } else {
-                    pQuery = new PreparedQueryObject();
-                    pQuery.appendQueryString("delete from admin.keyspace_master where uuid = ?");
-                    pQuery.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), uuid));
-                    MusicCore.nonKeyRelatedPut(pQuery, consistency);
-                }
-        
                 PreparedQueryObject queryObject = new PreparedQueryObject();
                 queryObject.appendQueryString("DROP KEYSPACE " + keyspaceName + ";");
                 ResultType result = MusicCore.nonKeyRelatedPut(queryObject, consistency);
@@ -398,12 +297,6 @@ public class RestMusicDataAPI {
                             .toMap()).build();
             }
             EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspace+" ) ");
-            if (!authenticator.authenticateUser(ns, authorization, keyspace, aid, Operation.CREATE_TABLE)) {
-                return response.status(Status.UNAUTHORIZED)
-                        .entity(new JsonResponse(ResultType.FAILURE)
-                                .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
-                                .toMap()).build();
-            }       
             String consistency = MusicUtil.EVENTUAL;
             // for now this needs only eventual consistency
             String primaryKey = null;
@@ -420,7 +313,7 @@ public class RestMusicDataAPI {
             Map<String, String> fields = tableObj.getFields();
             if (fields == null) {
                 return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
-                        .setError("Create Table Error: No fields in request").toMap()).build();
+                    .setError("Create Table Error: No fields in request").toMap()).build();
             }
 
             StringBuilder fieldsString = new StringBuilder("(vector_ts text,");
@@ -607,53 +500,46 @@ public class RestMusicDataAPI {
     @ApiOperation(value = "Create Index", response = String.class)
     @Produces(MediaType.APPLICATION_JSON)
     public Response createIndex(
-                    @ApiParam(value = "Major Version",required = true) @PathParam("version") String version,
-                    @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
-                    @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-                    @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
-                    @ApiParam(value = "Application namespace",required = true) @HeaderParam(NS) String ns,
-                    @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-                    @ApiParam(value = "Keyspace Name",required = true) @PathParam("keyspace") String keyspace,
-                    @ApiParam(value = "Table Name",required = true) @PathParam("tablename") String tablename,
-                    @ApiParam(value = "Field Name",required = true) @PathParam("field") String fieldName,
-                    @Context UriInfo info) throws Exception {
+        @ApiParam(value = "Major Version",required = true) @PathParam("version") String version,
+        @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
+        @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
+        @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
+        @ApiParam(value = "Application namespace",required = true) @HeaderParam(NS) String ns,
+        @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
+        @ApiParam(value = "Keyspace Name",required = true) @PathParam("keyspace") String keyspace,
+        @ApiParam(value = "Table Name",required = true) @PathParam("tablename") String tablename,
+        @ApiParam(value = "Field Name",required = true) @PathParam("field") String fieldName,
+        @Context UriInfo info) throws Exception {
         try {
-        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        if((keyspace == null || keyspace.isEmpty()) || (tablename == null || tablename.isEmpty()) || (fieldName == null || fieldName.isEmpty())){
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
-                .setError("one or more path parameters are not set, please check and try again")
-                .toMap()).build();
-        }
-        EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspace+" ) ");
-        if (!authenticator.authenticateUser(ns, authorization, keyspace, aid, Operation.CREATE_INDEX)) {
-            return response.status(Status.UNAUTHORIZED)
-                    .entity(new JsonResponse(ResultType.FAILURE)
-                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
-                            .toMap()).build();
-        } 
+            ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
+            if ((keyspace == null || keyspace.isEmpty()) || (tablename == null || tablename.isEmpty()) || (fieldName == null || fieldName.isEmpty())){
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
+                    .setError("one or more path parameters are not set, please check and try again")
+                    .toMap()).build();
+            }
+            EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspace+" ) ");
+            MultivaluedMap<String, String> rowParams = info.getQueryParameters();
+            String indexName = "";
+            if (rowParams.getFirst("index_name") != null)
+                indexName = rowParams.getFirst("index_name");
+            PreparedQueryObject query = new PreparedQueryObject();
+            query.appendQueryString("Create index if not exists " + indexName + "  on " + keyspace + "."
+                            + tablename + " (" + fieldName + ");");
 
-        MultivaluedMap<String, String> rowParams = info.getQueryParameters();
-        String indexName = "";
-        if (rowParams.getFirst("index_name") != null)
-            indexName = rowParams.getFirst("index_name");
-        PreparedQueryObject query = new PreparedQueryObject();
-        query.appendQueryString("Create index if not exists " + indexName + "  on " + keyspace + "."
-                        + tablename + " (" + fieldName + ");");
-
-        ResultType result = ResultType.FAILURE;
-        try {
-            result = MusicCore.nonKeyRelatedPut(query, "eventual");
-        } catch (MusicServiceException ex) {
-            logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity
+            ResultType result = ResultType.FAILURE;
+            try {
+                result = MusicCore.nonKeyRelatedPut(query, "eventual");
+            } catch (MusicServiceException ex) {
+                logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity
                 .CRITICAL, ErrorTypes.GENERALSERVICEERROR, ex);
-            response.status(Status.BAD_REQUEST);
-            return response.entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
-        }
-        if ( result.equals(ResultType.SUCCESS) ) {
-            return response.status(Status.OK).entity(new JsonResponse(result).setMessage("Index Created on " + keyspace+"."+tablename+"."+fieldName).toMap()).build();
-        } else {
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(result).setError("Unknown Error in create index.").toMap()).build();
-        }
+                response.status(Status.BAD_REQUEST);
+                return response.entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
+            }
+            if ( result.equals(ResultType.SUCCESS) ) {
+                return response.status(Status.OK).entity(new JsonResponse(result).setMessage("Index Created on " + keyspace+"."+tablename+"."+fieldName).toMap()).build();
+            } else {
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(result).setError("Unknown Error in create index.").toMap()).build();
+            }
         } finally {
             EELFLoggerDelegate.mdcRemove("keyspace");
         }
@@ -673,198 +559,185 @@ public class RestMusicDataAPI {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response insertIntoTable(
-                    @ApiParam(value = "Major Version",required = true) @PathParam("version") String version,
-                    @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
-                    @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-                    @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
-                    @ApiParam(value = "Application namespace",required = true) @HeaderParam(NS) String ns,
-                    @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-                    JsonInsert insObj,
-                    @ApiParam(value = "Keyspace Name",
-                                    required = true) @PathParam("keyspace") String keyspace,
-                    @ApiParam(value = "Table Name",
-                                    required = true) @PathParam("tablename") String tablename) {
+        @ApiParam(value = "Major Version",required = true) @PathParam("version") String version,
+        @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
+        @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
+        @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
+        @ApiParam(value = "Application namespace",required = true) @HeaderParam(NS) String ns,
+        @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
+        JsonInsert insObj,
+        @ApiParam(value = "Keyspace Name",
+            required = true) @PathParam("keyspace") String keyspace,
+        @ApiParam(value = "Table Name",
+            required = true) @PathParam("tablename") String tablename) {
         try {
-        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        if((keyspace == null || keyspace.isEmpty()) || (tablename == null || tablename.isEmpty())){
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
-                .setError("one or more path parameters are not set, please check and try again")
-                .toMap()).build();
-        }
-        EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspace+" ) ");
-        if (!authenticator.authenticateUser(ns, authorization, keyspace, aid, Operation.INSERT_INTO_TABLE)) {
-            return response.status(Status.UNAUTHORIZED)
-                    .entity(new JsonResponse(ResultType.FAILURE)
-                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
-                            .toMap()).build();
-        }
-
-        PreparedQueryObject queryObject = new PreparedQueryObject();
-        TableMetadata tableInfo = null;
-        try {
-            tableInfo = MusicDataStoreHandle.returnColumnMetadata(keyspace, tablename);
-            if(tableInfo == null) {
-                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Table name doesn't exists. Please check the table name.").toMap()).build();
+            ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
+            if((keyspace == null || keyspace.isEmpty()) || (tablename == null || tablename.isEmpty())){
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
+                    .setError("one or more path parameters are not set, please check and try again")
+                    .toMap()).build();
             }
-        } catch (MusicServiceException e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
-        }
-        String primaryKeyName = tableInfo.getPrimaryKey().get(0).getName();
-        StringBuilder fieldsString = new StringBuilder("(vector_ts,");
-        String vectorTs =
-                        String.valueOf(Thread.currentThread().getId() + System.currentTimeMillis());
-        StringBuilder valueString = new StringBuilder("(" + "?" + ",");
-        queryObject.addValue(vectorTs);
-        
-        Map<String, Object> valuesMap = insObj.getValues();
-        if (valuesMap==null) {
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
-                    .setError("Nothing to insert. No values provided in request.").toMap()).build();
-        }
-        int counter = 0;
-        String primaryKey = "";
-        for (Map.Entry<String, Object> entry : valuesMap.entrySet()) {
-            fieldsString.append("" + entry.getKey());
-            Object valueObj = entry.getValue();
-            if (primaryKeyName.equals(entry.getKey())) {
-                primaryKey = entry.getValue() + "";
-                primaryKey = primaryKey.replace("'", "''");
-            }
-            DataType colType = null;
+            EELFLoggerDelegate.mdcPut("keyspace","(" + keyspace + ")");
+            PreparedQueryObject queryObject = new PreparedQueryObject();
+            TableMetadata tableInfo = null;
             try {
-                colType = tableInfo.getColumn(entry.getKey()).getType();
-            } catch(NullPointerException ex) {
-                logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage() +" Invalid column name : "+entry.getKey
-                    (), AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR, ex);
-                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Invalid column name : "+entry.getKey()).toMap()).build();
-            }
-
-            Object formattedValue = null;
-            try {
-                formattedValue = MusicUtil.convertToActualDataType(colType, valueObj);
-            } catch (Exception e) {
-              logger.error(EELFLoggerDelegate.errorLogger,e);
-          }
-            valueString.append("?");
-
-            queryObject.addValue(formattedValue);
-
-            if (counter == valuesMap.size() - 1) {
-                fieldsString.append(")");
-                valueString.append(")");
-            } else {
-                fieldsString.append(",");
-                valueString.append(",");
-            }
-            counter = counter + 1;
-        }
-
-        //blobs..
-        Map<String, byte[]> objectMap = insObj.getObjectMap();
-        if(objectMap != null) {
-            for (Map.Entry<String, byte[]> entry : objectMap.entrySet()) {
-                if(counter > 0) {
-                    fieldsString.replace(fieldsString.length()-1, fieldsString.length(), ",");
-                    valueString.replace(valueString.length()-1, valueString.length(), ",");
+                tableInfo = MusicDataStoreHandle.returnColumnMetadata(keyspace, tablename);
+                if(tableInfo == null) {
+                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Table name doesn't exists. Please check the table name.").toMap()).build();
                 }
+            } catch (MusicServiceException e) {
+                logger.error(EELFLoggerDelegate.errorLogger, e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
+            }
+            String primaryKeyName = tableInfo.getPrimaryKey().get(0).getName();
+            StringBuilder fieldsString = new StringBuilder("(vector_ts,");
+            String vectorTs =
+                            String.valueOf(Thread.currentThread().getId() + System.currentTimeMillis());
+            StringBuilder valueString = new StringBuilder("(" + "?" + ",");
+            queryObject.addValue(vectorTs);
+            
+            Map<String, Object> valuesMap = insObj.getValues();
+            if (valuesMap==null) {
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
+                        .setError("Nothing to insert. No values provided in request.").toMap()).build();
+            }
+            int counter = 0;
+            String primaryKey = "";
+            for (Map.Entry<String, Object> entry : valuesMap.entrySet()) {
                 fieldsString.append("" + entry.getKey());
-                byte[] valueObj = entry.getValue();
+                Object valueObj = entry.getValue();
                 if (primaryKeyName.equals(entry.getKey())) {
                     primaryKey = entry.getValue() + "";
                     primaryKey = primaryKey.replace("'", "''");
                 }
+                DataType colType = null;
+                try {
+                    colType = tableInfo.getColumn(entry.getKey()).getType();
+                } catch(NullPointerException ex) {
+                    logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage() +" Invalid column name : "+entry.getKey
+                        (), AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR, ex);
+                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Invalid column name : "+entry.getKey()).toMap()).build();
+                }
 
-                DataType colType = tableInfo.getColumn(entry.getKey()).getType();
-
-                ByteBuffer formattedValue = null;
-
-                if(colType.toString().toLowerCase().contains("blob"))
+                Object formattedValue = null;
+                try {
                     formattedValue = MusicUtil.convertToActualDataType(colType, valueObj);
-
+                } catch (Exception e) {
+                    logger.error(EELFLoggerDelegate.errorLogger,e);
+                }
                 valueString.append("?");
 
                 queryObject.addValue(formattedValue);
-                counter = counter + 1;
-                fieldsString.append(",");
-                valueString.append(",");
-            } 
-        }
 
-        if(primaryKey == null || primaryKey.length() <= 0) {
-            logger.error(EELFLoggerDelegate.errorLogger, "Some required partition key parts are missing: "+primaryKeyName );
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.SYNTAXERROR).setError("Some required partition key parts are missing: "+primaryKeyName).toMap()).build();
-        }
-
-        fieldsString.replace(fieldsString.length()-1, fieldsString.length(), ")");
-        valueString.replace(valueString.length()-1, valueString.length(), ")");
-
-        queryObject.appendQueryString("INSERT INTO " + keyspace + "." + tablename + " "
-                        + fieldsString + " VALUES " + valueString);
-
-        String ttl = insObj.getTtl();
-        String timestamp = insObj.getTimestamp();
-
-        if ((ttl != null) && (timestamp != null)) {
-            logger.info(EELFLoggerDelegate.applicationLogger, "both there");
-            queryObject.appendQueryString(" USING TTL ? AND TIMESTAMP ?");
-            queryObject.addValue(Integer.parseInt(ttl));
-            queryObject.addValue(Long.parseLong(timestamp));
-        }
-
-        if ((ttl != null) && (timestamp == null)) {
-            logger.info(EELFLoggerDelegate.applicationLogger, "ONLY TTL there");
-            queryObject.appendQueryString(" USING TTL ?");
-            queryObject.addValue(Integer.parseInt(ttl));
-        }
-
-        if ((ttl == null) && (timestamp != null)) {
-            logger.info(EELFLoggerDelegate.applicationLogger, "ONLY timestamp there");
-            queryObject.appendQueryString(" USING TIMESTAMP ?");
-            queryObject.addValue(Long.parseLong(timestamp));
-        }
-
-        queryObject.appendQueryString(";");
-
-        ReturnType result = null;
-        String consistency = insObj.getConsistencyInfo().get("type");
-        if(consistency.equalsIgnoreCase(MusicUtil.EVENTUAL) && insObj.getConsistencyInfo().get("consistency") != null) {
-            if(MusicUtil.isValidConsistency(insObj.getConsistencyInfo().get("consistency")))
-                queryObject.setConsistency(insObj.getConsistencyInfo().get("consistency"));
-            else
-                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.SYNTAXERROR).setError("Invalid Consistency type").toMap()).build();
-        }
-        queryObject.setOperation("insert");
-        try {
-            if (consistency.equalsIgnoreCase(MusicUtil.EVENTUAL)) {
-                result = MusicCore.eventualPut(queryObject);
-            } else if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
-                String lockId = insObj.getConsistencyInfo().get("lockId");
-                if(lockId == null) {
-                    logger.error(EELFLoggerDelegate.errorLogger,"LockId cannot be null. Create lock reference or"
-                            + " use ATOMIC instead of CRITICAL", ErrorSeverity.FATAL, ErrorTypes.MUSICSERVICEERROR);
-                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("LockId cannot be null. Create lock "
-                            + "and acquire lock or use ATOMIC instead of CRITICAL").toMap()).build();
+                if (counter == valuesMap.size() - 1) {
+                    fieldsString.append(")");
+                    valueString.append(")");
+                } else {
+                    fieldsString.append(",");
+                    valueString.append(",");
                 }
-                result = MusicCore.criticalPut(keyspace, tablename, primaryKey, queryObject, lockId,null);
-            } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
-
-                result = MusicCore.atomicPut(keyspace, tablename, primaryKey, queryObject, null);
-
+                counter = counter + 1;
             }
-        } catch (Exception ex) {
-            logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity
-                .WARN, ErrorTypes.MUSICSERVICEERROR, ex);
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
-        }
 
-        if (result==null) {
-            logger.error(EELFLoggerDelegate.errorLogger,"Null result - Please Contact admin", AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Null result - Please Contact admin").toMap()).build();
-        }else if(result.getResult() == ResultType.FAILURE) {
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(result.getResult()).setError(result.getMessage()).toMap()).build();
-        }
-        return response.status(Status.OK).entity(new JsonResponse(result.getResult()).setMessage("Insert Successful").toMap()).build();
+            //blobs..
+            Map<String, byte[]> objectMap = insObj.getObjectMap();
+            if(objectMap != null) {
+                for (Map.Entry<String, byte[]> entry : objectMap.entrySet()) {
+                    if(counter > 0) {
+                        fieldsString.replace(fieldsString.length()-1, fieldsString.length(), ",");
+                        valueString.replace(valueString.length()-1, valueString.length(), ",");
+                    }
+                    fieldsString.append("" + entry.getKey());
+                    byte[] valueObj = entry.getValue();
+                    if (primaryKeyName.equals(entry.getKey())) {
+                        primaryKey = entry.getValue() + "";
+                        primaryKey = primaryKey.replace("'", "''");
+                    }
+                    DataType colType = tableInfo.getColumn(entry.getKey()).getType();
+                    ByteBuffer formattedValue = null;
+                    if(colType.toString().toLowerCase().contains("blob")) {
+                        formattedValue = MusicUtil.convertToActualDataType(colType, valueObj);
+                    }
+                    valueString.append("?");
+                    queryObject.addValue(formattedValue);
+                    counter = counter + 1;
+                    fieldsString.append(",");
+                    valueString.append(",");
+                } 
+            }
+
+            if(primaryKey == null || primaryKey.length() <= 0) {
+                logger.error(EELFLoggerDelegate.errorLogger, "Some required partition key parts are missing: "+primaryKeyName );
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.SYNTAXERROR).setError("Some required partition key parts are missing: "+primaryKeyName).toMap()).build();
+            }
+
+            fieldsString.replace(fieldsString.length()-1, fieldsString.length(), ")");
+            valueString.replace(valueString.length()-1, valueString.length(), ")");
+
+            queryObject.appendQueryString("INSERT INTO " + keyspace + "." + tablename + " "
+                            + fieldsString + " VALUES " + valueString);
+
+            String ttl = insObj.getTtl();
+            String timestamp = insObj.getTimestamp();
+
+            if ((ttl != null) && (timestamp != null)) {
+                logger.info(EELFLoggerDelegate.applicationLogger, "both there");
+                queryObject.appendQueryString(" USING TTL ? AND TIMESTAMP ?");
+                queryObject.addValue(Integer.parseInt(ttl));
+                queryObject.addValue(Long.parseLong(timestamp));
+            }
+
+            if ((ttl != null) && (timestamp == null)) {
+                logger.info(EELFLoggerDelegate.applicationLogger, "ONLY TTL there");
+                queryObject.appendQueryString(" USING TTL ?");
+                queryObject.addValue(Integer.parseInt(ttl));
+            }
+
+            if ((ttl == null) && (timestamp != null)) {
+                logger.info(EELFLoggerDelegate.applicationLogger, "ONLY timestamp there");
+                queryObject.appendQueryString(" USING TIMESTAMP ?");
+                queryObject.addValue(Long.parseLong(timestamp));
+            }
+
+            queryObject.appendQueryString(";");
+
+            ReturnType result = null;
+            String consistency = insObj.getConsistencyInfo().get("type");
+            if(consistency.equalsIgnoreCase(MusicUtil.EVENTUAL) && insObj.getConsistencyInfo().get("consistency") != null) {
+                if(MusicUtil.isValidConsistency(insObj.getConsistencyInfo().get("consistency"))) {
+                    queryObject.setConsistency(insObj.getConsistencyInfo().get("consistency"));
+                } else {
+                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.SYNTAXERROR).setError("Invalid Consistency type").toMap()).build();
+                }
+            }
+            queryObject.setOperation("insert");
+            try {
+                if (consistency.equalsIgnoreCase(MusicUtil.EVENTUAL)) {
+                    result = MusicCore.eventualPut(queryObject);
+                } else if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
+                    String lockId = insObj.getConsistencyInfo().get("lockId");
+                    if(lockId == null) {
+                        logger.error(EELFLoggerDelegate.errorLogger,"LockId cannot be null. Create lock reference or"
+                                + " use ATOMIC instead of CRITICAL", ErrorSeverity.FATAL, ErrorTypes.MUSICSERVICEERROR);
+                        return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("LockId cannot be null. Create lock "
+                                + "and acquire lock or use ATOMIC instead of CRITICAL").toMap()).build();
+                    }
+                    result = MusicCore.criticalPut(keyspace, tablename, primaryKey, queryObject, lockId,null);
+                } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
+                    result = MusicCore.atomicPut(keyspace, tablename, primaryKey, queryObject, null);
+                }
+            } catch (Exception ex) {
+                logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity
+                    .WARN, ErrorTypes.MUSICSERVICEERROR, ex);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
+            }
+            if (result==null) {
+                logger.error(EELFLoggerDelegate.errorLogger,"Null result - Please Contact admin", AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Null result - Please Contact admin").toMap()).build();
+            }else if(result.getResult() == ResultType.FAILURE) {
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(result.getResult()).setError(result.getMessage()).toMap()).build();
+            }
+            return response.status(Status.OK).entity(new JsonResponse(result.getResult()).setMessage("Insert Successful").toMap()).build();
         } finally {
             EELFLoggerDelegate.mdcRemove("keyspace");
         }
@@ -887,208 +760,203 @@ public class RestMusicDataAPI {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateTable(
-                    @ApiParam(value = "Major Version",
-                                    required = true) @PathParam("version") String version,
-                    @ApiParam(value = "Minor Version",
-                                    required = false) @HeaderParam(XMINORVERSION) String minorVersion,
-                    @ApiParam(value = "Patch Version",
-                                    required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-                    @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
-                    @ApiParam(value = "Application namespace",
-                                    required = true) @HeaderParam(NS) String ns,
-                    @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-                    JsonUpdate updateObj,
-                    @ApiParam(value = "Keyspace Name",
-                                    required = true) @PathParam("keyspace") String keyspace,
-                    @ApiParam(value = "Table Name",
-                                    required = true) @PathParam("tablename") String tablename,
-                    @Context UriInfo info) throws MusicQueryException, MusicServiceException {
+        @ApiParam(value = "Major Version",
+            required = true) @PathParam("version") String version,
+        @ApiParam(value = "Minor Version",
+            required = false) @HeaderParam(XMINORVERSION) String minorVersion,
+        @ApiParam(value = "Patch Version",
+            required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
+        @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
+        @ApiParam(value = "Application namespace",
+            required = true) @HeaderParam(NS) String ns,
+        @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
+        JsonUpdate updateObj,
+        @ApiParam(value = "Keyspace Name",
+            required = true) @PathParam("keyspace") String keyspace,
+        @ApiParam(value = "Table Name",
+            required = true) @PathParam("tablename") String tablename,
+        @Context UriInfo info) throws MusicQueryException, MusicServiceException {
         try {
-        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        if((keyspace == null || keyspace.isEmpty()) || (tablename == null || tablename.isEmpty())){
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
+            ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
+            if((keyspace == null || keyspace.isEmpty()) || (tablename == null || tablename.isEmpty())){
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
                     .setError("one or more path parameters are not set, please check and try again")
                     .toMap()).build();
-        }
-        EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspace+" ) ");
-        if (!authenticator.authenticateUser(ns, authorization, keyspace, aid, Operation.UPDATE_TABLE)) {
-            return response.status(Status.UNAUTHORIZED)
-                    .entity(new JsonResponse(ResultType.FAILURE)
-                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
-                            .toMap()).build();
-        }
-
-        long startTime = System.currentTimeMillis();
-        String operationId = UUID.randomUUID().toString();  // just for infoging
-                                                            // purposes.
-        String consistency = updateObj.getConsistencyInfo().get("type");
-
-        logger.info(EELFLoggerDelegate.applicationLogger, "--------------Music " + consistency
-                        + " update-" + operationId + "-------------------------");
-        // obtain the field value pairs of the update
-
-        PreparedQueryObject queryObject = new PreparedQueryObject();
-        Map<String, Object> valuesMap = updateObj.getValues();
-
-        TableMetadata tableInfo;
-        try {
-            tableInfo = MusicDataStoreHandle.returnColumnMetadata(keyspace, tablename);
-        } catch (MusicServiceException e) {
-            logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes
-                .GENERALSERVICEERROR, e);
-              return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
-        }
-        if (tableInfo == null) {
-            logger.error(EELFLoggerDelegate.errorLogger,"Table information not found. Please check input for table name= "+tablename, AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
-                .setError("Table information not found. Please check input for table name= "
-                + keyspace + "." + tablename).toMap()).build();
-        }
-        String vectorTs = String.valueOf(Thread.currentThread().getId() + System.currentTimeMillis());
-        StringBuilder fieldValueString = new StringBuilder("vector_ts=?,");
-        queryObject.addValue(vectorTs);
-        int counter = 0;
-        for (Map.Entry<String, Object> entry : valuesMap.entrySet()) {
-            Object valueObj = entry.getValue();
-            DataType colType = null;
-            try {
-                colType = tableInfo.getColumn(entry.getKey()).getType();
-            } catch(NullPointerException ex) {
-                logger.error(EELFLoggerDelegate.errorLogger, ex, "Invalid column name : "+entry.getKey(), ex);
-                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Invalid column name : "+entry.getKey()).toMap()).build();
             }
-            Object valueString = null;
+            EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspace+" ) ");
+            long startTime = System.currentTimeMillis();
+            String operationId = UUID.randomUUID().toString();  // just for infoging
+                                                                // purposes.
+            String consistency = updateObj.getConsistencyInfo().get("type");
+
+            logger.info(EELFLoggerDelegate.applicationLogger, "--------------Music " + consistency
+                + " update-" + operationId + "-------------------------");
+            // obtain the field value pairs of the update
+
+            PreparedQueryObject queryObject = new PreparedQueryObject();
+            Map<String, Object> valuesMap = updateObj.getValues();
+
+            TableMetadata tableInfo;
             try {
-                valueString = MusicUtil.convertToActualDataType(colType, valueObj);
-            } catch (Exception e) {
-              logger.error(EELFLoggerDelegate.errorLogger,e);
+                tableInfo = MusicDataStoreHandle.returnColumnMetadata(keyspace, tablename);
+            } catch (MusicServiceException e) {
+                logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes
+                    .GENERALSERVICEERROR, e);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
             }
-            fieldValueString.append(entry.getKey() + "= ?");
-            queryObject.addValue(valueString);
-            if (counter != valuesMap.size() - 1)
-                fieldValueString.append(",");
-            counter = counter + 1;
-        }
-        String ttl = updateObj.getTtl();
-        String timestamp = updateObj.getTimestamp();
-
-        queryObject.appendQueryString("UPDATE " + keyspace + "." + tablename + " ");
-        if ((ttl != null) && (timestamp != null)) {
-            logger.info("both there");
-            queryObject.appendQueryString(" USING TTL ? AND TIMESTAMP ?");
-            queryObject.addValue(Integer.parseInt(ttl));
-            queryObject.addValue(Long.parseLong(timestamp));
-        }
-
-        if ((ttl != null) && (timestamp == null)) {
-            logger.info("ONLY TTL there");
-            queryObject.appendQueryString(" USING TTL ?");
-            queryObject.addValue(Integer.parseInt(ttl));
-        }
-
-        if ((ttl == null) && (timestamp != null)) {
-            logger.info("ONLY timestamp there");
-            queryObject.appendQueryString(" USING TIMESTAMP ?");
-            queryObject.addValue(Long.parseLong(timestamp));
-        }
-        // get the row specifier
-        RowIdentifier rowId = null;
-        try {
-            rowId = getRowIdentifier(keyspace, tablename, info.getQueryParameters(), queryObject);
-            if(rowId == null || rowId.primarKeyValue.isEmpty()) {
+            if (tableInfo == null) {
+                logger.error(EELFLoggerDelegate.errorLogger,"Table information not found. Please check input for table name= "+tablename, AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
                 return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
-                        .setError("Mandatory WHERE clause is missing. Please check the input request.").toMap()).build();
+                    .setError("Table information not found. Please check input for table name= "
+                    + keyspace + "." + tablename).toMap()).build();
             }
-        } catch (MusicServiceException ex) {
-            logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes
-                .GENERALSERVICEERROR, ex);
-              return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
-        }
-
-        queryObject.appendQueryString(
-                        " SET " + fieldValueString + " WHERE " + rowId.rowIdString + ";");
-
-        // get the conditional, if any
-        Condition conditionInfo;
-        if (updateObj.getConditions() == null)
-            conditionInfo = null;
-        else {
-            // to avoid parsing repeatedly, just send the select query to obtain row
-            PreparedQueryObject selectQuery = new PreparedQueryObject();
-            selectQuery.appendQueryString("SELECT *  FROM " + keyspace + "." + tablename + " WHERE "
-                + rowId.rowIdString + ";");
-            selectQuery.addValue(rowId.primarKeyValue);
-            conditionInfo = new Condition(updateObj.getConditions(), selectQuery);
-        }
-
-        ReturnType operationResult = null;
-        long jsonParseCompletionTime = System.currentTimeMillis();
-
-        if(consistency.equalsIgnoreCase(MusicUtil.EVENTUAL) && updateObj.getConsistencyInfo().get("consistency") != null) {
-            if(MusicUtil.isValidConsistency(updateObj.getConsistencyInfo().get("consistency")))
-                queryObject.setConsistency(updateObj.getConsistencyInfo().get("consistency"));
-            else
-                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.SYNTAXERROR).setError("Invalid Consistency type").toMap()).build();
-        }
-        queryObject.setOperation("update");
-        if (consistency.equalsIgnoreCase(MusicUtil.EVENTUAL))
-            operationResult = MusicCore.eventualPut(queryObject);
-        else if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
-            String lockId = updateObj.getConsistencyInfo().get("lockId");
-            if(lockId == null) {
-                logger.error(EELFLoggerDelegate.errorLogger,"LockId cannot be null. Create lock reference or"
-                        + " use ATOMIC instead of CRITICAL", ErrorSeverity.FATAL, ErrorTypes.MUSICSERVICEERROR);
-                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("LockId cannot be null. Create lock "
-                        + "and acquire lock or use ATOMIC instead of CRITICAL").toMap()).build();
+            String vectorTs = String.valueOf(Thread.currentThread().getId() + System.currentTimeMillis());
+            StringBuilder fieldValueString = new StringBuilder("vector_ts=?,");
+            queryObject.addValue(vectorTs);
+            int counter = 0;
+            for (Map.Entry<String, Object> entry : valuesMap.entrySet()) {
+                Object valueObj = entry.getValue();
+                DataType colType = null;
+                try {
+                    colType = tableInfo.getColumn(entry.getKey()).getType();
+                } catch(NullPointerException ex) {
+                    logger.error(EELFLoggerDelegate.errorLogger, ex, "Invalid column name : "+entry.getKey(), ex);
+                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Invalid column name : "+entry.getKey()).toMap()).build();
+                }
+                Object valueString = null;
+                try {
+                    valueString = MusicUtil.convertToActualDataType(colType, valueObj);
+                } catch (Exception e) {
+                    logger.error(EELFLoggerDelegate.errorLogger,e);
+                }
+                fieldValueString.append(entry.getKey() + "= ?");
+                queryObject.addValue(valueString);
+                if (counter != valuesMap.size() - 1) {
+                    fieldValueString.append(",");
+                }    
+                counter = counter + 1;
             }
-            operationResult = MusicCore.criticalPut(keyspace, tablename, rowId.primarKeyValue,
-                            queryObject, lockId, conditionInfo);
-        } else if (consistency.equalsIgnoreCase("atomic_delete_lock")) {
-            // this function is mainly for the benchmarks
+            String ttl = updateObj.getTtl();
+            String timestamp = updateObj.getTimestamp();
+
+            queryObject.appendQueryString("UPDATE " + keyspace + "." + tablename + " ");
+            if ((ttl != null) && (timestamp != null)) {
+                logger.info("both there");
+                queryObject.appendQueryString(" USING TTL ? AND TIMESTAMP ?");
+                queryObject.addValue(Integer.parseInt(ttl));
+                queryObject.addValue(Long.parseLong(timestamp));
+            }
+
+            if ((ttl != null) && (timestamp == null)) {
+                logger.info("ONLY TTL there");
+                queryObject.appendQueryString(" USING TTL ?");
+                queryObject.addValue(Integer.parseInt(ttl));
+            }
+
+            if ((ttl == null) && (timestamp != null)) {
+                logger.info("ONLY timestamp there");
+                queryObject.appendQueryString(" USING TIMESTAMP ?");
+                queryObject.addValue(Long.parseLong(timestamp));
+            }
+            // get the row specifier
+            RowIdentifier rowId = null;
             try {
-                operationResult = MusicCore.atomicPutWithDeleteLock(keyspace, tablename,
-                    rowId.primarKeyValue, queryObject, conditionInfo);
-            } catch (MusicLockingException e) {
-                logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN,
-                    ErrorTypes.GENERALSERVICEERROR, e);
-                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
+                rowId = getRowIdentifier(keyspace, tablename, info.getQueryParameters(), queryObject);
+                if(rowId == null || rowId.primarKeyValue.isEmpty()) {
+                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
+                            .setError("Mandatory WHERE clause is missing. Please check the input request.").toMap()).build();
+                }
+            } catch (MusicServiceException ex) {
+                logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes
+                    .GENERALSERVICEERROR, ex);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
             }
-        } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
-            try {
-                operationResult = MusicCore.atomicPut(keyspace, tablename, rowId.primarKeyValue,
-                    queryObject, conditionInfo);
-            } catch (MusicLockingException e) {
-                logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR, e);
-                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
+
+            queryObject.appendQueryString(
+                " SET " + fieldValueString + " WHERE " + rowId.rowIdString + ";");
+
+            // get the conditional, if any
+            Condition conditionInfo;
+            if (updateObj.getConditions() == null) {
+                conditionInfo = null;
+            } else {
+                // to avoid parsing repeatedly, just send the select query to obtain row
+                PreparedQueryObject selectQuery = new PreparedQueryObject();
+                selectQuery.appendQueryString("SELECT *  FROM " + keyspace + "." + tablename + " WHERE "
+                    + rowId.rowIdString + ";");
+                selectQuery.addValue(rowId.primarKeyValue);
+                conditionInfo = new Condition(updateObj.getConditions(), selectQuery);
             }
-        }else if(consistency.equalsIgnoreCase(MusicUtil.EVENTUAL_NB)) {
-            operationResult = MusicCore.eventualPut_nb(queryObject, keyspace, tablename, rowId.primarKeyValue);
-        }
-        long actualUpdateCompletionTime = System.currentTimeMillis();
 
-        long endTime = System.currentTimeMillis();
-        String timingString = "Time taken in ms for Music " + consistency + " update-" + operationId
-                        + ":" + "|total operation time:" + (endTime - startTime)
-                        + "|json parsing time:" + (jsonParseCompletionTime - startTime)
-                        + "|update time:" + (actualUpdateCompletionTime - jsonParseCompletionTime)
-                        + "|";
+            ReturnType operationResult = null;
+            long jsonParseCompletionTime = System.currentTimeMillis();
 
-        if (operationResult != null && operationResult.getTimingInfo() != null) {
-            String lockManagementTime = operationResult.getTimingInfo();
-            timingString = timingString + lockManagementTime;
-        }
-        logger.info(EELFLoggerDelegate.applicationLogger, timingString);
+            if(consistency.equalsIgnoreCase(MusicUtil.EVENTUAL) && updateObj.getConsistencyInfo().get("consistency") != null) {
+                if(MusicUtil.isValidConsistency(updateObj.getConsistencyInfo().get("consistency"))) {
+                    queryObject.setConsistency(updateObj.getConsistencyInfo().get("consistency"));
+                } else {
+                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.SYNTAXERROR).setError("Invalid Consistency type").toMap()).build();
+                }
+            }
+            queryObject.setOperation("update");
+            if (consistency.equalsIgnoreCase(MusicUtil.EVENTUAL)) {
+                operationResult = MusicCore.eventualPut(queryObject);
+            } else if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
+                String lockId = updateObj.getConsistencyInfo().get("lockId");
+                if(lockId == null) {
+                    logger.error(EELFLoggerDelegate.errorLogger,"LockId cannot be null. Create lock reference or"
+                            + " use ATOMIC instead of CRITICAL", ErrorSeverity.FATAL, ErrorTypes.MUSICSERVICEERROR);
+                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("LockId cannot be null. Create lock "
+                            + "and acquire lock or use ATOMIC instead of CRITICAL").toMap()).build();
+                }
+                operationResult = MusicCore.criticalPut(keyspace, tablename, rowId.primarKeyValue,
+                                queryObject, lockId, conditionInfo);
+            } else if (consistency.equalsIgnoreCase("atomic_delete_lock")) {
+                // this function is mainly for the benchmarks
+                try {
+                    operationResult = MusicCore.atomicPutWithDeleteLock(keyspace, tablename,
+                        rowId.primarKeyValue, queryObject, conditionInfo);
+                } catch (MusicLockingException e) {
+                    logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN,
+                        ErrorTypes.GENERALSERVICEERROR, e);
+                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
+                }
+            } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
+                try {
+                    operationResult = MusicCore.atomicPut(keyspace, tablename, rowId.primarKeyValue,
+                        queryObject, conditionInfo);
+                } catch (MusicLockingException e) {
+                    logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR, e);
+                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
+                }
+            } else if (consistency.equalsIgnoreCase(MusicUtil.EVENTUAL_NB)) {
+                operationResult = MusicCore.eventualPut_nb(queryObject, keyspace, tablename, rowId.primarKeyValue);
+            }
+            long actualUpdateCompletionTime = System.currentTimeMillis();
 
-        if (operationResult==null) {
-            logger.error(EELFLoggerDelegate.errorLogger,"Null result - Please Contact admin", AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Null result - Please Contact admin").toMap()).build();
-        }
-        if ( operationResult.getResult() == ResultType.SUCCESS ) {
-            return response.status(Status.OK).entity(new JsonResponse(operationResult.getResult()).setMessage(operationResult.getMessage()).toMap()).build();
-        } else {
-            logger.error(EELFLoggerDelegate.errorLogger,operationResult.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(operationResult.getResult()).setError(operationResult.getMessage()).toMap()).build();
-        }
+            long endTime = System.currentTimeMillis();
+            String timingString = "Time taken in ms for Music " + consistency + " update-" + operationId
+                + ":" + "|total operation time:" + (endTime - startTime)
+                + "|json parsing time:" + (jsonParseCompletionTime - startTime)
+                + "|update time:" + (actualUpdateCompletionTime - jsonParseCompletionTime)
+                + "|";
+
+            if (operationResult != null && operationResult.getTimingInfo() != null) {
+                String lockManagementTime = operationResult.getTimingInfo();
+                timingString = timingString + lockManagementTime;
+            }
+            logger.info(EELFLoggerDelegate.applicationLogger, timingString);
+
+            if (operationResult==null) {
+                logger.error(EELFLoggerDelegate.errorLogger,"Null result - Please Contact admin", AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Null result - Please Contact admin").toMap()).build();
+            }
+            if ( operationResult.getResult() == ResultType.SUCCESS ) {
+                return response.status(Status.OK).entity(new JsonResponse(operationResult.getResult()).setMessage(operationResult.getMessage()).toMap()).build();
+            } else {
+                logger.error(EELFLoggerDelegate.errorLogger,operationResult.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(operationResult.getResult()).setError(operationResult.getMessage()).toMap()).build();
+            }
         } finally {
             EELFLoggerDelegate.mdcRemove("keyspace");
         }
@@ -1111,142 +979,134 @@ public class RestMusicDataAPI {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteFromTable(
-                    @ApiParam(value = "Major Version",
-                                    required = true) @PathParam("version") String version,
-                    @ApiParam(value = "Minor Version",
-                                    required = false) @HeaderParam(XMINORVERSION) String minorVersion,
-                    @ApiParam(value = "Patch Version",
-                                    required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-                    @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
-                    @ApiParam(value = "Application namespace",
-                                    required = true) @HeaderParam(NS) String ns,
-                    @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-                    JsonDelete delObj,
-                    @ApiParam(value = "Keyspace Name",
-                                    required = true) @PathParam("keyspace") String keyspace,
-                    @ApiParam(value = "Table Name",
-                                    required = true) @PathParam("tablename") String tablename,
-                    @Context UriInfo info) throws MusicQueryException, MusicServiceException {
+        @ApiParam(value = "Major Version",
+            required = true) @PathParam("version") String version,
+        @ApiParam(value = "Minor Version",
+            required = false) @HeaderParam(XMINORVERSION) String minorVersion,
+        @ApiParam(value = "Patch Version",
+            required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
+        @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
+        @ApiParam(value = "Application namespace",
+            required = true) @HeaderParam(NS) String ns,
+        @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
+        JsonDelete delObj,
+        @ApiParam(value = "Keyspace Name",
+            required = true) @PathParam("keyspace") String keyspace,
+        @ApiParam(value = "Table Name",
+            required = true) @PathParam("tablename") String tablename,
+        @Context UriInfo info) throws MusicQueryException, MusicServiceException {
         try {
-        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        if((keyspace == null || keyspace.isEmpty()) || (tablename == null || tablename.isEmpty())){
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
+            ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
+            if((keyspace == null || keyspace.isEmpty()) || (tablename == null || tablename.isEmpty())){
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
                     .setError("one or more path parameters are not set, please check and try again")
                     .toMap()).build();
-        }
-        EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspace+" ) ");
-        if (!authenticator.authenticateUser(ns, authorization, keyspace, aid, Operation.DELETE_FROM_TABLE)) {
-            return response.status(Status.UNAUTHORIZED)
-                    .entity(new JsonResponse(ResultType.FAILURE)
-                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
-                            .toMap()).build();
-        }
- 
-        if(delObj == null) {
-            logger.error(EELFLoggerDelegate.errorLogger,"Required HTTP Request body is missing.", AppMessages.MISSINGDATA  ,ErrorSeverity.WARN, ErrorTypes.DATAERROR);
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Required HTTP Request body is missing.").toMap()).build();
-        }
-        PreparedQueryObject queryObject = new PreparedQueryObject();
-        StringBuilder columnString = new StringBuilder();
-
-        int counter = 0;
-        List<String> columnList = delObj.getColumns();
-        if (columnList != null) {
-            for (String column : columnList) {
-                columnString.append(column);
-                if (counter != columnList.size() - 1)
-                    columnString.append(",");
-                counter = counter + 1;
             }
-        }
+            EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspace+" ) ");
+            if(delObj == null) {
+                logger.error(EELFLoggerDelegate.errorLogger,"Required HTTP Request body is missing.", AppMessages.MISSINGDATA  ,ErrorSeverity.WARN, ErrorTypes.DATAERROR);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Required HTTP Request body is missing.").toMap()).build();
+            }
+            PreparedQueryObject queryObject = new PreparedQueryObject();
+            StringBuilder columnString = new StringBuilder();
 
-        // get the row specifier
-        RowIdentifier rowId = null;
-        try {
-            rowId = getRowIdentifier(keyspace, tablename, info.getQueryParameters(), queryObject);
-        } catch (MusicServiceException ex) {
-            logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes
-                .GENERALSERVICEERROR, ex);
-              return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
-        }
-        String rowSpec = rowId.rowIdString.toString();
-
-        if ((columnList != null) && (!rowSpec.isEmpty())) {
-            queryObject.appendQueryString("DELETE " + columnString + " FROM " + keyspace + "."
-                            + tablename + " WHERE " + rowSpec + ";");
-        }
-
-        if ((columnList == null) && (!rowSpec.isEmpty())) {
-            queryObject.appendQueryString("DELETE FROM " + keyspace + "." + tablename + " WHERE "
-                            + rowSpec + ";");
-        }
-
-        if ((columnList != null) && (rowSpec.isEmpty())) {
-            queryObject.appendQueryString(
-                            "DELETE " + columnString + " FROM " + keyspace + "." + rowSpec + ";");
-        }
-        // get the conditional, if any
-        Condition conditionInfo;
-        if (delObj.getConditions() == null) {
-            conditionInfo = null;
-        } else {
-            // to avoid parsing repeatedly, just send the select query to
-            // obtain row
-            PreparedQueryObject selectQuery = new PreparedQueryObject();
-            selectQuery.appendQueryString("SELECT *  FROM " + keyspace + "." + tablename + " WHERE "
-                            + rowId.rowIdString + ";");
-            selectQuery.addValue(rowId.primarKeyValue);
-            conditionInfo = new Condition(delObj.getConditions(), selectQuery);
-        }
-
-        String consistency = delObj.getConsistencyInfo().get("type");
-
-
-        if(consistency.equalsIgnoreCase(MusicUtil.EVENTUAL) && delObj.getConsistencyInfo().get("consistency")!=null) {
-
-            if(MusicUtil.isValidConsistency(delObj.getConsistencyInfo().get("consistency")))
-                queryObject.setConsistency(delObj.getConsistencyInfo().get("consistency"));
-            else
-                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.SYNTAXERROR).setError("Invalid Consistency type").toMap()).build();
-        }
-
-        ReturnType operationResult = null;
-        queryObject.setOperation("delete");
-        try {
-            if (consistency.equalsIgnoreCase(MusicUtil.EVENTUAL))
-                operationResult = MusicCore.eventualPut(queryObject);
-            else if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
-                String lockId = delObj.getConsistencyInfo().get("lockId");
-                if(lockId == null) {
-                    logger.error(EELFLoggerDelegate.errorLogger,"LockId cannot be null. Create lock reference or"
-                            + " use ATOMIC instead of CRITICAL", ErrorSeverity.FATAL, ErrorTypes.MUSICSERVICEERROR);
-                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("LockId cannot be null. Create lock "
-                            + "and acquire lock or use ATOMIC instead of CRITICAL").toMap()).build();
+            int counter = 0;
+            List<String> columnList = delObj.getColumns();
+            if (columnList != null) {
+                for (String column : columnList) {
+                    columnString.append(column);
+                    if (counter != columnList.size() - 1)
+                        columnString.append(",");
+                    counter = counter + 1;
                 }
-                operationResult = MusicCore.criticalPut(keyspace, tablename, rowId.primarKeyValue,
-                                queryObject, lockId, conditionInfo);
-            } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
-                    operationResult = MusicCore.atomicPut(keyspace, tablename, rowId.primarKeyValue,
-                                    queryObject, conditionInfo);
-            } else if(consistency.equalsIgnoreCase(MusicUtil.EVENTUAL_NB)) {
-                
-                operationResult = MusicCore.eventualPut_nb(queryObject, keyspace, tablename, rowId.primarKeyValue);
             }
-        } catch (MusicLockingException e) {
-            logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR, e);
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
-                    .setError("Unable to perform Delete operation. Exception from music").toMap()).build();
-        }
-        if (operationResult==null) {
-            logger.error(EELFLoggerDelegate.errorLogger,"Null result - Please Contact admin", AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Null result - Please Contact admin").toMap()).build();
-        }
-        if (operationResult.getResult().equals(ResultType.SUCCESS)) {
-            return response.status(Status.OK).entity(new JsonResponse(operationResult.getResult()).setMessage(operationResult.getMessage()).toMap()).build();
-        } else {
-            logger.error(EELFLoggerDelegate.errorLogger,operationResult.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(operationResult.getMessage()).toMap()).build();
-        }
+
+            // get the row specifier
+            RowIdentifier rowId = null;
+            try {
+                rowId = getRowIdentifier(keyspace, tablename, info.getQueryParameters(), queryObject);
+            } catch (MusicServiceException ex) {
+                logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes
+                    .GENERALSERVICEERROR, ex);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
+            }
+            String rowSpec = rowId.rowIdString.toString();
+
+            if ((columnList != null) && (!rowSpec.isEmpty())) {
+                queryObject.appendQueryString("DELETE " + columnString + " FROM " + keyspace + "."
+                                + tablename + " WHERE " + rowSpec + ";");
+            }
+
+            if ((columnList == null) && (!rowSpec.isEmpty())) {
+                queryObject.appendQueryString("DELETE FROM " + keyspace + "." + tablename + " WHERE "
+                                + rowSpec + ";");
+            }
+
+            if ((columnList != null) && (rowSpec.isEmpty())) {
+                queryObject.appendQueryString(
+                                "DELETE " + columnString + " FROM " + keyspace + "." + rowSpec + ";");
+            }
+            // get the conditional, if any
+            Condition conditionInfo;
+            if (delObj.getConditions() == null) {
+                conditionInfo = null;
+            } else {
+                // to avoid parsing repeatedly, just send the select query to
+                // obtain row
+                PreparedQueryObject selectQuery = new PreparedQueryObject();
+                selectQuery.appendQueryString("SELECT *  FROM " + keyspace + "." + tablename + " WHERE "
+                    + rowId.rowIdString + ";");
+                selectQuery.addValue(rowId.primarKeyValue);
+                conditionInfo = new Condition(delObj.getConditions(), selectQuery);
+            }
+
+            String consistency = delObj.getConsistencyInfo().get("type");
+
+
+            if(consistency.equalsIgnoreCase(MusicUtil.EVENTUAL) && delObj.getConsistencyInfo().get("consistency")!=null) {
+                if(MusicUtil.isValidConsistency(delObj.getConsistencyInfo().get("consistency"))) {
+                    queryObject.setConsistency(delObj.getConsistencyInfo().get("consistency"));
+                } else {
+                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.SYNTAXERROR)
+                        .setError("Invalid Consistency type").toMap()).build();
+                }
+            }
+            ReturnType operationResult = null;
+            queryObject.setOperation("delete");
+            try {
+                if (consistency.equalsIgnoreCase(MusicUtil.EVENTUAL))
+                    operationResult = MusicCore.eventualPut(queryObject);
+                else if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
+                    String lockId = delObj.getConsistencyInfo().get("lockId");
+                    if(lockId == null) {
+                        logger.error(EELFLoggerDelegate.errorLogger,"LockId cannot be null. Create lock reference or"
+                            + " use ATOMIC instead of CRITICAL", ErrorSeverity.FATAL, ErrorTypes.MUSICSERVICEERROR);
+                        return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("LockId cannot be null. Create lock "
+                            + "and acquire lock or use ATOMIC instead of CRITICAL").toMap()).build();
+                    }
+                    operationResult = MusicCore.criticalPut(keyspace, tablename, rowId.primarKeyValue,
+                        queryObject, lockId, conditionInfo);
+                } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
+                    operationResult = MusicCore.atomicPut(keyspace, tablename, rowId.primarKeyValue,
+                        queryObject, conditionInfo);
+                } else if(consistency.equalsIgnoreCase(MusicUtil.EVENTUAL_NB)) {                    
+                    operationResult = MusicCore.eventualPut_nb(queryObject, keyspace, tablename, rowId.primarKeyValue);
+                }
+            } catch (MusicLockingException e) {
+                logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR, e);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
+                        .setError("Unable to perform Delete operation. Exception from music").toMap()).build();
+            }
+            if (operationResult==null) {
+                logger.error(EELFLoggerDelegate.errorLogger,"Null result - Please Contact admin", AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Null result - Please Contact admin").toMap()).build();
+            }
+            if (operationResult.getResult().equals(ResultType.SUCCESS)) {
+                return response.status(Status.OK).entity(new JsonResponse(operationResult.getResult()).setMessage(operationResult.getMessage()).toMap()).build();
+            } else {
+                logger.error(EELFLoggerDelegate.errorLogger,operationResult.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(operationResult.getMessage()).toMap()).build();
+            }
         } finally {
             EELFLoggerDelegate.mdcRemove("keyspace");
         }
@@ -1264,46 +1124,38 @@ public class RestMusicDataAPI {
     @ApiOperation(value = "Drop Table", response = String.class)
     @Produces(MediaType.APPLICATION_JSON)
     public Response dropTable(
-                    @ApiParam(value = "Major Version",
-                                    required = true) @PathParam("version") String version,
-                    @ApiParam(value = "Minor Version",
-                                    required = false) @HeaderParam(XMINORVERSION) String minorVersion,
-                    @ApiParam(value = "Patch Version",
-                                    required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-                    @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
-                    @ApiParam(value = "Application namespace",
-                                    required = true) @HeaderParam(NS) String ns,
-                    @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-                    @ApiParam(value = "Keyspace Name",
-                                    required = true) @PathParam("keyspace") String keyspace,
-                    @ApiParam(value = "Table Name",
-                                    required = true) @PathParam("tablename") String tablename) throws Exception {
+        @ApiParam(value = "Major Version",
+            required = true) @PathParam("version") String version,
+        @ApiParam(value = "Minor Version",
+            required = false) @HeaderParam(XMINORVERSION) String minorVersion,
+        @ApiParam(value = "Patch Version",
+            required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
+        @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
+        @ApiParam(value = "Application namespace",
+            required = true) @HeaderParam(NS) String ns,
+        @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
+        @ApiParam(value = "Keyspace Name",
+            required = true) @PathParam("keyspace") String keyspace,
+        @ApiParam(value = "Table Name",
+            required = true) @PathParam("tablename") String tablename) throws Exception {
         try {
-        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        if((keyspace == null || keyspace.isEmpty()) || (tablename == null || tablename.isEmpty())){
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
-                .setError("one or more path parameters are not set, please check and try again")
-                .toMap()).build();
-        }
-        EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspace+" ) ");
-        if (!authenticator.authenticateUser(ns, authorization, keyspace, aid, Operation.DROP_TABLE)) {
-            return response.status(Status.UNAUTHORIZED)
-                    .entity(new JsonResponse(ResultType.FAILURE)
-                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
-                            .toMap()).build();
-        }
-
-        String consistency = "eventual";// for now this needs only eventual
-                                        // consistency
-        PreparedQueryObject query = new PreparedQueryObject();
-        query.appendQueryString("DROP TABLE  " + keyspace + "." + tablename + ";");
-        try {
-            return response.status(Status.OK).entity(new JsonResponse(MusicCore.nonKeyRelatedPut(query, consistency)).toMap()).build();
-        } catch (MusicServiceException ex) {
-            logger.error(EELFLoggerDelegate.errorLogger, ex, AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes
-                .GENERALSERVICEERROR);
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
-        }
+            ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
+            if((keyspace == null || keyspace.isEmpty()) || (tablename == null || tablename.isEmpty())){
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
+                    .setError("one or more path parameters are not set, please check and try again")
+                    .toMap()).build();
+            }
+            EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspace+" ) ");
+            String consistency = "eventual";// for now this needs only eventual consistency
+            PreparedQueryObject query = new PreparedQueryObject();
+            query.appendQueryString("DROP TABLE  " + keyspace + "." + tablename + ";");
+            try {
+                return response.status(Status.OK).entity(new JsonResponse(MusicCore.nonKeyRelatedPut(query, consistency)).toMap()).build();
+            } catch (MusicServiceException ex) {
+                logger.error(EELFLoggerDelegate.errorLogger, ex, AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes
+                    .GENERALSERVICEERROR);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
+            }
         } finally {
             EELFLoggerDelegate.mdcRemove("keyspace");
         }
@@ -1323,76 +1175,66 @@ public class RestMusicDataAPI {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response selectCritical(
-                    @ApiParam(value = "Major Version",
-                                    required = true) @PathParam("version") String version,
-                    @ApiParam(value = "Minor Version",
-                                    required = false) @HeaderParam(XMINORVERSION) String minorVersion,
-                    @ApiParam(value = "Patch Version",
-                                    required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-                    @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
-                    @ApiParam(value = "Application namespace",
-                                    required = true) @HeaderParam(NS) String ns,
-                    @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-                    JsonInsert selObj,
-                    @ApiParam(value = "Keyspace Name",
-                                    required = true) @PathParam("keyspace") String keyspace,
-                    @ApiParam(value = "Table Name",
-                                    required = true) @PathParam("tablename") String tablename,
-                    @Context UriInfo info) throws Exception {
+        @ApiParam(value = "Major Version",
+            required = true) @PathParam("version") String version,
+        @ApiParam(value = "Minor Version",
+            required = false) @HeaderParam(XMINORVERSION) String minorVersion,
+        @ApiParam(value = "Patch Version",
+            required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
+        @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
+        @ApiParam(value = "Application namespace",
+            required = true) @HeaderParam(NS) String ns,
+        @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
+        JsonInsert selObj,
+        @ApiParam(value = "Keyspace Name",
+            required = true) @PathParam("keyspace") String keyspace,
+        @ApiParam(value = "Table Name",
+            required = true) @PathParam("tablename") String tablename,
+        @Context UriInfo info) throws Exception {
         try {
-        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        if((keyspace == null || keyspace.isEmpty()) || (tablename == null || tablename.isEmpty())){
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
-                .setError("one or more path parameters are not set, please check and try again")
-                .toMap()).build();
-        }
-        EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspace+" ) ");
-        if (!authenticator.authenticateUser(ns, authorization, keyspace, aid, Operation.SELECT_CRITICAL)) {
-            return response.status(Status.UNAUTHORIZED)
-                    .entity(new JsonResponse(ResultType.FAILURE)
-                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
-                            .toMap()).build();
-        }
-
-        String lockId = selObj.getConsistencyInfo().get("lockId");
-
-        PreparedQueryObject queryObject = new PreparedQueryObject();
-
-        RowIdentifier rowId = null;
-        try {
-            rowId = getRowIdentifier(keyspace, tablename, info.getQueryParameters(), queryObject);
-        } catch (MusicServiceException ex) {
-            logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes
-                .GENERALSERVICEERROR, ex);
-              return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
-        }
-        queryObject.appendQueryString(
-            "SELECT *  FROM " + keyspace + "." + tablename + " WHERE " + rowId.rowIdString + ";");
-
-        ResultSet results = null;
-
-        String consistency = selObj.getConsistencyInfo().get("type");
-        try {
-        if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
-            if(lockId == null) {
-                logger.error(EELFLoggerDelegate.errorLogger,"LockId cannot be null. Create lock reference or"
-                    + " use ATOMIC instead of CRITICAL", ErrorSeverity.FATAL, ErrorTypes.MUSICSERVICEERROR);
-                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("LockId cannot be null. Create lock "
-                    + "and acquire lock or use ATOMIC instead of CRITICAL").toMap()).build();
+            ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
+            if((keyspace == null || keyspace.isEmpty()) || (tablename == null || tablename.isEmpty())){
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
+                    .setError("one or more path parameters are not set, please check and try again")
+                    .toMap()).build();
             }
-            results = MusicCore.criticalGet(keyspace, tablename, rowId.primarKeyValue, queryObject,lockId);
-        } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
-            results = MusicCore.atomicGet(keyspace, tablename, rowId.primarKeyValue, queryObject);
-        }
-        }catch(Exception ex) {
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
-        }
-        
-        if(results!=null && results.getAvailableWithoutFetching() >0) {
-            return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setDataResult(MusicDataStoreHandle.marshallResults(results)).toMap()).build();
-        }
-        return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setError("No data found").toMap()).build();
+            EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspace+" ) ");
+            String lockId = selObj.getConsistencyInfo().get("lockId");
+            PreparedQueryObject queryObject = new PreparedQueryObject();
+            RowIdentifier rowId = null;
+            try {
+                rowId = getRowIdentifier(keyspace, tablename, info.getQueryParameters(), queryObject);
+            } catch (MusicServiceException ex) {
+                logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes
+                    .GENERALSERVICEERROR, ex);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
+            }
+            queryObject.appendQueryString(
+                "SELECT *  FROM " + keyspace + "." + tablename + " WHERE " + rowId.rowIdString + ";");
 
+            ResultSet results = null;
+
+            String consistency = selObj.getConsistencyInfo().get("type");
+            try {
+            if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
+                if(lockId == null) {
+                    logger.error(EELFLoggerDelegate.errorLogger,"LockId cannot be null. Create lock reference or"
+                        + " use ATOMIC instead of CRITICAL", ErrorSeverity.FATAL, ErrorTypes.MUSICSERVICEERROR);
+                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("LockId cannot be null. Create lock "
+                        + "and acquire lock or use ATOMIC instead of CRITICAL").toMap()).build();
+                }
+                results = MusicCore.criticalGet(keyspace, tablename, rowId.primarKeyValue, queryObject,lockId);
+            } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
+                results = MusicCore.atomicGet(keyspace, tablename, rowId.primarKeyValue, queryObject);
+            }
+            }catch(Exception ex) {
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
+            }
+            
+            if(results!=null && results.getAvailableWithoutFetching() >0) {
+                return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setDataResult(MusicDataStoreHandle.marshallResults(results)).toMap()).build();
+            }
+            return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setError("No data found").toMap()).build();
         } finally {
             EELFLoggerDelegate.mdcRemove("keyspace");
         }
@@ -1411,62 +1253,54 @@ public class RestMusicDataAPI {
     @ApiOperation(value = "Select All or Select Specific", response = Map.class)
     @Produces(MediaType.APPLICATION_JSON)
     public Response select(
-            @ApiParam(value = "Major Version",
-                            required = true) @PathParam("version") String version,
-            @ApiParam(value = "Minor Version",
-                            required = false) @HeaderParam(XMINORVERSION) String minorVersion,
-            @ApiParam(value = "Patch Version",
-                            required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-            @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
-            @ApiParam(value = "Application namespace",
-                            required = true) @HeaderParam(NS) String ns,
-            @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-            @ApiParam(value = "Keyspace Name",
-                            required = true) @PathParam("keyspace") String keyspace,
-            @ApiParam(value = "Table Name",
-                            required = true) @PathParam("tablename") String tablename,
-            @Context UriInfo info) throws Exception {
+        @ApiParam(value = "Major Version",
+            required = true) @PathParam("version") String version,
+        @ApiParam(value = "Minor Version",
+            required = false) @HeaderParam(XMINORVERSION) String minorVersion,
+        @ApiParam(value = "Patch Version",
+            required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
+        @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
+        @ApiParam(value = "Application namespace",
+            required = true) @HeaderParam(NS) String ns,
+        @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
+        @ApiParam(value = "Keyspace Name",
+            required = true) @PathParam("keyspace") String keyspace,
+        @ApiParam(value = "Table Name",
+            required = true) @PathParam("tablename") String tablename,
+        @Context UriInfo info) throws Exception {
         try { 
-        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        if((keyspace == null || keyspace.isEmpty()) || (tablename == null || tablename.isEmpty())){
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
-                .setError("one or more path parameters are not set, please check and try again")
-                .toMap()).build();
-        }
-        EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspace+" ) ");
-        if (!authenticator.authenticateUser(ns, authorization, keyspace, aid, Operation.SELECT)) {
-            return response.status(Status.UNAUTHORIZED)
-                    .entity(new JsonResponse(ResultType.FAILURE)
-                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
-                            .toMap()).build();
-        }
+            ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
+            if((keyspace == null || keyspace.isEmpty()) || (tablename == null || tablename.isEmpty())){
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
+                    .setError("one or more path parameters are not set, please check and try again")
+                    .toMap()).build();
+            }
+            EELFLoggerDelegate.mdcPut("keyspace", "( " + keyspace + " ) ");
+            PreparedQueryObject queryObject = new PreparedQueryObject();
 
-        PreparedQueryObject queryObject = new PreparedQueryObject();
-
-        if (info.getQueryParameters().isEmpty())// select all
-            queryObject.appendQueryString("SELECT *  FROM " + keyspace + "." + tablename + ";");
-        else {
-            int limit = -1; // do not limit the number of results
+            if (info.getQueryParameters().isEmpty()) { // select all
+                queryObject.appendQueryString("SELECT *  FROM " + keyspace + "." + tablename + ";");
+            } else {
+                int limit = -1; // do not limit the number of results
+                try {
+                    queryObject = selectSpecificQuery(keyspace, tablename, info, limit);
+                } catch (MusicServiceException ex) {
+                    logger.error(EELFLoggerDelegate.errorLogger, ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN,
+                        ErrorTypes.GENERALSERVICEERROR, ex);
+                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
+                }
+            }
             try {
-                queryObject = selectSpecificQuery(keyspace, tablename, info, limit);
+                ResultSet results = MusicCore.get(queryObject);
+                if(results.getAvailableWithoutFetching() >0) {
+                    return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setDataResult(MusicDataStoreHandle.marshallResults(results)).toMap()).build();
+                }
+                return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setDataResult(MusicDataStoreHandle.marshallResults(results)).setError("No data found").toMap()).build();
             } catch (MusicServiceException ex) {
-                logger.error(EELFLoggerDelegate.errorLogger, ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN,
-                    ErrorTypes.GENERALSERVICEERROR, ex);
+                logger.error(EELFLoggerDelegate.errorLogger, ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.ERROR,
+                    ErrorTypes.MUSICSERVICEERROR, ex);
                 return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
             }
-        }
-
-        try {
-            ResultSet results = MusicCore.get(queryObject);
-            if(results.getAvailableWithoutFetching() >0) {
-                return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setDataResult(MusicDataStoreHandle.marshallResults(results)).toMap()).build();
-            }
-            return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setDataResult(MusicDataStoreHandle.marshallResults(results)).setError("No data found").toMap()).build();
-        } catch (MusicServiceException ex) {
-            logger.error(EELFLoggerDelegate.errorLogger, ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.ERROR,
-                ErrorTypes.MUSICSERVICEERROR, ex);
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
-        }
         } finally {
             EELFLoggerDelegate.mdcRemove("keyspace");
         }
@@ -1482,23 +1316,18 @@ public class RestMusicDataAPI {
      * @throws MusicServiceException
      */
     public PreparedQueryObject selectSpecificQuery(String keyspace,
-            String tablename, UriInfo info, int limit)
-                    throws MusicServiceException {
-
+        String tablename, UriInfo info, int limit)
+        throws MusicServiceException {
         PreparedQueryObject queryObject = new PreparedQueryObject();
-        StringBuilder rowIdString = getRowIdentifier(keyspace, tablename, info.getQueryParameters(),
-                        queryObject).rowIdString;
-
+        StringBuilder rowIdString = getRowIdentifier(keyspace, 
+            tablename,info.getQueryParameters(),queryObject).rowIdString;
         queryObject.appendQueryString(
-                        "SELECT *  FROM " + keyspace + "." + tablename + " WHERE " + rowIdString);
-
+            "SELECT *  FROM " + keyspace + "." + tablename + " WHERE " + rowIdString);
         if (limit != -1) {
             queryObject.appendQueryString(" LIMIT " + limit);
         }
-
         queryObject.appendQueryString(";");
         return queryObject;
-
     }
 
     /**
@@ -1511,18 +1340,18 @@ public class RestMusicDataAPI {
      * @throws MusicServiceException
      */
     private RowIdentifier getRowIdentifier(String keyspace, String tablename,
-                    MultivaluedMap<String, String> rowParams, PreparedQueryObject queryObject)
-                    throws MusicServiceException {
+        MultivaluedMap<String, String> rowParams, PreparedQueryObject queryObject)
+        throws MusicServiceException {
         StringBuilder rowSpec = new StringBuilder();
         int counter = 0;
         TableMetadata tableInfo = MusicDataStoreHandle.returnColumnMetadata(keyspace, tablename);
         if (tableInfo == null) {
             logger.error(EELFLoggerDelegate.errorLogger,
-                            "Table information not found. Please check input for table name= "
-                                            + keyspace + "." + tablename);
+                "Table information not found. Please check input for table name= "
+                + keyspace + "." + tablename);
             throw new MusicServiceException(
-                            "Table information not found. Please check input for table name= "
-                                            + keyspace + "." + tablename);
+                "Table information not found. Please check input for table name= "
+                + keyspace + "." + tablename);
         }
         StringBuilder primaryKey = new StringBuilder();
         for (MultivaluedMap.Entry<String, List<String>> entry : rowParams.entrySet()) {
@@ -1537,12 +1366,14 @@ public class RestMusicDataAPI {
             } catch (Exception e) {
                 logger.error(EELFLoggerDelegate.errorLogger,e);
             }
-            if(tableInfo.getPrimaryKey().get(0).getName().equals(entry.getKey()))
-            primaryKey.append(indValue);
+            if(tableInfo.getPrimaryKey().get(0).getName().equals(entry.getKey())) {
+                primaryKey.append(indValue);
+            }
             rowSpec.append(keyName + "= ?");
             queryObject.addValue(formattedValue);
-            if (counter != rowParams.size() - 1)
+            if (counter != rowParams.size() - 1) {
                 rowSpec.append(" AND ");
+            }
             counter = counter + 1;
         }
         return new RowIdentifier(primaryKey.toString(), rowSpec, queryObject);

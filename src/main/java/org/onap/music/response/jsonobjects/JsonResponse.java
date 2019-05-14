@@ -22,7 +22,9 @@
 
 package org.onap.music.response.jsonobjects;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.onap.music.lockingservice.cassandra.MusicLockState.LockStatus;
@@ -52,7 +54,7 @@ public class JsonResponse {
     /* Locking fields */
     private String lock;
     private LockStatus lockStatus;
-    private String lockHolder;
+    private List<String> lockHolders;
     private String lockLease;
 
 
@@ -209,8 +211,8 @@ public class JsonResponse {
      * @return the lockHolder
      */
     @ApiModelProperty(value = "Holder of the Lock")
-    public String getLockHolder() {
-        return lockHolder;
+    public List<String> getLockHolder() {
+        return lockHolders;
     }
 
     /**
@@ -218,10 +220,15 @@ public class JsonResponse {
      * @param lockHolder
      */
     public JsonResponse setLockHolder(String lockHolder) {
-        this.lockHolder = lockHolder;
+        this.lockHolders = new ArrayList<String>();
+        this.lockHolders.add(lockHolder);
         return this;
     }
 
+    public JsonResponse setLockHolder(List<String> lockHolders) {
+        this.lockHolders = lockHolders;
+        return this;
+    }
 
 
     /**
@@ -274,8 +281,13 @@ public class JsonResponse {
             if (lockStatus != null) {
                 lockMap.put("lock-status", lockStatus);
             }
-            if (lockHolder != null) {
-                lockMap.put("lock-holder", lockHolder);
+            if (lockHolders != null && !lockHolders.isEmpty()) {
+                if (lockHolders.size()==1) {
+                    //for backwards compatability
+                    lockMap.put("lock-holder", lockHolders.get(0));
+                } else {
+                    lockMap.put("lock-holder", lockHolders);
+                }
             }
             if (lockLease != null) {
                 lockMap.put("lock-lease", lockLease);
@@ -293,7 +305,7 @@ public class JsonResponse {
     public String toString() {
         return "JsonLockResponse [status=" + status + ", error=" + error + ", message=" + message
                         + ", lock=" + lock + ", lockStatus=" + lockStatus + ", lockHolder="
-                        + lockHolder + "]";
+                        + lockHolders + "]";
     }
 
 }

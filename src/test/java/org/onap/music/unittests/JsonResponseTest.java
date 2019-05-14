@@ -26,7 +26,9 @@ package org.onap.music.unittests;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.Test;
 import org.onap.music.lockingservice.cassandra.MusicLockState.LockStatus;
@@ -124,5 +126,20 @@ public class JsonResponseTest {
         result = new JsonResponse(ResultType.SUCCESS);
         assertTrue(result.toString() instanceof String);
         
+    }
+    
+    @Test
+    public void testLockHolders() {
+        result = new JsonResponse(ResultType.SUCCESS).setLock("lockName").setLockHolder("lockholder1");
+        Map<String, Object> lockMap = (Map<String, Object>) result.toMap().get("lock");
+        // assure that this is string for backwards compatibility
+        assertEquals("lockholder1", lockMap.get("lock-holder"));
+
+        List<String> lockholders = new ArrayList<>();
+        lockholders.add("lockholder1");
+        lockholders.add("lockholder2");
+        result.setLockHolder(lockholders);
+        lockMap = (Map<String, Object>) result.toMap().get("lock");
+        assertEquals(lockMap.get("lock-holder"), lockholders);
     }
 }

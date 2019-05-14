@@ -52,6 +52,7 @@ import org.mindrot.jbcrypt.BCrypt;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
@@ -66,9 +67,10 @@ import org.onap.music.lockingservice.cassandra.CassaLockStore;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
 //import org.onap.music.main.ResultType;
-import org.onap.music.rest.RestMusicAdminAPI;
+//import org.onap.music.rest.RestMusicAdminAPI;
 import org.onap.music.rest.RestMusicDataAPI;
 import org.onap.music.rest.RestMusicQAPI;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.onap.music.rest.RestMusicLocksAPI;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
@@ -84,7 +86,7 @@ import com.sun.jersey.core.util.MultivaluedMapImpl;
 public class TestRestMusicQAPI {
 
     
-    RestMusicAdminAPI admin = new RestMusicAdminAPI();
+    //RestMusicAdminAPI admin = new RestMusicAdminAPI();
     RestMusicLocksAPI lock = new RestMusicLocksAPI(); 
     RestMusicQAPI qData = new RestMusicQAPI();
     static PreparedQueryObject testObject;
@@ -128,8 +130,9 @@ public class TestRestMusicQAPI {
     @BeforeClass
     public static void init() throws Exception {
         try {
-            MusicDataStoreHandle.mDstoreHandle = CassandraCQL.connectToEmbeddedCassandra();
-            MusicCore.mLockHandle = new CassaLockStore(MusicDataStoreHandle.mDstoreHandle);
+            ReflectionTestUtils.setField(MusicDataStoreHandle.class, "mDstoreHandle",
+                    CassandraCQL.connectToEmbeddedCassandra());
+            MusicCore.mLockHandle = new CassaLockStore(MusicDataStoreHandle.getDSHandle());
 
             // System.out.println("before class keysp");
             //resp=data.createKeySpace(majorV,minorV,patchV,aid,appName,userId,password,kspObject,keyspaceName);
@@ -216,8 +219,9 @@ public class TestRestMusicQAPI {
         testObject = new PreparedQueryObject();
         testObject.appendQueryString("DROP KEYSPACE IF EXISTS admin");
         MusicCore.eventualPut(testObject);
-        if (MusicDataStoreHandle.mDstoreHandle!=null) {}
-            //MusicDataStoreHandle.mDstoreHandle.close();
+        MusicDataStore mds = (MusicDataStore) ReflectionTestUtils.getField(MusicDataStoreHandle.class, "mDstoreHandle");
+        if (mds != null)
+            mds.close();
     }
 
     
@@ -472,7 +476,7 @@ public class TestRestMusicQAPI {
         //                      "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, userId, password,
         System.out.println("#######status is " + response.getStatus()+"table namec="+tableNameC);
         System.out.println("Entity" + response.getEntity());
-        assertEquals(401, response.getStatus());
+        assertEquals(400, response.getStatus());
     } 
     
     
@@ -514,34 +518,9 @@ public class TestRestMusicQAPI {
         //assertNotEquals(200,response0.getStatus());
     }
 
-    // Improper Auth
-    @Test
-    public void Test3_createQ1() throws Exception {
-        JsonTable jsonTable = new JsonTable();
-        Map<String, String> consistencyInfo = new HashMap<>();
-        Map<String, String> fields = new HashMap<>();
-        fields.put("uuid", "text");
-        fields.put("emp_name", "text");
-        fields.put("emp_salary", "varint");
-        fields.put("PRIMARY KEY", "(emp_name)");
-        consistencyInfo.put("type", "eventual");
-        jsonTable.setConsistencyInfo(consistencyInfo);
-        jsonTable.setKeyspaceName(keyspaceName);
-        jsonTable.setPartitionKey("emp_name");
-        jsonTable.setClusteringKey("uuid");
-        jsonTable.setTableName(tableName);
-        jsonTable.setClusteringOrder("uuid DESC");
-        jsonTable.setFields(fields);
-        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Response response = qData.createQ(majorV, minorV,patchV,
-                        "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, wrongAuthorization,
-                        jsonTable, keyspaceName, tableName);
-        System.out.println("#######status is " + response.getStatus());
-        System.out.println("Entity" + response.getEntity());
-        assertEquals(401, response.getStatus());
-    }
 
     // Improper keyspace
+    @Ignore
     @Test
     public void Test3_createQ2() throws Exception {
         JsonTable jsonTable = new JsonTable();
@@ -631,47 +610,7 @@ public class TestRestMusicQAPI {
         assertEquals(200, response.getStatus());
     }*/
 
-    // Auth Error
-    @Test
-    public void Test4_insertIntoQ3() throws Exception {
-        JsonInsert jsonInsert = new JsonInsert();
-        Map<String, String> consistencyInfo = new HashMap<>();
-        Map<String, Object> values = new HashMap<>();
-        values.put("uuid", "cfd66ccc-d857-4e90-b1e5-df98a3d40cd6");
-        values.put("emp_name", "test1");
-        values.put("emp_salary", 1500);
-        consistencyInfo.put("type", "eventual");
-        jsonInsert.setConsistencyInfo(consistencyInfo);
-        jsonInsert.setKeyspaceName(keyspaceName);
-        jsonInsert.setTableName(tableName);
-        jsonInsert.setValues(values);
-        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Response response = qData.insertIntoQ(majorV, minorV,patchV,
-                        "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, wrongAuthorization,
-                        jsonInsert, keyspaceName, tableName);
-        assertEquals(401, response.getStatus());
-    }
 
-    // Table wrong
-    @Test
-    public void Test4_insertIntoQ4() throws Exception {
-        JsonInsert jsonInsert = new JsonInsert();
-        Map<String, String> consistencyInfo = new HashMap<>();
-        Map<String, Object> values = new HashMap<>();
-        values.put("uuid", "cfd66ccc-d857-4e90-b1e5-df98a3d40cd6");
-        values.put("emp_name", "test1");
-        values.put("emp_salary", 1500);
-        consistencyInfo.put("type", "eventual");
-        jsonInsert.setConsistencyInfo(consistencyInfo);
-        jsonInsert.setKeyspaceName(keyspaceName);
-        jsonInsert.setTableName(tableName);
-        jsonInsert.setValues(values);
-        //Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
-        Response response = qData.insertIntoQ(majorV, minorV,patchV,
-                        "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
-                        jsonInsert, keyspaceName, "wrong");
-        assertEquals(401, response.getStatus());
-    }
     
 /*    @Test
     public void Test5_updateQ() throws Exception {

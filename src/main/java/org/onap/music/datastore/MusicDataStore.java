@@ -36,7 +36,6 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.apache.commons.jcs.access.CacheAccess;
-import org.onap.music.authentication.CachingUtil;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;

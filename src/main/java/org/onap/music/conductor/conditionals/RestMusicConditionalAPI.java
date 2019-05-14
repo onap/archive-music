@@ -40,7 +40,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
-import org.codehaus.jettison.json.JSONObject;
 import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
@@ -51,10 +50,6 @@ import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
 import org.onap.music.response.jsonobjects.JsonResponse;
-import org.onap.music.rest.RestMusicAdminAPI;
-import org.onap.music.authentication.MusicAAFAuthentication;
-import org.onap.music.authentication.MusicAuthenticator;
-import org.onap.music.authentication.MusicAuthenticator.Operation;
 import org.onap.music.conductor.*;
 
 import com.datastax.driver.core.DataType;
@@ -65,38 +60,37 @@ import io.swagger.annotations.ApiParam;
 
 @Path("/v2/conditional")
 @Api(value = "Conditional Api", hidden = true)
-    public class RestMusicConditionalAPI {
-    private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(RestMusicAdminAPI.class);
+public class RestMusicConditionalAPI {
+    private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(RestMusicConditionalAPI.class);
     private static final String XMINORVERSION = "X-minorVersion";
     private static final String XPATCHVERSION = "X-patchVersion";
     private static final String NS = "ns";
     private static final String VERSION = "v2";
-
-    private MusicAuthenticator authenticator = new MusicAAFAuthentication();
 
     @POST
     @Path("/insert/keyspaces/{keyspace}/tables/{tablename}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response insertConditional(
-            @ApiParam(value = "Major Version", required = true) @PathParam("version") String version,
-            @ApiParam(value = "Minor Version", required = false) @HeaderParam(XMINORVERSION) String minorVersion,
-            @ApiParam(value = "Patch Version", required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-            @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
-            @ApiParam(value = "Application namespace", required = true) @HeaderParam(NS) String ns,
-            @ApiParam(value = "Authorization", required = true) @HeaderParam("Authorization") String authorization,
-            @ApiParam(value = "Keyspace Name", required = true) @PathParam("keyspace") String keyspace,
-            @ApiParam(value = "Table Name", required = true) @PathParam("tablename") String tablename,
-            JsonConditional jsonObj) throws Exception {
-        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        
-        if (!authenticator.authenticateUser(ns, authorization, keyspace, aid, Operation.INSERT_INTO_TABLE)) {
-            return response.status(Status.UNAUTHORIZED)
-                    .entity(new JsonResponse(ResultType.FAILURE)
-                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
-                            .toMap()).build();
-        }
-        
+        @ApiParam(value = "Major Version", required = true) 
+        @PathParam("version") String version,
+        @ApiParam(value = "Minor Version", required = false) 
+        @HeaderParam(XMINORVERSION) String minorVersion,
+        @ApiParam(value = "Patch Version", required = false) 
+        @HeaderParam(XPATCHVERSION) String patchVersion,
+        @ApiParam(value = "AID", required = true) 
+        @HeaderParam("aid") String aid,
+        @ApiParam(value = "Application namespace", required = true) 
+        @HeaderParam(NS) String ns,
+        @ApiParam(value = "Authorization", required = true) 
+        @HeaderParam("Authorization") String authorization,
+        @ApiParam(value = "Keyspace Name", required = true) 
+        @PathParam("keyspace") String keyspace,
+        @ApiParam(value = "Table Name", required = true) 
+        @PathParam("tablename") String tablename,
+        JsonConditional jsonObj) throws Exception {
+        ResponseBuilder response = 
+            MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
         String primaryKey = jsonObj.getPrimaryKey();
         String primaryKeyValue = jsonObj.getPrimaryKeyValue();
         String casscadeColumnName = jsonObj.getCasscadeColumnName();
@@ -104,15 +98,14 @@ import io.swagger.annotations.ApiParam;
         Map<String, Object> casscadeColumnData = jsonObj.getCasscadeColumnData();
         Map<String, Map<String, String>> conditions = jsonObj.getConditions();
 
-        if (primaryKey == null || primaryKeyValue == null || casscadeColumnName == null || tableValues.isEmpty()
-                || casscadeColumnData.isEmpty() || conditions.isEmpty()) {
+        if (primaryKey == null || primaryKeyValue == null || casscadeColumnName == null 
+            || tableValues.isEmpty() || casscadeColumnData.isEmpty() || conditions.isEmpty()) {
             logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGINFO, ErrorSeverity.CRITICAL,
-                    ErrorTypes.AUTHENTICATIONERROR);
+                ErrorTypes.AUTHENTICATIONERROR);
             return response.status(Status.UNAUTHORIZED).entity(new JsonResponse(ResultType.FAILURE)
-                    .setError(String.valueOf("One or more input values missing")).toMap()).build();
-
+                .setError(String.valueOf("One or more input values missing")).toMap()).build();
         }
-
+        Map<String, Object> authMap = null;
         Map<String, Object> valuesMap = new LinkedHashMap<>();
         for (Map.Entry<String, Object> entry : tableValues.entrySet()) {
             valuesMap.put(entry.getKey(), entry.getValue());
@@ -123,10 +116,11 @@ import io.swagger.annotations.ApiParam;
         status.put("nonexists", conditions.get("nonexists").get("status"));
         ReturnType out = null;
 
-        out = MusicConditional.conditionalInsert(keyspace, tablename, casscadeColumnName, casscadeColumnData,
-                primaryKeyValue, valuesMap, status);
-        return response.status(Status.OK).entity(new JsonResponse(out.getResult()).setMessage(out.getMessage()).toMap())
-                .build();
+        out = MusicConditional.conditionalInsert(keyspace, tablename, 
+            casscadeColumnName, casscadeColumnData,primaryKeyValue, valuesMap, status);
+        return response.status(Status.OK).entity(new JsonResponse(
+            out.getResult()).setMessage(out.getMessage()).toMap())
+            .build();
 
     }
 
@@ -136,24 +130,25 @@ import io.swagger.annotations.ApiParam;
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateConditional(
-            @ApiParam(value = "Major Version", required = true) @PathParam("version") String version,
-            @ApiParam(value = "Minor Version", required = false) @HeaderParam(XMINORVERSION) String minorVersion,
-            @ApiParam(value = "Patch Version", required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-            @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
-            @ApiParam(value = "Application namespace", required = true) @HeaderParam(NS) String ns,
-            @ApiParam(value = "Authorization", required = true) @HeaderParam("Authorization") String authorization,
-            @ApiParam(value = "Major Version", required = true) @PathParam("keyspace") String keyspace,
-            @ApiParam(value = "Major Version", required = true) @PathParam("tablename") String tablename,
-            JsonConditional upObj) throws Exception {
+        @ApiParam(value = "Major Version", required = true) 
+        @PathParam("version") String version,
+        @ApiParam(value = "Minor Version", required = false) 
+        @HeaderParam(XMINORVERSION) String minorVersion,
+        @ApiParam(value = "Patch Version", required = false) 
+        @HeaderParam(XPATCHVERSION) String patchVersion,
+        @ApiParam(value = "AID", required = true) 
+        @HeaderParam("aid") String aid,
+        @ApiParam(value = "Application namespace", required = true) 
+        @HeaderParam(NS) String ns,
+        @ApiParam(value = "Authorization", required = true) 
+        @HeaderParam("Authorization") String authorization,
+        @ApiParam(value = "Major Version", required = true) 
+        @PathParam("keyspace") String keyspace,
+        @ApiParam(value = "Major Version", required = true) 
+        @PathParam("tablename") String tablename,
+        JsonConditional upObj) throws Exception {
         ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
 
-        if (!authenticator.authenticateUser(ns, authorization, keyspace, aid, Operation.INSERT_INTO_TABLE)) {
-            return response.status(Status.UNAUTHORIZED)
-                    .entity(new JsonResponse(ResultType.FAILURE)
-                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
-                            .toMap()).build();
-        }
-        
         String primaryKey = upObj.getPrimaryKey();
         String primaryKeyValue = upObj.getPrimaryKeyValue();
         String casscadeColumnName = upObj.getCasscadeColumnName();
@@ -161,7 +156,7 @@ import io.swagger.annotations.ApiParam;
         Map<String, Object> tableValues = upObj.getTableValues();
 
         if (primaryKey == null || primaryKeyValue == null || casscadeColumnName == null
-                || casscadeColumnData.isEmpty()) {
+            || casscadeColumnData.isEmpty()) {
             logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.MISSINGINFO, ErrorSeverity.CRITICAL,
                     ErrorTypes.AUTHENTICATIONERROR);
             return response.status(Status.UNAUTHORIZED).entity(new JsonResponse(ResultType.FAILURE)
@@ -169,28 +164,35 @@ import io.swagger.annotations.ApiParam;
 
         }
 
-        String planId = casscadeColumnData.get("key").toString();
-        Map<String,String> casscadeColumnValueMap = (Map<String, String>) casscadeColumnData.get("value");
+        Map<String,String> casscadeColumnValueMap = 
+            (Map<String, String>) casscadeColumnData.get("value");
         TableMetadata tableInfo = null;
         tableInfo = MusicDataStoreHandle.returnColumnMetadata(keyspace, tablename);
         DataType primaryIdType = tableInfo.getPrimaryKey().get(0).getType();
         String primaryId = tableInfo.getPrimaryKey().get(0).getName();
         
         PreparedQueryObject select = new PreparedQueryObject();
-        select.appendQueryString("SELECT * FROM " + keyspace + "." + tablename + " where " + primaryId + " = ?");
+        select.appendQueryString("SELECT * FROM " + keyspace + "." 
+            + tablename + " where " + primaryId + " = ?");
         select.addValue(MusicUtil.convertToActualDataType(primaryIdType, primaryKeyValue));
         
-        PreparedQueryObject upsert = MusicConditional.extractQuery(tableValues, tableInfo, tablename, keyspace, primaryKey, primaryKeyValue, null, null);
+        PreparedQueryObject upsert = 
+            MusicConditional.extractQuery(tableValues, tableInfo, tablename, 
+                keyspace, primaryKey, primaryKeyValue, null, null);
         Map<String,PreparedQueryObject> queryBank = new HashMap<>();
         queryBank.put(MusicUtil.SELECT, select);
         queryBank.put(MusicUtil.UPSERT, upsert);
-        ReturnType result = MusicConditional.update(queryBank, keyspace, tablename, primaryKey,primaryKeyValue,planId,casscadeColumnName,casscadeColumnValueMap);
+        String planId = casscadeColumnData.get("key").toString();
+        ReturnType result = MusicConditional.update(queryBank, keyspace, tablename, 
+            primaryKey,primaryKeyValue,planId,casscadeColumnName,casscadeColumnValueMap);
         if (result.getResult() == ResultType.SUCCESS) {
             return response.status(Status.OK)
-                    .entity(new JsonResponse(result.getResult()).setMessage(result.getMessage()).toMap()).build();
+            .entity(new JsonResponse(result.getResult())
+            .setMessage(result.getMessage()).toMap()).build();
         }
         return response.status(Status.BAD_REQUEST)
-                .entity(new JsonResponse(result.getResult()).setMessage(result.getMessage()).toMap()).build();
+            .entity(new JsonResponse(result.getResult())
+            .setMessage(result.getMessage()).toMap()).build();
 
     }
 

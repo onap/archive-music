@@ -52,26 +52,11 @@ public class PropertiesLoader implements InitializingBean {
     @Value("${build}")
     public String build;
     
-    @Value("${music.rest.ip}")
-    public String musicRestIp;
-    
     @Value("${music.properties}")
     public String musicProperties;
     
     @Value("${lock.lease.period}")
     public String lockLeasePeriod;
-    
-    @Value("${public.ip}")
-    public String publicIp;
-    
-    @Value("${my.id}")
-    public String myId;
-    
-    @Value("${all.ids}")
-    public String allIds;
-    
-    @Value("${all.public.ips}")
-    public String allPublicIps;
     
     @Value("${cassandra.user}")
     public String cassandraUser;
@@ -115,6 +100,30 @@ public class PropertiesLoader implements InitializingBean {
     @Value("${retry.count}")
     public String rertryCount;
     
+    @Value("${transId.header.prefix}")
+    private String transIdPrefix;
+
+    @Value("${conversation.header.prefix}")
+    private String conversationIdPrefix;
+
+    @Value("${clientId.header.prefix}")
+    private String clientIdPrefix;
+
+    @Value("${messageId.header.prefix}")
+    private String messageIdPrefix;    
+    
+    @Value("${transId.header.required}")
+    private String transIdRequired;
+
+    @Value("${conversation.header.required}")
+    private String conversationIdRequired;
+
+    @Value("${clientId.header.required}")
+    private String clientIdRequired;
+
+    @Value("${messageId.header.required}")
+    private String messageIdRequired;
+    
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(PropertiesLoader.class);
     
     @Bean
@@ -145,19 +154,6 @@ public class PropertiesLoader implements InitializingBean {
         if (adminUsername != null && !adminUsername.equals("${admin.username}")) {
             MusicUtil.setAdminId(adminUsername);
         }
-        if (allIds != null && !allIds.equals("${all.ids}")) {
-            String[] ids = allIds.split(":");
-            MusicUtil.setAllIds(new ArrayList<String>(Arrays.asList(ids)));
-        }
-        if (allPublicIps != null && !allPublicIps.equals("${all.public.ips}")) {
-            String[] ips = allPublicIps.split(":");
-            if (ips.length == 1) {
-                // Future use
-            } else if (ips.length > 1) {
-                MusicUtil.setAllPublicIps(
-                                new ArrayList<String>(Arrays.asList(ips)));
-            }
-        }
         if (cassandraPort != null && !cassandraPort.equals("${cassandra.port}")) {
             MusicUtil.setCassandraPort(Integer.parseInt(cassandraPort));
         }
@@ -182,23 +178,14 @@ public class PropertiesLoader implements InitializingBean {
         if (musicProperties != null && !musicProperties.equals("${music.properties}")) {
             MusicUtil.setMusicPropertiesFilePath(musicProperties);
         }
-        if (musicRestIp != null && !musicRestIp.equals("${music.rest.ip}")) {
-            MusicUtil.setMusicRestIp(musicRestIp);
-        }
         if (cassandraHost != null && !cassandraHost.equals("${cassandra.host}")) {
             MusicUtil.setMyCassaHost(cassandraHost);
-        }
-        if (myId != null && !myId.equals("${my.id}")) {
-            MusicUtil.setMyId(Integer.parseInt(myId));
         }
         if (notifyInterval != null && !notifyInterval.equals("${notify.interval}")) {
             MusicUtil.setNotifyInterval(Integer.parseInt(notifyInterval));
         }
         if (notifyTimeout != null && !notifyTimeout.equals("${notify.timeout}")) {
             MusicUtil.setNotifyTimeOut(Integer.parseInt(notifyTimeout));
-        }
-        if (allPublicIps != null && !allPublicIps.equals("${public.ip}")) {
-            MusicUtil.setPublicIp(allPublicIps);
         }
         if (version != null && !version.equals("${version}")) {
             MusicUtil.setVersion(version);
@@ -214,6 +201,39 @@ public class PropertiesLoader implements InitializingBean {
         }
         if (isKeyspaceActive != null && !isKeyspaceActive.equals("${keyspace.active}")) {
             MusicUtil.setKeyspaceActive(Boolean.parseBoolean(isKeyspaceActive));
+        }
+        
+
+        if(transIdPrefix!=null) {
+            MusicUtil.setTransIdPrefix(transIdPrefix);
+        }
+
+        if(conversationIdPrefix!=null) {
+            MusicUtil.setConversationIdPrefix(conversationIdPrefix);
+        }
+
+        if(clientIdPrefix!=null) {
+            MusicUtil.setClientIdPrefix(clientIdPrefix);
+        }
+
+        if(messageIdPrefix!=null) {
+            MusicUtil.setMessageIdPrefix(messageIdPrefix);
+        }
+
+        if(transIdRequired!=null) {
+            MusicUtil.setTransIdRequired(transIdRequired);
+        }
+
+        if(conversationIdRequired!=null) {
+            MusicUtil.setConversationIdRequired(conversationIdRequired);
+        }
+
+        if(clientIdRequired!=null) {
+            MusicUtil.setClientIdRequired(clientIdRequired);
+        }
+
+        if(messageIdRequired!=null) {
+            MusicUtil.setMessageIdRequired(messageIdRequired);
         }
     }
     

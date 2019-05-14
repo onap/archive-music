@@ -4,8 +4,9 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
- *  Modifications Copyright (c) 2019 Samsung
+ *  *  Modifications Copyright (c) 2019 Samsung
  * ===================================================================
+ * 
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -24,6 +25,7 @@
 
 package org.onap.music.rest;
 
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.Consumes;
@@ -39,15 +41,14 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
-import org.onap.music.authentication.MusicAAFAuthentication;
-import org.onap.music.authentication.MusicAuthenticator;
-import org.onap.music.authentication.MusicAuthenticator.Operation;
 import org.onap.music.datastore.jsonobjects.JsonLeasedLock;
+import org.onap.music.datastore.jsonobjects.JsonLock;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicLockingException;
+import org.onap.music.lockingservice.cassandra.LockType;
 import org.onap.music.lockingservice.cassandra.MusicLockState;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
@@ -69,8 +70,6 @@ public class RestMusicLocksAPI {
     private static final String XPATCHVERSION = "X-patchVersion";
     private static final String VERSION = "v2";
 
-    private MusicAuthenticator authenticator = new MusicAAFAuthentication();
-
     /**
      * Puts the requesting process in the q for this lock. The corresponding
      * node will be created if it did not already exist
@@ -86,6 +85,7 @@ public class RestMusicLocksAPI {
         " The corresponding lock will be created if it did not already exist." +
         " Lock Name is the \"key\" of the form keyspaceName.tableName.rowId",
         response = Map.class)
+    @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)    
     public Response createLockReference(
             @ApiParam(value="Lock Name",required=true) @PathParam("lockname") String lockName,
@@ -93,40 +93,37 @@ public class RestMusicLocksAPI {
             @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
             @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
             @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+            JsonLock lockObject,
             @ApiParam(value = "Application namespace",
                             required = true) @HeaderParam("ns") String ns) throws Exception{
         try {
-        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        Map<String, Object> resultMap = MusicCore.validateLock(lockName);
-        if (resultMap.containsKey("Error")) {
-            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
-            response.status(Status.BAD_REQUEST);
-            return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
-        }
-        String keyspaceName = (String) resultMap.get("keyspace");
-        EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspaceName+" ) ");
-        
-        if (!authenticator.authenticateUser(ns, authorization, keyspaceName, aid, Operation.CREATE_LOCKREF)) {
-            return response.status(Status.UNAUTHORIZED)
-                    .entity(new JsonResponse(ResultType.FAILURE)
-                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
-                            .toMap()).build();
-        }
-        
-        ResultType status = ResultType.SUCCESS;
-        String lockId;
-        try {
-        	lockId= MusicCore.createLockReference(lockName);
-        } catch (MusicLockingException e) {
-        	return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
-        }
-        
-        if (lockId == null) { 
-            status = ResultType.FAILURE; 
-            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.LOCKINGERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(status).setError("Lock Id is null").toMap()).build();
-        }
-        return response.status(Status.OK).entity(new JsonResponse(status).setLock(lockId).toMap()).build();
+            ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
+            Map<String, Object> resultMap = MusicCore.validateLock(lockName);
+            if (resultMap.containsKey("Error")) {
+                logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+                response.status(Status.BAD_REQUEST);
+                return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
+            }
+            String keyspaceName = (String) resultMap.get("keyspace");
+            EELFLoggerDelegate.mdcPut("keyspace", "( " + keyspaceName + " ) ");
+            
+            //default lock type is write, as this is always semantically safe
+            LockType locktype = LockType.WRITE;
+            if (lockObject!=null && lockObject.getLocktype()!=null) {
+                locktype = lockObject.getLocktype();
+            }
+            String lockId;
+            try {
+                lockId= MusicCore.createLockReference(lockName, locktype);
+            } catch (MusicLockingException e) {
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
+            }
+            
+            if (lockId == null) {  
+                logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.LOCKINGERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Lock Id is null").toMap()).build();
+            }
+            return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setLock(lockId).toMap()).build();
         } finally {
             EELFLoggerDelegate.mdcRemove("keyspace");
         }
@@ -155,38 +152,30 @@ public class RestMusicLocksAPI {
             @ApiParam(value = "Application namespace",
                             required = true) @HeaderParam("ns") String ns) throws Exception{
         try { 
-        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        Map<String, Object> resultMap = MusicCore.validateLock(lockId);
-        if (resultMap.containsKey("Error")) {
-            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
-            response.status(Status.BAD_REQUEST);
-            return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
-        }
-        
-        String keyspaceName = (String) resultMap.get("keyspace");
-        EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspaceName+" ) ");
-        
-        if (!authenticator.authenticateUser(ns, authorization, keyspaceName, aid, Operation.ACQUIRE_LOCK)) {
-            return response.status(Status.UNAUTHORIZED)
-                    .entity(new JsonResponse(ResultType.FAILURE)
-                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
-                            .toMap()).build();
-        }
-        
-        try {
-            String lockName = lockId.substring(lockId.indexOf('$')+1, lockId.lastIndexOf('$'));
-            ReturnType lockStatus = MusicCore.acquireLock(lockName,lockId);
-            if ( lockStatus.getResult().equals(ResultType.SUCCESS)) {
-                response.status(Status.OK);
-            } else {
+            ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
+            Map<String, Object> resultMap = MusicCore.validateLock(lockId);
+            if (resultMap.containsKey("Error")) {
+                logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
                 response.status(Status.BAD_REQUEST);
+                return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
             }
-            return response.entity(new JsonResponse(lockStatus.getResult()).setLock(lockId).setMessage(lockStatus.getMessage()).toMap()).build();
-        } catch (Exception e) {
-            logger.error(EELFLoggerDelegate.errorLogger,AppMessages.INVALIDLOCK + lockId, ErrorSeverity.CRITICAL,
-                ErrorTypes.LOCKINGERROR, e);
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Unable to aquire lock").toMap()).build();
-        }
+            
+            String keyspaceName = (String) resultMap.get("keyspace");
+            EELFLoggerDelegate.mdcPut("keyspace", "( " + keyspaceName + " ) ");
+            try {
+                String lockName = lockId.substring(lockId.indexOf('$')+1, lockId.lastIndexOf('$'));
+                ReturnType lockStatus = MusicCore.acquireLock(lockName,lockId);
+                if ( lockStatus.getResult().equals(ResultType.SUCCESS)) {
+                    response.status(Status.OK);
+                } else {
+                    response.status(Status.BAD_REQUEST);
+                }
+                return response.entity(new JsonResponse(lockStatus.getResult()).setLock(lockId).setMessage(lockStatus.getMessage()).toMap()).build();
+            } catch (Exception e) {
+                logger.error(EELFLoggerDelegate.errorLogger,AppMessages.INVALIDLOCK + lockId, ErrorSeverity.CRITICAL,
+                    ErrorTypes.LOCKINGERROR, e);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Unable to aquire lock").toMap()).build();
+            }
         } finally {
             EELFLoggerDelegate.mdcRemove("keyspace");
         }
@@ -209,33 +198,25 @@ public class RestMusicLocksAPI {
             @ApiParam(value = "Application namespace",
                             required = true) @HeaderParam("ns") String ns) throws Exception{
         try {
-        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        Map<String, Object> resultMap = MusicCore.validateLock(lockId);
-        if (resultMap.containsKey("Error")) {
-            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
-            response.status(Status.BAD_REQUEST);
-            return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
-        }
-        String keyspaceName = (String) resultMap.get("keyspace");
-        EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspaceName+" ) ");
-        resultMap.remove("keyspace");
-        if (!authenticator.authenticateUser(ns, authorization, keyspaceName, aid, Operation.ACQUIRE_LOCK)) {
-            return response.status(Status.UNAUTHORIZED)
-                    .entity(new JsonResponse(ResultType.FAILURE)
-                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
-                            .toMap()).build();
-        }
-        
-        String lockName = lockId.substring(lockId.indexOf('$')+1, lockId.lastIndexOf('$'));
-        ReturnType lockLeaseStatus = MusicCore.acquireLockWithLease(lockName, lockId, lockObj.getLeasePeriod());
-        if ( lockLeaseStatus.getResult().equals(ResultType.SUCCESS)) {
-            response.status(Status.OK);
-        } else {
-            response.status(Status.BAD_REQUEST);
-        }
-        return response.entity(new JsonResponse(lockLeaseStatus.getResult()).setLock(lockName)
-                                    .setMessage(lockLeaseStatus.getMessage())
-                                    .setLockLease(String.valueOf(lockObj.getLeasePeriod())).toMap()).build();
+            ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
+            Map<String, Object> resultMap = MusicCore.validateLock(lockId);
+            if (resultMap.containsKey("Error")) {
+                logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+                response.status(Status.BAD_REQUEST);
+                return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
+            }
+            String keyspaceName = (String) resultMap.get("keyspace");
+            EELFLoggerDelegate.mdcPut("keyspace", "( " + keyspaceName + " ) ");
+            String lockName = lockId.substring(lockId.indexOf('$')+1, lockId.lastIndexOf('$'));
+            ReturnType lockLeaseStatus = MusicCore.acquireLockWithLease(lockName, lockId, lockObj.getLeasePeriod());
+            if ( lockLeaseStatus.getResult().equals(ResultType.SUCCESS)) {
+                response.status(Status.OK);
+            } else {
+                response.status(Status.BAD_REQUEST);
+            }
+            return response.entity(new JsonResponse(lockLeaseStatus.getResult()).setLock(lockName)
+                .setMessage(lockLeaseStatus.getMessage())
+                .setLockLease(String.valueOf(lockObj.getLeasePeriod())).toMap()).build();
         } finally {
             EELFLoggerDelegate.mdcRemove("keyspace");
         }
@@ -244,11 +225,11 @@ public class RestMusicLocksAPI {
 
     @GET
     @Path("/enquire/{lockname}")
-    @ApiOperation(value = "Get Lock Holder", 
-        notes = "Gets the current Lock Holder",
+    @ApiOperation(value = "Get the top of the lock queue", 
+        notes = "Gets the current single lockholder at top of lock queue",
         response = Map.class)
     @Produces(MediaType.APPLICATION_JSON)    
-    public Response currentLockHolder(
+    public Response enquireLock(
             @ApiParam(value="Lock Name",required=true) @PathParam("lockname") String lockName,
             @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
             @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
@@ -257,39 +238,76 @@ public class RestMusicLocksAPI {
             @ApiParam(value = "Application namespace",
                             required = true) @HeaderParam("ns") String ns) throws Exception{
         try {
-        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        Map<String, Object> resultMap = MusicCore.validateLock(lockName);
-        if (resultMap.containsKey("Error")) {
-            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
-            response.status(Status.BAD_REQUEST);
-            return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
-        }
-
-        String keyspaceName = (String) resultMap.get("keyspace");
-        EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspaceName+" ) ");
-        resultMap.remove("keyspace");
-        if (!authenticator.authenticateUser(ns, authorization, keyspaceName, aid, Operation.CURRENT_LOCK)) {
-            return response.status(Status.UNAUTHORIZED)
-                    .entity(new JsonResponse(ResultType.FAILURE)
-                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
-                            .toMap()).build();
-        }
-        
-        String who = MusicCore.whoseTurnIsIt(lockName);
-        ResultType status = ResultType.SUCCESS;
-        String error = "";
-        if ( who == null ) { 
-            status = ResultType.FAILURE; 
-            error = "There was a problem getting the lock holder";
-            logger.error(EELFLoggerDelegate.errorLogger,"There was a problem getting the lock holder", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(status).setError(error).setLock(lockName).setLockHolder(who).toMap()).build();
-        }
-        return response.status(Status.OK).entity(new JsonResponse(status).setError(error).setLock(lockName).setLockHolder(who).toMap()).build();
+            ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
+            Map<String, Object> resultMap = MusicCore.validateLock(lockName);
+            if (resultMap.containsKey("Error")) {
+                logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+                response.status(Status.BAD_REQUEST);
+                return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
+            }
+            String keyspaceName = (String) resultMap.get("keyspace");
+            EELFLoggerDelegate.mdcPut("keyspace", "( " + keyspaceName + " ) ");
+            String who = MusicCore.whoseTurnIsIt(lockName);
+            ResultType status = ResultType.SUCCESS;
+            String error = "";
+            if ( who == null ) { 
+                status = ResultType.FAILURE; 
+                error = "There was a problem getting the lock holder";
+                logger.error(EELFLoggerDelegate.errorLogger,"There was a problem getting the lock holder", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(status).setError(error).setLock(lockName).setLockHolder(who).toMap()).build();
+            }
+            return response.status(Status.OK).entity(new JsonResponse(status).setError(error).setLock(lockName).setLockHolder(who).toMap()).build();
         } finally {
             EELFLoggerDelegate.mdcRemove("keyspace");
         }
     }
 
+    @GET
+    @Path("/getCurrentLockHolders/{lockname}")
+    @ApiOperation(value = "Get Lock Holders", 
+        notes = "Gets the current Lock Holders",
+        response = Map.class)
+    @Produces(MediaType.APPLICATION_JSON)    
+    public Response currentLockHolder(@ApiParam(value="Lock Name",required=true) @PathParam("lockname") String lockName,
+            @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
+            @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
+            @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
+            @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+            @ApiParam(value = "Application namespace",
+                            required = true) @HeaderParam("ns") String ns) throws Exception{
+        try {
+            ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
+            Map<String, Object> resultMap = MusicCore.validateLock(lockName);
+            if (resultMap.containsKey("Error")) {
+                logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.INCORRECTDATA, ErrorSeverity.CRITICAL,
+                        ErrorTypes.GENERALSERVICEERROR);
+                response.status(Status.BAD_REQUEST);
+                return response.entity(
+                        new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap())
+                        .build();
+            }
+            String keyspaceName = (String) resultMap.get("keyspace");
+            List<String> who = MusicCore.getCurrentLockHolders(lockName);
+            ResultType status = ResultType.SUCCESS;
+            String error = "";
+            if (who == null) {
+                status = ResultType.FAILURE;
+                error = "There was a problem getting the lock holder";
+                logger.error(EELFLoggerDelegate.errorLogger, "There was a problem getting the lock holder",
+                        AppMessages.INCORRECTDATA, ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+                return response.status(Status.BAD_REQUEST)
+                        .entity(new JsonResponse(status).setError(error).setLock(lockName).setLockHolder(who).toMap())
+                        .build();
+            }
+            return response.status(Status.OK)
+                    .entity(new JsonResponse(status).setError(error).setLock(lockName).setLockHolder(who).toMap())
+                    .build();
+        } finally {
+            EELFLoggerDelegate.mdcRemove("keyspace");
+        }
+    }
+    
+    
     @GET
     @Path("/{lockname}")
     @ApiOperation(value = "Lock State",
@@ -305,33 +323,25 @@ public class RestMusicLocksAPI {
             @ApiParam(value = "Application namespace",
                             required = true) @HeaderParam("ns") String ns) throws Exception{
         try {
-        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        Map<String, Object> resultMap = MusicCore.validateLock(lockName);
-        if (resultMap.containsKey("Error")) {
-            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
-            response.status(Status.BAD_REQUEST);
-            return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
-        }
-        String keyspaceName = (String) resultMap.get("keyspace");
-        EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspaceName+" ) ");
-        resultMap.remove("keyspace");
-        if (!authenticator.authenticateUser(ns, authorization, keyspaceName, aid, Operation.CURRENT_LOCK)) {
-            return response.status(Status.UNAUTHORIZED)
-                    .entity(new JsonResponse(ResultType.FAILURE)
-                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
-                            .toMap()).build();
-        }
-        
-        String who = MusicCore.whoseTurnIsIt(lockName);
-        ResultType status = ResultType.SUCCESS;
-        String error = "";
-        if ( who == null ) { 
-            status = ResultType.FAILURE; 
-            error = "There was a problem getting the lock holder";
-            logger.error(EELFLoggerDelegate.errorLogger,"There was a problem getting the lock holder", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(status).setError(error).setLock(lockName).setLockHolder(who).toMap()).build();
-        }
-        return response.status(Status.OK).entity(new JsonResponse(status).setError(error).setLock(lockName).setLockHolder(who).toMap()).build();
+            ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
+            Map<String, Object> resultMap = MusicCore.validateLock(lockName);
+            if (resultMap.containsKey("Error")) {
+                logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+                response.status(Status.BAD_REQUEST);
+                return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
+            }
+            String keyspaceName = (String) resultMap.get("keyspace");
+            EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspaceName+" ) ");
+            String who = MusicCore.whoseTurnIsIt(lockName);
+            ResultType status = ResultType.SUCCESS;
+            String error = "";
+            if ( who == null ) { 
+                status = ResultType.FAILURE; 
+                error = "There was a problem getting the lock holder";
+                logger.error(EELFLoggerDelegate.errorLogger,"There was a problem getting the lock holder", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(status).setError(error).setLock(lockName).setLockHolder(who).toMap()).build();
+            }
+            return response.status(Status.OK).entity(new JsonResponse(status).setError(error).setLock(lockName).setLockHolder(who).toMap()).build();
         } finally {
             EELFLoggerDelegate.mdcRemove("keyspace");
         }
@@ -357,61 +367,52 @@ public class RestMusicLocksAPI {
             @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
             @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
             @ApiParam(value = "Application namespace",
-                            required = true) @HeaderParam("ns") String ns) throws Exception{
+                required = true) @HeaderParam("ns") String ns) throws Exception{
         try {
-        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        Map<String, Object> resultMap = MusicCore.validateLock(lockId);
-        if (resultMap.containsKey("Error")) {
-            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
-            response.status(Status.BAD_REQUEST);
-            return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
-        }
+            ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
+            Map<String, Object> resultMap = MusicCore.validateLock(lockId);
+            if (resultMap.containsKey("Error")) {
+                logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+                response.status(Status.BAD_REQUEST);
+                return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
+            }
 
-        String keyspaceName = (String) resultMap.get("keyspace");
-        EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspaceName+" ) ");
-        resultMap.remove("keyspace");
-        if (!authenticator.authenticateUser(ns, authorization, keyspaceName, aid, Operation.DELETE_LOCK)) {
-            return response.status(Status.UNAUTHORIZED)
-                    .entity(new JsonResponse(ResultType.FAILURE)
-                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
-                            .toMap()).build();
-        }
-        
-        boolean voluntaryRelease = true; 
-        MusicLockState mls = MusicCore.releaseLock(lockId,voluntaryRelease);
-        if(mls.getErrorMessage() != null) {
-            resultMap.put(ResultType.EXCEPTION.getResult(), mls.getErrorMessage());
-            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
-            return response.status(Status.BAD_REQUEST).entity(resultMap).build();
-        }
-        Map<String,Object> returnMap = null;
-        if (mls.getLockStatus() == MusicLockState.LockStatus.UNLOCKED) {
-            returnMap = new JsonResponse(ResultType.SUCCESS).setLock(lockId)
-                                .setLockStatus(mls.getLockStatus()).toMap();
-            response.status(Status.OK);
-        }
-        if (mls.getLockStatus() == MusicLockState.LockStatus.LOCKED) {
-            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.LOCKINGERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
-            returnMap = new JsonResponse(ResultType.FAILURE).setLock(lockId)
-                                .setLockStatus(mls.getLockStatus()).toMap();
-            response.status(Status.BAD_REQUEST);
-        }
-        return response.entity(returnMap).build();
+            String keyspaceName = (String) resultMap.get("keyspace");
+            EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspaceName+" ) ");
+            boolean voluntaryRelease = true; 
+            MusicLockState mls = MusicCore.releaseLock(lockId,voluntaryRelease);
+            if(mls.getErrorMessage() != null) {
+                resultMap.put(ResultType.EXCEPTION.getResult(), mls.getErrorMessage());
+                logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+                return response.status(Status.BAD_REQUEST).entity(resultMap).build();
+            }
+            Map<String,Object> returnMap = null;
+            if (mls.getLockStatus() == MusicLockState.LockStatus.UNLOCKED) {
+                returnMap = new JsonResponse(ResultType.SUCCESS).setLock(lockId)
+                    .setLockStatus(mls.getLockStatus()).toMap();
+                response.status(Status.OK);
+            }
+            if (mls.getLockStatus() == MusicLockState.LockStatus.LOCKED) {
+                logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.LOCKINGERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+                returnMap = new JsonResponse(ResultType.FAILURE).setLock(lockId)
+                    .setLockStatus(mls.getLockStatus()).toMap();
+                response.status(Status.BAD_REQUEST);
+            }
+            return response.entity(returnMap).build();
         } finally {
             EELFLoggerDelegate.mdcRemove("keyspace");
         }
     }
 
     /**
-     * @deprecated
+     * 
      * @param lockName
      * @throws Exception 
      */
     @DELETE
     @Path("/delete/{lockname}")
-    @ApiOperation(value = "Delete Lock", response = Map.class, hidden = true, notes = "Deprecated")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Deprecated
+    @ApiOperation(value = "Delete Lock", response = Map.class)
+    @Produces(MediaType.APPLICATION_JSON)    
     public Response deleteLock(@PathParam("lockname") String lockName,
             @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
             @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
@@ -420,31 +421,23 @@ public class RestMusicLocksAPI {
             @ApiParam(value = "Application namespace",
                             required = true) @HeaderParam("ns") String ns) throws Exception{
         try {
-        ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-        Map<String, Object> resultMap = MusicCore.validateLock(lockName);
-        if (resultMap.containsKey("Error")) {
-            logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.UNKNOWNERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
-            response.status(Status.BAD_REQUEST);
-            return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
-        }
+            ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
+            Map<String, Object> resultMap = MusicCore.validateLock(lockName);
+            if (resultMap.containsKey("Error")) {
+                logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.UNKNOWNERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+                response.status(Status.BAD_REQUEST);
+                return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
+            }
 
-        String keyspaceName = (String) resultMap.get("keyspace");
-        EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspaceName+" ) ");
-        resultMap.remove("keyspace");
-        if (!authenticator.authenticateUser(ns, authorization, keyspaceName, aid, Operation.DELETE_LOCK)) {
-            return response.status(Status.UNAUTHORIZED)
-                    .entity(new JsonResponse(ResultType.FAILURE)
-                            .setError("Unauthorized: Please check username, password and make sure your app is onboarded")
-                            .toMap()).build();
-        }
-        
-        try{
-            MusicCore.deleteLock(lockName);
-        }catch (Exception e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e);
-            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
-        }
-        return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).toMap()).build();
+            String keyspaceName = (String) resultMap.get("keyspace");
+            EELFLoggerDelegate.mdcPut("keyspace", "( " + keyspaceName + " ) ");
+            try{
+                MusicCore.destroyLockRef(lockName);
+            }catch (Exception e) {
+                logger.error(EELFLoggerDelegate.errorLogger, e);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
+            }
+            return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).toMap()).build();
         } finally {
             EELFLoggerDelegate.mdcRemove("keyspace");
         }

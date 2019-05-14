@@ -44,11 +44,10 @@ public class MusicLockState implements Serializable {
     };// captures the state of the lock
 
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicLockState.class);
-    LockStatus lockStatus;
-    boolean needToSyncQuorum = false;
-    String lockHolder;
-    long leasePeriod = Long.MAX_VALUE, leaseStartTime = -1;
-    
+    private LockStatus lockStatus;
+    private boolean needToSyncQuorum = false;
+    private String lockHolder;
+    private long leasePeriod = Long.MAX_VALUE, leaseStartTime = -1;
     private String errorMessage = null;
     
     public MusicLockState(String errorMessage) {

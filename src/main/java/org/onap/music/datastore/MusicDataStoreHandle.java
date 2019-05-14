@@ -42,7 +42,7 @@ public class MusicDataStoreHandle {
         throw new IllegalStateException("Utility class");
     }
 
-    public static MusicDataStore mDstoreHandle = null;
+    private static MusicDataStore mDstoreHandle = null;
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicDataStoreHandle.class);
     
     /**

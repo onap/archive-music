@@ -312,7 +312,7 @@ public class RestMusicQAPI {
     JsonDelete delObj,
     @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
     @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename,
-          @Context UriInfo info) throws MusicServiceException, MusicQueryException {
+    @Context UriInfo info) throws MusicServiceException, MusicQueryException {
     // added checking as per RestMusicDataAPI
     ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
     if (delObj == null) {
@@ -348,11 +348,11 @@ public class RestMusicQAPI {
         @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
         @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
         @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename,
-          @Context UriInfo info)  {
+        @Context UriInfo info)  {
         int limit =1; //peek must return just the top row
-        Map<String ,String> auth = new HashMap<>();
-        String userId =auth.get(MusicUtil.USERID);
-        String password =auth.get(MusicUtil.PASSWORD);  
+        // Map<String ,String> auth = new HashMap<>();
+        // String userId =auth.get(MusicUtil.USERID);
+        // String password =auth.get(MusicUtil.PASSWORD);  
         ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
 
         PreparedQueryObject queryObject = new PreparedQueryObject();
@@ -377,7 +377,7 @@ public class RestMusicQAPI {
                 .setDataResult(MusicDataStoreHandle.marshallResults(results)).toMap()).build();
         } catch (MusicServiceException ex) {
             logger.error(EELFLoggerDelegate.errorLogger, "", AppMessages.UNKNOWNERROR,
-              ErrorSeverity.ERROR, ErrorTypes.MUSICSERVICEERROR, ex);
+                ErrorSeverity.ERROR, ErrorTypes.MUSICSERVICEERROR, ex);
             return response.status(Status.BAD_REQUEST)
                 .entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap())
                 .build();

@@ -20,34 +20,36 @@
  * ====================================================================
  */
 
-package org.onap.music.datastore.jsonobjects;
+package org.onap.music.authentication;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+/**
+ * Authorization error class used while setting error code and description back to client.
+ * 
+ * 
+ * @author sp931a
+ *
+ */
+public class AuthorizationError {
 
-@ApiModel(value = "JsonTable", description = "model for leased lock")
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class JsonLeasedLock {
-    private long leasePeriod;
-    private String notifyUrl;
+    private int responseCode;
 
-    @ApiModelProperty(value = "Lease period")
-    public long getLeasePeriod() {
-        return leasePeriod;
+    private String responseMessage;
+
+    public int getResponseCode() {
+        return responseCode;
     }
 
-    public void setLeasePeriod(long leasePeriod) {
-        this.leasePeriod = leasePeriod;
+    public void setResponseCode(int responseCode) {
+        this.responseCode = responseCode;
     }
 
-    @ApiModelProperty(value = "URL to be notified")
-    public String getNotifyUrl() {
-        return notifyUrl;
+    public String getResponseMessage() {
+        return responseMessage;
     }
 
-    public void setNotifyUrl(String notifyUrl) {
-        this.notifyUrl = notifyUrl;
+    public void setResponseMessage(String responseMessage) {
+        this.responseMessage = responseMessage;
     }
+
 }

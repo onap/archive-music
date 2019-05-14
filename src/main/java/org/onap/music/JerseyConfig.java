@@ -25,7 +25,6 @@ import javax.annotation.PostConstruct;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.onap.music.conductor.conditionals.RestMusicConditionalAPI;
 import org.onap.music.exceptions.MusicExceptionMapper;
-import org.onap.music.rest.RestMusicAdminAPI;
 import org.onap.music.rest.RestMusicDataAPI;
 import org.onap.music.rest.RestMusicHealthCheckAPI;
 import org.onap.music.rest.RestMusicLocksAPI; 
@@ -52,7 +51,6 @@ public class JerseyConfig extends ResourceConfig {
     }
 
     private void registerEndpoints() {
-        register(RestMusicAdminAPI.class); 
         register(RestMusicDataAPI.class);
         register(RestMusicLocksAPI.class); 
         register(RestMusicConditionalAPI.class); 
@@ -60,7 +58,7 @@ public class JerseyConfig extends ResourceConfig {
         register(RestMusicTestAPI.class); 
         register(RestMusicVersionAPI.class);
         register(RestMusicHealthCheckAPI.class);
-
+    
     }
 
     private void configureSwagger() {

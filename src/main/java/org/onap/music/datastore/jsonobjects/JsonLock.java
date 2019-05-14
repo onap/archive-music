@@ -22,6 +22,8 @@
 
 package org.onap.music.datastore.jsonobjects;
 
+import org.onap.music.lockingservice.cassandra.LockType;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import io.swagger.annotations.ApiModel;
@@ -29,25 +31,15 @@ import io.swagger.annotations.ApiModelProperty;
 
 @ApiModel(value = "JsonTable", description = "model for leased lock")
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class JsonLeasedLock {
-    private long leasePeriod;
-    private String notifyUrl;
+public class JsonLock {
+    private LockType locktype;
 
-    @ApiModelProperty(value = "Lease period")
-    public long getLeasePeriod() {
-        return leasePeriod;
+    @ApiModelProperty(value = "Type of music lock")
+    public LockType getLocktype() {
+        return this.locktype;
     }
 
-    public void setLeasePeriod(long leasePeriod) {
-        this.leasePeriod = leasePeriod;
-    }
-
-    @ApiModelProperty(value = "URL to be notified")
-    public String getNotifyUrl() {
-        return notifyUrl;
-    }
-
-    public void setNotifyUrl(String notifyUrl) {
-        this.notifyUrl = notifyUrl;
+    public void setLockType(LockType locktype) {
+        this.locktype = locktype;
     }
 }

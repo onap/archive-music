@@ -30,14 +30,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.apache.cassandra.exceptions.PreparedQueryNotFoundException;
 import org.junit.Test;
-import org.onap.music.authentication.CachingUtil;
 import org.onap.music.datastore.PreparedQueryObject;
-import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.MusicUtil;
 import com.datastax.driver.core.DataType;
-import javassist.CodeConverter.ArrayAccessReplacementMethodNames;
 
 public class MusicUtilTest {
 
@@ -60,46 +56,8 @@ public class MusicUtilTest {
     }
 
     @Test
-    public void testGetMyId() {
-        MusicUtil.setMyId(1);
-        assertEquals(MusicUtil.getMyId(),1);
-    }
-
-    @Test
-    public void testGetAllIds() {
-        List<String> ids = new ArrayList<String>();
-        ids.add("1");
-        ids.add("2");
-        ids.add("3");
-        MusicUtil.setAllIds(ids);
-        assertEquals(MusicUtil.getAllIds().get(0),"1");
-    }
-
-//    @Test
-//    public void testGetPublicIp() {
-//        MusicUtil.setPublicIp("10.0.0.1");
-//        assertEquals(MusicUtil.getPublicIp(),"10.0.0.1");
-//    }
-
-    @Test
-    public void testGetAllPublicIps() {
-        List<String> ips = new ArrayList<String>();
-        ips.add("10.0.0.1");
-        ips.add("10.0.0.2");
-        ips.add("10.0.0.3");
-        MusicUtil.setAllPublicIps(ips);
-        assertEquals(MusicUtil.getAllPublicIps().get(1),"10.0.0.2");
-    }
-
-    @Test
     public void testGetPropkeys() {
         assertEquals(MusicUtil.getPropkeys()[2],"debug");
-    }
-
-    @Test
-    public void testGetMusicRestIp() {
-        MusicUtil.setMusicRestIp("localhost");
-        assertEquals(MusicUtil.getMusicRestIp(),"localhost");
     }
 
     @Test
