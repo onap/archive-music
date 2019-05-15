@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f940dfc8_0408ffd8",
+        "filename": "README.md",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-05-15T21:47:45Z",
+      "side": 1,
+      "message": "The old file is more recent",
+      "revId": "5a34e6575a337a30952781ea01fc632826729f79",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "c717bd99_c0914991",
+        "filename": "distribution/cassandra_job/Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-05-15T21:47:45Z",
+      "side": 1,
+      "message": "We probably don\u0027t want to remove the licensing",
+      "revId": "5a34e6575a337a30952781ea01fc632826729f79",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8439650e_efd6a3c2",
+        "filename": "distribution/cassandra_job/runcql.sh",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-05-15T21:47:45Z",
+      "side": 1,
+      "message": "licensing",
+      "revId": "5a34e6575a337a30952781ea01fc632826729f79",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6fae39d2_ee0551cf",
+        "filename": "distribution/music/Dockerfile",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-05-15T21:47:45Z",
+      "side": 1,
+      "message": "licensing",
+      "revId": "5a34e6575a337a30952781ea01fc632826729f79",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8b83061f_cf4256ae",
+        "filename": "distribution/music/startup.sh",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-05-15T21:47:45Z",
+      "side": 1,
+      "message": "l",
+      "revId": "5a34e6575a337a30952781ea01fc632826729f79",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
