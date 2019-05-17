@@ -43,6 +43,7 @@ import org.onap.music.eelf.logging.format.ErrorTypes;
 @ApiModel(value = "JsonTable", description = "Json model for table vlaues insert")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonInsert implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String keyspaceName;
     private String tableName;
     private transient Map<String, Object> values;
@@ -117,11 +118,11 @@ public class JsonInsert implements Serializable {
     }
 
     @ApiModelProperty(value = "Information for selecting specific rows for insert")
-    public Map<String, Object> getRow_specification() {
+    public Map<String, Object> getRowSpecification() {
         return rowSpecification;
     }
 
-    public void setRow_specification(Map<String, Object> rowSpecification) {
+    public void setRowSpecification(Map<String, Object> rowSpecification) {
         this.rowSpecification = rowSpecification;
     }
 

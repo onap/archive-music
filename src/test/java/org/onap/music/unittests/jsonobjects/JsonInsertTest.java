@@ -23,8 +23,12 @@
 package org.onap.music.unittests.jsonobjects;
 
 import static org.junit.Assert.*;
+
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.apache.commons.lang3.SerializationUtils;
 import org.junit.Test;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
 
@@ -74,13 +78,26 @@ public class JsonInsertTest {
     }
 
     @Test
-    public void testGetRow_specification() {
+    public void testGetRowSpecification() {
         Map<String,Object> cons = new HashMap<>();
         cons.put("val1","one");
         cons.put("val2","two");
-        ji.setRow_specification(cons);
-        assertEquals("two",ji.getRow_specification().get("val2"));
+        ji.setRowSpecification(cons);
+        assertEquals("two",ji.getRowSpecification().get("val2"));
     }
+
+    @Test
+    public void testSerialize() {
+        Map<String,Object> cons = new HashMap<>();
+        cons.put("val1","one");
+        cons.put("val2","two");
+        ji.setTimestamp("10:30");
+        ji.setRowSpecification(cons);
+        byte[] test1 = ji.serialize();
+        byte[] ji1 = SerializationUtils.serialize(ji);
+        assertArrayEquals(ji1,test1);
+    }
+
 
 
 }
