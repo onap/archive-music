@@ -25,7 +25,12 @@ package org.onap.music.service;
 import java.util.List;
 import java.util.Map;
 
+import org.onap.music.datastore.Condition;
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.datastore.jsonobjects.CassaIndexObject;
+import org.onap.music.datastore.jsonobjects.CassaKeyspaceObject;
+import org.onap.music.datastore.jsonobjects.CassaSelect;
+import org.onap.music.datastore.jsonobjects.CassaTableObject;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
@@ -33,7 +38,6 @@ import org.onap.music.lockingservice.cassandra.LockType;
 import org.onap.music.lockingservice.cassandra.MusicLockState;
 import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
-import org.onap.music.datastore.*;
 
 import com.datastax.driver.core.ResultSet;
 
@@ -95,8 +99,6 @@ public interface MusicCoreService {
     public ReturnType acquireLock(String key, String lockReference)
         throws MusicLockingException, MusicQueryException, MusicServiceException; // key,lock id
 
-    public ResultType createTable(String keyspace, String table, PreparedQueryObject tableQueryObject,
-        String consistency) throws MusicServiceException;
 
     public ResultSet quorumGet(PreparedQueryObject query);
 
@@ -134,5 +136,24 @@ public interface MusicCoreService {
     public Map<String, Object> validateLock(String lockName);
 
     public MusicLockState releaseLock(String lockId, boolean voluntaryRelease) throws MusicLockingException;
+    
+    /**
+     *  Core Music Database Methods
+     */
+
+    public ResultType createTable(String keyspace, String table, PreparedQueryObject tableQueryObject,
+            String consistency) throws MusicServiceException;
+    
+    public ResultType createTable(CassaTableObject cassaTableObject,String consistencyInfo) throws MusicServiceException;
+    
+    public ResultType dropTable(CassaTableObject cassaTableObject, String consistencyInfo) throws MusicServiceException;
+    
+    public ResultType createKeyspace(CassaKeyspaceObject cassaKeyspaceObject,String consistencyInfo) throws MusicServiceException;
+    
+    public ResultType dropKeyspace(CassaKeyspaceObject cassaKeyspaceObject, String consistencyInfo) throws MusicServiceException;
+    
+    public ResultType createIndex(CassaIndexObject cassaIndexObject, String consistencyInfo) throws MusicServiceException;
+    
+    public ResultSet select(CassaSelect cassaSelect) throws MusicServiceException;
 
 }

@@ -43,6 +43,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.datastore.jsonobjects.CassaTableObject;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
 import org.onap.music.datastore.jsonobjects.JsonLeasedLock;
 import org.onap.music.datastore.jsonobjects.JsonLock;
@@ -410,7 +411,7 @@ public class TstRestMusicLockAPI {
      * @throws Exception
      */
     private void createTable() throws Exception {
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");

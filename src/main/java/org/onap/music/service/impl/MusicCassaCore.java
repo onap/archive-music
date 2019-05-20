@@ -29,11 +29,15 @@ import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
-import java.util.concurrent.TimeUnit;
 
+import org.onap.music.datastore.Condition;
 import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.datastore.jsonobjects.CassaIndexObject;
+import org.onap.music.datastore.jsonobjects.CassaKeyspaceObject;
+import org.onap.music.datastore.jsonobjects.CassaSelect;
+import org.onap.music.datastore.jsonobjects.CassaTableObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
@@ -51,13 +55,10 @@ import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
 import org.onap.music.service.MusicCoreService;
 
-import com.att.eelf.configuration.EELFLogger;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.TableMetadata;
-
-import org.onap.music.datastore.*;
 
 public class MusicCassaCore implements MusicCoreService {
 
@@ -95,7 +96,7 @@ public class MusicCassaCore implements MusicCoreService {
     }
 
     public String createLockReference(String fullyQualifiedKey) throws MusicLockingException {
-    	return createLockReference(fullyQualifiedKey, LockType.WRITE);
+        return createLockReference(fullyQualifiedKey, LockType.WRITE);
     }
 
     public String createLockReference(String fullyQualifiedKey, LockType locktype) throws MusicLockingException {
@@ -302,7 +303,7 @@ public class MusicCassaCore implements MusicCoreService {
         String table = splitString[1];
         String primaryKeyValue = splitString[2];
         try {
-        	return getLockingServiceHandle().getCurrentLockHolders(keyspace, table, primaryKeyValue);
+            return getLockingServiceHandle().getCurrentLockHolders(keyspace, table, primaryKeyValue);
         } catch (MusicLockingException | MusicServiceException | MusicQueryException e) {
             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.LOCKINGERROR+fullyQualifiedKey ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         }
@@ -779,6 +780,136 @@ public class MusicCassaCore implements MusicCoreService {
             PreparedQueryObject queryObject) throws MusicServiceException, MusicLockingException {
         //deprecated
         return null;
+    }
+    
+    @Override
+    public ResultType createKeyspace(CassaKeyspaceObject cassaKeyspaceObject,String consistencyInfo) throws MusicServiceException {
+        logger.info(EELFLoggerDelegate.applicationLogger, "Coming Inside MusicCassaCore createKeyspace Method.");
+        boolean result = false;
+        try {
+            logger.info(EELFLoggerDelegate.applicationLogger,
+                    "consistencyInfo createKeyspace Method :" + consistencyInfo);
+            result = MusicDataStoreHandle.getDSHandle().executePut(cassaKeyspaceObject.genCreateKeyspaceQuery(),
+                    consistencyInfo);
+        } catch (MusicQueryException | MusicServiceException ex) {
+            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(), AppMessages.UNKNOWNERROR, ErrorSeverity.WARN,
+                    ErrorTypes.MUSICSERVICEERROR);
+            throw new MusicServiceException(ex.getMessage());
+        }
+        logger.info(EELFLoggerDelegate.applicationLogger, " Keyspace Creation Process completed successfully");
+
+        return result ? ResultType.SUCCESS : ResultType.FAILURE;
+    }
+    
+    @Override
+    public ResultType dropKeyspace(CassaKeyspaceObject cassaKeyspaceObject, String consistencyInfo) throws MusicServiceException {
+        logger.info(EELFLoggerDelegate.applicationLogger, "Coming Inside MusicCassaCore dropKeyspace Method.");
+        boolean result = false;
+        try {
+            logger.info(EELFLoggerDelegate.applicationLogger,
+                    "consistencyInfo deleteKeyspace Method : " + consistencyInfo);
+            result = MusicDataStoreHandle.getDSHandle().executePut(cassaKeyspaceObject.genDropKeyspaceQuery(),
+                    consistencyInfo);
+        } catch (MusicQueryException | MusicServiceException ex) {
+            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(), AppMessages.UNKNOWNERROR, ErrorSeverity.WARN,
+                    ErrorTypes.MUSICSERVICEERROR);
+            throw new MusicServiceException(ex.getMessage());
+        }
+        logger.info(EELFLoggerDelegate.applicationLogger, " Keyspace deletion Process completed successfully");
+        return result ? ResultType.SUCCESS : ResultType.FAILURE;
+    }
+    
+    @Override
+    public ResultType createTable(CassaTableObject cassaTableObject,String consistencyInfo) throws MusicServiceException {
+        logger.info(EELFLoggerDelegate.applicationLogger, "Coming Inside MusicCassaCore createTable Method.");
+        boolean result = false;
+        try {
+            logger.info(EELFLoggerDelegate.applicationLogger,
+                    "consistencyInfo createTable Method: " + consistencyInfo);
+            /**
+             * creating shadow locking table
+             */
+            result = getLockingServiceHandle().createLockQueue(cassaTableObject.getKeyspaceName(), cassaTableObject.getTableName());
+            if(result == false)
+                return ResultType.FAILURE;
+
+            result = false;
+
+            //create table to track unsynced_keys
+            result = MusicDataStoreHandle.getDSHandle().executePut(cassaTableObject.genCreateShadowLockingTableQuery(), "eventual");
+            
+            /**
+             * creating actual table
+             */
+            result = MusicDataStoreHandle.getDSHandle().executePut(cassaTableObject.genCreateTableQuery(),
+                    consistencyInfo);
+            
+        } catch (MusicQueryException | MusicServiceException | MusicLockingException ex) {
+            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(), AppMessages.UNKNOWNERROR, ErrorSeverity.WARN,
+                    ErrorTypes.MUSICSERVICEERROR);
+            throw new MusicServiceException(ex.getMessage());
+        }
+        logger.info(EELFLoggerDelegate.applicationLogger, " Table Creation Process completed successfully ");
+        return result ? ResultType.SUCCESS : ResultType.FAILURE;
+    }
+    
+    @Override
+    public ResultType dropTable(CassaTableObject cassaTableObject,String consistencyInfo) throws MusicServiceException {
+        logger.info(EELFLoggerDelegate.applicationLogger, "Coming Inside MusicCassaCore dropTable Method.");
+        boolean result = false;
+        try {
+            logger.info(EELFLoggerDelegate.applicationLogger,
+                    "consistencyInfo dropTable Method : " + consistencyInfo);
+            result = MusicDataStoreHandle.getDSHandle().executePut(cassaTableObject.genDropTableQuery(),
+                    consistencyInfo);
+        } catch (MusicQueryException | MusicServiceException ex) {
+            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(), AppMessages.UNKNOWNERROR, ErrorSeverity.WARN,
+                    ErrorTypes.MUSICSERVICEERROR);
+            throw new MusicServiceException(ex.getMessage());
+        }
+        logger.info(EELFLoggerDelegate.applicationLogger, " Table deletion Process completed successfully ");
+        return result ? ResultType.SUCCESS : ResultType.FAILURE;
+    }
+    
+    @Override
+    public ResultType createIndex(CassaIndexObject cassaIndexObject,String consistencyInfo) throws MusicServiceException {
+        logger.info(EELFLoggerDelegate.applicationLogger, "Coming Inside MusicCassaCore createIndex Method.");
+        boolean result = false;
+        try {
+            logger.info(EELFLoggerDelegate.applicationLogger,
+                    "consistencyInfo createIndex Method.  " + consistencyInfo);
+            result = MusicDataStoreHandle.getDSHandle().executePut(cassaIndexObject.genCreateIndexQuery(),
+                    consistencyInfo);
+        } catch (MusicQueryException | MusicServiceException ex) {
+            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(), AppMessages.UNKNOWNERROR, ErrorSeverity.WARN,
+                    ErrorTypes.MUSICSERVICEERROR);
+            throw new MusicServiceException(ex.getMessage());
+        }
+        logger.info(EELFLoggerDelegate.applicationLogger, " Index creation Process completed successfully ");
+        return result ? ResultType.SUCCESS : ResultType.FAILURE;
+    }
+    
+    /**
+     * This method performs DDL operation on cassandra.
+     *
+     * @param queryObject query object containing prepared query and values
+     * @return ResultSet
+     * @throws MusicServiceException
+     */
+    public  ResultSet select(CassaSelect cassaSelect) throws MusicServiceException {
+        ResultSet results = null;
+        try {
+            if(null != cassaSelect && null != cassaSelect.getRowIdString() &&
+                    cassaSelect.getRowIdString().length() >0) {
+                results = MusicDataStoreHandle.getDSHandle().executeOneConsistencyGet(cassaSelect.genSpecificSelectQuery());
+            }else {
+                results = MusicDataStoreHandle.getDSHandle().executeOneConsistencyGet(cassaSelect.genSelectQuery());
+            }
+        } catch (MusicQueryException | MusicServiceException e) {
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
+            throw new MusicServiceException(e.getMessage());
+        }
+        return results;
     }
 
 }

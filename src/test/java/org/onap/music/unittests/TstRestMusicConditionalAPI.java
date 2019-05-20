@@ -43,6 +43,7 @@ import org.onap.music.conductor.conditionals.JsonConditional;
 import org.onap.music.conductor.conditionals.RestMusicConditionalAPI;
 import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.datastore.jsonobjects.CassaTableObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
 import org.onap.music.datastore.jsonobjects.JsonKeySpace;
@@ -317,7 +318,7 @@ public class TstRestMusicConditionalAPI {
      * @throws Exception
      */
     private void createTable() throws Exception {
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("id", "text");

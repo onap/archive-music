@@ -46,6 +46,8 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.datastore.jsonobjects.CassaKeyspaceObject;
+import org.onap.music.datastore.jsonobjects.CassaTableObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
 import org.onap.music.datastore.jsonobjects.JsonKeySpace;
@@ -118,14 +120,14 @@ public class TstRestMusicDataAPI {
     @Test
     public void test1_createKeyspace() throws Exception {
         System.out.println("Testing create keyspace");
-        JsonKeySpace jsonKeyspace = new JsonKeySpace();
+        CassaKeyspaceObject jsonKeyspace = new CassaKeyspaceObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, Object> replicationInfo = new HashMap<>();
         consistencyInfo.put("type", "eventual");
         replicationInfo.put("class", "SimpleStrategy");
         replicationInfo.put("replication_factor", 1);
         jsonKeyspace.setConsistencyInfo(consistencyInfo);
-        jsonKeyspace.setDurabilityOfWrites("true");
+        jsonKeyspace.setDurabilityOfWrites(true);
         jsonKeyspace.setKeyspaceName(keyspaceName);
         jsonKeyspace.setReplicationInfo(replicationInfo);
         // Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
@@ -140,7 +142,7 @@ public class TstRestMusicDataAPI {
     @Test
     public void test3_createTable() throws Exception {
         System.out.println("Testing create table");
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -162,7 +164,7 @@ public class TstRestMusicDataAPI {
     @Test
     public void test3_createTableNoName() throws Exception {
         System.out.println("Testing create table without name");
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -185,7 +187,7 @@ public class TstRestMusicDataAPI {
     @Test
     public void test3_createTableClusterOrderBad() throws Exception {
         System.out.println("Testing create table bad clustering");
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -208,7 +210,7 @@ public class TstRestMusicDataAPI {
     @Test
     public void test3_createTable_withPropertiesNotNull() throws Exception {
         System.out.println("Testing create table with properties");
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -235,7 +237,7 @@ public class TstRestMusicDataAPI {
     @Test
     public void test3_createTable_duplicateTable() throws Exception {
         System.out.println("Testing creating duplicate tables");
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -269,7 +271,7 @@ public class TstRestMusicDataAPI {
     public void test3_createTable_badParantesis() throws Exception {
         System.out.println("Testing malformed create table request");
         String tableNameC = "testTable0";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -298,7 +300,7 @@ public class TstRestMusicDataAPI {
         System.out.println("Testing create w/ clusterKey");
 
         String tableNameC = "testTableC1";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -324,7 +326,7 @@ public class TstRestMusicDataAPI {
     public void test3_createTable_2_clusterKey_bad() throws Exception {
         System.out.println("Testing create w/ bad clusterKey");
         String tableNameC = "testTableC2";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -351,7 +353,7 @@ public class TstRestMusicDataAPI {
         System.out.println("Testing create w/ composite partition key, clusterKey");
 
         String tableNameC = "testTableC3";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -378,7 +380,7 @@ public class TstRestMusicDataAPI {
     public void test3_createTable_5_clusteringOrder_bad() throws Exception {
         System.out.println("Testing create table bad request with clustering & composite keys");
         String tableNameC = "testTableC5";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -406,7 +408,7 @@ public class TstRestMusicDataAPI {
     public void test3_createTableIndex_1() throws Exception {
         System.out.println("Testing index in create table");
         String tableNameC = "testTableCinx";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -439,7 +441,7 @@ public class TstRestMusicDataAPI {
     public void test3_createTableIndexNoName() throws Exception {
         System.out.println("Testing index in create table w/o tablename");
         String tableNameC = "testTableCinx";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -976,7 +978,7 @@ public class TstRestMusicDataAPI {
      * @throws Exception
      */
     private void createTable() throws Exception {
-        JsonTable jsonTable = new JsonTable();
+    	CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");

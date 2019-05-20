@@ -26,8 +26,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-//cjc import static org.junit.Assert.assertTrue;
-import java.io.File;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -35,11 +34,12 @@ import java.util.List;
 //cjc import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import org.junit.After;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
@@ -55,12 +55,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.datastore.jsonobjects.CassaKeyspaceObject;
+import org.onap.music.datastore.jsonobjects.CassaTableObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 import org.onap.music.datastore.jsonobjects.JsonInsert;
 import org.onap.music.datastore.jsonobjects.JsonKeySpace;
-//cjc import org.onap.music.datastore.jsonobjects.JsonKeySpace;
-//import org.onap.music.datastore.jsonobjects.JsonOnboard;
-import org.onap.music.datastore.jsonobjects.JsonSelect;
 import org.onap.music.datastore.jsonobjects.JsonTable;
 import org.onap.music.datastore.jsonobjects.JsonUpdate;
 import org.onap.music.lockingservice.cassandra.CassaLockStore;
@@ -69,9 +68,10 @@ import org.onap.music.main.MusicUtil;
 //import org.onap.music.main.ResultType;
 //import org.onap.music.rest.RestMusicAdminAPI;
 import org.onap.music.rest.RestMusicDataAPI;
+import org.onap.music.rest.RestMusicLocksAPI;
 import org.onap.music.rest.RestMusicQAPI;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.onap.music.rest.RestMusicLocksAPI;
+
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -194,14 +194,14 @@ public class TestRestMusicQAPI {
             System.out.println("#######UUID is:" + rows.get(0).getUUID("uuid"));
         }
             
-        JsonKeySpace jsonKeyspace = new JsonKeySpace();
+        CassaKeyspaceObject  jsonKeyspace = new CassaKeyspaceObject ();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, Object> replicationInfo = new HashMap<>();
         consistencyInfo.put("type", "eventual");
         replicationInfo.put("class", "SimpleStrategy");
         replicationInfo.put("replication_factor", 1);
         jsonKeyspace.setConsistencyInfo(consistencyInfo);
-        jsonKeyspace.setDurabilityOfWrites("true");
+        jsonKeyspace.setDurabilityOfWrites(true);
         jsonKeyspace.setKeyspaceName(keyspaceName);
         jsonKeyspace.setReplicationInfo(replicationInfo);
         Response response = data.createKeySpace(majorV, minorV, patchV, null, authorization, appName,
@@ -254,7 +254,7 @@ public class TestRestMusicQAPI {
     
     @Test
     public void Test1_createQ_FieldsEmpty() throws Exception {
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         /*
@@ -364,7 +364,7 @@ public class TestRestMusicQAPI {
     @Test
     public void Test1_createQ_PartitionKeybadclose() throws Exception {
         String tableNameC="testcjcP1";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -453,7 +453,7 @@ public class TestRestMusicQAPI {
     @Test
     public void Test1_createQ_ClusterOrderBad() throws Exception {
         String tableNameC="testcjcO1b";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -483,7 +483,7 @@ public class TestRestMusicQAPI {
     @Test
     public void Test3_createQ_0() throws Exception {
         //duplicate testing ...
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -523,7 +523,7 @@ public class TestRestMusicQAPI {
     @Ignore
     @Test
     public void Test3_createQ2() throws Exception {
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -765,7 +765,7 @@ public class TestRestMusicQAPI {
 /*
     @Test
     public void Test7_dropQ() throws Exception {
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         consistencyInfo.put("type", "atomic");
         jsonTable.setConsistencyInfo(consistencyInfo);
@@ -789,7 +789,7 @@ public class TestRestMusicQAPI {
     @Test
     public void Test8_createQ_fields_empty() throws Exception {
         String tableNameC="testcjcC";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         consistencyInfo.put("type", "eventual");
         jsonTable.setConsistencyInfo(consistencyInfo);
@@ -811,7 +811,7 @@ public class TestRestMusicQAPI {
     @Test
     public void Test8_createQ_partitionKey_empty() throws Exception {
         String tableNameC="testcjcC";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -838,7 +838,7 @@ public class TestRestMusicQAPI {
     @Test
     public void Test8_createQ_ClusteringKey_empty() throws Exception {
         String tableNameC="testcjcC";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -865,7 +865,7 @@ public class TestRestMusicQAPI {
     @Test
     public void Test8_createQ_ClusteringOrder_empty() throws Exception {
         String tableNameC="testcjcC";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -892,7 +892,7 @@ public class TestRestMusicQAPI {
     @Test
     public void Test8_createQ_primaryKey_invalid() throws Exception {
         String tableNameC="testcjcC";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -920,7 +920,7 @@ public class TestRestMusicQAPI {
     @Test
     public void Test8_createQ_primaryKey_with_empty_clusteringKey() throws Exception {
         String tableNameC="testcjcC";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
@@ -948,7 +948,7 @@ public class TestRestMusicQAPI {
     @Test
     public void Test8_createQ_primaryKey_with_empty_partitionKey() throws Exception {
         String tableNameC="testcjcC";
-        JsonTable jsonTable = new JsonTable();
+        CassaTableObject jsonTable = new CassaTableObject();
         Map<String, String> consistencyInfo = new HashMap<>();
         Map<String, String> fields = new HashMap<>();
         fields.put("uuid", "text");
