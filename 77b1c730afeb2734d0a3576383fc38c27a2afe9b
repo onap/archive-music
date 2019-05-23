@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1aa6140f_90fc153d",
+        "filename": "src/main/java/org/onap/music/datastore/jsonobjects/CassaTableObject.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-05-23T16:44:02Z",
+      "side": 1,
+      "message": "I\u0027m a bit concerned that a lot of this code duplicated JsonTable. Do we need both classes, or can we consolidate?",
+      "revId": "77b1c730afeb2734d0a3576383fc38c27a2afe9b",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
