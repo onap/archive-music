@@ -16,6 +16,24 @@
       "revId": "77b1c730afeb2734d0a3576383fc38c27a2afe9b",
       "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "818e5ff9_11c47103",
+        "filename": "src/main/java/org/onap/music/datastore/jsonobjects/CassaTableObject.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 5049
+      },
+      "writtenOn": "2019-05-24T06:11:16Z",
+      "side": 1,
+      "message": "In future once we complete the changes for all the APIs, might not need JsonTable class. The reason I have kept it for now as we are making changes by taking one by one API so it will not break the build for the other APIs which is currently using JsonTable. Also if we keep old class JsonTable it will be backward compatibility for the exiting old methods inside music core service.",
+      "parentUuid": "1aa6140f_90fc153d",
+      "revId": "77b1c730afeb2734d0a3576383fc38c27a2afe9b",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
     }
   ]
 }
