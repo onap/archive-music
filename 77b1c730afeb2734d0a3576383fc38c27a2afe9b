@@ -34,6 +34,24 @@
       "revId": "77b1c730afeb2734d0a3576383fc38c27a2afe9b",
       "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3b9b288b_ccbc2015",
+        "filename": "src/main/java/org/onap/music/datastore/jsonobjects/CassaTableObject.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-05-24T13:30:32Z",
+      "side": 1,
+      "message": "As an example, JsonTable is no longer used anywhere but test cases in this pull request. At this point it should be removed along with any remaining references to it",
+      "parentUuid": "818e5ff9_11c47103",
+      "revId": "77b1c730afeb2734d0a3576383fc38c27a2afe9b",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
     }
   ]
 }
