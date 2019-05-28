@@ -145,9 +145,9 @@ public class RestMusicDataAPI {
         @ApiParam(value = "Major Version",required = true) @PathParam("version") String version,
         @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
         @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-        @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
+        @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
         @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-        @ApiParam(value = "Application namespace",required = true) @HeaderParam(NS) String ns,
+        @ApiParam(value = "Application namespace",required = false, hidden = true) @HeaderParam(NS) String ns,
         JsonKeySpace kspObject,
         @ApiParam(value = "Keyspace Name",required = true) @PathParam("name") String keyspaceName) {
         try {
@@ -231,9 +231,9 @@ public class RestMusicDataAPI {
         @ApiParam(value = "Major Version",required = true) @PathParam("version") String version,
         @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
         @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-        @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
+        @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
         @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-        @ApiParam(value = "Application namespace",required = true) @HeaderParam(NS) String ns,
+        @ApiParam(value = "Application namespace",required = false, hidden = true) @HeaderParam(NS) String ns,
         @ApiParam(value = "Keyspace Name",required = true) @PathParam("name") String keyspaceName) throws Exception {
         try {
             ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
@@ -282,14 +282,18 @@ public class RestMusicDataAPI {
         @ApiParam(value = "Major Version",required = true) @PathParam("version") String version,
         @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
         @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-        @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
-        @ApiParam(value = "Application namespace",required = true) @HeaderParam(NS) String ns,
+        @ApiParam(value = "AID", required = false,hidden = true) @HeaderParam("aid") String aid,
+        @ApiParam(value = "Application namespace",required = false, hidden = true) @HeaderParam(NS) String ns,
         @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
         JsonTable tableObj,
         @ApiParam(value = "Keyspace Name",required = true) @PathParam("keyspace") String keyspace,
         @ApiParam(value = "Table Name",required = true) @PathParam("tablename") String tablename) throws Exception {
         try {
             ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
+            if ( null == tableObj ) {
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
+                        .setError(ResultType.BODYMISSING.getResult()).toMap()).build();
+            }
             if(keyspace == null || keyspace.isEmpty() || tablename == null || tablename.isEmpty()){
                 return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
                         .setError("One or more path parameters are not set, please check and try again."
@@ -562,8 +566,8 @@ public class RestMusicDataAPI {
         @ApiParam(value = "Major Version",required = true) @PathParam("version") String version,
         @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
         @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-        @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
-        @ApiParam(value = "Application namespace",required = true) @HeaderParam(NS) String ns,
+        @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
+        @ApiParam(value = "Application namespace",required = false, hidden = true) @HeaderParam(NS) String ns,
         @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
         JsonInsert insObj,
         @ApiParam(value = "Keyspace Name",
@@ -572,10 +576,14 @@ public class RestMusicDataAPI {
             required = true) @PathParam("tablename") String tablename) {
         try {
             ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-            if((keyspace == null || keyspace.isEmpty()) || (tablename == null || tablename.isEmpty())){
+            if ( null == insObj ) {
                 return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
-                    .setError("one or more path parameters are not set, please check and try again")
-                    .toMap()).build();
+                        .setError(ResultType.BODYMISSING.getResult()).toMap()).build();
+            }
+            if((keyspace == null || keyspace.isEmpty()) || (tablename == null || tablename.isEmpty())){
+            return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
+                .setError("one or more path parameters are not set, please check and try again")
+                .toMap()).build();
             }
             EELFLoggerDelegate.mdcPut("keyspace","(" + keyspace + ")");
             PreparedQueryObject queryObject = new PreparedQueryObject();
@@ -766,9 +774,9 @@ public class RestMusicDataAPI {
             required = false) @HeaderParam(XMINORVERSION) String minorVersion,
         @ApiParam(value = "Patch Version",
             required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-        @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
+        @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
         @ApiParam(value = "Application namespace",
-            required = true) @HeaderParam(NS) String ns,
+            required = false, hidden = true) @HeaderParam(NS) String ns,
         @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
         JsonUpdate updateObj,
         @ApiParam(value = "Keyspace Name",
@@ -778,6 +786,10 @@ public class RestMusicDataAPI {
         @Context UriInfo info) throws MusicQueryException, MusicServiceException {
         try {
             ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
+            if ( null == updateObj ) {
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
+                        .setError(ResultType.BODYMISSING.getResult()).toMap()).build();
+            }
             if((keyspace == null || keyspace.isEmpty()) || (tablename == null || tablename.isEmpty())){
                 return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
                     .setError("one or more path parameters are not set, please check and try again")
@@ -985,9 +997,9 @@ public class RestMusicDataAPI {
             required = false) @HeaderParam(XMINORVERSION) String minorVersion,
         @ApiParam(value = "Patch Version",
             required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-        @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
+        @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
         @ApiParam(value = "Application namespace",
-            required = true) @HeaderParam(NS) String ns,
+            required = false, hidden = true) @HeaderParam(NS) String ns,
         @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
         JsonDelete delObj,
         @ApiParam(value = "Keyspace Name",
@@ -1004,8 +1016,8 @@ public class RestMusicDataAPI {
             }
             EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspace+" ) ");
             if(delObj == null) {
-                logger.error(EELFLoggerDelegate.errorLogger,"Required HTTP Request body is missing.", AppMessages.MISSINGDATA  ,ErrorSeverity.WARN, ErrorTypes.DATAERROR);
-                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Required HTTP Request body is missing.").toMap()).build();
+                logger.error(EELFLoggerDelegate.errorLogger,ResultType.BODYMISSING.getResult(), AppMessages.MISSINGDATA  ,ErrorSeverity.WARN, ErrorTypes.DATAERROR);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ResultType.BODYMISSING.getResult()).toMap()).build();
             }
             PreparedQueryObject queryObject = new PreparedQueryObject();
             StringBuilder columnString = new StringBuilder();
@@ -1130,9 +1142,9 @@ public class RestMusicDataAPI {
             required = false) @HeaderParam(XMINORVERSION) String minorVersion,
         @ApiParam(value = "Patch Version",
             required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-        @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
+        @ApiParam(value = "AID", required = false,hidden = true) @HeaderParam("aid") String aid,
         @ApiParam(value = "Application namespace",
-            required = true) @HeaderParam(NS) String ns,
+            required = false, hidden = true) @HeaderParam(NS) String ns,
         @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
         @ApiParam(value = "Keyspace Name",
             required = true) @PathParam("keyspace") String keyspace,
@@ -1181,9 +1193,9 @@ public class RestMusicDataAPI {
             required = false) @HeaderParam(XMINORVERSION) String minorVersion,
         @ApiParam(value = "Patch Version",
             required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-        @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
+        @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
         @ApiParam(value = "Application namespace",
-            required = true) @HeaderParam(NS) String ns,
+            required = false, hidden = true) @HeaderParam(NS) String ns,
         @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
         JsonInsert selObj,
         @ApiParam(value = "Keyspace Name",
@@ -1198,6 +1210,11 @@ public class RestMusicDataAPI {
                     .setError("one or more path parameters are not set, please check and try again")
                     .toMap()).build();
             }
+            if(selObj == null) {
+                logger.error(EELFLoggerDelegate.errorLogger,ResultType.BODYMISSING.getResult(), AppMessages.MISSINGDATA  ,ErrorSeverity.WARN, ErrorTypes.DATAERROR);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ResultType.BODYMISSING.getResult()).toMap()).build();
+            }
+
             EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspace+" ) ");
             String lockId = selObj.getConsistencyInfo().get("lockId");
             PreparedQueryObject queryObject = new PreparedQueryObject();
@@ -1259,9 +1276,9 @@ public class RestMusicDataAPI {
             required = false) @HeaderParam(XMINORVERSION) String minorVersion,
         @ApiParam(value = "Patch Version",
             required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-        @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
+        @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
         @ApiParam(value = "Application namespace",
-            required = true) @HeaderParam(NS) String ns,
+            required = false,hidden = true) @HeaderParam(NS) String ns,
         @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
         @ApiParam(value = "Keyspace Name",
             required = true) @PathParam("keyspace") String keyspace,

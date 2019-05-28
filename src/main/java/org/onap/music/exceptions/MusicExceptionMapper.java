@@ -37,18 +37,20 @@ public class MusicExceptionMapper implements ExceptionMapper<Exception> {
     public Response toResponse(Exception  exception) {
         if(exception instanceof UnrecognizedPropertyException) {
             return Response.status(Response.Status.BAD_REQUEST).
-                        entity(new JsonResponse(ResultType.FAILURE).setError("Unknown field :"+((UnrecognizedPropertyException) exception).getUnrecognizedPropertyName()).toMap()).
-                        build();
-        }
-        else if(exception instanceof EOFException) {
+                entity(new JsonResponse(ResultType.FAILURE).setError("Unknown field :"+((UnrecognizedPropertyException) exception).getUnrecognizedPropertyName()).toMap()).
+                build();
+        } else if(exception instanceof EOFException) {
             return Response.status(Response.Status.BAD_REQUEST).
-                        entity(new JsonResponse(ResultType.FAILURE).setError("Request body cannot be empty").toMap()).
-                        build();
-        }
-        else {
+                entity(new JsonResponse(ResultType.FAILURE).setError("Request body cannot be empty").toMap()).
+                build();
+        } else if(exception instanceof NullPointerException) {
             return Response.status(Response.Status.BAD_REQUEST).
-                    entity(new JsonResponse(ResultType.FAILURE).setError(exception.getMessage()).toMap()).
-                    build();
+                entity(new JsonResponse(ResultType.FAILURE).setError("NullPointerException - Please check to make sure all inputs are valid.").toMap()).
+                build();
+        } else {
+            return Response.status(Response.Status.BAD_REQUEST).
+                entity(new JsonResponse(ResultType.FAILURE).setError(exception.getMessage()).toMap()).
+                build();
         }
     }
 }

@@ -263,7 +263,7 @@ public class RestMusicLocksAPI {
     }
 
     @GET
-    @Path("/getCurrentLockHolders/{lockname}")
+    @Path("/holders/{lockname}")
     @ApiOperation(value = "Get Lock Holders", 
         notes = "Gets the current Lock Holders",
         response = Map.class)
@@ -335,7 +335,7 @@ public class RestMusicLocksAPI {
             String who = MusicCore.whoseTurnIsIt(lockName);
             ResultType status = ResultType.SUCCESS;
             String error = "";
-            if ( who == null ) { 
+            if ( who == null ) {
                 status = ResultType.FAILURE; 
                 error = "There was a problem getting the lock holder";
                 logger.error(EELFLoggerDelegate.errorLogger,"There was a problem getting the lock holder", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
