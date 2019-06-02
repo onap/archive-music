@@ -33,6 +33,8 @@ import java.util.UUID;
 import org.junit.Test;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.main.MusicUtil;
+import org.onap.music.main.PropertiesLoader;
+import org.springframework.test.context.TestPropertySource;
 import com.datastax.driver.core.DataType;
 
 public class MusicUtilTest {
@@ -294,4 +296,11 @@ public class MusicUtilTest {
         MusicUtil.setMessageIdRequired("msgIdRequired");
         assertEquals("msgIdRequired", MusicUtil.getMessageIdRequired());
     }
+    
+    @Test
+    public void testLoadProperties() {
+        PropertiesLoader pl = new PropertiesLoader();
+        pl.loadProperties();
+    }
+    
 }
