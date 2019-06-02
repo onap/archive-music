@@ -642,22 +642,6 @@ public class MusicUtil {
         return response;
     }
 
-
-    public static Map<String,String> extractBasicAuthentication(String authorization){
-        Map<String,String> authValues = new HashMap<>();
-        if(authorization == null) {
-            authValues.put("ERROR", "Authorization cannot be null");
-            return authValues;
-        }
-        authorization = authorization.replaceFirst("Basic", "");
-        String decoded = Base64.base64Decode(authorization);
-        StringTokenizer token = new StringTokenizer(decoded, ":");
-        authValues.put(MusicUtil.USERID, token.nextToken());
-        authValues.put(MusicUtil.PASSWORD,token.nextToken());
-        return authValues;
-
-    }
-
     public static boolean isValidConsistency(String consistency) {
         for (String string : cosistencyLevel) {
             if (string.equalsIgnoreCase(consistency))

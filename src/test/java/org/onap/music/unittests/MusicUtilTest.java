@@ -180,4 +180,118 @@ public class MusicUtilTest {
         assertFalse(MusicUtil.isValidConsistency("TEST"));
     }
 
+    @Test
+    public void testLockUsing() {
+        MusicUtil.setLockUsing("testlock");
+        assertEquals("testlock", MusicUtil.getLockUsing());
+    }
+    
+    @Test
+    public void testAAFAdminUrl() {
+        MusicUtil.setAafAdminUrl("aafAdminURL.com");
+        assertEquals("aafAdminURL.com", MusicUtil.getAafAdminUrl());
+    }
+    
+    @Test
+    public void testAAFEndpointUrl() {
+        MusicUtil.setAafEndpointUrl("aafEndpointURL.com");
+        assertEquals("aafEndpointURL.com", MusicUtil.getAafEndpointUrl());
+    }
+    
+    @Test
+    public void testNamespace() {
+        MusicUtil.setMusicNamespace("musicNamespace");
+        assertEquals("musicNamespace", MusicUtil.getMusicNamespace());
+    }
+    
+    @Test
+    public void testAAFRole() {
+        MusicUtil.setAdminAafRole("aafRole");
+        assertEquals("aafRole", MusicUtil.getAdminAafRole());
+    }
+    
+    @Test
+    public void testAdminId() {
+        MusicUtil.setAdminId("adminId");
+        assertEquals("adminId", MusicUtil.getAdminId());
+    }
+    
+    @Test
+    public void testAdminPass() {
+        MusicUtil.setAdminPass("pass");
+        assertEquals("pass", MusicUtil.getAdminPass());
+    }
+    
+    @Test
+    public void testCassaPort() {
+        MusicUtil.setCassandraPort(1234);
+        assertEquals(1234, MusicUtil.getCassandraPort());
+    }
+    
+    @Test
+    public void testBuild() {
+        MusicUtil.setBuild("testbuild");
+        assertEquals("testbuild", MusicUtil.getBuild());
+    }
+    
+    @Test
+    public void testNotifyInterval() {
+        MusicUtil.setNotifyInterval(123);
+        assertEquals(123, MusicUtil.getNotifyInterval());
+    }
+    
+    @Test
+    public void testNotifyTimeout() {
+        MusicUtil.setNotifyTimeOut(789);
+        assertEquals(789, MusicUtil.getNotifyTimeout());
+    }
+    
+    @Test
+    public void testTransId() {
+        MusicUtil.setTransIdPrefix("prefix");
+        assertEquals("prefix-", MusicUtil.getTransIdPrefix());
+    }
+    
+    
+    @Test
+    public void testConversationIdPrefix() {
+        MusicUtil.setConversationIdPrefix("prefix-");
+        assertEquals("prefix-", MusicUtil.getConversationIdPrefix());
+    }
+    
+    @Test
+    public void testClientIdPrefix() {
+        MusicUtil.setClientIdPrefix("clientIdPrefix");
+        assertEquals("clientIdPrefix-", MusicUtil.getClientIdPrefix());
+    }
+    
+    @Test
+    public void testMessageIdPrefix() {
+        MusicUtil.setMessageIdPrefix("clientIdPrefix");
+        assertEquals("clientIdPrefix-", MusicUtil.getMessageIdPrefix());
+    }
+    
+    @Test
+    public void testTransIdPrefix() {
+        MusicUtil.setTransIdPrefix("transIdPrefix");
+        assertEquals("transIdPrefix-", MusicUtil.getTransIdPrefix());
+    }
+    
+    @Test
+    public void testconvIdReq() {
+        MusicUtil.setConversationIdRequired("conversationIdRequired");
+        assertEquals("conversationIdRequired", MusicUtil.getConversationIdRequired());
+    }
+    
+    @Test
+    public void testClientIdRequired() {
+        MusicUtil.setClientIdRequired("conversationIdRequired");
+        assertEquals("conversationIdRequired", MusicUtil.getClientIdRequired());
+    }
+    
+    @Test
+    public void testMessageIdRequired() {
+        MusicUtil.setMessageIdRequired("msgIdRequired");
+        assertEquals("msgIdRequired", MusicUtil.getMessageIdRequired());
+    }
 }
