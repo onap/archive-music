@@ -123,6 +123,18 @@ public class TstRestMusicLockAPI {
         assertTrue(respMap.containsKey("lock"));
         assertTrue(((Map<String, String>) respMap.get("lock")).containsKey("lock"));
     }
+    
+    @Test
+    public void test_createBadLockReference() throws Exception {
+        System.out.println("Testing create bad lockref");
+        createAndInsertIntoTable();
+        Response response = lock.createLockReference("badlock", "1", "1", authorization,
+                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", null, appName);
+        Map<String, Object> respMap = (Map<String, Object>) response.getEntity();
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+
+        assertEquals(400, response.getStatus());
+    }
 
     @Test
     public void test_createReadLock() throws Exception {
@@ -267,6 +279,20 @@ public class TstRestMusicLockAPI {
     }
     
     @Test
+    public void test_accquireBadLockWLease() throws Exception {
+        System.out.println("Testing acquire bad lock ref with lease");
+        createAndInsertIntoTable();
+        String lockRef = createLockReference();
+
+        JsonLeasedLock jsonLock = new JsonLeasedLock();
+        jsonLock.setLeasePeriod(10000); // 10 second lease period?
+        Response response = lock.accquireLockWithLease(jsonLock, "badlock", "1", "1", authorization,
+                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+        assertEquals(400, response.getStatus());
+    }
+    
+    @Test
     public void test_accquireBadLock() throws Exception {
         System.out.println("Testing acquire lock that is not lock-holder");
         createAndInsertIntoTable();
@@ -276,6 +302,19 @@ public class TstRestMusicLockAPI {
         String lockRef2 = createLockReference();
 
         Response response = lock.accquireLock(lockRef2, "1", "1", authorization,
+                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+        assertEquals(400, response.getStatus());
+    }
+    
+    @Test
+    public void test_accquireBadLockRef() throws Exception {
+        System.out.println("Testing acquire bad lock ref");
+        createAndInsertIntoTable();
+        // This is required to create an initial loc reference.
+        String lockRef1 = createLockReference();
+
+        Response response = lock.accquireLock("badlockref", "1", "1", authorization,
                 "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
         System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
         assertEquals(400, response.getStatus());
@@ -297,6 +336,59 @@ public class TstRestMusicLockAPI {
     }
     
     @Test
+    public void test_nocurrentLockHolder() throws Exception {
+        System.out.println("Testing get current lock holder w/ bad lockref");
+        createAndInsertIntoTable();
+
+        Response response =
+                lock.enquireLock(lockName, "1", "1", authorization, "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+        assertEquals(400, response.getStatus());
+    }
+    
+    @Test
+    public void test_badcurrentLockHolder() throws Exception {
+        System.out.println("Testing get current lock holder w/ bad lockref");
+        createAndInsertIntoTable();
+
+        String lockRef = createLockReference();
+
+        Response response =
+                lock.enquireLock("badlock", "1", "1", authorization, "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+        assertEquals(400, response.getStatus());
+    }
+    
+    @Test
+    public void test_holders() throws Exception {
+        System.out.println("Testing holders api");
+        createAndInsertIntoTable();
+
+        String lockRef = createLockReference();
+        
+        Response response =
+                lock.currentLockHolder(lockName, "1", "1", authorization, "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+        assertEquals(200, response.getStatus());
+        Map<String, Object> respMap = (Map<String, Object>) response.getEntity();
+        //TODO: this should be lockRef
+        assertEquals("1", ((Map<String, String>) respMap.get("lock")).get("lock-holder"));
+    }
+    
+    @Test
+    public void test_holdersbadRef() throws Exception {
+        System.out.println("Testing holders api w/ bad lockref");
+        createAndInsertIntoTable();
+
+        String lockRef = createLockReference();
+        
+        Response response =
+                lock.currentLockHolder("badname", "1", "1", authorization, "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+        assertEquals(400, response.getStatus());
+    }
+    
+    @Test
     public void test_unLock() throws Exception {
         System.out.println("Testing unlock");
         createAndInsertIntoTable();
@@ -306,6 +398,18 @@ public class TstRestMusicLockAPI {
                 lock.unLock(lockRef, "1", "1", authorization, "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
         System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
         assertEquals(200, response.getStatus());
+    }
+    
+    @Test
+    public void test_unLockBadRef() throws Exception {
+        System.out.println("Testing unlock w/ bad lock ref");
+        createAndInsertIntoTable();
+        String lockRef = createLockReference();
+
+        Response response =
+                lock.unLock("badref", "1", "1", authorization, "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+        assertEquals(400, response.getStatus());
     }
     
     @Test
@@ -322,6 +426,19 @@ public class TstRestMusicLockAPI {
         Map<String,Object> respMap = (Map<String, Object>) response.getEntity();
         assertEquals(lockRef, ((Map<String,String>) respMap.get("lock")).get("lock-holder"));
     }
+    
+    @Test
+    public void test_getLockStateBadRef() throws Exception {
+        System.out.println("Testing get lock state w/ bad ref");
+        createAndInsertIntoTable();
+
+        String lockRef = createLockReference();
+
+        Response response = lock.currentLockState("badname", "1", "1", authorization,
+                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+        assertEquals(400, response.getStatus());
+    }
 
     // Ignoring since this is now a duplicate of delete lock ref.
     @Test
@@ -329,6 +446,8 @@ public class TstRestMusicLockAPI {
     public void test_deleteLock() throws Exception {
         System.out.println("Testing get lock state");
         createAndInsertIntoTable();
+        
+        String lockRef = createLockReference();
 
         Response response = lock.deleteLock(lockName, "1", "1",
                 "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", authorization, appName);

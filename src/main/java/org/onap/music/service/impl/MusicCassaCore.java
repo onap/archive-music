@@ -286,7 +286,7 @@ public class MusicCassaCore implements MusicCoreService {
         try {
             LockObject lockOwner = getLockingServiceHandle().peekLockQueue(keyspace, table, primaryKeyValue);
             if (!lockOwner.getIsLockOwner()) {
-                return "No lock holder!";
+                return null;
             }
             return "$" + fullyQualifiedKey + "$" + lockOwner.getLockRef();
         } catch (MusicLockingException | MusicServiceException | MusicQueryException e) {

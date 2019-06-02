@@ -136,6 +136,42 @@ public class TstRestMusicDataAPI {
         Map<String, String> respMap = (Map<String, String>) response.getEntity();
         assertEquals(ResultType.FAILURE, respMap.get("status"));
     }
+    
+    @Test
+    public void test1_createKeyspaceSuccess() throws Exception {
+        System.out.println("Testing successful creation and deletion of keyspace");
+        MusicUtil.setKeyspaceActive(true);
+        
+        String keyspaceToCreate = "temp"+keyspaceName;
+        
+        
+        JsonKeySpace jsonKeyspace = new JsonKeySpace();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        Map<String, Object> replicationInfo = new HashMap<>();
+        consistencyInfo.put("type", "eventual");
+        replicationInfo.put("class", "SimpleStrategy");
+        replicationInfo.put("replication_factor", 1);
+        jsonKeyspace.setConsistencyInfo(consistencyInfo);
+        jsonKeyspace.setDurabilityOfWrites("true");
+        //don't overwrite a keyspace we already have
+        jsonKeyspace.setKeyspaceName(keyspaceToCreate);
+        jsonKeyspace.setReplicationInfo(replicationInfo);
+        // Mockito.doNothing().when(http).addHeader(xLatestVersion, MusicUtil.getVersion());
+        Response response =
+                data.createKeySpace("1", "1", "1", null, authorization, appName, jsonKeyspace, keyspaceToCreate);
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+        assertEquals(200, response.getStatus());
+        Map<String, String> respMap = (Map<String, String>) response.getEntity();
+        assertEquals(ResultType.SUCCESS, respMap.get("status"));
+        
+        response = data.dropKeySpace("1", "1", "1", null, authorization, appName, keyspaceToCreate);
+        assertEquals(200, response.getStatus());
+        respMap = (Map<String, String>) response.getEntity();
+        assertEquals(ResultType.SUCCESS, respMap.get("status"));
+        
+        //unset to not mess up any further tests
+        MusicUtil.setKeyspaceActive(false);
+    }
 
     @Test
     public void test3_createTable() throws Exception {
@@ -175,6 +211,22 @@ public class TstRestMusicDataAPI {
         jsonTable.setPrimaryKey("emp_name");
         jsonTable.setTableName("");
         jsonTable.setFields(fields);
+        Response response = data.createTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
+                authorization, jsonTable, keyspaceName, "");
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+        assertEquals(400, response.getStatus());
+    }
+    
+    @Test
+    public void test3_createTableNoFields() throws Exception {
+        System.out.println("Testing create table without fields");
+        JsonTable jsonTable = new JsonTable();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        consistencyInfo.put("type", "eventual");
+        jsonTable.setConsistencyInfo(consistencyInfo);
+        jsonTable.setKeyspaceName(keyspaceName);
+        jsonTable.setPrimaryKey("emp_name");
+        jsonTable.setTableName("");
         Response response = data.createTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
                 authorization, jsonTable, keyspaceName, "");
         System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
@@ -266,7 +318,7 @@ public class TstRestMusicDataAPI {
 
     // Improper parenthesis in key field
     @Test
-    public void test3_createTable_badParantesis() throws Exception {
+    public void test3_createTable_badParanthesis() throws Exception {
         System.out.println("Testing malformed create table request");
         String tableNameC = "testTable0";
         JsonTable jsonTable = new JsonTable();
@@ -489,6 +541,24 @@ public class TstRestMusicDataAPI {
     }
 
     @Test
+    public void test4_insertIntoTableNoValues() throws Exception {
+        System.out.println("Testing insert into table");
+        createTable();
+        JsonInsert jsonInsert = new JsonInsert();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        consistencyInfo.put("type", "eventual");
+        jsonInsert.setConsistencyInfo(consistencyInfo);
+        jsonInsert.setKeyspaceName(keyspaceName);
+        jsonInsert.setTableName(tableName);
+
+        Response response = data.insertIntoTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
+                authorization, jsonInsert, keyspaceName, tableName);
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+
+        assertEquals(400, response.getStatus());
+    }
+    
+    @Test
     public void test4_insertIntoTableCriticalNoLockID() throws Exception {
         System.out.println("Testing critical insert into table without lockid");
         createTable();
@@ -647,6 +717,19 @@ public class TstRestMusicDataAPI {
         assertEquals(200, response.getStatus());
     }
     
+
+    public void test5_updateTableNoBody() throws Exception {
+        System.out.println("Testing update table no body");
+        createTable();
+        
+        Response response = data.updateTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
+                authorization, null, keyspaceName, tableName, info);
+
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+
+        assertEquals(400, response.getStatus());
+    }
+    
     @Test
     public void test5_updateTable_tableDNE() throws Exception {
         System.out.println("Testing update table that does not exist");
@@ -740,7 +823,8 @@ public class TstRestMusicDataAPI {
 		Map<String, String> row0 = (Map<String, String>) result.get("row 0");
 		assertEquals("testname", row0.get("emp_name"));
 		assertEquals(BigInteger.valueOf(500), row0.get("emp_salary"));
-	}
+	}	
+
 	
 	@Test
     public void test6_critical_selectCritical_nolockid() throws Exception {
