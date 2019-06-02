@@ -653,36 +653,6 @@ public class MusicUtil {
 
     public static ConsistencyLevel getConsistencyLevel(String consistency) {
         return consistencyName.get(consistency.toUpperCase());
-        }
-
-        public static void loadProperties() throws Exception {
-        Properties prop = new Properties();
-        InputStream input = null;
-        try {
-            // load the properties file
-            input = MusicUtil.class.getClassLoader().getResourceAsStream("music.properties");
-            prop.load(input);
-        } catch (Exception ex) {
-            logger.error(EELFLoggerDelegate.errorLogger, "Unable to find properties file.", ex);
-            throw new Exception();
-        } finally {
-            if (input != null) {
-                try {
-                    input.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    logger.error(EELFLoggerDelegate.errorLogger, e);
-                }
-            }
-        }
-        // get the property value and return it
-        MusicUtil.setMyCassaHost(prop.getProperty("cassandra.host"));
-        MusicUtil.setCassName(prop.getProperty("cassandra.user"));
-        MusicUtil.setCassPwd(prop.getProperty("cassandra.password"));
-        MusicUtil.setCassandraPort(Integer.parseInt(prop.getProperty("cassandra.port")));
-        MusicUtil.setNotifyTimeOut(Integer.parseInt(prop.getProperty("notify.timeout")));
-        MusicUtil.setNotifyInterval(Integer.parseInt(prop.getProperty("notify.interval")));
-        MusicUtil.setCacheObjectMaxLife(Integer.parseInt(prop.getProperty("cacheobject.maxlife")));
     }
 
     public static void setNotifyInterval(int notifyinterval) {

@@ -134,7 +134,11 @@ public class AuthUtil {
      */
     public static boolean isAccessAllowed(ServletRequest request, String nameSpace) throws Exception {
 
-        if (nameSpace.isEmpty()) {
+        if (request==null) {
+            throw new Exception("Request cannot be null");
+        }
+        
+        if (nameSpace==null || nameSpace.isEmpty()) {
             throw new Exception("NameSpace not Declared!");
         }
         
@@ -143,9 +147,7 @@ public class AuthUtil {
         //logger.info(EELFLoggerDelegate.applicationLogger,
         //        "AAFPermission  of the requested MechId for all the namespaces: " + aafPermsList);
 
-        String requestUri = null;
         logger.debug(EELFLoggerDelegate.applicationLogger, "Requested nameSpace: " + nameSpace);
-        HttpServletRequest httpRequest = null;
 
 
         List<AAFPermission> aafPermsFinalList = filterNameSpacesAAFPermissions(nameSpace, aafPermsList);
@@ -154,10 +156,8 @@ public class AuthUtil {
             "AuthUtil list of AAFPermission for the specific namespace ::::::::::::::::::::::::::::::::::::::::::::"
             + aafPermsFinalList);
         
-        if (null != request) {
-            httpRequest = (HttpServletRequest) request;
-            requestUri = httpRequest.getRequestURI().substring(httpRequest.getContextPath().length() + 1);
-        }
+        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        String requestUri = httpRequest.getRequestURI().substring(httpRequest.getContextPath().length() + 1);
 
         logger.debug(EELFLoggerDelegate.applicationLogger,
                 "AuthUtil requestUri ::::::::::::::::::::::::::::::::::::::::::::" + requestUri);
@@ -222,10 +222,8 @@ public class AuthUtil {
         String[] subPath = null;
         //String type = null;
         //type = keyArray[0];
-        String instance = null; 
-        instance = keyArray[1];
-        String action = null;
-        action = keyArray[2];
+        String instance = keyArray[1];
+        String action = keyArray[2];
         
         //if the instance & action both are * , then allow
         if ("*".equalsIgnoreCase(instance) && "*".equalsIgnoreCase(action)) {
