@@ -25,7 +25,7 @@
     <groupId>org.onap.music</groupId>
     <artifactId>MUSIC</artifactId>
     <packaging>jar</packaging>
-    <version>2.5.8</version>
+    <version>2.5.9</version>
     <description>
             This is the MUSIC REST interface, packaged as a war file.
     </description>
@@ -44,6 +44,7 @@
         <jaxrs.version>2.0.1</jaxrs.version>
         <cassandra.version>3.4.0</cassandra.version>
         <zookeeper.version>3.4.11</zookeeper.version>
+        <onap.nexus.url>https://nexus.onap.org</onap.nexus.url>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>

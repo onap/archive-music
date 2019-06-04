@@ -569,12 +569,10 @@ public class MusicUtil {
         }
         String cassPwd = prop.getProperty("cassandra.password");
         String isEncrypted = prop.getProperty("cassandra.password.isencrypted");
-        logger.info(EELFLoggerDelegate.applicationLogger,"cassandra.password:" + cassPwd);
-        logger.info(EELFLoggerDelegate.applicationLogger,"cassandra.password.isencrypted:" + isEncrypted);
         if("true".equals(isEncrypted)) {
-            logger.info(EELFLoggerDelegate.applicationLogger,"Decrypting....");
+            logger.debug(EELFLoggerDelegate.applicationLogger,"Decrypting....");
             cassPwd = CipherUtil.decryptPKC(cassPwd);
-            logger.info(EELFLoggerDelegate.applicationLogger,"Decrypted password: "+cassPwd);
+            logger.debug(EELFLoggerDelegate.applicationLogger,"Password Decrypted");
             MusicUtil.setCassPwd(cassPwd);
         } else
             MusicUtil.setCassPwd(cassPwd);

@@ -319,7 +319,7 @@ public class CachingUtil implements Runnable {
         Map<String, Object> resultMap = new HashMap<>();
         if (ns == null || userId == null || password == null) {
             logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.MISSINGINFO ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
-            logger.error(EELFLoggerDelegate.errorLogger,"One or more required headers is missing. userId: "+userId+" :: password: "+password);
+            logger.error(EELFLoggerDelegate.errorLogger,"One or more required headers is missing.");
             resultMap.put("Exception",
                             "One or more required headers appName(ns), userId, password is missing. Please check.");
             return resultMap;
