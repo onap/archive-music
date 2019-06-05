@@ -183,8 +183,14 @@ public class RestMusicConditionalAPI {
         queryBank.put(MusicUtil.SELECT, select);
         queryBank.put(MusicUtil.UPSERT, upsert);
         String planId = casscadeColumnData.get("key").toString();
-        ReturnType result = MusicConditional.update(queryBank, keyspace, tablename, 
-            primaryKey,primaryKeyValue,planId,casscadeColumnName,casscadeColumnValueMap);
+        ReturnType result = MusicConditional.update(new UpdateDataObject().setQueryBank(queryBank)
+                .setKeyspace(keyspace)
+                .setTableName(tablename)
+                .setPrimaryKey(primaryKey)
+                .setPrimaryKeyValue(primaryKeyValue)
+                 .setPlanId(planId)
+                .setCascadeColumnName(casscadeColumnName)
+                .setCascadeColumnValues(casscadeColumnValueMap));
         if (result.getResult() == ResultType.SUCCESS) {
             return response.status(Status.OK)
             .entity(new JsonResponse(result.getResult())

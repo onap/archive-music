@@ -165,12 +165,10 @@ public class MusicConditional {
 
     }
 
-	public static ReturnType update(Map<String, PreparedQueryObject> queryBank, String keyspace, String tableName,
-			String primaryKey, String primaryKeyValue, String planId, String cascadeColumnName,
-			Map<String, String> cascadeColumnValues)
-			throws MusicLockingException, MusicQueryException, MusicServiceException {
+    public static ReturnType update(UpdateDataObject dataObj)
+            throws MusicLockingException, MusicQueryException, MusicServiceException {
 
-        String key = keyspace + "." + tableName + "." + primaryKeyValue;
+        String key = dataObj.getKeyspace() + "." + dataObj.getTableName() + "." + dataObj.getPrimaryKeyValue();
         String lockId = MusicCore.createLockReference(key);
         long leasePeriod = MusicUtil.getDefaultLockLeasePeriod();
         ReturnType lockAcqResult = MusicCore.acquireLockWithLease(key, lockId, leasePeriod);
@@ -178,7 +176,9 @@ public class MusicConditional {
         try {
 
             if (lockAcqResult.getResult().equals(ResultType.SUCCESS)) {
-                ReturnType criticalPutResult = updateAtomic(lockId, keyspace, tableName, primaryKey,primaryKeyValue, queryBank,planId,cascadeColumnValues,cascadeColumnName);
+                ReturnType criticalPutResult = updateAtomic(lockId, dataObj.getKeyspace(), dataObj.getTableName(),
+                        dataObj.getPrimaryKey(), dataObj.getPrimaryKeyValue(), dataObj.getQueryBank(),
+                        dataObj.getPlanId(), dataObj.getCascadeColumnValues(), dataObj.getCascadeColumnName());
                 MusicCore.destroyLockRef(lockId);
                 return criticalPutResult;
             } else {
