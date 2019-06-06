@@ -4,37 +4,33 @@
 
 Release Notes
 =============
-Initial Release for Casablanca
+Initial Release for Dublin
 
-Version: 3.0.24
+Version: 3.2.18
 ---------------
 
-:Release Date: 2018-11-30
+:Release Date: 2019-06-06
 
 **New Features**
 
-- MUSIC as a Service: while MUSIC was consumed internally by components in the Beijing release, in Casablanca MUSIC can be deployed as an independent multi-site clustered service
+- MUSIC now uses Cassandra only as its locking service. In previous releases, MUSIC had a dependency on Zookeeper for locking.
 
-- Designed MUSIC to be a fully sharded, scale out system, where as many ONAP sites/component replicas can be added as required for performance
+- For the Dublin release, MUSIC now leverages Spring Boot for improved start up capabilities and performance.
 
-- Automated failure detection and consistent failover across sites for ONAP components using MUSIC through the PROM recipe
+- By leveraging CADI, MUSIC is able to more quickly and accurately authenticate it's clients.
 
 - Continued adherence to ONAP S3P requirements
 
 
 **Bug Fixes**
 
-    - `MUSIC-176 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-176>`_ nc: bad address
+    - `MUSIC-386 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-386>`_ Music fails health check
 
-    - `MUSIC-154 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-154>`_ Helm charts using latest tag name
-
-    - `MUSIC-152 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-152>`_ MUSIC tomcat returning HTTP 401
-
-    - `MUSIC-147 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-147>`_ Cassandra-job is failing
-
-    - `MUSIC-143 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-143>`_ Translator Service not picking records from controller
+    - `MUSIC-368 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-368`_ MUSIC responding with 500 error
 
     - `MUSIC-78 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-78>`_ Build failed to find artifact org.onap.music:MUSIC:jar:2.5.5
+
+    - `MUSIC-264 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-264>`_ Fails to create keyspace
 
 
 
@@ -48,10 +44,10 @@ MUSIC code has been formally scanned during build time using NexusIQ and all Cri
 Quick Links:
 
 - `MUSIC project page <https://wiki.onap.org/display/DW/MUSIC+Project>`_
-- `MUSIC Casablanca Release <https://wiki.onap.org/display/DW/MUSIC+Casablanca+Release>`_
+- `MUSIC Dublin Release <https://wiki.onap.org/display/DW/MUSIC+%28R4%29+Dublin+Release>`_
 - `Passing Badge information for MUSIC <https://bestpractices.coreinfrastructure.org/en/projects/1722>`_
-- `MUSIC Architecture Page <https://onap.readthedocs.io/en/casablanca/submodules/music.git/docs/architecture.html>`_
-- `Project Vulnerability Review Table for MUSIC <https://wiki.onap.org/pages/viewpage.action?pageId=45285410>`_
+- `MUSIC Architecture Page <https://onap.readthedocs.io/en/dublin/submodules/music.git/docs/architecture.html>`_
+- `Project Vulnerability Review Table for MUSIC <https://wiki.onap.org/pages/viewpage.action?pageId=64004601>`_
 
 **Upgrade Notes**
 
