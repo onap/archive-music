@@ -29,12 +29,15 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Map;
-
+import org.onap.music.authentication.AuthUtil;
+import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonSelect implements Serializable {
     private Map<String, String> consistencyInfo;
+    private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(JsonSelect.class);
+
 
 
     public Map<String, String> getConsistencyInfo() {
@@ -52,8 +55,7 @@ public class JsonSelect implements Serializable {
             out = new ObjectOutputStream(bos);
             out.writeObject(this);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.error("IOException occured {}",e.getMessage());
         }
         return bos.toByteArray();
     }
