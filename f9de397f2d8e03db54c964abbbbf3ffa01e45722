@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fe77ea28_bc55a2ec",
+        "filename": "src/main/java/org/onap/music/conductor/conditionals/MusicConditional.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 179,
+      "author": {
+        "id": 1827
+      },
+      "writtenOn": "2019-06-13T14:57:56Z",
+      "side": 1,
+      "message": "The Method updateAtomic(..) also seems to have the same Sonar Issues. Will these be addressed also? I don\u0027t see any benefit in making the change if only a few are addressed and not others. Are there plans to resolve all these Sonar Issues(greater than 7 authorized) other than the Rest API classes?",
+      "revId": "f9de397f2d8e03db54c964abbbbf3ffa01e45722",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
