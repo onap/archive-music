@@ -113,6 +113,28 @@ public class JsonResponseTest {
     }
     
     @Test
+    public void testLockLease() {
+    	result = new JsonResponse(ResultType.SUCCESS);
+        result.setLockLease("lockLease");
+        assertEquals("lockLease", result.getLockLease());
+    }
+    
+    @Test
+    public void testMusicBuild() {
+    	result = new JsonResponse(ResultType.SUCCESS);
+        result.setMusicBuild("Build");
+        assertEquals("Build", result.getMusicBuild());
+    }
+    
+    @Test
+    public void testLockHolder() {
+    	result = new JsonResponse(ResultType.SUCCESS);
+    	List<String> lockHolders = new ArrayList<>();
+        result.setLockHolder(lockHolders);
+        assertEquals(lockHolders, result.getLockHolder());
+    }
+    
+    @Test
     public void testLockStatus() {
         result = new JsonResponse(ResultType.SUCCESS);
         LockStatus status = LockStatus.LOCKED;
