@@ -168,20 +168,18 @@ public class MusicDataStore {
         .setConnectionsPerHost(HostDistance.REMOTE, 2, 4);
         while (it.hasNext()) {
             try {
-            	if(MusicUtil.getCassName() != null && MusicUtil.getCassPwd() != null) {
-                    logger.info(EELFLoggerDelegate.applicationLogger,
-                            "Building with credentials "+MusicUtil.getCassName()+" & "+MusicUtil.getCassPwd());
+                if(MusicUtil.getCassName() != null && MusicUtil.getCassPwd() != null) {
                     cluster = Cluster.builder().withPort(MusicUtil.getCassandraPort())
-                                       .withCredentials(MusicUtil.getCassName(), MusicUtil.getCassPwd())
+                        .withCredentials(MusicUtil.getCassName(), MusicUtil.getCassPwd())
                                        //.withLoadBalancingPolicy(new RoundRobinPolicy())
-                                       .withoutJMXReporting()
-                                       .withPoolingOptions(poolingOptions)
-                                       .addContactPoints(addresses).build();
+                        .withoutJMXReporting()
+                        .withPoolingOptions(poolingOptions)
+                        .addContactPoints(addresses).build();
                 }
                 else
                     cluster = Cluster.builder().withPort(MusicUtil.getCassandraPort())
                                          //.withLoadBalancingPolicy(new RoundRobinPolicy())
-                                         .addContactPoints(addresses).build();
+                        .addContactPoints(addresses).build();
                 
                 Metadata metadata = cluster.getMetadata();
                 logger.info(EELFLoggerDelegate.applicationLogger, "Connected to cassa cluster "
@@ -213,19 +211,15 @@ public class MusicDataStore {
         addresses = address.split(",");
         PoolingOptions poolingOptions = new PoolingOptions();
         poolingOptions
-        .setConnectionsPerHost(HostDistance.LOCAL,  4, 10)
-        .setConnectionsPerHost(HostDistance.REMOTE, 2, 4);
+            .setConnectionsPerHost(HostDistance.LOCAL,  4, 10)
+            .setConnectionsPerHost(HostDistance.REMOTE, 2, 4);
         if(MusicUtil.getCassName() != null && MusicUtil.getCassPwd() != null) {
-            logger.info(EELFLoggerDelegate.applicationLogger,
-                    "Building with credentials "+MusicUtil.getCassName()+" & "+MusicUtil.getCassPwd());
             cluster = Cluster.builder().withPort(MusicUtil.getCassandraPort())
-                       .withCredentials(MusicUtil.getCassName(), MusicUtil.getCassPwd())
-                       //.withLoadBalancingPolicy(new RoundRobinPolicy())
-                       .withoutJMXReporting()
-                       .withPoolingOptions(poolingOptions)
-                       .addContactPoints(addresses).build();
-        }
-        else {
+                .withCredentials(MusicUtil.getCassName(), MusicUtil.getCassPwd())
+                .withoutJMXReporting()
+                .withPoolingOptions(poolingOptions)
+                .addContactPoints(addresses).build();
+        } else {
             cluster = Cluster.builder().withPort(MusicUtil.getCassandraPort())
                         //.withLoadBalancingPolicy(new RoundRobinPolicy())
                         .withoutJMXReporting()
@@ -238,7 +232,9 @@ public class MusicDataStore {
         try {
             session = cluster.connect();
         } catch (Exception ex) {
-            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.CASSANDRACONNECTIVITY, ErrorSeverity.ERROR, ErrorTypes.SERVICEUNAVAILABLE);
+            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),
+                AppMessages.CASSANDRACONNECTIVITY, 
+                ErrorSeverity.ERROR, ErrorTypes.SERVICEUNAVAILABLE);
             throw new MusicServiceException(
                             "Error while connecting to Cassandra cluster.. " + ex.getMessage());
         }
