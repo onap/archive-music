@@ -25,7 +25,6 @@
 
 package org.onap.music.rest;
 
-import java.util.HashMap;
 import java.util.Map;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -67,7 +66,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 
 @Path("/v2/priorityq/")
-@Api(value = "Q Api")
+@Api(value = "Q Api",hidden = true)
 public class RestMusicQAPI {
 
     private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(RestMusicQAPI.class);
@@ -95,7 +94,7 @@ public class RestMusicQAPI {
         @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
         JsonTable tableObj, 
         @ApiParam(value = "Key Space", required = true) @PathParam("keyspace") String keyspace,
-          @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename) throws Exception {
+        @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename) throws Exception {
         ResponseBuilder response = MusicUtil.buildVersionResponse(version, minorVersion, patchVersion);
 
         Map<String, String> fields = tableObj.getFields();
@@ -409,7 +408,7 @@ public class RestMusicQAPI {
         @ApiParam(value = "Table Name", required = true) @PathParam("qname") String tablename,
         @Context UriInfo info) throws Exception {
 
-        return new RestMusicDataAPI().select(version, minorVersion, patchVersion, aid, ns, authorization, keyspace, tablename, info);// , limit)
+        return new RestMusicDataAPI().selectWithCritical(version, minorVersion, patchVersion, aid, ns, authorization,null, keyspace, tablename, info);// , limit)
 
     }
 

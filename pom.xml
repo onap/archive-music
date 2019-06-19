@@ -27,7 +27,7 @@
     <groupId>org.onap.music</groupId>
     <artifactId>MUSIC</artifactId>
     <packaging>jar</packaging>
-    <version>3.2.29-SNAPSHOT</version>
+    <version>3.2.34-SNAPSHOT</version>
     <description>
             This is the MUSIC REST interface, packaged as a Springboot jar file.
     </description>
@@ -45,7 +45,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-data-jpa</artifactId>
                 <version>2.0.3.RELEASE</version>
-               </dependency> -->
+            </dependency> -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
@@ -141,6 +141,7 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>2.1.1.RELEASE</version>
                 <configuration>
                     <mainClass>org.onap.music.MusicApplication</mainClass>
                     <outputDirectory>./distribution/music/</outputDirectory>
@@ -244,22 +245,13 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
-		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-aop</artifactId>
-			<scope>compile</scope>
-		</dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-autoconfigure</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-aop</artifactId>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
         </dependency>
         <dependency>
             <groupId>org.aspectj</groupId>
@@ -268,15 +260,7 @@
         </dependency>
         <!-- Springboot -->
         <!-- Development -->
-		<dependency>
-			<groupId>org.aspectj</groupId>
-			<artifactId>aspectjweaver</artifactId>
-			<scope>compile</scope>
-		</dependency>
-		
-        <!-- Springboot -->
-        <!-- Development -->
-		<dependency>
+        <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
             <version>2.4</version>
@@ -323,21 +307,16 @@
                 </exclusion>
                 <exclusion>
                     <groupId>org.powermock</groupId>
-	            <artifactId>powermock-module-junit4</artifactId>
+                    <artifactId>powermock-module-junit4</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
         <!-- End Logging -->
         <!-- Cassandra -->
         <dependency>
-        <groupId>io.dropwizard.metrics</groupId>
-        <artifactId>metrics-core</artifactId>
-        <version>4.1.0-rc3</version>
-        </dependency>
-        <dependency>
-        <groupId>com.datastax.cassandra</groupId>
-        <artifactId>cassandra-driver-core</artifactId>
-        <version>3.6.0</version>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+            <version>4.1.0-rc3</version>
         </dependency>
         <dependency>
             <groupId>com.datastax.cassandra</groupId>
@@ -383,6 +362,7 @@
             <artifactId>commons-lang3</artifactId>
             <version>3.8</version>
         </dependency>
+
         <!-- Testing -->
         <dependency>
             <groupId>junit</groupId>
@@ -397,6 +377,22 @@
             <scope>test</scope>
             <exclusions>
                 <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-log4j12</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>ch.qos.logback</groupId>
+                    <artifactId>logback-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>ch.qos.logback</groupId>
+                    <artifactId>logback-classic</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.cassandraunit</groupId>
+                    <artifactId>cassandra-unit</artifactId>
+                </exclusion>
+                <exclusion>
                     <groupId>io.dropwizard.metrics</groupId>
                     <artifactId>metrics-core</artifactId>
                 </exclusion>
@@ -405,45 +401,12 @@
                     <artifactId>reporter-config-base</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency> 
+        </dependency>
         <dependency>
-        <groupId>org.cassandraunit</groupId>
-        <artifactId>cassandra-unit-spring</artifactId>
-        <version>3.5.0.1</version>
-        <scope>test</scope>
-        <exclusions>
-            <exclusion>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-log4j12</artifactId>
-            </exclusion>
-            <exclusion>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-core</artifactId>
-            </exclusion>
-            <exclusion>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-classic</artifactId>
-            </exclusion>
-            <exclusion>
-                <groupId>org.cassandraunit</groupId>
-                <artifactId>cassandra-unit</artifactId>
-            </exclusion>
-            <exclusion>
-                <groupId>io.dropwizard.metrics</groupId>
-                <artifactId>metrics-core</artifactId>
-            </exclusion>
-        </exclusions>
-    </dependency>
-    <dependency>
             <groupId>org.cassandraunit</groupId>
             <artifactId>cassandra-unit-shaded</artifactId>
             <version>3.5.0.1</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.dropwizard.metrics</groupId>
-            <artifactId>metrics-core</artifactId>
-            <version>3.1.0</version>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
@@ -452,13 +415,13 @@
             <scope>test</scope>
         </dependency>
         <!--  /Testing -->
+
         <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310 -->
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
             <version>2.9.8</version>
         </dependency>
-
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
@@ -478,16 +441,10 @@
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
         </dependency>
-            
-<!--    <dependency>
-            <groupId>io.swagger</groupId>
-            <artifactId>swagger-jersey2-jaxrs</artifactId>
-            <version>1.5.18</version>
-        </dependency> -->
         <dependency>
             <groupId>io.swagger</groupId>
             <artifactId>swagger-jersey-jaxrs</artifactId>
-            <version>1.5.21</version>
+            <version>1.5.22</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -498,11 +455,6 @@
             <artifactId>jBCrypt</artifactId>
             <version>0.4.1</version>
         </dependency>
-       <!-- <dependency>
-            <groupId>org.mindrot</groupId>
-            <artifactId>jbcrypt</artifactId>
-            <version>0.4</version>
-        </dependency>-->
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-handler</artifactId>
@@ -533,28 +485,27 @@
             <artifactId>netty-transport</artifactId>
             <version>4.1.33.Final</version>
         </dependency>
-    <dependency>
-        <groupId>org.onap.aaf.authz</groupId>
-        <artifactId>aaf-cadi-aaf</artifactId>
-        <version>2.1.7</version>
-        <exclusions>
-            <exclusion>
-                <groupId>log4j</groupId>
-                <artifactId>log4j</artifactId>
-            </exclusion>
-        </exclusions>
-    </dependency>
-    <dependency>
-        <groupId>org.onap.aaf.authz</groupId>
-        <artifactId>aaf-cadi-client</artifactId>
-        <version>2.1.7</version>
-    </dependency>
-    <dependency>
-        <groupId>org.onap.aaf.authz</groupId>
-        <artifactId>aaf-cadi-core</artifactId>
-        <version>2.1.7</version>
-    </dependency>
-
+        <dependency>
+            <groupId>org.onap.aaf.authz</groupId>
+            <artifactId>aaf-cadi-aaf</artifactId>
+            <version>2.1.7</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>log4j</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.onap.aaf.authz</groupId>
+            <artifactId>aaf-cadi-client</artifactId>
+            <version>2.1.7</version>
+        </dependency>
+        <dependency>
+            <groupId>org.onap.aaf.authz</groupId>
+            <artifactId>aaf-cadi-core</artifactId>
+            <version>2.1.7</version>
+        </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
@@ -689,13 +640,6 @@
         </profile>
         <profile> 
             <id>default</id> 
-            <repositories> 
-                <repository> 
-                    <id>nexus</id> 
-                    <name>attarch-releases</name> 
-                    <url>http://mavencentral.it.att.com:8084/nexus/content/repositories/attarch-releases</url> 
-                </repository> 
-            </repositories> 
         </profile>
     </profiles>
     <distributionManagement>

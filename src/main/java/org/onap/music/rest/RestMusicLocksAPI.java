@@ -59,10 +59,14 @@ import org.onap.music.response.jsonobjects.JsonResponse;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import io.swagger.annotations.Example;
+import io.swagger.annotations.ExampleProperty;
 
 
 @Path("/v2/locks/")
-@Api(value="Lock Api")
+@Api(value="Locking Api")
 public class RestMusicLocksAPI {
 
     private EELFLoggerDelegate logger =EELFLoggerDelegate.getLogger(RestMusicLocksAPI.class);
@@ -80,22 +84,40 @@ public class RestMusicLocksAPI {
      */
     @POST
     @Path("/create/{lockname}")
-    @ApiOperation(value = "Create Lock",
-        notes = "Puts the requesting process in the q for this lock." +
-        " The corresponding lock will be created if it did not already exist." +
-        " Lock Name is the \"key\" of the form keyspaceName.tableName.rowId",
+    @ApiOperation(value = "Create and Acquire a Lock Id for a single row.",
+        notes = "Creates and Acquires a Lock Id for a specific Row in a table based on the key of that row.\n"
+        + " The corresponding lock will be created if it did not already exist."
+        + " Lock Name also the Lock is in the form of keyspaceName.tableName.rowId.\n"
+        + " The Response will be in the form of \"$kesypaceName.tableName.rowId$lockRef\" "
+        + " where the lockRef is a integer representing the Lock Name buffered by \"$\" " 
+        + " followed by the lock number. This term for "
+        + " this response is a lockId and it will be used in other /locks API calls where a "
+        + " lockId is required. If just a lock is required then the form that would be "
+        + " the original lockname(without the buffered \"$\").",
         response = Map.class)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)    
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiResponses(value={
+        @ApiResponse(code=200, message = "Success",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"lock\" : {\"lock\" : \"$keyspace.table.rowId$<integer>\"},"
+                + "\"status\" : \"SUCCESS\"}")
+        })),
+        @ApiResponse(code=400, message = "Failure",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"error\" : \"Unable to aquire lock\","
+                + "\"status\" : \"FAILURE\"}") 
+        }))
+    })  
     public Response createLockReference(
             @ApiParam(value="Lock Name",required=true) @PathParam("lockname") String lockName,
             @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
             @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
             @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-            @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+            @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
             JsonLock lockObject,
             @ApiParam(value = "Application namespace",
-                            required = true) @HeaderParam("ns") String ns) throws Exception{
+                            required = false, hidden = true) @HeaderParam("ns") String ns) throws Exception{
         try {
             ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
             Map<String, Object> resultMap = MusicCore.validateLock(lockName);
@@ -138,19 +160,32 @@ public class RestMusicLocksAPI {
      * @throws Exception 
      */
     @GET
-    @Path("/acquire/{lockreference}")
-    @ApiOperation(value = "Aquire Lock", 
+    @Path("/acquire/{lockId}")
+    @ApiOperation(value = "Aquire Lock Id ", 
         notes = "Checks if the node is in the top of the queue and hence acquires the lock",
         response = Map.class)
     @Produces(MediaType.APPLICATION_JSON)    
+    @ApiResponses(value={
+        @ApiResponse(code=200, message = "Success",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"lock\" : {\"lock\" : \"$keyspace.table.rowId$<integer>\"},"
+                + "\"message\" : \"<integer> is the lock holder for the key\","
+                + "\"status\" : \"SUCCESS\"}") 
+        })),
+        @ApiResponse(code=400, message = "Failure",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"error\" : \"Unable to aquire lock\","
+                + "\"status\" : \"FAILURE\"}") 
+        }))
+    })  
     public Response accquireLock(
-            @ApiParam(value="Lock Reference",required=true) @PathParam("lockreference") String lockId,
+            @ApiParam(value="Lock Id",required=true) @PathParam("lockId") String lockId,
             @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
             @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
             @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-            @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+            @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
             @ApiParam(value = "Application namespace",
-                            required = true) @HeaderParam("ns") String ns) throws Exception{
+                            required = false, hidden = true) @HeaderParam("ns") String ns) throws Exception{
         try { 
             ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
             Map<String, Object> resultMap = MusicCore.validateLock(lockId);
@@ -182,21 +217,40 @@ public class RestMusicLocksAPI {
     }
     
 
-
-    
     @POST
-    @Path("/acquire-with-lease/{lockreference}")
-    @ApiOperation(value = "Aquire Lock with Lease", response = Map.class)
+    @Path("/acquire-with-lease/{lockId}")
+    @ApiOperation(
+        hidden = false,
+        value = " ** DEPRECATED ** - Aquire Lock with Lease", 
+        notes = "Acquire the lock with a lease, where lease period is in Milliseconds.\n"
+        + "This will ensure that a lock will expire in set milliseconds.\n"
+        + "This is no longer available after v3.2.0",
+        response = Map.class)
     @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)    
-    public Response accquireLockWithLease(JsonLeasedLock lockObj, 
-            @ApiParam(value="Lock Reference",required=true) @PathParam("lockreference") String lockId,
-            @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
-            @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-            @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-            @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
-            @ApiParam(value = "Application namespace",
-                            required = true) @HeaderParam("ns") String ns) throws Exception{
+    @Produces(MediaType.APPLICATION_JSON) 
+    @ApiResponses(value={
+        @ApiResponse(code=200, message = "Success",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"lock\" : {\"lock\" : \"$keyspace.table.rowId$<integer>\","
+                + "\"lock-lease\" : \"6000\"},"
+                + "\"message\" : \"<integer> is the lock holder for the key\","
+                + "\"status\" : \"SUCCESS\"}")
+        })),
+        @ApiResponse(code=400, message = "Failure",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"error\" : \"Unable to aquire lock\","
+                + "\"status\" : \"FAILURE\"}") 
+        }))
+    })  
+    @Deprecated
+    public Response accquireLockWithLease(
+        JsonLeasedLock lockObj, 
+        @ApiParam(value="Lock Id",required=true) @PathParam("lockId") String lockId,
+        @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
+        @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
+        @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
+        @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
+        @ApiParam(value = "Application namespace",required = false, hidden = true) @HeaderParam("ns") String ns) throws Exception{
         try {
             ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
             Map<String, Object> resultMap = MusicCore.validateLock(lockId);
@@ -220,6 +274,8 @@ public class RestMusicLocksAPI {
         } finally {
             EELFLoggerDelegate.mdcRemove("keyspace");
         }
+
+
     } 
     
 
@@ -229,14 +285,27 @@ public class RestMusicLocksAPI {
         notes = "Gets the current single lockholder at top of lock queue",
         response = Map.class)
     @Produces(MediaType.APPLICATION_JSON)    
+    @ApiResponses(value={
+        @ApiResponse(code=200, message = "Success",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"lock\" : {\"lock\" : \"keyspace.table.rowId\","
+                + "\"lock-holder\" : \"$tomtest.employees.tom$<integer>\"}},"
+                + "\"status\" : \"SUCCESS\"}") 
+        })),
+        @ApiResponse(code=400, message = "Failure",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"error\" : \"Error Message\","
+                + "\"status\" : \"FAILURE\"}") 
+        }))
+    })  
     public Response enquireLock(
             @ApiParam(value="Lock Name",required=true) @PathParam("lockname") String lockName,
             @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
             @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
             @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-            @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+            @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
             @ApiParam(value = "Application namespace",
-                            required = true) @HeaderParam("ns") String ns) throws Exception{
+                            required = false, hidden = true) @HeaderParam("ns") String ns) throws Exception{
         try {
             ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
             Map<String, Object> resultMap = MusicCore.validateLock(lockName);
@@ -265,16 +334,30 @@ public class RestMusicLocksAPI {
     @GET
     @Path("/holders/{lockname}")
     @ApiOperation(value = "Get Lock Holders", 
-        notes = "Gets the current Lock Holders",
+        notes = "Gets the current Lock Holders.\n"
+        + "Will return an array of READ Lock References.",
         response = Map.class)
     @Produces(MediaType.APPLICATION_JSON)    
+    @ApiResponses(value={
+        @ApiResponse(code=200, message = "Success",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"lock\" : {\"lock\" : \"keyspace.table.rowId\","
+                + "\"lock-holder\" : [\"$keyspace.table.rowId$<integer1>\",\"$keyspace.table.rowId$<integer2>\"]}},"
+                + "\"status\" : \"SUCCESS\"}") 
+        })),
+        @ApiResponse(code=400, message = "Failure",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"error\" : \"Error message\","
+                + "\"status\" : \"FAILURE\"}") 
+        }))
+    })  
     public Response currentLockHolder(@ApiParam(value="Lock Name",required=true) @PathParam("lockname") String lockName,
             @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
             @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
             @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-            @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+            @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
             @ApiParam(value = "Application namespace",
-                            required = true) @HeaderParam("ns") String ns) throws Exception{
+                            required = false, hidden = true) @HeaderParam("ns") String ns) throws Exception{
         try {
             ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
             Map<String, Object> resultMap = MusicCore.validateLock(lockName);
@@ -290,9 +373,9 @@ public class RestMusicLocksAPI {
             List<String> who = MusicCore.getCurrentLockHolders(lockName);
             ResultType status = ResultType.SUCCESS;
             String error = "";
-            if (who == null) {
+            if (who == null || who.isEmpty()) {
                 status = ResultType.FAILURE;
-                error = "There was a problem getting the lock holder";
+                error = (who !=null && who.isEmpty()) ? "No lock holders for the key":"There was a problem getting the lock holder";
                 logger.error(EELFLoggerDelegate.errorLogger, "There was a problem getting the lock holder",
                         AppMessages.INCORRECTDATA, ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
                 return response.status(Status.BAD_REQUEST)
@@ -300,8 +383,8 @@ public class RestMusicLocksAPI {
                         .build();
             }
             return response.status(Status.OK)
-                    .entity(new JsonResponse(status).setError(error).setLock(lockName).setLockHolder(who).toMap())
-                    .build();
+                .entity(new JsonResponse(status).setError(error).setLock(lockName).setLockHolder(who).setisLockHolders(true).toMap())
+                .build();
         } finally {
             EELFLoggerDelegate.mdcRemove("keyspace");
         }
@@ -312,16 +395,29 @@ public class RestMusicLocksAPI {
     @Path("/{lockname}")
     @ApiOperation(value = "Lock State",
         notes = "Returns current Lock State and Holder.",
-        response = Map.class)
+        response = Map.class,hidden = true)
     @Produces(MediaType.APPLICATION_JSON)    
+    @ApiResponses(value={
+        @ApiResponse(code=200, message = "Success",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"lock\" : {\"lock\" : \"$keyspace.table.rowId$<integer>\"},"
+                + "\"message\" : \"<integer> is the lock holder for the key\","
+                + "\"status\" : \"SUCCESS\"}") 
+        })),
+        @ApiResponse(code=400, message = "Failure",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"error\" : \"Unable to aquire lock\","
+                + "\"status\" : \"FAILURE\"}") 
+        }))
+    })  
     public Response currentLockState(
             @ApiParam(value="Lock Name",required=true) @PathParam("lockname") String lockName,
             @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
             @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
             @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-            @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+            @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
             @ApiParam(value = "Application namespace",
-                            required = true) @HeaderParam("ns") String ns) throws Exception{
+                            required = false, hidden = true) @HeaderParam("ns") String ns) throws Exception{
         try {
             ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
             Map<String, Object> resultMap = MusicCore.validateLock(lockName);
@@ -358,16 +454,29 @@ public class RestMusicLocksAPI {
     @DELETE
     @Path("/release/{lockreference}")
     @ApiOperation(value = "Release Lock",
-        notes = "deletes the process from the lock queue",
+        notes = "Releases the lock from the lock queue.",
         response = Map.class)
     @Produces(MediaType.APPLICATION_JSON)    
+    @ApiResponses(value={
+        @ApiResponse(code=200, message = "Success - UNLOCKED = Lock Removed.",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"lock\" : {\"lock\" : \"$keyspace.table.rowId$<integer>\"},"
+                + "\"lock-status\" : \"UNLOCKED\"},"
+                + "\"status\" : \"SUCCESS\"}")
+        })),
+        @ApiResponse(code=400, message = "Failure",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"error\" : \"Unable to aquire lock\","
+                + "\"status\" : \"FAILURE\"}") 
+        }))
+    })  
     public Response unLock(@PathParam("lockreference") String lockId,
             @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
             @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
             @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-            @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+            @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
             @ApiParam(value = "Application namespace",
-                required = true) @HeaderParam("ns") String ns) throws Exception{
+                required = false, hidden = true) @HeaderParam("ns") String ns) throws Exception{
         try {
             ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
             Map<String, Object> resultMap = MusicCore.validateLock(lockId);
@@ -409,17 +518,32 @@ public class RestMusicLocksAPI {
      * @param lockName
      * @throws Exception 
      */
+    @Deprecated
     @DELETE
     @Path("/delete/{lockname}")
-    @ApiOperation(value = "Delete Lock", response = Map.class)
+    @ApiOperation(
+        hidden = true,
+        value = "-DEPRECATED- Delete Lock", response = Map.class,
+        notes = "-DEPRECATED- Delete the lock.")
     @Produces(MediaType.APPLICATION_JSON)    
+    @ApiResponses(value={
+        @ApiResponse(code=200, message = "Success",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"status\" : \"SUCCESS\"}") 
+        })),
+        @ApiResponse(code=400, message = "Failure",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"error\" : \"Error Message if any\","
+                + "\"status\" : \"FAILURE\"}") 
+        }))
+    })
     public Response deleteLock(@PathParam("lockname") String lockName,
             @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
             @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-            @ApiParam(value = "AID", required = true) @HeaderParam("aid") String aid,
+            @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
             @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
             @ApiParam(value = "Application namespace",
-                            required = true) @HeaderParam("ns") String ns) throws Exception{
+                            required = false, hidden = true) @HeaderParam("ns") String ns) throws Exception{
         try {
             ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
             Map<String, Object> resultMap = MusicCore.validateLock(lockName);

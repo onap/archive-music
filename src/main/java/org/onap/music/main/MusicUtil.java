@@ -31,20 +31,13 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Scanner;
-import java.util.StringTokenizer;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
@@ -61,7 +54,6 @@ import org.onap.music.service.impl.MusicCassaCore;
 
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.DataType;
-import com.sun.jersey.core.util.Base64;
 
 /**
  * @author nelson24
@@ -103,30 +95,27 @@ public class MusicUtil {
     private static final String PROPERTIES_FILE = "/opt/app/music/etc/music.properties";
     public static final String DEFAULTKEYSPACENAME = "TBD";
 
-    private static String myCassaHost = LOCALHOST;
-    private static String defaultMusicIp = LOCALHOST;
-    private static int cassandraPort = 9042;
-    private static int notifytimeout = 30000;
-    private static int notifyinterval = 5000;
     private static long defaultLockLeasePeriod = 6000;
+    // Amount of times to retry to delete a lock in atomic.
     private static int retryCount = 3;
-    private static int cacheObjectMaxLife = -1;
     private static String lockUsing = MusicUtil.CASSANDRA;
+    // Cadi OnOff
     private static boolean isCadi = false;
+    // Keyspace Creation on/off
     private static boolean isKeyspaceActive = false;
     private static boolean debug = true;
     private static String version = "0.0.0";
     private static String build = "";
 
     private static String musicPropertiesFilePath = PROPERTIES_FILE;
-    private static final String[] propKeys = new String[] { "cassandra.host", "music.ip", "debug",
-        "version", "music.rest.ip", "music.properties", "lock.lease.period", "id", "all.ids", 
-        "public.ip","all.pubic.ips", "cassandra.user", "cassandra.password", "aaf.endpoint.url",
-        "admin.username","admin.password","aaf.admin.url","music.namespace","admin.aaf.role",
-        "cassandra.port","lock.using","retry.count","transId.header.required",
-        "conversation.header.required","clientId.header.required","messageId.header.required",
-        "transId.header.prefix","conversation.header.prefix","clientId.header.prefix",
-        "messageId.header.prefix"};
+    // private static final String[] propKeys = new String[] { MusicUtil.class.getDeclaredMethod(arg0, )"build","cassandra.host", "debug",
+    //     "version", "music.properties", "lock.lease.period", "cassandra.user", 
+    //     "cassandra.password", "aaf.endpoint.url","admin.username","admin.password",
+    //     "music.namespace","admin.aaf.role","cassandra.port","lock.using","retry.count",
+    //     "transId.header.required","conversation.header.required","clientId.header.required",
+    //     "messageId.header.required","transId.header.prefix","conversation.header.prefix",
+    //     "clientId.header.prefix","messageId.header.prefix"};
+    // Consistency Constants and variables. 
     private static final String[] cosistencyLevel = new String[] {
         "ALL","EACH_QUORUM","QUORUM","LOCAL_QUORUM","ONE","TWO",
         "THREE","LOCAL_ONE","ANY","SERIAL","LOCAL_SERIAL"};
@@ -143,87 +132,42 @@ public class MusicUtil {
         consistencyName.put("LOCAL_ONE",ConsistencyLevel.LOCAL_ONE);
         consistencyName.put("LOCAL_SERIAL",ConsistencyLevel.LOCAL_SERIAL);
     }
+
+    // Cassandra Values
     private static String cassName = "cassandra";
     private static String cassPwd;
-    private static String aafEndpointUrl = null;
-    private static String adminId = "username";
-    private static String adminPass= "password";
-    private static String aafAdminUrl= null;
-    private static String musicNamespace= "org.onap.music.api";
-    private static String adminAafRole= "org.onap.music.api.admin_api";
+    private static String myCassaHost = LOCALHOST;
+    private static int cassandraPort = 9042;
 
+    // AAF
+    private static String musicAafNs = "org.onap.music.cadi";
+
+    // Locking
     public static final long MusicEternityEpochMillis = 1533081600000L; // Wednesday, August 1, 2018 12:00:00 AM
     public static final long MaxLockReferenceTimePart = 1000000000000L; // millis after eternity (eq sometime in 2050)
     public static final long MaxCriticalSectionDurationMillis = 1L * 24 * 60 * 60 * 1000; // 1 day
 
-    private static String transIdPrefix= "false";
-	private static String conversationIdPrefix= "false";
-    private static String clientIdPrefix= "false";
-    private static String messageIdPrefix= "false";
-	private static String transIdRequired= "false";
-	private static String conversationIdRequired= "false";
-    private static String clientIdRequired= "false";
-    private static String messageIdRequired= "false";
+    // Response/Request tracking headers
+    private static String transIdPrefix = "false";
+	private static String conversationIdPrefix = "false";
+    private static String clientIdPrefix = "false";
+    private static String messageIdPrefix = "false";
+	private static Boolean transIdRequired = false;
+	private static Boolean conversationIdRequired = false;
+    private static Boolean clientIdRequired = false;
+    private static Boolean messageIdRequired = false;
+    private static String cipherEncKey = "";
+
 
     public static String getLockUsing() {
         return lockUsing;
     }
 
-
     public static void setLockUsing(String lockUsing) {
         MusicUtil.lockUsing = lockUsing;
     }
-    
-    public static String getAafAdminUrl() {
-        return aafAdminUrl;
-    }
 
-
-    public static void setAafAdminUrl(String aafAdminUrl) {
-        MusicUtil.aafAdminUrl = aafAdminUrl;
-    }
-
-
-    public static String getMusicNamespace() {
-        return musicNamespace;
-    }
-
-
-    public static void setMusicNamespace(String musicNamespace) {
-        MusicUtil.musicNamespace = musicNamespace;
-    }
-
-
-    public static String getAdminAafRole() {
-        return adminAafRole;
-    }
-
-
-    public static void setAdminAafRole(String adminAafRole) {
-        MusicUtil.adminAafRole = adminAafRole;
-    }
-
-
-
-    public static String getAdminId() {
-        return adminId;
-    }
-
-
-    public static void setAdminId(String adminId) {
-        MusicUtil.adminId = adminId;
-    }
-
-
-    public static String getAdminPass() {
-        return adminPass;
-    }
-
-    public static void setAdminPass(String adminPass) {
-        MusicUtil.adminPass = adminPass;
-    }
-
-    private MusicUtil() {
+    public MusicUtil() {
         throw new IllegalStateException("Utility Class");
     }
     /**
@@ -256,30 +200,14 @@ public class MusicUtil {
     }
 
     /**
-     * @return the aafEndpointUrl
-     */
-    public static String getAafEndpointUrl() {
-        return aafEndpointUrl;
-    }
-
-    /**
-     *
-     * @param aafEndpointUrl
-     */
-    public static void setAafEndpointUrl(String aafEndpointUrl) {
-        MusicUtil.aafEndpointUrl = aafEndpointUrl;
-    }
-
-
-    /**
      * Returns An array of property names that should be in the Properties
      * files.
      *
-     * @return
-     */
-    public static String[] getPropkeys() {
-        return propKeys.clone();
-    }
+//     * @return
+//     */
+//    public static String[] getPropkeys() {
+//        return propKeys.clone();
+//    }
 
     /**
      * Get MusicPropertiesFilePath - Default = /opt/music/music.properties
@@ -390,24 +318,6 @@ public class MusicUtil {
     public static void setMyCassaHost(String myCassaHost) {
         MusicUtil.myCassaHost = myCassaHost;
     }
-
-    /**
-     * Get DefaultMusicIp - Default = localhost property file value - music.ip
-     *
-     * @return
-     */
-    public static String getDefaultMusicIp() {
-        return defaultMusicIp;
-    }
-
-    /**
-     * Set DefaultMusicIp
-     *
-     * @param defaultMusicIp .
-     */
-    public static void setDefaultMusicIp(String defaultMusicIp) {
-        MusicUtil.defaultMusicIp = defaultMusicIp;
-    }
     
     /**
      * Gey default retry count
@@ -443,9 +353,11 @@ public class MusicUtil {
     }
 
     /**
-     * .
+     * This method depricated as its not used or needed.
+     * 
      * @return String
      */
+    @Deprecated
     public static String getTestType() {
         String testType = "";
         try {
@@ -462,7 +374,9 @@ public class MusicUtil {
     }
 
     /**
-     *
+     * Method to do a Thread Sleep.
+     * Used for adding a delay. 
+     * 
      * @param time
      */
     public static void sleep(long time) {
@@ -638,7 +552,7 @@ public class MusicUtil {
             response.header(XPATCHVERSION,verArray[2]);
         }
         response.header(XLATESTVERSION,version);
-        logger.info(EELFLoggerDelegate.applicationLogger,"Version In:" + versionIn);
+        logger.info(EELFLoggerDelegate.auditLogger,"Version In:" + versionIn);
         return response;
     }
 
@@ -655,29 +569,6 @@ public class MusicUtil {
         return consistencyName.get(consistency.toUpperCase());
     }
 
-    public static void setNotifyInterval(int notifyinterval) {
-        MusicUtil.notifyinterval = notifyinterval;
-    }
-    public static void setNotifyTimeOut(int notifytimeout) {
-        MusicUtil.notifytimeout = notifytimeout;
-    }
-
-    public static int getNotifyInterval() {
-        return MusicUtil.notifyinterval;
-    }
-
-    public static int getNotifyTimeout() {
-        return MusicUtil.notifytimeout;
-    }
-
-    public static int getCacheObjectMaxLife() {
-        return MusicUtil.cacheObjectMaxLife;
-    }
-
-    public static void setCacheObjectMaxLife(int cacheObjectMaxLife) {
-        MusicUtil.cacheObjectMaxLife = cacheObjectMaxLife;
-    }
-    
     /**
      * Given the time of write for an update in a critical section, this method provides a transformed timestamp
      * that ensures that a previous lock holder who is still alive can never corrupt a later critical section.
@@ -839,67 +730,89 @@ public class MusicUtil {
     }
 
         /**
-	 * @return the transIdRequired
-	 */
-	public static String getTransIdRequired() {
-		return transIdRequired;
-	}
+    * @return the transIdRequired
+    */
+    public static Boolean getTransIdRequired() {
+        return transIdRequired;
+    }
 
 
-	/**
-	 * @param transIdRequired the transIdRequired to set
-	 */
-	public static void setTransIdRequired(String transIdRequired) {
-		MusicUtil.transIdRequired = transIdRequired;
-	}
+    /**
+    * @param transIdRequired the transIdRequired to set
+    */
+    public static void setTransIdRequired(Boolean transIdRequired) {
+        MusicUtil.transIdRequired = transIdRequired;
+    }
 
 
-	/**
-	 * @return the conversationIdRequired
-	 */
-	public static String getConversationIdRequired() {
-		return conversationIdRequired;
-	}
+    /**
+    * @return the conversationIdRequired
+    */
+    public static Boolean getConversationIdRequired() {
+        return conversationIdRequired;
+    }
 
 
-	/**
-	 * @param conversationIdRequired the conversationIdRequired to set
-	 */
-	public static void setConversationIdRequired(String conversationIdRequired) {
-		MusicUtil.conversationIdRequired = conversationIdRequired;
-	}
+    /**
+    * @param conversationIdRequired the conversationIdRequired to set
+    */
+    public static void setConversationIdRequired(Boolean conversationIdRequired) {
+        MusicUtil.conversationIdRequired = conversationIdRequired;
+    }
 
 
-	/**
-	 * @return the clientIdRequired
-	 */
-	public static String getClientIdRequired() {
-		return clientIdRequired;
-	}
+    /**
+    * @return the clientIdRequired
+    */
+    public static Boolean getClientIdRequired() {
+        return clientIdRequired;
+    }
 
 
-	/**
-	 * @param clientIdRequired the clientIdRequired to set
-	 */
-	public static void setClientIdRequired(String clientIdRequired) {
-		MusicUtil.clientIdRequired = clientIdRequired;
-	}
+    /**
+    * @param clientIdRequired the clientIdRequired to set
+    */
+    public static void setClientIdRequired(Boolean clientIdRequired) {
+        MusicUtil.clientIdRequired = clientIdRequired;
+    }
 
 
-	/**
-	 * @return the messageIdRequired
-	 */
-	public static String getMessageIdRequired() {
-		return messageIdRequired;
-	}
+    /**
+    * @return the messageIdRequired
+    */
+    public static Boolean getMessageIdRequired() {
+        return messageIdRequired;
+    }
+
+    /**
+    * @param messageIdRequired the messageIdRequired to set
+    */
+    public static void setMessageIdRequired(Boolean messageIdRequired) {
+        MusicUtil.messageIdRequired = messageIdRequired;
+    }
 
 
-	/**
-	 * @param messageIdRequired the messageIdRequired to set
-	 */
-	public static void setMessageIdRequired(String messageIdRequired) {
-		MusicUtil.messageIdRequired = messageIdRequired;
-	}
+    public static String getCipherEncKey() {
+        return MusicUtil.cipherEncKey;
+    }
+
+
+    public static void setCipherEncKey(String cipherEncKey) {
+        MusicUtil.cipherEncKey = cipherEncKey;
+        if ( null == cipherEncKey || cipherEncKey.equals("") || 
+            cipherEncKey.equals("nothing to see here")) {
+            logger.error(EELFLoggerDelegate.errorLogger, "Missing Cipher Encryption Key.");
+        }
+    }
+
+    public static String getMusicAafNs() {
+        return MusicUtil.musicAafNs;
+    }
+
+
+    public static void setMusicAafNs(String musicAafNs) {
+        MusicUtil.musicAafNs = musicAafNs;
+    }
 
 
 

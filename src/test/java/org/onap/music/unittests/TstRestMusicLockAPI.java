@@ -371,8 +371,7 @@ public class TstRestMusicLockAPI {
         System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
         assertEquals(200, response.getStatus());
         Map<String, Object> respMap = (Map<String, Object>) response.getEntity();
-        //TODO: this should be lockRef
-        assertEquals("1", ((Map<String, String>) respMap.get("lock")).get("lock-holder"));
+        assertEquals(lockRef, ((Map<String, List>) respMap.get("lock")).get("lock-holder").get(0));
     }
     
     @Test

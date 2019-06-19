@@ -40,9 +40,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
-
+import org.onap.music.main.MusicUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -51,11 +49,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author sp931a
  *
  */
-@PropertySource(value = {"file:/opt/app/music/etc/music.properties"})
+//@PropertySource(value = {"file:/opt/app/music/etc/music.properties"})
 public class MusicAuthorizationFilter implements Filter {
 
-    @Value("${music.aaf.ns}")
-    private String musicNS;
+    private String musicNS = MusicUtil.getMusicAafNs();
     
     private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicAuthorizationFilter.class);
 
@@ -70,21 +67,13 @@ public class MusicAuthorizationFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
-            throws IOException, ServletException {
-
-        logger.debug(EELFLoggerDelegate.applicationLogger,
-                "In MusicAuthorizationFilter doFilter start() ::::::::::::::::::::::::");
-
+        throws IOException, ServletException {
         HttpServletResponse httpResponse = null;
 
         boolean isAuthAllowed = false;
 
         if (null != servletRequest && null != servletResponse) {
             httpResponse = (HttpServletResponse) servletResponse;
-
-            logger.debug(EELFLoggerDelegate.applicationLogger,
-                    "Music NS defined in music property file  --------------------------" + musicNS);
-            
             long startTime = 0;
             if( null != servletRequest.getAttribute("startTime")) {
                 startTime = ((Long)servletRequest.getAttribute("startTime")).longValue();
@@ -95,19 +84,19 @@ public class MusicAuthorizationFilter implements Filter {
             try {
                 isAuthAllowed = AuthUtil.isAccessAllowed(servletRequest, musicNS);
             } catch (Exception e) {
-                logger.error(EELFLoggerDelegate.applicationLogger,
-                        "Error while checking authorization :::" + e.getMessage());
+                logger.error(EELFLoggerDelegate.securityLogger,
+                    "Error while checking authorization Music Namespace: " + musicNS + " : " + e.getMessage());
             }
 
             long endTime = System.currentTimeMillis();
             
             //startTime set in <code>CadiAuthFilter</code> doFilter
-            logger.debug(EELFLoggerDelegate.applicationLogger,
-                    "Time took for authentication & authorization : " 
-                    + (endTime - startTime) + " milliseconds");
+            logger.debug(EELFLoggerDelegate.securityLogger,
+                "Time took for authentication & authorization : " 
+                + (endTime - startTime) + " milliseconds");
 
             if (!isAuthAllowed) {
-                logger.debug(EELFLoggerDelegate.applicationLogger,
+                logger.info(EELFLoggerDelegate.securityLogger,
                     "Unauthorized Access");
                 AuthorizationError authError = new AuthorizationError();
                 authError.setResponseCode(HttpServletResponse.SC_UNAUTHORIZED);
@@ -124,8 +113,6 @@ public class MusicAuthorizationFilter implements Filter {
                 filterChain.doFilter(servletRequest, servletResponse);
             }
         }
-        logger.debug(EELFLoggerDelegate.applicationLogger,
-                "In MusicAuthorizationFilter doFilter exit() ::::::::::::::::::::::::");
     }
 
     private byte[] restResponseBytes(AuthorizationError eErrorResponse) throws IOException {
