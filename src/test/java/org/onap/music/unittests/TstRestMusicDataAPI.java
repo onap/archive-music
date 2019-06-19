@@ -194,6 +194,16 @@ public class TstRestMusicDataAPI {
         System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
         assertEquals(200, response.getStatus());
     }
+    
+    @Test
+    public void test3_createTableNoBody() throws Exception {
+        System.out.println("Testing create table w/o body");
+
+        Response response = data.createTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
+                authorization, null, keyspaceName, tableName);
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+        assertEquals(400, response.getStatus());
+    }
 
     @Test
     public void test3_createTableNoName() throws Exception {
@@ -312,7 +322,7 @@ public class TstRestMusicDataAPI {
         assertEquals(400, response2.getStatus());
         Map<String, String> respMap = (Map<String, String>) response2.getEntity();
         assertEquals(ResultType.FAILURE, respMap.get("status"));
-        assertEquals("Table " + keyspaceName + "." + tableNameDup + " already exists", respMap.get("error"));
+        assertEquals("AlreadyExistsException: Table " + keyspaceName + "." + tableNameDup + " already exists", respMap.get("error"));
     }
 
 
@@ -539,7 +549,36 @@ public class TstRestMusicDataAPI {
 
         assertEquals(200, response.getStatus());
     }
+    
+    @Test
+    public void test4_insertIntoTableNoBody() throws Exception {
+        System.out.println("Testing insert into table w/o body");
+        createTable();
+        Response response = data.insertIntoTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
+                authorization, null, keyspaceName, tableName);
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
 
+        assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    public void test4_insertIntoTableNoaValues() throws Exception {
+        System.out.println("Testing insert into table");
+        createTable();
+        JsonInsert jsonInsert = new JsonInsert();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        consistencyInfo.put("type", "eventual");
+        jsonInsert.setConsistencyInfo(consistencyInfo);
+        jsonInsert.setKeyspaceName(keyspaceName);
+        jsonInsert.setTableName(tableName);
+
+        Response response = data.insertIntoTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
+                authorization, jsonInsert, keyspaceName, tableName);
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+
+        assertEquals(400, response.getStatus());
+    }
+    
     @Test
     public void test4_insertIntoTableNoValues() throws Exception {
         System.out.println("Testing insert into table");
@@ -827,6 +866,23 @@ public class TstRestMusicDataAPI {
 
 	
 	@Test
+    public void test6_critical_select() throws Exception {
+        System.out.println("Testing critical select w/o body");
+        createAndInsertIntoTable();
+        MultivaluedMap<String, String> row = new MultivaluedMapImpl();
+        row.add("emp_name", "testname");
+        Mockito.when(info.getQueryParameters()).thenReturn(row);
+        Response response = data.selectCritical("1", "1", "1","abc66ccc-d857-4e90-b1e5-df98a3d40ce6", 
+                appName, authorization, null, keyspaceName, tableName,info);
+        HashMap<String,HashMap<String,Object>> map = (HashMap<String, HashMap<String, Object>>) response.getEntity();
+        HashMap<String, Object> result = map.get("result");
+        System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
+        
+        assertEquals(400, response.getStatus());
+    }
+    
+    // Added during merge?
+	@Test
     public void test6_critical_selectCritical_nolockid() throws Exception {
         System.out.println("Testing critical select critical w/o lockid");
         createAndInsertIntoTable();
@@ -872,8 +928,8 @@ public class TstRestMusicDataAPI {
         consistencyInfo.put("type", "atomic");
         jsonSelect.setConsistencyInfo(consistencyInfo);
         Mockito.when(info.getQueryParameters()).thenReturn(row);
-        Response response = data.select("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
-                keyspaceName, tableName, info);
+        Response response = data.selectWithCritical("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName, authorization,
+                null,keyspaceName, tableName, info);
         HashMap<String, HashMap<String, Object>> map = (HashMap<String, HashMap<String, Object>>) response.getEntity();
         HashMap<String, Object> result = map.get("result");
         System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
@@ -891,8 +947,8 @@ public class TstRestMusicDataAPI {
         Map<String, String> consistencyInfo = new HashMap<>();
         consistencyInfo.put("type", "atomic");
         jsonSelect.setConsistencyInfo(consistencyInfo);
-        Response response = data.select("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
-                appName, wrongAuthorization, keyspaceName, null, info);
+        Response response = data.selectWithCritical("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6",
+                appName, wrongAuthorization,null, keyspaceName, null, info);
         System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
 
         assertEquals(400, response.getStatus());

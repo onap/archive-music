@@ -29,12 +29,16 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
-@ApiModel(value = "JsonTable", description = "model for leased lock")
+@ApiModel(value = "Json Lock Type", description = "Model for Lock Type")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonLock {
     private LockType locktype;
 
-    @ApiModelProperty(value = "Type of music lock")
+    @ApiModelProperty(
+        value = "Type of music lock", 
+        name = "lockType",
+        allowEmptyValue = false,
+        allowableValues = "READ|WRITE")
     public LockType getLocktype() {
         return this.locktype;
     }

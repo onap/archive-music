@@ -73,10 +73,14 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.TableMetadata;
 
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.Example;
+import io.swagger.annotations.ExampleProperty;
 
 /* Version 2 Class */
 //@Path("/v{version: [0-9]+}/keyspaces")
@@ -111,6 +115,8 @@ public class RestMusicDataAPI {
     private static final String XPATCHVERSION = "X-patchVersion";
     private static final String NS = "ns";
     private static final String VERSION = "v2";
+    private static final String PARAMETER_ERROR = "Missing Row Identifier. Please provide the parameter of key=value for the row being selected.";
+
 
     private class RowIdentifier {
         public String primarKeyValue;
@@ -138,9 +144,22 @@ public class RestMusicDataAPI {
      */
     @POST
     @Path("/{name}")
-    @ApiOperation(value = "Create Keyspace", response = String.class,hidden = true)
+    @ApiOperation(value = "Create Keyspace", response = String.class,
+        notes = "This API will not work if MUSIC properties has keyspace.active=false ")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiResponses(value={
+        @ApiResponse(code=200, message = "Success",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"message\" : \"Keysapce <keyspace> Created\","
+                + "\"status\" : \"SUCCESS\"}")
+        })),
+        @ApiResponse(code=400, message = "Failure",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"error\" : \"<errorMessage>\","
+                + "\"status\" : \"FAILURE\"}") 
+        }))
+    })  
     public Response createKeySpace(
         @ApiParam(value = "Major Version",required = true) @PathParam("version") String version,
         @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
@@ -196,11 +215,14 @@ public class RestMusicDataAPI {
                 ResultType result = ResultType.FAILURE;
                 try {
                     result = MusicCore.nonKeyRelatedPut(queryObject, consistency);
-                    logger.info(EELFLoggerDelegate.applicationLogger, "result = " + result);
+                } catch ( MusicQueryException ex) {
+                    logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.QUERYERROR 
+                    ,ErrorSeverity.WARN, ErrorTypes.QUERYERROR);
+                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
                 } catch ( MusicServiceException ex) {
                     logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity
                         .WARN, ErrorTypes.MUSICSERVICEERROR, ex);
-                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("err:" + ex.getMessage()).toMap()).build();
+                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
                 }
         
                 return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setMessage("Keyspace " + keyspaceName + " Created").toMap()).build();
@@ -225,8 +247,21 @@ public class RestMusicDataAPI {
      */
     @DELETE
     @Path("/{name}")
-    @ApiOperation(value = "Delete Keyspace", response = String.class,hidden=true)
+    @ApiOperation(value = "Delete Keyspace", response = String.class,
+        notes = "This API will not work if MUSIC properties has keyspace.active=false ")
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiResponses(value={
+        @ApiResponse(code=200, message = "Success",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"message\" : \"Keysapce <keyspace> Deleted\","
+                + "\"status\" : \"SUCCESS\"}")
+        })),
+        @ApiResponse(code=400, message = "Failure",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"error\" : \"<errorMessage>\","
+                + "\"status\" : \"FAILURE\"}") 
+        }))
+    })  
     public Response dropKeySpace(
         @ApiParam(value = "Major Version",required = true) @PathParam("version") String version,
         @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
@@ -243,9 +278,20 @@ public class RestMusicDataAPI {
                 String consistency = MusicUtil.EVENTUAL;// for now this needs only
                 PreparedQueryObject queryObject = new PreparedQueryObject();
                 queryObject.appendQueryString("DROP KEYSPACE " + keyspaceName + ";");
-                ResultType result = MusicCore.nonKeyRelatedPut(queryObject, consistency);
-                if ( result.equals(ResultType.FAILURE) ) {
-                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(result).setError("Error Deleteing Keyspace " + keyspaceName).toMap()).build();
+                String droperror = "Error Deleteing Keyspace " + keyspaceName;
+                try{
+                    ResultType result = MusicCore.nonKeyRelatedPut(queryObject, consistency);
+                    if ( result.equals(ResultType.FAILURE) ) {
+                        return response.status(Status.BAD_REQUEST).entity(new JsonResponse(result).setError(droperror).toMap()).build();
+                    }
+                } catch ( MusicQueryException ex) {
+                    logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.QUERYERROR 
+                    ,ErrorSeverity.WARN, ErrorTypes.QUERYERROR);
+                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(droperror + " " + ex.getMessage()).toMap()).build();
+                } catch ( MusicServiceException ex) {
+                    logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR
+                        ,ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR, ex);
+                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(droperror + " " + ex.getMessage()).toMap()).build();
                 }
                 return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setMessage("Keyspace " + keyspaceName + " Deleted").toMap()).build();
             } else {
@@ -271,18 +317,27 @@ public class RestMusicDataAPI {
      */
     @POST
     @Path("/{keyspace: .*}/tables/{tablename: .*}")
-    @ApiOperation(value = "Create Table", response = String.class)
+    @ApiOperation(value = "Create Table", response = String.class,
+        notes = "Create a table with the required json in the body.")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiResponses(value={
-        @ApiResponse(code= 400, message = "Will return JSON response with message"),
-        @ApiResponse(code= 401, message = "Unautorized User")
-    })
+        @ApiResponse(code=200, message = "Success",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"message\" : \"Tablename <tablename> Created under keyspace <keyspace>\","
+                + "\"status\" : \"SUCCESS\"}")
+        })),
+        @ApiResponse(code=400, message = "Failure",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"error\" : \"<errorMessage>\","
+                + "\"status\" : \"FAILURE\"}") 
+        }))
+    })  
     public Response createTable(
         @ApiParam(value = "Major Version",required = true) @PathParam("version") String version,
         @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
         @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-        @ApiParam(value = "AID", required = false,hidden = true) @HeaderParam("aid") String aid,
+        @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
         @ApiParam(value = "Application namespace",required = false, hidden = true) @HeaderParam(NS) String ns,
         @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
         JsonTable tableObj,
@@ -501,14 +556,34 @@ public class RestMusicDataAPI {
      */
     @POST
     @Path("/{keyspace: .*}/tables/{tablename: .*}/index/{field: .*}")
-    @ApiOperation(value = "Create Index", response = String.class)
+    @ApiOperation(value = "Create Index", response = String.class,
+        notes = "An index provides a means to access data using attributes "
+        + "other than the partition key. The benefit is fast, efficient lookup "
+        + "of data matching a given condition.")
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiResponses(value={
+        @ApiResponse(code=200, message = "Success",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"message\" : \"Index Created on <keyspace>.<table>.<field>\","
+                + "\"status\" : \"SUCCESS\"}")
+        })),
+        @ApiResponse(code=400, message = "Failure",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"error\" : \"<errorMessage>\","
+                + "\"status\" : \"FAILURE\"}") 
+        })),
+        @ApiResponse(code=400, message = "Failure",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"error\" : \"Unknown Error in create index.\","
+                + "\"status\" : \"FAILURE\"}") 
+        }))
+    })  
     public Response createIndex(
         @ApiParam(value = "Major Version",required = true) @PathParam("version") String version,
         @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
         @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-        @ApiParam(value = "AID", required = false) @HeaderParam("aid") String aid,
-        @ApiParam(value = "Application namespace",required = true) @HeaderParam(NS) String ns,
+        @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
+        @ApiParam(value = "Application namespace",required = false, hidden = true) @HeaderParam(NS) String ns,
         @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
         @ApiParam(value = "Keyspace Name",required = true) @PathParam("keyspace") String keyspace,
         @ApiParam(value = "Table Name",required = true) @PathParam("tablename") String tablename,
@@ -559,9 +634,22 @@ public class RestMusicDataAPI {
      */
     @POST
     @Path("/{keyspace: .*}/tables/{tablename: .*}/rows")
-    @ApiOperation(value = "Insert Into Table", response = String.class)
+    @ApiOperation(value = "Insert Into Table", response = String.class,
+        notes = "Insert into table with data in json body.")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiResponses(value={
+        @ApiResponse(code=200, message = "Success",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"message\" : \"Insert Successful\","
+                + "\"status\" : \"SUCCESS\"}")
+        })),
+        @ApiResponse(code=400, message = "Failure - Generic",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"error\" : \"<errorMessage>\","
+                + "\"status\" : \"FAILURE\"}") 
+        }))
+    })  
     public Response insertIntoTable(
         @ApiParam(value = "Major Version",required = true) @PathParam("version") String version,
         @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
@@ -764,7 +852,8 @@ public class RestMusicDataAPI {
      */
     @PUT
     @Path("/{keyspace: .*}/tables/{tablename: .*}/rows")
-    @ApiOperation(value = "Update Table", response = String.class)
+    @ApiOperation(value = "Update Table", response = String.class,
+        notes = "Update the table with the data in the JSON body.")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateTable(
@@ -921,8 +1010,14 @@ public class RestMusicDataAPI {
                     return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("LockId cannot be null. Create lock "
                             + "and acquire lock or use ATOMIC instead of CRITICAL").toMap()).build();
                 }
-                operationResult = MusicCore.criticalPut(keyspace, tablename, rowId.primarKeyValue,
-                                queryObject, lockId, conditionInfo);
+                try {
+                    operationResult = MusicCore.criticalPut(keyspace, tablename, rowId.primarKeyValue,
+                        queryObject, lockId, conditionInfo);
+                } catch ( Exception e) {
+                    logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN,
+                        ErrorTypes.GENERALSERVICEERROR, e);
+                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Error doing critical put: " + e.getMessage()).toMap()).build();
+                }
             } else if (consistency.equalsIgnoreCase("atomic_delete_lock")) {
                 // this function is mainly for the benchmarks
                 try {
@@ -987,7 +1082,8 @@ public class RestMusicDataAPI {
      */
     @DELETE
     @Path("/{keyspace: .*}/tables/{tablename: .*}/rows")
-    @ApiOperation(value = "Delete From table", response = String.class)
+    @ApiOperation(value = "Delete From table", response = String.class,
+        notes = "Delete from a table, the row or parts of a row. Based on JSON body.")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteFromTable(
@@ -1135,6 +1231,17 @@ public class RestMusicDataAPI {
     @Path("/{keyspace: .*}/tables/{tablename: .*}")
     @ApiOperation(value = "Drop Table", response = String.class)
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiResponses(value={
+        @ApiResponse(code=200, message = "Success",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"status\" : \"SUCCESS\"}")
+        })),
+        @ApiResponse(code=400, message = "Failure",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"error\" : \"<errorMessage>\","
+                + "\"status\" : \"FAILURE\"}") 
+        }))
+    })
     public Response dropTable(
         @ApiParam(value = "Major Version",
             required = true) @PathParam("version") String version,
@@ -1142,7 +1249,7 @@ public class RestMusicDataAPI {
             required = false) @HeaderParam(XMINORVERSION) String minorVersion,
         @ApiParam(value = "Patch Version",
             required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-        @ApiParam(value = "AID", required = false,hidden = true) @HeaderParam("aid") String aid,
+        @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
         @ApiParam(value = "Application namespace",
             required = false, hidden = true) @HeaderParam(NS) String ns,
         @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
@@ -1163,9 +1270,13 @@ public class RestMusicDataAPI {
             query.appendQueryString("DROP TABLE  " + keyspace + "." + tablename + ";");
             try {
                 return response.status(Status.OK).entity(new JsonResponse(MusicCore.nonKeyRelatedPut(query, consistency)).toMap()).build();
+            } catch (MusicQueryException ex) {
+                logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(), AppMessages.QUERYERROR,ErrorSeverity.WARN
+                    , ErrorTypes.QUERYERROR);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
             } catch (MusicServiceException ex) {
-                logger.error(EELFLoggerDelegate.errorLogger, ex, AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes
-                    .GENERALSERVICEERROR);
+                logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(), AppMessages.MISSINGINFO  ,ErrorSeverity.WARN
+                , ErrorTypes.GENERALSERVICEERROR,ex);
                 return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
             }
         } finally {
@@ -1183,15 +1294,34 @@ public class RestMusicDataAPI {
      */
     @PUT
     @Path("/{keyspace: .*}/tables/{tablename: .*}/rows/criticalget")
-    @ApiOperation(value = "Select Critical", response = Map.class)
+    @ApiOperation(value = "** Depreciated ** - Select Critical", response = Map.class,
+        notes = "This API is depreciated in favor of the regular select api.\n"
+        + "Avaliable to use with the select api by providing a minorVersion of 1 "
+        + "and patchVersion of 0.\n"
+        + "Critical Get requires parameter rowId=value and consistency in order to work.\n"
+        + "It will fail if either are missing.")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @ApiResponses(value={
+        @ApiResponse(code=200, message = "Success",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"result\":{\"row 0\":{\"address\":"
+                + "{\"city\":\"Someplace\",\"street\":\"1 Some way\"},"
+                + "\"emp_salary\":50,\"emp_name\":\"tom\",\"emp_id\":"
+                + "\"cfd66ccc-d857-4e90-b1e5-df98a3d40cd6\"}},\"status\":\"SUCCESS\"}")
+        })),
+        @ApiResponse(code=400, message = "Failure",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"error\" : \"<errorMessage>\","
+                + "\"status\" : \"FAILURE\"}") 
+        }))
+    })
     public Response selectCritical(
         @ApiParam(value = "Major Version",
-            required = true) @PathParam("version") String version,
-        @ApiParam(value = "Minor Version",
+    required = true) @PathParam("version") String version,
+        @ApiParam(value = "Minor Version",example = "0",
             required = false) @HeaderParam(XMINORVERSION) String minorVersion,
-        @ApiParam(value = "Patch Version",
+        @ApiParam(value = "Patch Version",example = "0",
             required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
         @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
         @ApiParam(value = "Application namespace",
@@ -1205,22 +1335,33 @@ public class RestMusicDataAPI {
         @Context UriInfo info) throws Exception {
         try {
             ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
-            if((keyspace == null || keyspace.isEmpty()) || (tablename == null || tablename.isEmpty())){
+            if((keyspace == null || keyspace.isEmpty()) || (tablename == null || tablename.isEmpty())) { 
                 return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
                     .setError("one or more path parameters are not set, please check and try again")
                     .toMap()).build();
             }
-            if(selObj == null) {
-                logger.error(EELFLoggerDelegate.errorLogger,ResultType.BODYMISSING.getResult(), AppMessages.MISSINGDATA  ,ErrorSeverity.WARN, ErrorTypes.DATAERROR);
-                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ResultType.BODYMISSING.getResult()).toMap()).build();
+            EELFLoggerDelegate.mdcPut("keyspace", "( " + keyspace + " )");
+            if (info.getQueryParameters().isEmpty()) {
+                logger.error(EELFLoggerDelegate.errorLogger,RestMusicDataAPI.PARAMETER_ERROR, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes
+                .GENERALSERVICEERROR);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(RestMusicDataAPI.PARAMETER_ERROR).toMap()).build();
+            }
+            if (selObj == null || selObj.getConsistencyInfo().isEmpty()) {
+                String error = " Missing Body or Consistency type.";
+                logger.error(EELFLoggerDelegate.errorLogger,ResultType.BODYMISSING.getResult() + error, AppMessages.MISSINGDATA  ,ErrorSeverity.WARN, ErrorTypes.DATAERROR);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ResultType.BODYMISSING.getResult() + error).toMap()).build();
             }
 
-            EELFLoggerDelegate.mdcPut("keyspace", "( "+keyspace+" ) ");
             String lockId = selObj.getConsistencyInfo().get("lockId");
             PreparedQueryObject queryObject = new PreparedQueryObject();
             RowIdentifier rowId = null;
             try {
                 rowId = getRowIdentifier(keyspace, tablename, info.getQueryParameters(), queryObject);
+                if ( "".equals(rowId)) {
+                    logger.error(EELFLoggerDelegate.errorLogger,RestMusicDataAPI.PARAMETER_ERROR, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes
+                    .GENERALSERVICEERROR);
+                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(RestMusicDataAPI.PARAMETER_ERROR).toMap()).build();
+                }
             } catch (MusicServiceException ex) {
                 logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes
                     .GENERALSERVICEERROR, ex);
@@ -1233,18 +1374,24 @@ public class RestMusicDataAPI {
 
             String consistency = selObj.getConsistencyInfo().get("type");
             try {
-            if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
-                if(lockId == null) {
-                    logger.error(EELFLoggerDelegate.errorLogger,"LockId cannot be null. Create lock reference or"
-                        + " use ATOMIC instead of CRITICAL", ErrorSeverity.FATAL, ErrorTypes.MUSICSERVICEERROR);
-                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("LockId cannot be null. Create lock "
-                        + "and acquire lock or use ATOMIC instead of CRITICAL").toMap()).build();
+                if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
+                    if(lockId == null) {
+                        logger.error(EELFLoggerDelegate.errorLogger,"LockId cannot be null. Create lock reference or"
+                            + " use ATOMIC instead of CRITICAL", ErrorSeverity.FATAL, ErrorTypes.MUSICSERVICEERROR);
+                        return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("LockId cannot be null. Create lock "
+                            + "and acquire lock or use ATOMIC instead of CRITICAL").toMap()).build();
+                    }
+                    results = MusicCore.criticalGet(keyspace, tablename, rowId.primarKeyValue, queryObject,lockId);
+                } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
+                    results = MusicCore.atomicGet(keyspace, tablename, rowId.primarKeyValue, queryObject);
+                } else {
+                    return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
+                        .setError("Consistency must be: " + MusicUtil.ATOMIC + " or " + MusicUtil.CRITICAL)
+                        .toMap()).build();
                 }
-                results = MusicCore.criticalGet(keyspace, tablename, rowId.primarKeyValue, queryObject,lockId);
-            } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
-                results = MusicCore.atomicGet(keyspace, tablename, rowId.primarKeyValue, queryObject);
-            }
-            }catch(Exception ex) {
+            } catch ( MusicLockingException | MusicServiceException me ) {
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Music Exception" + me.getMessage()).toMap()).build();
+            } catch ( Exception ex) {
                 return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();
             }
             
@@ -1258,6 +1405,63 @@ public class RestMusicDataAPI {
     }
 
     /**
+     * This API will replace the original select and provide a single API fro select and critical. 
+     * The idea is to depreciate the older api of criticalGet and use a single API. 
+     * 
+     * @param selObj
+     * @param keyspace
+     * @param tablename
+     * @param info
+     * @return
+     */
+    @GET
+    @Path("/{keyspace: .*}/tables/{tablename: .*}/rows")
+    @ApiOperation(value = "Select", response = Map.class,
+        notes = "This has 2 versions: if minorVersion and patchVersion is null or 0, this will be a Eventual Select only.\n"
+        + "If minorVersion is 1 and patchVersion is 0, this will act like the Critical Select \n"
+        + "Critical Get requires parameter rowId=value and consistency in order to work.\n"
+        + "If parameters are missing or consistency information is missing. An eventual select will be preformed.")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiResponses(value={
+        @ApiResponse(code=200, message = "Success",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"result\":{\"row 0\":{\"address\":"
+                + "{\"city\":\"Someplace\",\"street\":\"1 Some way\"},"
+                + "\"emp_salary\":50,\"emp_name\":\"tom\",\"emp_id\":"
+                + "\"cfd66ccc-d857-4e90-b1e5-df98a3d40cd6\"}},\"status\":\"SUCCESS\"}")
+        })),
+        @ApiResponse(code=400, message = "Failure",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"error\" : \"<errorMessage>\","
+                + "\"status\" : \"FAILURE\"}") 
+        }))
+    })
+    public Response selectWithCritical(
+        @ApiParam(value = "Major Version",example = "v2", 
+            required = true) @PathParam("version") String version,
+        @ApiParam(value = "Minor Version",example = "1",
+            required = false) @HeaderParam(XMINORVERSION) String minorVersion,
+        @ApiParam(value = "Patch Version",example = "0",
+            required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
+        @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
+        @ApiParam(value = "Application namespace",
+            required = false,hidden = true) @HeaderParam(NS) String ns,
+        @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
+        JsonInsert selObj,
+        @ApiParam(value = "Keyspace Name", required = true) @PathParam("keyspace") String keyspace,
+        @ApiParam(value = "Table Name", required = true) @PathParam("tablename") String tablename,
+        @Context UriInfo info) throws Exception {
+        if ((minorVersion != null && patchVersion != null) &&
+            (Integer.parseInt(minorVersion) == 1 && Integer.parseInt(patchVersion) == 0) &&
+            (!(null == selObj) && !selObj.getConsistencyInfo().isEmpty())) {
+            return selectCritical(version, minorVersion, patchVersion, aid, ns, authorization, selObj, keyspace, tablename, info);
+        } else {
+            return select(version, minorVersion, patchVersion, aid, ns, authorization, keyspace, tablename, info);
+        }
+    }
+
+    /**
      *
      * @param keyspace
      * @param tablename
@@ -1265,26 +1469,10 @@ public class RestMusicDataAPI {
      * @return
      * @throws Exception
      */
-    @GET
-    @Path("/{keyspace: .*}/tables/{tablename: .*}/rows")
-    @ApiOperation(value = "Select All or Select Specific", response = Map.class)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response select(
-        @ApiParam(value = "Major Version",
-            required = true) @PathParam("version") String version,
-        @ApiParam(value = "Minor Version",
-            required = false) @HeaderParam(XMINORVERSION) String minorVersion,
-        @ApiParam(value = "Patch Version",
-            required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
-        @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
-        @ApiParam(value = "Application namespace",
-            required = false,hidden = true) @HeaderParam(NS) String ns,
-        @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
-        @ApiParam(value = "Keyspace Name",
-            required = true) @PathParam("keyspace") String keyspace,
-        @ApiParam(value = "Table Name",
-            required = true) @PathParam("tablename") String tablename,
-        @Context UriInfo info) throws Exception {
+    private Response select(
+        String version,String minorVersion,String patchVersion,
+        String aid,String ns,String authorization,String keyspace,        
+        String tablename,UriInfo info) throws Exception {
         try { 
             ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
             if((keyspace == null || keyspace.isEmpty()) || (tablename == null || tablename.isEmpty())){

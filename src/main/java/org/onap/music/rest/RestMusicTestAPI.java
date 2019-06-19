@@ -51,6 +51,7 @@ public class RestMusicTestAPI {
      * @return
      */
     @GET
+    @Path("/")
     @ApiOperation(value = "Get Test", response = Map.class)
     @Produces(MediaType.APPLICATION_JSON)
     public Map<String, HashMap<String, String>> simpleTests(
@@ -60,6 +61,7 @@ public class RestMusicTestAPI {
         for(int i=0; i < 3; i++){
             HashMap<String, String> innerMap = new HashMap<>();
             innerMap.put("Music Version",MusicUtil.getVersion());
+            innerMap.put("Music Build",MusicUtil.getBuild());
             innerMap.put(i+1+"", i+2+"");
             testMap.put(i+"", innerMap);
         }

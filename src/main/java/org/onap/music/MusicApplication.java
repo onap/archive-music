@@ -33,6 +33,7 @@ import org.onap.music.authentication.CadiAuthFilter;
 import org.onap.music.authentication.MusicAuthorizationFilter;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.MusicLoggingServletFilter;
+import org.onap.music.main.CipherUtil;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.PropertiesLoader;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +43,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.data.cassandra.CassandraDataAutoConfiguration;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
-//import org.springframework.boot.web.support.SpringBootServletInitializer;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -51,7 +51,7 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.context.request.RequestContextListener;
 
-@SpringBootApplication(scanBasePackages = { "org.onap.music.rest" })
+@SpringBootApplication(scanBasePackages = { "org.onap.music.rest"})
 @EnableAutoConfiguration(exclude = { CassandraDataAutoConfiguration.class })
 @ComponentScan(value = { "org.onap.music" })
 @EnableScheduling
@@ -62,10 +62,10 @@ public class MusicApplication extends SpringBootServletInitializer {
     private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicApplication.class);
 
     public static void main(String[] args) {
-        System.setProperty("AFT_DME2_CLIENT_IGNORE_SSL_CONFIG", "false");
-        System.setProperty("AFT_DME2_CLIENT_KEYSTORE", "/opt/app/music/etc/truststore2018.jks");
-        System.setProperty("AFT_DME2_CLIENT_KEYSTORE_PASSWORD", "changeit");
-        System.setProperty("AFT_DME2_CLIENT_SSL_INCLUDE_PROTOCOLS", "TLSv1.1,TLSv1.2");
+        // System.setProperty("AFT_DME2_CLIENT_IGNORE_SSL_CONFIG", "false");
+        // System.setProperty("AFT_DME2_CLIENT_KEYSTORE", "/opt/app/music/etc/truststore2018.jks");
+        // System.setProperty("AFT_DME2_CLIENT_KEYSTORE_PASSWORD", "changeit");
+        // System.setProperty("AFT_DME2_CLIENT_SSL_INCLUDE_PROTOCOLS", "TLSv1.1,TLSv1.2");
         new MusicApplication().configure(new SpringApplicationBuilder(MusicApplication.class)).run(args);
     }
 

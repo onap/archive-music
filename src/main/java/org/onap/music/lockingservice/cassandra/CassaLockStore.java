@@ -274,7 +274,7 @@ public class CassaLockStore {
         String lockReference = "" + row.getLong("lockReference");
         String createTime = row.getString("createTime");
         String acquireTime = row.getString("acquireTime");
-        LockType locktype = row.getBool("writeLock") ? LockType.WRITE : LockType.READ;
+        LockType locktype = row.isNull("writeLock") || row.getBool("writeLock") ? LockType.WRITE : LockType.READ;
 
         return new LockObject(true, lockReference, createTime, acquireTime, locktype);
     }
@@ -283,29 +283,37 @@ public class CassaLockStore {
             throws MusicServiceException, MusicQueryException {
         logger.info(EELFLoggerDelegate.applicationLogger,
                 "Getting lockholders in lock table for " + keyspace + "." + table + "." + key);
+        String origTable = table;
         table = table_prepend_name + table;
         String selectQuery = "select * from " + keyspace + "." + table + " where key=?;";
+        List<String> lockHolders = new ArrayList<>();
         PreparedQueryObject queryObject = new PreparedQueryObject();
         queryObject.appendQueryString(selectQuery);
         queryObject.addValue(key);
         ResultSet rs = dsHandle.executeOneConsistencyGet(queryObject);
-
-        List<String> lockHolders = new ArrayList<>();
         boolean topOfQueue = true;
+        StringBuilder lock = new StringBuilder().
+        append("$").append(keyspace).append(".").append(origTable).
+        append(".").append(key).append("$");
+        StringBuilder lockReference = new StringBuilder();
         for (Row row : rs) {
-            String lockReference = "" + row.getLong("lockReference");
-            if (row.getBool("writeLock")) {
+                if ( row.isNull("lockReference") ) {
+                    return lockHolders;
+                }
+                lockReference.append(lock).append(row.getLong("lockReference"));
+            if (row.isNull("writeLock") || row.getBool("writeLock")) {
                 if (topOfQueue) {
-                    lockHolders.add(lockReference);
+                    lockHolders.add(lockReference.toString());
                     break;
                 } else {
                     break;
                 }
             }
             // read lock
-            lockHolders.add(lockReference);
+            lockHolders.add(lockReference.toString());
 
             topOfQueue = false;
+            lockReference.delete(0,lockReference.length());
         }
         return lockHolders;
     }
@@ -335,16 +343,16 @@ public class CassaLockStore {
 
         boolean topOfQueue = true;
         for (Row row : rs) {
-        	String lockReference = "" + row.getLong("lockReference");
-            if (row.getBool("writeLock")) {
+            String lockReference = "" + row.getLong("lockReference");
+            if (row.isNull("writeLock") || row.getBool("writeLock")) {
                 if (topOfQueue && lockRef.equals(lockReference)) {
-                	return true;
+                    return true;
                 } else {
-                	return false;
+                    return false;
                 }
             }
             if (lockRef.equals(lockReference)) {
-            	return true;
+                return true;
             }
             topOfQueue = false;
         }
@@ -384,7 +392,7 @@ public class CassaLockStore {
         String lockReference = "" + row.getLong("lockReference");
         String createTime = row.getString("createTime");
         String acquireTime = row.getString("acquireTime");
-        LockType locktype = row.getBool("writeLock") ? LockType.WRITE : LockType.READ;
+        LockType locktype = row.isNull("writeLock") || row.getBool("writeLock") ? LockType.WRITE : LockType.READ;
         boolean isLockOwner = isLockOwner(keyspace, table, key, lockRef);
 
         return new LockObject(isLockOwner, lockReference, createTime, acquireTime, locktype);
@@ -441,8 +449,9 @@ public class CassaLockStore {
         String updateQuery = "update " + keyspace + "." + table + " set acquireTime='" + System.currentTimeMillis()
                 + "' where key='" + key + "' AND lockReference = " + lockReferenceL + " IF EXISTS;";
         queryObject.appendQueryString(updateQuery);
-        dsHandle.executePut(queryObject, "eventual");
 
+        //cannot use executePut because we need to ignore music timestamp adjustments for lock store
+        dsHandle.getSession().execute(updateQuery);
     }  
 
 }

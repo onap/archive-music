@@ -40,7 +40,7 @@ import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 
-@ApiModel(value = "JsonTable", description = "Json model for table vlaues insert")
+@ApiModel(value = "InsertTable", description = "Json model for table vlaues insert")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonInsert implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -54,7 +54,7 @@ public class JsonInsert implements Serializable {
     private Map<String, byte[]> objectMap;
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(JsonInsert.class);
 
-    @ApiModelProperty(value = "objectMap")
+    @ApiModelProperty(value = "objectMap",hidden = true)
     public Map<String, byte[]> getObjectMap() {
         return objectMap;
     }
@@ -90,7 +90,10 @@ public class JsonInsert implements Serializable {
         this.consistencyInfo = consistencyInfo;
     }
 
-    @ApiModelProperty(value = "Time to live information")
+    @ApiModelProperty(value = "Columns and tables support an optional "
+        + "expiration period called TTL (time-to-live) in seconds.",
+        notes="TTL precision is one second, which is calculated by the coordinator "
+        + "node. When using TTL, ensure that all nodes in the cluster have synchronized clocks.",allowEmptyValue = true)
     public String getTtl() {
         return ttl;
     }
@@ -99,7 +102,10 @@ public class JsonInsert implements Serializable {
         this.ttl = ttl;
     }
 
-    @ApiModelProperty(value = "Time stamp")
+    @ApiModelProperty(value = "Time stamp (epoch_in_microseconds)",
+        notes = "Marks inserted data (write time) with TIMESTAMP. "
+        + "Enter the time since epoch (January 1, 1970) in microseconds."
+        + "By default, the actual time of write is used.", allowEmptyValue = true)
     public String getTimestamp() {
         return timestamp;
     }
@@ -108,7 +114,9 @@ public class JsonInsert implements Serializable {
         this.timestamp = timestamp;
     }
 
-    @ApiModelProperty(value = "values returned")
+    @ApiModelProperty(value = "Json Object of key/values", notes="Where key is the column name and value is the data value for that column.",
+        example = "{'emp_id': 'df98a3d40cd6','emp_name': 'john',"
+        + "'emp_salary': 50,'address':{'street' : '1 Some way','city' : 'New York'}}")
     public Map<String, Object> getValues() {
         return values;
     }
@@ -117,7 +125,7 @@ public class JsonInsert implements Serializable {
         this.values = values;
     }
 
-    @ApiModelProperty(value = "Information for selecting specific rows for insert")
+    @ApiModelProperty(value = "Information for selecting specific rows for insert",hidden = true)
     public Map<String, Object> getRowSpecification() {
         return rowSpecification;
     }

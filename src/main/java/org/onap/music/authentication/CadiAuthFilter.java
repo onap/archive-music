@@ -57,7 +57,7 @@ public class CadiAuthFilter extends CadiFilter {
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
-            logger.info(EELFLoggerDelegate.applicationLogger, "Request is entering cadifilter");
+            logger.info(EELFLoggerDelegate.securityLogger, "Request is entering cadifilter");
             
             long startTime = System.currentTimeMillis();
             request.setAttribute("startTime", startTime);

@@ -26,8 +26,7 @@ package main;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Random;
-
+import java.security.SecureRandom;
 public class MusicConnector {
     
     //change this to point to relevant cluster
@@ -38,7 +37,7 @@ public class MusicConnector {
     }
     
     private String getMusicNodeIp(){
-        Random r = new Random();
+        SecureRandom r = new SecureRandom();
         int index = r.nextInt(musicNodes.length);    
         return musicNodes[index];
     }

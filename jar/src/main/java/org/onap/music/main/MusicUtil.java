@@ -82,7 +82,7 @@ public class MusicUtil {
             "all.pubic.ips", "cassandra.user", "cassandra.password", "aaf.endpoint.url" };
 
     private static String cassName = "cassandra";
-    private static String cassPwd = "cassandra";
+    private static String cassPwd = "";
     private static String aafEndpointUrl = null;
     private static int cassandraPort = 9042;
 

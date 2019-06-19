@@ -85,8 +85,8 @@ public class MusicLoggingServletFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
 
-        logger.info(EELFLoggerDelegate.applicationLogger,
-                "In MusicLogginServletFilter doFilter start() ::::::::::::::::::::::: [\"+MusicUtil.getTransIdRequired()+\",\"+MusicUtil.getConversationIdRequired()+\",\"+MusicUtil.getClientIdRequired()+\",\"+MusicUtil.getMessageIdRequired()");
+        logger.info(EELFLoggerDelegate.securityLogger,
+                "In MusicLogginServletFilter doFilter start() :: [\"+MusicUtil.getTransIdRequired()+\",\"+MusicUtil.getConversationIdRequired()+\",\"+MusicUtil.getClientIdRequired()+\",\"+MusicUtil.getMessageIdRequired()");
 
         HttpServletRequest httpRequest = null;
         HttpServletResponse httpResponse = null;
@@ -149,7 +149,7 @@ public class MusicLoggingServletFilter implements Filter {
 
         }
 
-        logger.info(EELFLoggerDelegate.applicationLogger,
+        logger.info(EELFLoggerDelegate.securityLogger,
                 "In MusicLogginServletFilter doFilter. Header values validated sucessfully");
 
         chain.doFilter(request, response);

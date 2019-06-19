@@ -51,7 +51,7 @@ public interface MusicCoreService {
         PreparedQueryObject queryObject, String lockId, Condition conditionInfo);
 
     public ResultType nonKeyRelatedPut(PreparedQueryObject queryObject, String consistency)
-        throws MusicServiceException;
+        throws MusicServiceException,MusicQueryException;
 
     public ResultSet get(PreparedQueryObject queryObject) throws MusicServiceException;
 
