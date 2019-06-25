@@ -33,3 +33,11 @@ debug-logs/
 docs/Makefile
 docs/_build
 docs/conf.py
+
+#VSCODE
+.VSCODE
+.attach_pid*
+
+
+#jmeter
+jmeter.log
