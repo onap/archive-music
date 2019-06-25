@@ -37,14 +37,16 @@ import org.onap.aaf.cadi.CadiWrap;
 import org.onap.aaf.cadi.Permission;
 import org.onap.aaf.cadi.aaf.AAFPermission;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.exceptions.MusicAuthenticationException;
 
 public class AuthUtil {
 
-    private static final String decodeValueOfForwardSlash = "2f";
-    private static final String decodeValueOfHyphen = "2d";
-    private static final String decodeValueOfAsterisk = "2a";
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(AuthUtil.class);
 
+    private AuthUtil() {
+        throw new IllegalStateException("Utility class");
+    }
+    
     /**
      * Get the list of permissions from the Request object.
      * 
@@ -104,20 +106,23 @@ public class AuthUtil {
      * @return returns the decoded string.
      * @throws Exception throws excpetion
      */
-    public static String decodeFunctionCode(String str) throws Exception {
+    public static String decodeFunctionCode(String str) throws MusicAuthenticationException {
+        final String DECODEVALUE_FORWARDSLASH = "2f";
+        final String DECODEVALUE_HYPHEN = "2d";
+        final String DECODEVALUE_ASTERISK = "2a";
         String decodedString = str;
         List<Pattern> decodingList = new ArrayList<>();
-        decodingList.add(Pattern.compile(decodeValueOfForwardSlash));
-        decodingList.add(Pattern.compile(decodeValueOfHyphen));
-        decodingList.add(Pattern.compile(decodeValueOfAsterisk));
+        decodingList.add(Pattern.compile(DECODEVALUE_FORWARDSLASH));
+        decodingList.add(Pattern.compile(DECODEVALUE_HYPHEN));
+        decodingList.add(Pattern.compile(DECODEVALUE_ASTERISK));
         for (Pattern xssInputPattern : decodingList) {
             try {
                 decodedString = decodedString.replaceAll("%" + xssInputPattern,
                         new String(Hex.decodeHex(xssInputPattern.toString().toCharArray())));
             } catch (DecoderException e) {
-                logger.error(EELFLoggerDelegate.applicationLogger, 
+                logger.error(EELFLoggerDelegate.securityLogger, 
                     "AuthUtil Decode Failed! for instance: " + str);
-                throw new Exception("decode failed", e);
+                throw new MusicAuthenticationException("Decode failed", e);
             }
         }
 
@@ -132,23 +137,21 @@ public class AuthUtil {
      * @return boolean value if the access is allowed
      * @throws Exception throws exception
      */
-    public static boolean isAccessAllowed(ServletRequest request, String nameSpace) throws Exception {
+    public static boolean isAccessAllowed(ServletRequest request, String nameSpace) throws MusicAuthenticationException {
 
         if (request==null) {
-            throw new Exception("Request cannot be null");
+            throw new MusicAuthenticationException("Request cannot be null");
         }
         
         if (nameSpace==null || nameSpace.isEmpty()) {
-            throw new Exception("NameSpace not Declared!");
+            throw new MusicAuthenticationException("NameSpace not Declared!");
         }
         
         boolean isauthorized = false;
         List<AAFPermission> aafPermsList = getAAFPermissions(request);
-        //logger.info(EELFLoggerDelegate.applicationLogger,
-        //        "AAFPermission  of the requested MechId for all the namespaces: " + aafPermsList);
-
-        logger.debug(EELFLoggerDelegate.applicationLogger, "Requested nameSpace: " + nameSpace);
-
+        logger.info(EELFLoggerDelegate.securityLogger,
+            "AAFPermission  of the requested MechId for all the namespaces: " + aafPermsList);
+        logger.debug(EELFLoggerDelegate.securityLogger, "Requested nameSpace: " + nameSpace);
 
         List<AAFPermission> aafPermsFinalList = filterNameSpacesAAFPermissions(nameSpace, aafPermsList);
 
@@ -162,10 +165,10 @@ public class AuthUtil {
         logger.debug(EELFLoggerDelegate.securityLogger,
                 "AuthUtil requestUri :::" + requestUri);
 
-        for (Iterator iterator = aafPermsFinalList.iterator(); iterator.hasNext();) {
+        for (Iterator<AAFPermission> iterator = aafPermsFinalList.iterator(); iterator.hasNext();) {
             AAFPermission aafPermission = (AAFPermission) iterator.next();
             if(!isauthorized) {
-                isauthorized = isMatchPatternWithInstanceAndAction(aafPermission, requestUri, httpRequest.getMethod());
+                isauthorized = isMatchPattern(aafPermission, requestUri, httpRequest.getMethod());
             }
         }
         
@@ -205,23 +208,21 @@ public class AuthUtil {
      * @return returns a boolean
      * @throws Exception - throws an exception
      */
-    private static boolean isMatchPatternWithInstanceAndAction(
+    private static boolean isMatchPattern(
         AAFPermission aafPermission, 
         String requestUri, 
-        String method) throws Exception {
+        String method) throws MusicAuthenticationException {
         if (null == aafPermission || null == requestUri || null == method) {
             return false;
         }
 
         String permKey = aafPermission.getKey();
         
-        logger.debug(EELFLoggerDelegate.auditLogger, "isMatchPattern permKey: " 
+        logger.debug(EELFLoggerDelegate.securityLogger, "isMatchPattern permKey: " 
             + permKey + ", requestUri " + requestUri + " ," + method);
         
         String[] keyArray = permKey.split("\\|");
         String[] subPath = null;
-        //String type = null;
-        //type = keyArray[0];
         String instance = keyArray[1];
         String action = keyArray[2];
         
@@ -251,13 +252,7 @@ public class AuthUtil {
             subPath = path[i].split("\\.");
             for (int j = 0; j < subPath.length; j++) {
                 if (instanceList.contains(subPath[j])) {
-                    if ("*".equals(action) || "ALL".equalsIgnoreCase(action)) {
-                        return true;
-                    } else if (method.equalsIgnoreCase(action)) {
-                        return true;
-                    } else {
-                        return false;
-                    }
+                    return checkAction(method,action);
                 } else {
                     continue;
                 }
@@ -265,4 +260,15 @@ public class AuthUtil {
         }
         return false;
     }
+
+    private static boolean checkAction(String method, String action) {
+        if ("*".equals(action) || "ALL".equalsIgnoreCase(action)) {
+            return true;
+        } else {
+            return (method.equalsIgnoreCase(action));
+        }
+    }
+
+
+
 }
