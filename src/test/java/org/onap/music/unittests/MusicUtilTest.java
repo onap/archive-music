@@ -25,19 +25,27 @@ package org.onap.music.unittests;
 
 import static org.junit.Assert.*;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
 import org.junit.Test;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.PropertiesLoader;
-import org.springframework.test.context.TestPropertySource;
+import org.onap.music.service.MusicCoreService;
+
+import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.DataType;
 
 public class MusicUtilTest {
+
+    private static final String XLATESTVERSION = "X-latestVersion";
+    private static final String XMINORVERSION = "X-minorVersion";
+    private static final String XPATCHVERSION = "X-patchVersion";
 
     @Test
     public void testGetCassName() {
@@ -52,14 +60,28 @@ public class MusicUtilTest {
     }
 
     @Test
-    public void testGetAafEndpointUrl() {
-        MusicUtil.setAafEndpointUrl("url");
-        assertEquals(MusicUtil.getAafEndpointUrl(),"url");
+    public void testMusicAafNs() {
+        MusicUtil.setMusicAafNs("ns");
+        assertTrue("ns".equals(MusicUtil.getMusicAafNs()));
     }
 
     @Test
-    public void testGetPropkeys() {
-        assertEquals(MusicUtil.getPropkeys()[2],"debug");
+    public void testMusicCoreService() {
+        MusicUtil.setLockUsing(MusicUtil.CASSANDRA);
+        MusicCoreService mc = null;
+        mc = MusicUtil.getMusicCoreService();
+        assertTrue(mc != null);        
+        MusicUtil.setLockUsing("nothing");
+        mc = null;
+        mc = MusicUtil.getMusicCoreService();
+        assertTrue(mc != null);        
+        
+    }
+
+    @Test
+    public void testCipherEncKey() {
+        MusicUtil.setCipherEncKey("cipherEncKey");
+        assertTrue("cipherEncKey".equals(MusicUtil.getCipherEncKey()));        
     }
 
     @Test
@@ -86,28 +108,53 @@ public class MusicUtilTest {
         assertEquals(MusicUtil.getVersion(),"1.0.0");
     }
 
-    /*@Test
-    public void testGetMyZkHost() {
-        MusicUtil.setMyZkHost("10.0.0.2");
-        assertEquals(MusicUtil.getMyZkHost(),"10.0.0.2");
-    }*/
+    @Test 
+    public void testBuildVersionA() {
+        assertEquals(MusicUtil.buildVersion("1","2","3"),"1.2.3");
+    }
+
+    @Test 
+    public void testBuildVersionB() {
+        assertEquals(MusicUtil.buildVersion("1",null,"3"),"1");
+    }
+
+    @Test 
+    public void testBuildVersionC() {
+        assertEquals(MusicUtil.buildVersion("1","2",null),"1.2");
+    }
+
+
+    @Test
+    public void testBuileVersionResponse() {
+        assertTrue(MusicUtil.buildVersionResponse("1","2","3").getClass().getSimpleName().equals("Builder"));
+        assertTrue(MusicUtil.buildVersionResponse("1",null,"3").getClass().getSimpleName().equals("Builder"));
+        assertTrue(MusicUtil.buildVersionResponse("1","2",null).getClass().getSimpleName().equals("Builder"));
+        assertTrue(MusicUtil.buildVersionResponse(null,null,null).getClass().getSimpleName().equals("Builder"));
+    }
+
+    @Test
+    public void testGetConsistency() {
+        assertTrue(ConsistencyLevel.ONE.equals(MusicUtil.getConsistencyLevel("one")));
+    }
+
+    @Test
+    public void testRetryCount() {
+        MusicUtil.setRetryCount(1);
+        assertEquals(MusicUtil.getRetryCount(),1);
+    }
+
+    @Test
+    public void testIsCadi() {
+        MusicUtil.setIsCadi(true);
+        assertEquals(MusicUtil.getIsCadi(),true);
+    }
+
 
     @Test
     public void testGetMyCassaHost() {
         MusicUtil.setMyCassaHost("10.0.0.2");
         assertEquals(MusicUtil.getMyCassaHost(),"10.0.0.2");
     }
-
-    @Test
-    public void testGetDefaultMusicIp() {
-        MusicUtil.setDefaultMusicIp("10.0.0.2");
-        assertEquals(MusicUtil.getDefaultMusicIp(),"10.0.0.2");
-    }
-
-//    @Test
-//    public void testGetTestType() {
-//      fail("Not yet implemented"); // TODO
-//    }
 
     @Test
     public void testIsValidQueryObject() {
@@ -130,6 +177,16 @@ public class MusicUtilTest {
     
     }
 
+
+
+
+    @Test(expected = IllegalStateException.class)
+    public void testMusicUtil() {
+        System.out.println("MusicUtil Constructor Test");
+        MusicUtil mu = new MusicUtil();
+        System.out.println(mu.toString());
+    }
+
     @Test
     public void testConvertToCQLDataType() throws Exception {
         Map<String,Object> myMap = new HashMap<String,Object>();
@@ -150,9 +207,20 @@ public class MusicUtilTest {
         assertEquals(MusicUtil.convertToActualDataType(DataType.cfloat(),"123.01"),Float.parseFloat("123.01"));
         assertEquals(MusicUtil.convertToActualDataType(DataType.cdouble(),"123.02"),Double.parseDouble("123.02"));
         assertEquals(MusicUtil.convertToActualDataType(DataType.cboolean(),"true"),Boolean.parseBoolean("true"));
+        List<String> myList = new ArrayList<String>();
+        List<String> newList = myList;
+        myList.add("TOM");
+        assertEquals(MusicUtil.convertToActualDataType(DataType.list(DataType.varchar()),myList),newList);
         Map<String,Object> myMap = new HashMap<String,Object>();
         myMap.put("name","tom");
-        assertEquals(MusicUtil.convertToActualDataType(DataType.map(DataType.varchar(),DataType.varchar()),myMap),myMap);
+        Map<String,Object> newMap = myMap;
+        assertEquals(MusicUtil.convertToActualDataType(DataType.map(DataType.varchar(),DataType.varchar()),myMap),newMap);
+    }
+
+    @Test
+    public void testConvertToActualDataTypeByte() throws Exception {
+        byte[] testByte = "TOM".getBytes();
+        assertEquals(MusicUtil.convertToActualDataType(DataType.blob(),testByte),ByteBuffer.wrap(testByte));
 
     }
 
@@ -189,42 +257,6 @@ public class MusicUtilTest {
     }
     
     @Test
-    public void testAAFAdminUrl() {
-        MusicUtil.setAafAdminUrl("aafAdminURL.com");
-        assertEquals("aafAdminURL.com", MusicUtil.getAafAdminUrl());
-    }
-    
-    @Test
-    public void testAAFEndpointUrl() {
-        MusicUtil.setAafEndpointUrl("aafEndpointURL.com");
-        assertEquals("aafEndpointURL.com", MusicUtil.getAafEndpointUrl());
-    }
-    
-    @Test
-    public void testNamespace() {
-        MusicUtil.setMusicNamespace("musicNamespace");
-        assertEquals("musicNamespace", MusicUtil.getMusicNamespace());
-    }
-    
-    @Test
-    public void testAAFRole() {
-        MusicUtil.setAdminAafRole("aafRole");
-        assertEquals("aafRole", MusicUtil.getAdminAafRole());
-    }
-    
-    @Test
-    public void testAdminId() {
-        MusicUtil.setAdminId("adminId");
-        assertEquals("adminId", MusicUtil.getAdminId());
-    }
-    
-    @Test
-    public void testAdminPass() {
-        MusicUtil.setAdminPass("pass");
-        assertEquals("pass", MusicUtil.getAdminPass());
-    }
-    
-    @Test
     public void testCassaPort() {
         MusicUtil.setCassandraPort(1234);
         assertEquals(1234, MusicUtil.getCassandraPort());
@@ -234,18 +266,6 @@ public class MusicUtilTest {
     public void testBuild() {
         MusicUtil.setBuild("testbuild");
         assertEquals("testbuild", MusicUtil.getBuild());
-    }
-    
-    @Test
-    public void testNotifyInterval() {
-        MusicUtil.setNotifyInterval(123);
-        assertEquals(123, MusicUtil.getNotifyInterval());
-    }
-    
-    @Test
-    public void testNotifyTimeout() {
-        MusicUtil.setNotifyTimeOut(789);
-        assertEquals(789, MusicUtil.getNotifyTimeout());
     }
     
     @Test
@@ -280,23 +300,29 @@ public class MusicUtilTest {
     }
     
     @Test
-    public void testconvIdReq() {
-        MusicUtil.setConversationIdRequired("conversationIdRequired");
-        assertEquals("conversationIdRequired", MusicUtil.getConversationIdRequired());
+    public void testConvIdReq() {
+        MusicUtil.setConversationIdRequired(true);
+        assertEquals(true, MusicUtil.getConversationIdRequired());
     }
     
     @Test
     public void testClientIdRequired() {
-        MusicUtil.setClientIdRequired("conversationIdRequired");
-        assertEquals("conversationIdRequired", MusicUtil.getClientIdRequired());
+        MusicUtil.setClientIdRequired(true);
+        assertEquals(true, MusicUtil.getClientIdRequired());
     }
     
     @Test
     public void testMessageIdRequired() {
-        MusicUtil.setMessageIdRequired("msgIdRequired");
-        assertEquals("msgIdRequired", MusicUtil.getMessageIdRequired());
+        MusicUtil.setMessageIdRequired(true);
+        assertEquals(true, MusicUtil.getMessageIdRequired());
     }
-    
+
+    @Test
+    public void testTransIdRequired() {
+        MusicUtil.setTransIdRequired(true);
+        assertEquals(true,MusicUtil.getTransIdRequired());
+    }
+
     @Test
     public void testLoadProperties() {
         PropertiesLoader pl = new PropertiesLoader();

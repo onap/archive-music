@@ -27,11 +27,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
-@ApiModel(value = "JsonTable", description = "model for leased lock")
+@ApiModel(value = "Json Leasesd Lock", description = "model for leased lock")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonLeasedLock {
     private long leasePeriod;
-    private String notifyUrl;
 
     @ApiModelProperty(value = "Lease period")
     public long getLeasePeriod() {
@@ -42,12 +41,4 @@ public class JsonLeasedLock {
         this.leasePeriod = leasePeriod;
     }
 
-    @ApiModelProperty(value = "URL to be notified")
-    public String getNotifyUrl() {
-        return notifyUrl;
-    }
-
-    public void setNotifyUrl(String notifyUrl) {
-        this.notifyUrl = notifyUrl;
-    }
 }

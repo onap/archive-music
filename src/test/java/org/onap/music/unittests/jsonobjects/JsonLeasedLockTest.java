@@ -44,11 +44,4 @@ public class JsonLeasedLockTest {
         assertEquals(lease,jl.getLeasePeriod());
     }
 
-    @Test
-    public void testGetNotifyUrl() {
-        String url = "http://somewhere.com";
-        jl.setNotifyUrl(url);
-        assertEquals(url,jl.getNotifyUrl());
-    }
-
 }

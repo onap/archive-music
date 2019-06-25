@@ -58,17 +58,20 @@ public class MusicHealthCheck {
         UUID randomUUID = UUID.randomUUID();
         try {
             result = getAdminKeySpace(consistency, randomUUID);
-        } catch(Exception e) {
+        } catch( Exception e) {
             if(e.getMessage().toLowerCase().contains("unconfigured table healthcheck")) {
                 logger.error("Error", e);
                 logger.debug("Creating table....");
-                boolean ksresult = createKeyspace();
-                if(ksresult)
-                    try {
+                try {
+                    boolean ksresult = createKeyspace();
+                    if(ksresult) {
                         result = getAdminKeySpace(consistency, randomUUID);
-                    } catch (MusicServiceException e1) {
-                        logger.error(EELFLoggerDelegate.errorLogger, e1, AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.UNKNOWN);
                     }
+                } catch (MusicServiceException e1) {
+                    logger.error(EELFLoggerDelegate.errorLogger, e1.getMessage(), AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.UNKNOWN);
+                } catch (MusicQueryException e1) {
+                    logger.error(EELFLoggerDelegate.errorLogger, e1.getMessage(), AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.UNKNOWN,e1);
+                }
             } else {
                 logger.error("Error", e);
                 return "One or more nodes are down or not responding.";
@@ -88,11 +91,12 @@ public class MusicHealthCheck {
         }
     }
 
-    private Boolean getAdminKeySpace(String consistency, UUID randomUUID) throws MusicServiceException {
+    private Boolean getAdminKeySpace(String consistency, UUID randomUUID) throws MusicServiceException,MusicQueryException {
         PreparedQueryObject pQuery = new PreparedQueryObject();
         pQuery.appendQueryString("insert into admin.healthcheck (id) values (?)");
         pQuery.addValue(randomUUID);
-        ResultType rs = MusicCore.nonKeyRelatedPut(pQuery, consistency);
+        ResultType rs = null;
+        rs = MusicCore.nonKeyRelatedPut(pQuery, consistency);
         logger.info(rs.toString());
         return null != rs;
         
@@ -109,15 +113,11 @@ public class MusicHealthCheck {
     
     
     
-    private boolean createKeyspace() {
+    private boolean createKeyspace() throws MusicServiceException,MusicQueryException {
         PreparedQueryObject pQuery = new PreparedQueryObject();
         pQuery.appendQueryString("CREATE TABLE admin.healthcheck (id uuid PRIMARY KEY)");
         ResultType rs = null ;
-        try {
-            rs = MusicCore.nonKeyRelatedPut(pQuery, ConsistencyLevel.ONE.toString());
-        } catch (MusicServiceException e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e, AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.UNKNOWN);
-        }
+        rs = MusicCore.nonKeyRelatedPut(pQuery, ConsistencyLevel.ONE.toString());
         return rs != null && rs.getResult().toLowerCase().contains("success");
     }
 

@@ -122,7 +122,7 @@ public class MusicCore {
     }
 
     public static ResultType nonKeyRelatedPut(PreparedQueryObject queryObject, String consistency)
-            throws MusicServiceException {
+            throws MusicServiceException,MusicQueryException {
         return musicCore.nonKeyRelatedPut(queryObject, consistency);
     }
 

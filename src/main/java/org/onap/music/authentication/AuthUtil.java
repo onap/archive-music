@@ -88,7 +88,7 @@ public class AuthUtil {
     private static List<AAFPermission> filterNameSpacesAAFPermissions(String nameSpace,
             List<AAFPermission> allPermissionsList) {
         List<AAFPermission> list = new ArrayList<>();
-        for (Iterator iterator = allPermissionsList.iterator(); iterator.hasNext();) {
+        for (Iterator<AAFPermission> iterator = allPermissionsList.iterator(); iterator.hasNext();) {
             AAFPermission aafPermission = (AAFPermission) iterator.next();
             if(aafPermission.getType().indexOf(nameSpace) == 0) {
                 list.add(aafPermission);
@@ -152,15 +152,15 @@ public class AuthUtil {
 
         List<AAFPermission> aafPermsFinalList = filterNameSpacesAAFPermissions(nameSpace, aafPermsList);
 
-        logger.debug(EELFLoggerDelegate.applicationLogger,
-            "AuthUtil list of AAFPermission for the specific namespace ::::::::::::::::::::::::::::::::::::::::::::"
+        logger.debug(EELFLoggerDelegate.securityLogger,
+            "AuthUtil list of AAFPermission for the specific namespace :::"
             + aafPermsFinalList);
         
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         String requestUri = httpRequest.getRequestURI().substring(httpRequest.getContextPath().length() + 1);
 
-        logger.debug(EELFLoggerDelegate.applicationLogger,
-                "AuthUtil requestUri ::::::::::::::::::::::::::::::::::::::::::::" + requestUri);
+        logger.debug(EELFLoggerDelegate.securityLogger,
+                "AuthUtil requestUri :::" + requestUri);
 
         for (Iterator iterator = aafPermsFinalList.iterator(); iterator.hasNext();) {
             AAFPermission aafPermission = (AAFPermission) iterator.next();
@@ -169,7 +169,7 @@ public class AuthUtil {
             }
         }
         
-        logger.debug(EELFLoggerDelegate.applicationLogger,
+        logger.debug(EELFLoggerDelegate.securityLogger,
             "isAccessAllowed for the request uri: " + requestUri + "is :" + isauthorized);
         return isauthorized;
     }
@@ -215,7 +215,7 @@ public class AuthUtil {
 
         String permKey = aafPermission.getKey();
         
-        logger.info(EELFLoggerDelegate.applicationLogger, "isMatchPattern permKey: " 
+        logger.debug(EELFLoggerDelegate.auditLogger, "isMatchPattern permKey: " 
             + permKey + ", requestUri " + requestUri + " ," + method);
         
         String[] keyArray = permKey.split("\\|");

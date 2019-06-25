@@ -39,32 +39,30 @@ import org.springframework.stereotype.Component;
 @Component
 public class MusicContainerFilter implements  ContainerResponseFilter {
 
-	private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicContainerFilter.class);
-	
-	public MusicContainerFilter() {
-		
-	}
-	
-	@Override
-	public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext)
-			throws IOException {
-		logger.info(EELFLoggerDelegate.applicationLogger, "In MusicContainerFilter response filter ::::::::::::::::::::::::");
-		
-		if (null != EELFLoggerDelegate.mdcGet("transactionId")) {
-		    EELFLoggerDelegate.mdcRemove("transactionId");
-		} 
-		
-		if (null != EELFLoggerDelegate.mdcGet("conversationId")) {
-		    EELFLoggerDelegate.mdcRemove("conversationId");
-		} 
-		
-		if (null != EELFLoggerDelegate.mdcGet("clientId")) {
-		    EELFLoggerDelegate.mdcRemove("clientId");
-		} 
-			
-		if (null != EELFLoggerDelegate.mdcGet("messageId")) {
-		    EELFLoggerDelegate.mdcRemove("messageId");
-		}
-	}
-	
+    private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicContainerFilter.class);
+    
+    public MusicContainerFilter() {
+        
+    }
+    
+    @Override
+    public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext)
+            throws IOException {
+        if (null != EELFLoggerDelegate.mdcGet("transactionId")) {
+            EELFLoggerDelegate.mdcRemove("transactionId");
+        } 
+        
+        if (null != EELFLoggerDelegate.mdcGet("conversationId")) {
+            EELFLoggerDelegate.mdcRemove("conversationId");
+        } 
+        
+        if (null != EELFLoggerDelegate.mdcGet("clientId")) {
+            EELFLoggerDelegate.mdcRemove("clientId");
+        } 
+            
+        if (null != EELFLoggerDelegate.mdcGet("messageId")) {
+            EELFLoggerDelegate.mdcRemove("messageId");
+        }
+    }
+    
 }

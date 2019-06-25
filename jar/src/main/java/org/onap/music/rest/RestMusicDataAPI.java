@@ -218,12 +218,16 @@ public class RestMusicDataAPI {
 
         try {
             queryObject = new PreparedQueryObject();
-            queryObject.appendQueryString("CREATE ROLE IF NOT EXISTS '" + userId
-                            + "' WITH PASSWORD = '" + password + "' AND LOGIN = true;");
+//            queryObject.appendQueryString("CREATE ROLE IF NOT EXISTS '" + userId
+//                            + "' WITH PASSWORD = '" + password + "' AND LOGIN = true;");
+            queryObject.appendQueryString("CREATE ROLE IF NOT EXISTS ? "
+                + " WITH PASSWORD = ? AND LOGIN = true;");
+            queryObject.addValue(userId);
+            queryObject.addValue(password);
             MusicCore.nonKeyRelatedPut(queryObject, consistency);
             queryObject = new PreparedQueryObject();
             queryObject.appendQueryString("GRANT ALL PERMISSIONS on KEYSPACE " + keyspaceName
-                                + " to '" + userId + "'");
+                + " to '" + userId + "'");
             queryObject.appendQueryString(";");
             MusicCore.nonKeyRelatedPut(queryObject, consistency);
         } catch (Exception e) {
@@ -235,8 +239,8 @@ public class RestMusicDataAPI {
             String hashedpwd = BCrypt.hashpw(password, BCrypt.gensalt());
             queryObject = new PreparedQueryObject();
             queryObject.appendQueryString(
-                        "INSERT into admin.keyspace_master (uuid, keyspace_name, application_name, is_api, "
-                                        + "password, username, is_aaf) values (?,?,?,?,?,?,?)");
+                "INSERT into admin.keyspace_master (uuid, keyspace_name, application_name, is_api, "
+                + "password, username, is_aaf) values (?,?,?,?,?,?,?)");
             queryObject.addValue(MusicUtil.convertToActualDataType(DataType.uuid(), newAid));
             queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), keyspaceName));
             queryObject.addValue(MusicUtil.convertToActualDataType(DataType.text(), ns));

@@ -81,7 +81,7 @@ public class PropertiesListener implements ServletContextListener {
                             break;
                         case "debug":
                             MusicUtil.setDebug(Boolean
-                                            .getBoolean(prop.getProperty(key).toLowerCase()));
+                                .parseBoolean(prop.getProperty(key).toLowerCase()));
                             break;
                         case "version":
                             MusicUtil.setVersion(prop.getProperty(key));

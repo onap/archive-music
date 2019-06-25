@@ -44,6 +44,7 @@ public class EELFLoggerDelegate extends SLF4jWrapper implements EELFLogger {
     public static final EELFLogger auditLogger = EELFManager.getInstance().getAuditLogger();
     public static final EELFLogger metricsLogger = EELFManager.getInstance().getMetricsLogger();
     public static final EELFLogger debugLogger = EELFManager.getInstance().getDebugLogger();
+    public static final EELFLogger securityLogger = EELFManager.getInstance().getSecurityLogger();
 
     private String className;
     private static ConcurrentMap<String, EELFLoggerDelegate> classMap = new ConcurrentHashMap<>();
@@ -230,9 +231,7 @@ public class EELFLoggerDelegate extends SLF4jWrapper implements EELFLogger {
      * @param logger
      * @param msg
      * 
-     * @deprecated use {@link #error(EELF, Exception)} instead
      */
-    @Deprecated
     public void error(EELFLogger logger, String msg) {
         logger.error(className+ " - " + msg);
     }
@@ -254,9 +253,7 @@ public class EELFLoggerDelegate extends SLF4jWrapper implements EELFLogger {
      * @param msg
      * @param arguments
      * 
-     * @deprecated use {@link #error(EELF, Exception, Object...)} instead
      */
-    @Deprecated
     public void error(EELFLogger logger, String msg, Object... arguments) {
         logger.error(msg, arguments);
     }
@@ -289,9 +286,7 @@ public class EELFLoggerDelegate extends SLF4jWrapper implements EELFLogger {
      * @param logger
      * @param msg
      * @param severtiy
-     * @deprecated use {@link #error(EELF, Exception)} instead
      */
-    @Deprecated
     public void error(EELFLogger logger, String msg, Object /* AlarmSeverityEnum */ severtiy) {
         logger.error(msg);
     }
@@ -309,6 +304,8 @@ public class EELFLoggerDelegate extends SLF4jWrapper implements EELFLogger {
         debug(debugLogger, msg);
         info(auditLogger, msg);
         info(metricsLogger, msg);
+        info(securityLogger, msg);
+
     }
 
     /**

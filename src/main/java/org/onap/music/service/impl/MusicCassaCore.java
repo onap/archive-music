@@ -498,14 +498,22 @@ public class MusicCassaCore implements MusicCoreService {
             PreparedQueryObject queryObject, String lockId, Condition conditionInfo) {
         long start = System.currentTimeMillis();
         try {
+            String keyLock = lockId.substring(lockId.lastIndexOf(".") + 1,lockId.lastIndexOf("$"));
+            if (lockId.contains(".") && !keyLock.equals(primaryKeyValue)) {
+                return new ReturnType(ResultType.FAILURE,"Lock value '" + keyLock + "' and key value '"
+                + primaryKeyValue + "' not match. Please check your values: " 
+                + lockId + " .");
+            }
             LockObject lockObject = getLockingServiceHandle().getLockInfo(keyspace, table, primaryKeyValue,
                     lockId.substring(lockId.lastIndexOf("$") + 1));
 
-            if (!lockObject.getIsLockOwner()) {
+            if ( lockObject == null ) {
+                return new ReturnType(ResultType.FAILURE, lockId + " does not exist.");
+            } else if (!lockObject.getIsLockOwner()) {
                 return new ReturnType(ResultType.FAILURE, lockId + " is not the lock holder");
             } else if (lockObject.getLocktype() != LockType.WRITE) {
                 return new ReturnType(ResultType.FAILURE,
-                        "Attempting to do write operation, but " + lockId + " is a write lock");
+                        "Attempting to do write operation, but " + lockId + " is a read lock");
             }
 
             if (conditionInfo != null) {
@@ -536,10 +544,10 @@ public class MusicCassaCore implements MusicCoreService {
             dsHandle.executePut(queryObject, MusicUtil.CRITICAL);
             long end = System.currentTimeMillis();
             logger.info(EELFLoggerDelegate.applicationLogger,"Time taken for the critical put:" + (end - start) + " ms");
-        }catch (MusicQueryException | MusicServiceException | MusicLockingException  e) {
+        } catch (MusicQueryException | MusicServiceException | MusicLockingException  e) {
             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), e);
             return new ReturnType(ResultType.FAILURE,
-                "Exception thrown while doing the critical put\n"
+                "Exception thrown while doing the critical put: "
                 + e.getMessage());
         }
         return new ReturnType(ResultType.SUCCESS, "Update performed");
@@ -555,17 +563,17 @@ public class MusicCassaCore implements MusicCoreService {
      *
      *
      */
-    public ResultType nonKeyRelatedPut(PreparedQueryObject queryObject, String consistency) throws MusicServiceException {
+    public ResultType nonKeyRelatedPut(PreparedQueryObject queryObject, String consistency) throws MusicServiceException,MusicQueryException {
         // this is mainly for some functions like keyspace creation etc which does not
         // really need the bells and whistles of Music locking.
         boolean result = false;
-        try {
-            result = MusicDataStoreHandle.getDSHandle().executePut(queryObject, consistency);
-        } catch (MusicQueryException | MusicServiceException ex) {
-            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(), AppMessages.UNKNOWNERROR,
-                    ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR, ex);
-            throw new MusicServiceException(ex.getMessage());
-        }
+//        try {
+        result = MusicDataStoreHandle.getDSHandle().executePut(queryObject, consistency);
+//        } catch (MusicQueryException | MusicServiceException ex) {
+            // logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(), AppMessages.UNKNOWNERROR,
+            //     ErrorSeverity.WARN, ErrorTypes.MUSICSERVICEERROR, ex);
+//            throw new MusicServiceException(ex.getMessage(),ex);
+//        }
         return result ? ResultType.SUCCESS : ResultType.FAILURE;
     }
 
@@ -601,17 +609,33 @@ public class MusicCassaCore implements MusicCoreService {
     public ResultSet criticalGet(String keyspace, String table, String primaryKeyValue,
                     PreparedQueryObject queryObject, String lockId) throws MusicServiceException {
         ResultSet results = null;
-
+        String keyLock = lockId.substring(lockId.lastIndexOf(".") + 1,lockId.lastIndexOf("$"));
         try {
+            if (lockId.contains(".") && !keyLock.equals(primaryKeyValue)) {
+                throw new MusicLockingException("Lock value '" + keyLock + "' and key value '"
+                + primaryKeyValue + "' do not match. Please check your values: " 
+                + lockId + " .");
+            }
             LockObject lockObject = getLockingServiceHandle().getLockInfo(keyspace, table, primaryKeyValue,
-                    lockId.substring(lockId.lastIndexOf("$") + 1));
-            if (!lockObject.getIsLockOwner()) {
+                lockId.substring(lockId.lastIndexOf("$") + 1));
+            if (null == lockObject) {
+                throw new MusicLockingException("No Lock Object. Please check if lock name or key is correct." 
+                    + lockId + " .");
+            }
+            if ( !lockObject.getIsLockOwner()) {
                 return null;// not top of the lock store q
             }
             results = MusicDataStoreHandle.getDSHandle().executeQuorumConsistencyGet(queryObject);
-        } catch (MusicQueryException | MusicServiceException | MusicLockingException e) {
-                logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity
+        } catch ( MusicLockingException e ) {
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity
+                    .WARN, ErrorTypes.MUSICSERVICEERROR);
+                throw new MusicServiceException(
+                    "Cannot perform critical get for key: " + primaryKeyValue + " : " + e.getMessage());
+        } catch (MusicQueryException | MusicServiceException e) {
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity
                     .WARN, ErrorTypes.MUSICSERVICEERROR, e);
+                throw new MusicServiceException(
+                    "Cannot perform critical get for key: " + primaryKeyValue + " : " + e.getMessage());    
         }
         return results;
     }

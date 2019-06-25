@@ -56,9 +56,19 @@ public class JsonResponse {
     private LockStatus lockStatus;
     private List<String> lockHolders;
     private String lockLease;
+    private boolean isLockHolders=false;
 
 
-    /**
+    public boolean isLockHolders() {
+		return isLockHolders;
+	}
+
+	public JsonResponse setisLockHolders(boolean isLockHolders) {
+		this.isLockHolders = isLockHolders;
+		return this;
+	}
+
+	/**
      * Create a JSONLock Response
      * Use setters to provide more information as in
      * JsonLockResponse(ResultType.SUCCESS).setMessage("We did it").setLock(mylockname)
@@ -282,7 +292,7 @@ public class JsonResponse {
                 lockMap.put("lock-status", lockStatus);
             }
             if (lockHolders != null && !lockHolders.isEmpty()) {
-                if (lockHolders.size()==1) {
+                if (lockHolders.size()==1 && !isLockHolders) {
                     //for backwards compatability
                     lockMap.put("lock-holder", lockHolders.get(0));
                 } else {

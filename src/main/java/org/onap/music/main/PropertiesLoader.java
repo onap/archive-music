@@ -22,9 +22,6 @@
 
 package org.onap.music.main;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,7 +30,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.stereotype.Component;
 
-@PropertySource(value = {"file:/opt/app/music/etc/music.properties", "classpath:/project.properties"})
+@PropertySource(value = {"file:/opt/app/music/etc/music.properties", "classpath:/project.properties","file:/opt/app/music/etc/key.properties"})
 @Component
 public class PropertiesLoader implements InitializingBean {
 
@@ -64,33 +61,9 @@ public class PropertiesLoader implements InitializingBean {
     @Value("${cassandra.password}")
     public String cassandraPassword;
     
-    @Value("${aaf.endpoint.url}")
-    public String aafEndpointUrl;
-    
-    @Value("${admin.username}")
-    public String adminUsername;
-    
-    @Value("${admin.password}")
-    public String adminPassword;
-    
     @Value("${cassandra.port}")
     public String cassandraPort;
     
-    @Value("${aaf.admin.url}")
-    public String aafAdminUrl;
-    
-    @Value("${music.namespace}")
-    public String musicNamespace;
-    
-    @Value("${admin.aaf.role}")
-    public String adminAafRole;
-    
-    @Value("${notify.interval}")
-    public String notifyInterval;
-    
-    @Value("${notify.timeout}")
-    public String notifyTimeout;
-
     @Value("${cadi}")
     public String isCadi;
     
@@ -113,16 +86,22 @@ public class PropertiesLoader implements InitializingBean {
     private String messageIdPrefix;    
     
     @Value("${transId.header.required}")
-    private String transIdRequired;
+    private Boolean transIdRequired;
 
     @Value("${conversation.header.required}")
-    private String conversationIdRequired;
+    private Boolean conversationIdRequired;
 
     @Value("${clientId.header.required}")
-    private String clientIdRequired;
+    private Boolean clientIdRequired;
 
     @Value("${messageId.header.required}")
-    private String messageIdRequired;
+    private Boolean messageIdRequired;
+
+    @Value("${music.aaf.ns}")
+    private String musicAafNs;
+
+    @Value("${cipher.enc.key}")
+    private String cipherEncKey;
     
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(PropertiesLoader.class);
     
@@ -139,20 +118,11 @@ public class PropertiesLoader implements InitializingBean {
      * .
      */
     public void loadProperties() {
-        if (aafAdminUrl != null && !aafAdminUrl.equals("${aaf.admin.url}")) {
-            MusicUtil.setAafAdminUrl(aafAdminUrl);
+        if(cipherEncKey != null) {
+            MusicUtil.setCipherEncKey(cipherEncKey);
         }
-        if (aafEndpointUrl != null && !aafEndpointUrl.equals("${aaf.endpoint.url}")) {
-            MusicUtil.setAafEndpointUrl(aafEndpointUrl);
-        }
-        if (adminAafRole != null && !adminAafRole.equals("${admin.aaf.role}")) {
-            MusicUtil.setAdminAafRole(adminAafRole);
-        }
-        if (adminPassword != null && !adminPassword.equals("${admin.password}")) {
-            MusicUtil.setAdminPass(adminPassword);
-        }
-        if (adminUsername != null && !adminUsername.equals("${admin.username}")) {
-            MusicUtil.setAdminId(adminUsername);
+        if (musicAafNs != null) {
+            MusicUtil.setMusicAafNs(musicAafNs);
         }
         if (cassandraPort != null && !cassandraPort.equals("${cassandra.port}")) {
             MusicUtil.setCassandraPort(Integer.parseInt(cassandraPort));
@@ -169,23 +139,11 @@ public class PropertiesLoader implements InitializingBean {
         if (lockLeasePeriod != null && !lockLeasePeriod.equals("${lock.lease.period}")) {
             MusicUtil.setDefaultLockLeasePeriod(Long.parseLong(lockLeasePeriod));
         }
-        if (musicIp != null && !musicIp.equals("${music.ip}")) {
-            MusicUtil.setDefaultMusicIp(musicIp);
-        }
-        if (musicNamespace != null && !musicNamespace.equals("${music.namespace}")) {
-            MusicUtil.setMusicNamespace(musicNamespace);
-        }
         if (musicProperties != null && !musicProperties.equals("${music.properties}")) {
             MusicUtil.setMusicPropertiesFilePath(musicProperties);
         }
         if (cassandraHost != null && !cassandraHost.equals("${cassandra.host}")) {
             MusicUtil.setMyCassaHost(cassandraHost);
-        }
-        if (notifyInterval != null && !notifyInterval.equals("${notify.interval}")) {
-            MusicUtil.setNotifyInterval(Integer.parseInt(notifyInterval));
-        }
-        if (notifyTimeout != null && !notifyTimeout.equals("${notify.timeout}")) {
-            MusicUtil.setNotifyTimeOut(Integer.parseInt(notifyTimeout));
         }
         if (version != null && !version.equals("${version}")) {
             MusicUtil.setVersion(version);
@@ -202,8 +160,6 @@ public class PropertiesLoader implements InitializingBean {
         if (isKeyspaceActive != null && !isKeyspaceActive.equals("${keyspace.active}")) {
             MusicUtil.setKeyspaceActive(Boolean.parseBoolean(isKeyspaceActive));
         }
-        
-
         if(transIdPrefix!=null) {
             MusicUtil.setTransIdPrefix(transIdPrefix);
         }
@@ -236,6 +192,8 @@ public class PropertiesLoader implements InitializingBean {
             MusicUtil.setMessageIdRequired(messageIdRequired);
         }
     }
+
+
     
     
     @Override
