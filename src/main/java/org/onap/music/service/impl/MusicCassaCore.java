@@ -29,7 +29,6 @@ import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
-import java.util.concurrent.TimeUnit;
 
 import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.MusicDataStoreHandle;
@@ -51,7 +50,6 @@ import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
 import org.onap.music.service.MusicCoreService;
 
-import com.att.eelf.configuration.EELFLogger;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -61,9 +59,8 @@ import org.onap.music.datastore.*;
 
 public class MusicCassaCore implements MusicCoreService {
 
-    public static CassaLockStore mLockHandle = null;;
+    private static CassaLockStore mLockHandle = null;
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicCassaCore.class);
-    private static boolean unitTestRun=true;
     private static MusicCassaCore musicCassaCoreInstance = null;
 
     private MusicCassaCore() {
@@ -95,7 +92,7 @@ public class MusicCassaCore implements MusicCoreService {
     }
 
     public String createLockReference(String fullyQualifiedKey) throws MusicLockingException {
-    	return createLockReference(fullyQualifiedKey, LockType.WRITE);
+        return createLockReference(fullyQualifiedKey, LockType.WRITE);
     }
 
     public String createLockReference(String fullyQualifiedKey, LockType locktype) throws MusicLockingException {
@@ -125,8 +122,8 @@ public class MusicCassaCore implements MusicCoreService {
 
     public ReturnType acquireLockWithLease(String fullyQualifiedKey, String lockReference, long leasePeriod)
             throws MusicLockingException, MusicQueryException, MusicServiceException  {
-         evictExpiredLockHolder(fullyQualifiedKey,leasePeriod);
-         return acquireLock(fullyQualifiedKey, lockReference);
+        evictExpiredLockHolder(fullyQualifiedKey,leasePeriod);
+        return acquireLock(fullyQualifiedKey, lockReference);
     }
 
     private void evictExpiredLockHolder(String fullyQualifiedKey, long leasePeriod)
@@ -167,7 +164,7 @@ public class MusicCassaCore implements MusicCoreService {
         if (!lockInfo.getIsLockOwner()) {
             return new ReturnType(ResultType.FAILURE, lockId + " is not a lock holder");//not top of the lock store q
         }
-   
+        
         //check to see if the value of the key has to be synced in case there was a forceful release
         String syncTable = keyspace+".unsyncedKeys_"+table;
         String query = "select * from "+syncTable+" where key='"+localFullyQualifiedKey+"';";

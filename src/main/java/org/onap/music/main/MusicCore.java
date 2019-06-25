@@ -34,17 +34,12 @@ import org.onap.music.lockingservice.cassandra.CassaLockStore;
 import org.onap.music.lockingservice.cassandra.LockType;
 import org.onap.music.lockingservice.cassandra.MusicLockState;
 import org.onap.music.service.MusicCoreService;
-import org.onap.music.service.impl.MusicCassaCore;
 import com.datastax.driver.core.ResultSet;
 
 public class MusicCore {
 
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicCore.class);
-    private static boolean unitTestRun = true;
-
     private static MusicCoreService musicCore = MusicUtil.getMusicCoreService();
-    public static CassaLockStore mLockHandle;
-
 
     /**
      * Acquire lock
