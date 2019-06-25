@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (c) 2019 IBM.
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -22,9 +24,9 @@
 
 package org.onap.music.unittests.jsonobjects;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -98,6 +100,12 @@ public class JsonInsertTest {
         assertArrayEquals(ji1,test1);
     }
 
-
+    @Test
+    public void testObjectMap()
+    {
+        Map<String, byte[]> map = new HashMap<>();
+        ji.setObjectMap(map);
+        assertEquals(map, ji.getObjectMap());
+    }
 
 }
