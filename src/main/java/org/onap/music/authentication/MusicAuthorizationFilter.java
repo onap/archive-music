@@ -25,10 +25,6 @@
 package org.onap.music.authentication;
 
 import java.io.IOException;
-import java.util.Base64;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -36,10 +32,10 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.exceptions.MusicAuthenticationException;
 import org.onap.music.main.MusicUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -62,7 +58,7 @@ public class MusicAuthorizationFilter implements Filter {
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
-
+        // Do Nothing
     }
 
     @Override
@@ -83,9 +79,12 @@ public class MusicAuthorizationFilter implements Filter {
 
             try {
                 isAuthAllowed = AuthUtil.isAccessAllowed(servletRequest, musicNS);
-            } catch (Exception e) {
+            } catch (MusicAuthenticationException e) {
                 logger.error(EELFLoggerDelegate.securityLogger,
-                    "Error while checking authorization Music Namespace: " + musicNS + " : " + e.getMessage());
+                    "Error while checking authorization Music Namespace: " + musicNS + " : " + e.getMessage(),e);
+            } catch ( Exception e) {
+                logger.error(EELFLoggerDelegate.securityLogger,
+                    "Error while checking authorization Music Namespace: " + musicNS + " : " + e.getMessage(),e);
             }
 
             long endTime = System.currentTimeMillis();
@@ -119,39 +118,5 @@ public class MusicAuthorizationFilter implements Filter {
         String serialized = new ObjectMapper().writeValueAsString(eErrorResponse);
         return serialized.getBytes();
     }
-
-    private Map<String, String> getHeadersInfo(HttpServletRequest request) {
-
-        Map<String, String> map = new HashMap<String, String>();
-
-        Enumeration headerNames = request.getHeaderNames();
-        while (headerNames.hasMoreElements()) {
-            String key = (String) headerNames.nextElement();
-            String value = request.getHeader(key);
-            map.put(key, value);
-        }
-
-        return map;
-    }
-
-    private static String getUserNamefromRequest(HttpServletRequest httpRequest) {
-        String authHeader = httpRequest.getHeader("Authorization");
-        String username = null;
-        if (authHeader != null) {
-            String[] split = authHeader.split("\\s+");
-            if (split.length > 0) {
-                String basic = split[0];
-
-                if ("Basic".equalsIgnoreCase(basic)) {
-                    byte[] decodedBytes = Base64.getDecoder().decode(split[1]);
-                    String decodedString = new String(decodedBytes);
-                    int p = decodedString.indexOf(":");
-                    if (p != -1) {
-                        username = decodedString.substring(0, p);
-                    }
-                }
-            }
-        }
-        return username;
-    }
 }
+
