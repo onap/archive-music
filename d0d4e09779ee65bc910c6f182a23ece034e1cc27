@@ -16,6 +16,24 @@
       "revId": "d0d4e09779ee65bc910c6f182a23ece034e1cc27",
       "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5921f19e_e6a0468d",
+        "filename": "src/main/java/org/onap/music/MusicApplication.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 1827
+      },
+      "writtenOn": "2019-06-25T13:22:06Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "893cc225_6a81fc07",
+      "revId": "d0d4e09779ee65bc910c6f182a23ece034e1cc27",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
     }
   ]
 }
