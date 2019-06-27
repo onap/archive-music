@@ -30,9 +30,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import javax.ws.rs.core.MultivaluedMap;
+
+import org.onap.music.datastore.Condition;
 import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.datastore.jsonobjects.JsonDelete;
+import org.onap.music.datastore.jsonobjects.JsonIndex;
+import org.onap.music.datastore.jsonobjects.JsonInsert;
+import org.onap.music.datastore.jsonobjects.JsonKeySpace;
+import org.onap.music.datastore.jsonobjects.JsonSelect;
+import org.onap.music.datastore.jsonobjects.JsonTable;
+import org.onap.music.datastore.jsonobjects.JsonUpdate;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
@@ -54,8 +64,6 @@ import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.TableMetadata;
-
-import org.onap.music.datastore.*;
 
 public class MusicCassaCore implements MusicCoreService {
 
@@ -812,6 +820,284 @@ public class MusicCassaCore implements MusicCoreService {
             PreparedQueryObject queryObject) throws MusicServiceException, MusicLockingException {
         //deprecated
         return null;
+    }
+    
+    //Methods added for ORM changes
+    
+    public ResultType createKeyspace(JsonKeySpace jsonKeySpaceObject,String consistencyInfo) 
+            throws MusicServiceException,MusicQueryException {
+        logger.info(EELFLoggerDelegate.applicationLogger, "Coming Inside MusicCassaCore createKeyspace Method.");
+        logger.info(EELFLoggerDelegate.applicationLogger, "consistencyInfo createKeyspace Method :" + consistencyInfo);
+        ResultType result = nonKeyRelatedPut(jsonKeySpaceObject.genCreateKeyspaceQuery(), consistencyInfo);
+        logger.info(EELFLoggerDelegate.applicationLogger, " Keyspace Creation Process completed successfully");
+
+        return result;
+    }
+    
+    public ResultType dropKeyspace(JsonKeySpace jsonKeySpaceObject, String consistencyInfo) 
+            throws MusicServiceException,MusicQueryException {
+        logger.info(EELFLoggerDelegate.applicationLogger, "Coming Inside MusicCassaCore dropKeyspace Method.");
+        logger.info(EELFLoggerDelegate.applicationLogger,
+                    "consistencyInfo deleteKeyspace Method : " + consistencyInfo);
+        ResultType result = nonKeyRelatedPut(jsonKeySpaceObject.genDropKeyspaceQuery(),
+                    consistencyInfo);
+        logger.info(EELFLoggerDelegate.applicationLogger, " Keyspace deletion Process completed successfully");
+        return result;
+    }
+    
+    public ResultType createTable(JsonTable jsonTableObject, String consistencyInfo) 
+            throws MusicServiceException, MusicQueryException {
+        logger.info(EELFLoggerDelegate.applicationLogger, "Coming Inside MusicCassaCore createTable Method.");
+        ResultType result = null;
+        try {
+            result = createTable(jsonTableObject.getKeyspaceName(), 
+                    jsonTableObject.getTableName(), jsonTableObject.genCreateTableQuery(), consistencyInfo);
+            
+        } catch (MusicServiceException ex) {
+            logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(), AppMessages.UNKNOWNERROR, ErrorSeverity.WARN,
+                    ErrorTypes.MUSICSERVICEERROR);
+            throw new MusicServiceException(ex.getMessage());
+        }
+        logger.info(EELFLoggerDelegate.applicationLogger, " Table Creation Process completed successfully ");
+        return result;
+    }
+    
+    public ResultType dropTable(JsonTable jsonTableObject,String consistencyInfo) 
+            throws MusicServiceException,MusicQueryException {
+        logger.info(EELFLoggerDelegate.applicationLogger, "Coming Inside MusicCassaCore dropTable Method.");
+        logger.info(EELFLoggerDelegate.applicationLogger,
+                    "consistencyInfo dropTable Method : " + consistencyInfo);
+        ResultType result = nonKeyRelatedPut(jsonTableObject.genDropTableQuery(),
+                    consistencyInfo);
+        logger.info(EELFLoggerDelegate.applicationLogger, " Table deletion Process completed successfully ");
+        
+        return result;
+    }
+    
+    @Override
+    public ResultType createIndex(JsonIndex jsonIndexObject, String consistencyInfo) 
+            throws MusicServiceException, MusicQueryException{
+        logger.info(EELFLoggerDelegate.applicationLogger, "Coming Inside MusicCassaCore createIndex Method.");
+        logger.info(EELFLoggerDelegate.applicationLogger,
+                    "consistencyInfo createIndex Method.  " + consistencyInfo);
+        ResultType result = nonKeyRelatedPut(jsonIndexObject.genCreateIndexQuery(),
+                    consistencyInfo);
+        
+        logger.info(EELFLoggerDelegate.applicationLogger, " Index creation Process completed successfully ");
+        return result;
+    }
+    
+    /**
+     * This method performs DDL operation on cassandra.
+     *
+     * @param queryObject query object containing prepared query and values
+     * @return ResultSet
+     * @throws MusicServiceException
+     */
+    public  ResultSet select(JsonSelect jsonSelect, MultivaluedMap<String, String> rowParams) 
+            throws MusicServiceException, MusicQueryException {
+        ResultSet results = null;
+        try {
+            results = get(jsonSelect.genSelectQuery(rowParams));
+        } catch (MusicServiceException e) {
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage());
+            throw new MusicServiceException(e.getMessage());
+        }
+        return results;
+    }
+    
+    /**
+     * Select Critical
+     */
+    public ResultSet selectCritical(JsonInsert jsonInsertObj, MultivaluedMap<String, String> rowParams)
+            throws MusicLockingException, MusicQueryException, MusicServiceException {
+        
+        ResultSet results = null;
+        String consistency = "";
+        if(null != jsonInsertObj && null != jsonInsertObj.getConsistencyInfo()) {
+            consistency = jsonInsertObj.getConsistencyInfo().get("type");
+        }
+        
+        String lockId = jsonInsertObj.getConsistencyInfo().get("lockId");
+        
+        PreparedQueryObject queryObject = jsonInsertObj.genSelectCriticalPreparedQueryObj(rowParams);
+        
+        if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
+            results = criticalGet(jsonInsertObj.getKeyspaceName(), jsonInsertObj.getTableName(), 
+                    jsonInsertObj.getPrimaryKeyVal(), queryObject,lockId);
+        } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
+            results = atomicGet(jsonInsertObj.getKeyspaceName(), jsonInsertObj.getTableName(),
+                    jsonInsertObj.getPrimaryKeyVal(), queryObject);
+        }
+        
+        return results;
+    }
+    
+    /**
+     * this is insert row into Table
+     */
+    public ReturnType insertIntoTable(JsonInsert jsonInsertObj)
+            throws MusicLockingException, MusicQueryException, MusicServiceException {
+        
+        String consistency = "";
+        if(null != jsonInsertObj && null != jsonInsertObj.getConsistencyInfo()) {
+            consistency = jsonInsertObj.getConsistencyInfo().get("type");
+        }
+        
+        System.out.println("consistency type in music core insertIntoTable "+consistency);
+        
+        ReturnType result = null;
+        
+        try {
+            PreparedQueryObject queryObj = null;
+            queryObj = jsonInsertObj.genInsertPreparedQueryObj();
+            
+            if (consistency.equalsIgnoreCase(MusicUtil.EVENTUAL)) {
+                result = eventualPut(jsonInsertObj.genInsertPreparedQueryObj());
+            } else if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
+                String lockId = jsonInsertObj.getConsistencyInfo().get("lockId");
+                if(lockId == null) {
+                    logger.error(EELFLoggerDelegate.errorLogger,"LockId cannot be null. Create lock reference or"
+                            + " use ATOMIC instead of CRITICAL", ErrorSeverity.FATAL, ErrorTypes.MUSICSERVICEERROR);
+                    return new ReturnType(ResultType.FAILURE, "LockId cannot be null. Create lock "
+                            + "and acquire lock or use ATOMIC instead of CRITICAL");
+                }
+                result = criticalPut(jsonInsertObj.getKeyspaceName(), 
+                        jsonInsertObj.getTableName(), jsonInsertObj.getPrimaryKeyVal(), jsonInsertObj.genInsertPreparedQueryObj(), lockId,null);
+            } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
+                result = atomicPut(jsonInsertObj.getKeyspaceName(), jsonInsertObj.getTableName(), 
+                        jsonInsertObj.getPrimaryKeyVal(), jsonInsertObj.genInsertPreparedQueryObj(), null);
+            }
+        } catch (Exception ex) {
+            logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity
+                .WARN, ErrorTypes.MUSICSERVICEERROR, ex);
+            return new ReturnType(ResultType.FAILURE, ex.getMessage());
+        }
+        
+        return result;
+    }
+    
+     /**
+     * This is insert row into Table
+     */
+    public ReturnType updateTable(JsonUpdate jsonUpdateObj, MultivaluedMap<String, String> rowParams)
+            throws MusicLockingException, MusicQueryException, MusicServiceException {
+        
+        ReturnType result = null;
+        String consistency = "";
+        if(null != jsonUpdateObj && null != jsonUpdateObj.getConsistencyInfo()) {
+            consistency = jsonUpdateObj.getConsistencyInfo().get("type");
+        }
+        PreparedQueryObject queryObject = jsonUpdateObj.genUpdatePreparedQueryObj(rowParams);
+        
+        Condition conditionInfo;
+        if (jsonUpdateObj.getConditions() == null) {
+            conditionInfo = null;
+        } else {
+            // to avoid parsing repeatedly, just send the select query to obtain row
+            PreparedQueryObject selectQuery = new PreparedQueryObject();
+            selectQuery.appendQueryString("SELECT *  FROM " + jsonUpdateObj.getKeyspaceName() + "." + jsonUpdateObj.getTableName() + " WHERE "
+                + jsonUpdateObj.getRowIdString() + ";");
+            selectQuery.addValue(jsonUpdateObj.getPrimarKeyValue());
+            conditionInfo = new Condition(jsonUpdateObj.getConditions(), selectQuery);
+        }
+
+        
+        if (consistency.equalsIgnoreCase(MusicUtil.EVENTUAL)) {
+            result = eventualPut(queryObject);
+        } else if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
+            String lockId = jsonUpdateObj.getConsistencyInfo().get("lockId");
+            if(lockId == null) {
+                logger.error(EELFLoggerDelegate.errorLogger,"LockId cannot be null. Create lock reference or"
+                        + " use ATOMIC instead of CRITICAL", ErrorSeverity.FATAL, ErrorTypes.MUSICSERVICEERROR);
+               
+                return new ReturnType(ResultType.FAILURE, "LockId cannot be null. Create lock "
+                        + "and acquire lock or use ATOMIC instead of CRITICAL");
+            }
+            result = criticalPut(jsonUpdateObj.getKeyspaceName(), jsonUpdateObj.getTableName(), jsonUpdateObj.getPrimarKeyValue(),
+                            queryObject, lockId, conditionInfo);
+        } else if (consistency.equalsIgnoreCase("atomic_delete_lock")) {
+            // this function is mainly for the benchmarks
+            try {
+                result = atomicPutWithDeleteLock(jsonUpdateObj.getKeyspaceName(), jsonUpdateObj.getTableName(),
+                        jsonUpdateObj.getPrimarKeyValue(), queryObject, conditionInfo);
+            } catch (MusicLockingException e) {
+                logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN,
+                    ErrorTypes.GENERALSERVICEERROR, e);
+                throw new MusicLockingException(AppMessages.UNKNOWNERROR.toString());
+                
+            }
+        } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
+            try {
+                result = atomicPut(jsonUpdateObj.getKeyspaceName(), jsonUpdateObj.getTableName(), jsonUpdateObj.getPrimarKeyValue(),
+                    queryObject, conditionInfo);
+            } catch (MusicLockingException e) {
+                logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes.GENERALSERVICEERROR, e);
+                throw new MusicLockingException(AppMessages.UNKNOWNERROR.toString());
+            }
+        } else if (consistency.equalsIgnoreCase(MusicUtil.EVENTUAL_NB)) {
+            try {
+                result = eventualPut_nb(queryObject, jsonUpdateObj.getKeyspaceName(),
+                        jsonUpdateObj.getTableName(), jsonUpdateObj.getPrimarKeyValue());
+            }catch (Exception e) {
+                return new ReturnType(ResultType.FAILURE, e.getMessage());
+            }
+            
+        }
+        
+        return result;
+    }
+    
+    /**
+     * This method is for Delete From Table
+     */
+    public ReturnType deleteFromTable(JsonDelete jsonDeleteObj, MultivaluedMap<String, String> rowParams)
+            throws MusicLockingException, MusicQueryException, MusicServiceException {
+        
+        ReturnType result = null;
+        String consistency = "";
+        if(null != jsonDeleteObj && null != jsonDeleteObj.getConsistencyInfo()) {
+            consistency = jsonDeleteObj.getConsistencyInfo().get("type");
+        }
+        PreparedQueryObject queryObject = jsonDeleteObj.genDeletePreparedQueryObj(rowParams);
+        
+        // get the conditional, if any
+        Condition conditionInfo;
+        if (jsonDeleteObj.getConditions() == null) {
+            conditionInfo = null;
+        } else {
+            // to avoid parsing repeatedly, just send the select query to obtain row
+            PreparedQueryObject selectQuery = new PreparedQueryObject();
+            selectQuery.appendQueryString("SELECT *  FROM " + jsonDeleteObj.getKeyspaceName() + "." + jsonDeleteObj.getTableName() + " WHERE "
+                + jsonDeleteObj.getRowIdString() + ";");
+            selectQuery.addValue(jsonDeleteObj.getPrimarKeyValue());
+            conditionInfo = new Condition(jsonDeleteObj.getConditions(), selectQuery);
+        }
+        
+        if (consistency.equalsIgnoreCase(MusicUtil.EVENTUAL))
+            result = eventualPut(queryObject);
+        else if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
+            String lockId = jsonDeleteObj.getConsistencyInfo().get("lockId");
+            if(lockId == null) {
+                logger.error(EELFLoggerDelegate.errorLogger,"LockId cannot be null. Create lock reference or"
+                    + " use ATOMIC instead of CRITICAL", ErrorSeverity.FATAL, ErrorTypes.MUSICSERVICEERROR);
+               
+                return new ReturnType(ResultType.FAILURE, "LockId cannot be null. Create lock "
+                        + "and acquire lock or use ATOMIC instead of CRITICAL");
+            }
+            result = criticalPut(jsonDeleteObj.getKeyspaceName(), 
+                    jsonDeleteObj.getTableName(), jsonDeleteObj.getPrimarKeyValue(),
+                queryObject, lockId, conditionInfo);
+        } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
+            result = atomicPut(jsonDeleteObj.getKeyspaceName(), 
+                    jsonDeleteObj.getTableName(), jsonDeleteObj.getPrimarKeyValue(),
+                queryObject, conditionInfo);
+        } else if(consistency.equalsIgnoreCase(MusicUtil.EVENTUAL_NB)) {                    
+            result = eventualPut_nb(queryObject, jsonDeleteObj.getKeyspaceName(), 
+                    jsonDeleteObj.getTableName(), jsonDeleteObj.getPrimarKeyValue());
+        }
+        
+        return result;
     }
 
 

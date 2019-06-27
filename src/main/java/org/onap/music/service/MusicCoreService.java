@@ -25,7 +25,17 @@ package org.onap.music.service;
 import java.util.List;
 import java.util.Map;
 
+import javax.ws.rs.core.MultivaluedMap;
+
+import org.onap.music.datastore.Condition;
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.datastore.jsonobjects.JsonDelete;
+import org.onap.music.datastore.jsonobjects.JsonIndex;
+import org.onap.music.datastore.jsonobjects.JsonInsert;
+import org.onap.music.datastore.jsonobjects.JsonKeySpace;
+import org.onap.music.datastore.jsonobjects.JsonSelect;
+import org.onap.music.datastore.jsonobjects.JsonTable;
+import org.onap.music.datastore.jsonobjects.JsonUpdate;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
@@ -33,7 +43,6 @@ import org.onap.music.lockingservice.cassandra.LockType;
 import org.onap.music.lockingservice.cassandra.MusicLockState;
 import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
-import org.onap.music.datastore.*;
 
 import com.datastax.driver.core.ResultSet;
 
@@ -134,5 +143,34 @@ public interface MusicCoreService {
     public Map<String, Object> validateLock(String lockName);
 
     public MusicLockState releaseLock(String lockId, boolean voluntaryRelease) throws MusicLockingException;
+    
+    /**
+     *  Methods added for orm
+     */
+
+    public ResultType createTable(JsonTable jsonTableObject, String consistencyInfo) throws MusicServiceException,MusicQueryException;
+    
+    public ResultType dropTable(JsonTable jsonTableObject, String consistencyInfo) 
+            throws MusicServiceException,MusicQueryException;
+    
+    public ResultType createKeyspace(JsonKeySpace jsonKeySpaceObject,String consistencyInfo) throws MusicServiceException,MusicQueryException;
+    
+    public ResultType dropKeyspace(JsonKeySpace jsonKeySpaceObject, String consistencyInfo) 
+            throws MusicServiceException,MusicQueryException;
+    
+    public ResultType createIndex(JsonIndex jsonIndexObject, String consistencyInfo) throws MusicServiceException,MusicQueryException;
+    
+    public ResultSet select(JsonSelect jsonSelect, MultivaluedMap<String, String> rowParams) throws MusicServiceException, MusicQueryException;
+    
+    public ResultSet selectCritical(JsonInsert jsonInsertObj, MultivaluedMap<String, String> rowParams) 
+            throws MusicLockingException, MusicQueryException, MusicServiceException;
+    
+    public ReturnType insertIntoTable(JsonInsert jsonInsert) throws MusicLockingException, MusicQueryException, MusicServiceException;
+    
+    public ReturnType updateTable(JsonUpdate jsonUpdateObj,MultivaluedMap<String, String> rowParams) 
+            throws MusicLockingException, MusicQueryException, MusicServiceException;
+    
+    public ReturnType deleteFromTable(JsonDelete jsonDeleteObj,MultivaluedMap<String, String> rowParams) 
+            throws MusicLockingException, MusicQueryException, MusicServiceException;
 
 }
