@@ -33,7 +33,6 @@ import org.onap.music.authentication.CadiAuthFilter;
 import org.onap.music.authentication.MusicAuthorizationFilter;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.MusicLoggingServletFilter;
-import org.onap.music.main.CipherUtil;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.PropertiesLoader;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +43,6 @@ import org.springframework.boot.autoconfigure.data.cassandra.CassandraDataAutoCo
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.DependsOn;
@@ -57,9 +55,14 @@ import org.springframework.web.context.request.RequestContextListener;
 @EnableScheduling
 public class MusicApplication extends SpringBootServletInitializer {
 
+    private final String KEYSPACE_PATTERN = "/v2/keyspaces/*";
+    private final String LOCKS_PATTERN = "/v2/locks/*";
+    private final String Q_PATTERN = "/v2/priorityq/*";
+
     @Autowired
     private PropertiesLoader propertyLoader;
     private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicApplication.class);
+
 
     public static void main(String[] args) {
         new MusicApplication().configure(new SpringApplicationBuilder(MusicApplication.class)).run(args);
@@ -76,8 +79,6 @@ public class MusicApplication extends SpringBootServletInitializer {
         propertyLoader.loadProperties();
     }
 
-    @Autowired
-    private ApplicationContext appContext;
 
     @Bean
     @DependsOn("loadProperties")
@@ -96,9 +97,7 @@ public class MusicApplication extends SpringBootServletInitializer {
         propertyLoader.loadProperties();
         if (MusicUtil.getIsCadi()) {
             PropAccess propAccess = propAccess();
-            CadiAuthFilter cadiFilter = new CadiAuthFilter(propAccess);
-
-            return cadiFilter;
+            return new CadiAuthFilter(propAccess);
         } else {
             return (ServletRequest request, ServletResponse response, FilterChain chain) -> {
                 // do nothing for now.
@@ -124,15 +123,14 @@ public class MusicApplication extends SpringBootServletInitializer {
         FilterRegistrationBean<Filter> frb = new FilterRegistrationBean<>();
         frb.setFilter(new MusicLoggingServletFilter());
         frb.addUrlPatterns(
-            "/v2/keyspaces/*", 
-            "/v2/locks/*", 
-            "/v2/priorityq/*"
+            KEYSPACE_PATTERN,
+            LOCKS_PATTERN,
+            Q_PATTERN
         );
         frb.setName("logFilter");
         frb.setOrder(1);
         return frb;
     }
-    
 
     @Bean
     @DependsOn("loadProperties")
@@ -140,14 +138,11 @@ public class MusicApplication extends SpringBootServletInitializer {
         logger.info("cadiFilterRegistration called for cadi filter..");
         FilterRegistrationBean<Filter> frb = new FilterRegistrationBean<>();
         frb.setFilter(cadiFilter());
-
-        // The Following Patterns are used to control what APIs will be secure
-        // TODO: Make this a configurable item. Build this from an array?
         if (MusicUtil.getIsCadi()) {
             frb.addUrlPatterns(
-                "/v2/keyspaces/*", 
-                "/v2/locks/*", 
-                "/v2/priorityq/*"
+                KEYSPACE_PATTERN,
+                LOCKS_PATTERN,
+                Q_PATTERN
             );
         } else {
             frb.addUrlPatterns("/v0/test");
@@ -175,10 +170,10 @@ public class MusicApplication extends SpringBootServletInitializer {
 
         if (MusicUtil.getIsCadi()) {
             frb.addUrlPatterns(
-                "/v2/keyspaces/*", 
-                "/v2/locks/*", 
-                "/v2/priorityq/*"
-            );
+                KEYSPACE_PATTERN,
+                LOCKS_PATTERN,
+                Q_PATTERN
+                );
         } else {
             frb.addUrlPatterns("/v0/test");
         }
@@ -192,8 +187,7 @@ public class MusicApplication extends SpringBootServletInitializer {
     public Filter cadiMusicAuthFilter() throws ServletException {
         propertyLoader.loadProperties();
         if (MusicUtil.getIsCadi()) {
-            MusicAuthorizationFilter authFilter = new MusicAuthorizationFilter();
-            return authFilter;
+            return new MusicAuthorizationFilter();
         } else {
             return (ServletRequest request, ServletResponse response, FilterChain chain) -> {
                 // do nothing for now.

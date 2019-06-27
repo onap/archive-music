@@ -132,7 +132,7 @@ public class TestRestMusicQAPI {
         try {
             ReflectionTestUtils.setField(MusicDataStoreHandle.class, "mDstoreHandle",
                     CassandraCQL.connectToEmbeddedCassandra());
-            MusicCore.mLockHandle = new CassaLockStore(MusicDataStoreHandle.getDSHandle());
+            MusicCore.setmLockHandle(new CassaLockStore(MusicDataStoreHandle.getDSHandle()));
 
             // System.out.println("before class keysp");
             //resp=data.createKeySpace(majorV,minorV,patchV,aid,appName,userId,password,kspObject,keyspaceName);

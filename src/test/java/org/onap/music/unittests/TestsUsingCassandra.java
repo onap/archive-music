@@ -66,7 +66,7 @@ public class TestsUsingCassandra {
     public static void beforeClass() throws Exception {
         ReflectionTestUtils.setField(MusicDataStoreHandle.class, "mDstoreHandle",
                 CassandraCQL.connectToEmbeddedCassandra());
-        MusicCore.mLockHandle = new CassaLockStore(MusicDataStoreHandle.getDSHandle());
+        MusicCore.setmLockHandle(new CassaLockStore(MusicDataStoreHandle.getDSHandle()));
         createAdminTable();
     }
     
