@@ -1,0 +1,89 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "599a3d8b_0d73e95a",
+        "filename": "src/main/java/org/onap/music/datastore/jsonobjects/JsonKeySpace.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-07-01T20:32:35Z",
+      "side": 1,
+      "message": "Lets rename this to MusicKeyspace now that it has more functionality than just a json object\n\nPlease do so for other \"Json\" classes",
+      "revId": "cda92ac5e06fa6ead9fb0e2a5135696ef8f9cb11",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "75040d89_27d8ac72",
+        "filename": "src/main/java/org/onap/music/rest/RestMusicDataAPI.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 334,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-07-01T20:32:35Z",
+      "side": 1,
+      "message": "I like how clean this function has gotten!",
+      "revId": "cda92ac5e06fa6ead9fb0e2a5135696ef8f9cb11",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8bd095a5_8a4db42b",
+        "filename": "src/main/java/org/onap/music/rest/RestMusicDataAPI.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 409,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-07-01T20:32:35Z",
+      "side": 1,
+      "message": "Why not create another constructor in the jsonindex class with an index, keyspace, table, and fieldname?",
+      "revId": "cda92ac5e06fa6ead9fb0e2a5135696ef8f9cb11",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "bdcca7bd_4c008068",
+        "filename": "src/main/java/org/onap/music/service/MusicCoreService.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 147,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-07-01T20:32:35Z",
+      "side": 1,
+      "message": "should either be // or /*\nThis will get picked up by javadoc",
+      "revId": "cda92ac5e06fa6ead9fb0e2a5135696ef8f9cb11",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "e0594d2b_4d134b43",
+        "filename": "src/main/java/org/onap/music/service/impl/MusicCassaCore.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 829,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-07-01T20:32:35Z",
+      "side": 1,
+      "message": "can we remove these logs. I don\u0027t think they will help debug much and will just clutter the log. Please do the same for other methods below",
+      "revId": "cda92ac5e06fa6ead9fb0e2a5135696ef8f9cb11",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
