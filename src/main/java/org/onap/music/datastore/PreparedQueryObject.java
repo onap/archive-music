@@ -2,7 +2,7 @@
  * ============LICENSE_START==========================================
  * org.onap.music
  * ===================================================================
- *  Copyright (c) 2017 AT&T Intellectual Property
+ *  Copyright (c) 2017-2019 AT&T Intellectual Property
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -42,6 +42,35 @@ public class PreparedQueryObject {
     private String primaryKeyValue;
 
 
+    /**
+     * Create PreparedQueryObject
+     */
+    public PreparedQueryObject() {
+        this.values = new ArrayList<>();
+        this.query = new StringBuilder();
+    }
+    
+    /**
+     * Create PreparedQueryObject
+     * @param query query portion of the prepared query
+     */
+    public PreparedQueryObject(String query) {
+        this.values = new ArrayList<>();
+        this.query = new StringBuilder(query);
+    }
+    
+    /**
+     * Create PreparedQueryObject
+     * @param query query portion of the prepared query
+     * @param values to be added to the query string as prepared query
+     */
+    public PreparedQueryObject(String query, Object...values) {
+        this.query = new StringBuilder(query);
+        this.values = new ArrayList<>();
+        for (Object value: values) {
+            this.values.add(value);
+        }
+    }
 
     public String getKeyspaceName() {
         return keyspaceName;
@@ -83,27 +112,28 @@ public class PreparedQueryObject {
         this.consistency = consistency;
     }
 
-	/**
-     * 
-     */
-    public PreparedQueryObject() {
-
-        this.values = new ArrayList<>();
-        this.query = new StringBuilder();
-    }
-
     /**
-     * @return
+     * @return values to be set as part of the prepared query
      */
     public List<Object> getValues() {
         return values;
     }
 
     /**
-     * @param o
+     * @param o object to be added as a value to the prepared query, in order
      */
     public void addValue(Object o) {
         this.values.add(o);
+    }
+    
+    /**
+     * Add values to the preparedQuery
+     * @param objs ordered list of objects to be added as values to the prepared query
+     */
+    public void addValues(Object... objs) {
+        for (Object obj: objs) {
+            this.values.add(obj);
+        }
     }
 
     /**
@@ -117,7 +147,7 @@ public class PreparedQueryObject {
     }
 
     /**
-     * @return
+     * @return the query
      */
     public String getQuery() {
         return this.query.toString();

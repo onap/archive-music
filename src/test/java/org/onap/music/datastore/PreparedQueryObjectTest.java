@@ -72,4 +72,30 @@ public class PreparedQueryObjectTest {
         assertEquals("primaryKeyValue", preparedQueryObject.getPrimaryKeyValue());
     }
     
+    @Test
+    public void testAddValue() {
+        preparedQueryObject.addValue("one");
+        assertEquals("one", preparedQueryObject.getValues().get(0));
+    }
+    
+    @Test
+    public void testAddValues() {
+        preparedQueryObject.addValues("one", "two", "three");
+        assertEquals(3, preparedQueryObject.getValues().size());
+        assertEquals("two", preparedQueryObject.getValues().get(1));
+    }
+    
+    @Test
+    public void testConstructorQuery() {
+        preparedQueryObject = new PreparedQueryObject("some query string");
+        assertEquals("some query string", preparedQueryObject.getQuery());
+    }
+    
+    @Test
+    public void testConstructorQueryValues() {
+        preparedQueryObject = new PreparedQueryObject("another query string", "a", "b", "c");
+        assertEquals("another query string", preparedQueryObject.getQuery());
+        assertEquals(3, preparedQueryObject.getValues().size());
+        assertEquals("b", preparedQueryObject.getValues().get(1));
+    }
 }
