@@ -29,7 +29,6 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Map;
-import org.onap.music.authentication.AuthUtil;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -55,7 +54,7 @@ public class JsonSelect implements Serializable {
             out = new ObjectOutputStream(bos);
             out.writeObject(this);
         } catch (IOException e) {
-            logger.error("IOException occured {}",e.getMessage());
+            logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), e);
         }
         return bos.toByteArray();
     }
