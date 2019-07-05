@@ -3,6 +3,8 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *
+ * Copyright (c) 2019 IBM Intellectual Property
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -41,7 +43,14 @@ public class PreparedQueryObject {
     private String operation;
     private String primaryKeyValue;
 
+    /**
+     *
+     */
+    public PreparedQueryObject() {
 
+        this.values = new ArrayList<>();
+        this.query = new StringBuilder();
+    }
 
     public String getKeyspaceName() {
         return keyspaceName;
@@ -81,15 +90,6 @@ public class PreparedQueryObject {
 
     public void setConsistency(String consistency) {
         this.consistency = consistency;
-    }
-
-	/**
-     * 
-     */
-    public PreparedQueryObject() {
-
-        this.values = new ArrayList<>();
-        this.query = new StringBuilder();
     }
 
     /**
