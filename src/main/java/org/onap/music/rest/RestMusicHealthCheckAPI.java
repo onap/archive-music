@@ -67,6 +67,8 @@ public class RestMusicHealthCheckAPI {
     private static final String INVALID_MESSAGE = "Consistency level is invalid...";
     private static final String INACTIVE_MESSAGE = "One or more nodes in the Cluster is/are down or not responding.";
     private static final String ACTIVE_MESSAGE = "Cassandra Running and Listening to requests";
+    private static final String STATUS_KEY = "status";
+    private static final String MESSAGE_KEY = "message";
     
     @GET
     @Path("/pingCassandra/{consistency}")
@@ -80,21 +82,21 @@ public class RestMusicHealthCheckAPI {
         
         Map<String, Object> resultMap = new HashMap<>();
         if(ConsistencyLevel.valueOf(consistency) == null) {
-            resultMap.put("status",INVALID_STATUS);
-            resultMap.put("message", INVALID_MESSAGE);
+            resultMap.put(STATUS_KEY,INVALID_STATUS);
+            resultMap.put(MESSAGE_KEY, INVALID_MESSAGE);
             resultMap.put(INVALID_STATUS, INVALID_STATUS);
             return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
         MusicHealthCheck cassHealthCheck = new MusicHealthCheck();
         String status = cassHealthCheck.getCassandraStatus(consistency);
         if(status.equals(ACTIVE_STATUS)) {
-            resultMap.put("status",ACTIVE_STATUS);
-            resultMap.put("message", ACTIVE_MESSAGE);
+            resultMap.put(STATUS_KEY,ACTIVE_STATUS);
+            resultMap.put(MESSAGE_KEY, ACTIVE_MESSAGE);
             resultMap.put(ACTIVE_STATUS, ACTIVE_MESSAGE);
             return Response.status(Status.OK).entity(resultMap).build();
         } else {
-            resultMap.put("status",INACTIVE_STATUS);
-            resultMap.put("message", INACTIVE_MESSAGE);
+            resultMap.put(STATUS_KEY,INACTIVE_STATUS);
+            resultMap.put(MESSAGE_KEY, INACTIVE_MESSAGE);
             resultMap.put(INACTIVE_STATUS, INACTIVE_MESSAGE);
             return Response.status(Status.BAD_REQUEST).entity(resultMap).build();
         }
