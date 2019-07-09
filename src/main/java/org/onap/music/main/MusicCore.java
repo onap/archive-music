@@ -24,8 +24,18 @@ package org.onap.music.main;
 
 import java.util.List;
 import java.util.Map;
+
+import javax.ws.rs.core.MultivaluedMap;
+
 import org.onap.music.datastore.Condition;
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.datastore.jsonobjects.JsonDelete;
+import org.onap.music.datastore.jsonobjects.JsonIndex;
+import org.onap.music.datastore.jsonobjects.JsonInsert;
+import org.onap.music.datastore.jsonobjects.JsonKeySpace;
+import org.onap.music.datastore.jsonobjects.JsonSelect;
+import org.onap.music.datastore.jsonobjects.JsonTable;
+import org.onap.music.datastore.jsonobjects.JsonUpdate;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicQueryException;
@@ -34,6 +44,7 @@ import org.onap.music.lockingservice.cassandra.CassaLockStore;
 import org.onap.music.lockingservice.cassandra.LockType;
 import org.onap.music.lockingservice.cassandra.MusicLockState;
 import org.onap.music.service.MusicCoreService;
+
 import com.datastax.driver.core.ResultSet;
 
 public class MusicCore {
@@ -180,6 +191,58 @@ public class MusicCore {
 
     public static MusicLockState releaseLock(String lockId, boolean voluntaryRelease) throws MusicLockingException {
         return musicCore.releaseLock(lockId, voluntaryRelease);
+    }
+    
+    //Added changes for orm implementation.
+    
+    public static ResultType createKeyspace(JsonKeySpace jsonKeySpaceObject, String consistencyInfo) 
+            throws MusicServiceException, MusicQueryException {
+        return musicCore.createKeyspace(jsonKeySpaceObject,consistencyInfo);
+    }
+    
+    public static ResultType dropKeyspace(JsonKeySpace josnKeyspaceObject, String consistencyInfo)
+            throws MusicServiceException,MusicQueryException {
+        return musicCore.dropKeyspace(josnKeyspaceObject, consistencyInfo);
+    }
+    
+    public static ResultType createTable(JsonTable jsonTableObject,String consistencyInfo) 
+            throws MusicServiceException,MusicQueryException {
+        return musicCore.createTable(jsonTableObject, consistencyInfo);
+    }
+    
+    public static ResultType dropTable(JsonTable jsonTableObject, String consistencyInfo) 
+            throws MusicServiceException, MusicQueryException {
+        return musicCore.dropTable(jsonTableObject, consistencyInfo);
+    }
+    
+    public static ResultType createIndex(JsonIndex jsonIndexObject, String consistencyInfo) 
+            throws MusicServiceException,MusicQueryException {
+        return musicCore.createIndex(jsonIndexObject, consistencyInfo);
+    }
+    
+    public static ResultSet select(JsonSelect jsonSelect, MultivaluedMap<String, String> rowParams) 
+            throws MusicServiceException, MusicQueryException{
+        return musicCore.select(jsonSelect, rowParams);
+    }
+    
+    public static ResultSet selectCritical(JsonInsert jsonInsertObj, MultivaluedMap<String, String> rowParams) 
+            throws MusicLockingException, MusicQueryException, MusicServiceException{
+        return musicCore.selectCritical(jsonInsertObj, rowParams);
+    }
+    
+    
+    public static ReturnType insertIntoTable(JsonInsert jsonInsert) throws MusicLockingException, MusicQueryException, MusicServiceException{
+        return musicCore.insertIntoTable(jsonInsert);
+    }
+    
+    public static ReturnType updateTable(JsonUpdate jsonUpdateObj,MultivaluedMap<String, String> rowParams) 
+            throws MusicLockingException, MusicQueryException, MusicServiceException{
+        return musicCore.updateTable(jsonUpdateObj, rowParams);
+    }
+    
+    public static ReturnType deleteFromTable(JsonDelete jsonDeleteObj,MultivaluedMap<String, String> rowParams) 
+            throws MusicLockingException, MusicQueryException, MusicServiceException{
+        return musicCore.deleteFromTable(jsonDeleteObj,rowParams);
     }
 
 

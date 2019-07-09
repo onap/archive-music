@@ -3,7 +3,7 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
- *  Modifications Copyright (C) 2018 IBM.
+ *  Modifications Copyright (C) 2019 IBM 
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -28,17 +28,30 @@ import java.io.IOException;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response.Status;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-
+import org.onap.music.datastore.MusicDataStoreHandle;
+import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
+import org.onap.music.exceptions.MusicQueryException;
+import org.onap.music.exceptions.MusicServiceException;
+import org.onap.music.main.MusicUtil;
+import org.onap.music.main.ReturnType;
+
+import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.TableMetadata;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 
 @ApiModel(value = "InsertTable", description = "Json model for table vlaues insert")
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -52,6 +65,7 @@ public class JsonInsert implements Serializable {
     private transient Map<String, Object> rowSpecification;
     private Map<String, String> consistencyInfo;
     private Map<String, byte[]> objectMap;
+    private String primaryKeyVal;
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(JsonInsert.class);
 
     @ApiModelProperty(value = "objectMap",hidden = true)
@@ -133,6 +147,14 @@ public class JsonInsert implements Serializable {
     public void setRowSpecification(Map<String, Object> rowSpecification) {
         this.rowSpecification = rowSpecification;
     }
+    
+    public String getPrimaryKeyVal() {
+        return primaryKeyVal;
+    }
+
+    public void setPrimaryKeyVal(String primaryKeyVal) {
+        this.primaryKeyVal = primaryKeyVal;
+    }
 
     public byte[] serialize() {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -145,5 +167,267 @@ public class JsonInsert implements Serializable {
         }
         return bos.toByteArray();
     }
+    
+    /**
+     * Generate TableInsertQuery
+     * @return
+     * @throws MusicQueryException
+     */
+    public PreparedQueryObject genInsertPreparedQueryObj() throws MusicQueryException {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Coming inside genTableInsertQuery method " + this.getKeyspaceName());
+            logger.debug("Coming inside genTableInsertQuery method " + this.getTableName());
+        }
+
+        PreparedQueryObject queryObject = new PreparedQueryObject();
+        TableMetadata tableInfo = null;
+        try {
+            tableInfo = MusicDataStoreHandle.returnColumnMetadata(this.getKeyspaceName(), this.getTableName());
+            if(tableInfo == null) {
+                //return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Table name doesn't exists. Please check the table name.").toMap()).build();
+                throw new MusicQueryException("Table name doesn't exists. Please check the table name.",
+                        Status.BAD_REQUEST.getStatusCode());
+            }
+        } catch (MusicServiceException e) {
+            logger.error(EELFLoggerDelegate.errorLogger, e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+            //return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
+            throw new MusicQueryException(e.getMessage(),Status.BAD_REQUEST.getStatusCode());
+            
+        }
+        String primaryKeyName = tableInfo.getPrimaryKey().get(0).getName();
+        StringBuilder fieldsString = new StringBuilder("(vector_ts,");
+        String vectorTs =
+                        String.valueOf(Thread.currentThread().getId() + System.currentTimeMillis());
+        StringBuilder valueString = new StringBuilder("(" + "?" + ",");
+        queryObject.addValue(vectorTs);
+        
+        Map<String, Object> valuesMap = this.getValues();
+        if (valuesMap==null) {
+            //return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
+                    //.setError("Nothing to insert. No values provided in request.").toMap()).build();
+            throw new MusicQueryException("Nothing to insert. No values provided in request.",
+                    Status.BAD_REQUEST.getStatusCode());
+        }
+        int counter = 0;
+        String primaryKey = "";
+        for (Map.Entry<String, Object> entry : valuesMap.entrySet()) {
+            fieldsString.append("" + entry.getKey());
+            Object valueObj = entry.getValue();
+            if (primaryKeyName.equals(entry.getKey())) {
+                primaryKey = entry.getValue() + "";
+                primaryKey = primaryKey.replace("'", "''");
+            }
+            DataType colType = null;
+            try {
+                colType = tableInfo.getColumn(entry.getKey()).getType();
+            } catch(NullPointerException ex) {
+                logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage() +" Invalid column name : "+entry.getKey
+                    (), AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR, ex);
+                //return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Invalid column name : "+entry.getKey()).toMap()).build();
+                throw new MusicQueryException("Invalid column name : " + entry.getKey(),
+                        Status.BAD_REQUEST.getStatusCode());
+            }
+
+            Object formattedValue = null;
+            try {
+                formattedValue = MusicUtil.convertToActualDataType(colType, valueObj);
+            } catch (Exception e) {
+                logger.error(EELFLoggerDelegate.errorLogger,e);
+            }
+            valueString.append("?");
+
+            queryObject.addValue(formattedValue);
+
+            if (counter == valuesMap.size() - 1) {
+                fieldsString.append(")");
+                valueString.append(")");
+            } else {
+                fieldsString.append(",");
+                valueString.append(",");
+            }
+            counter = counter + 1;
+        }
+
+        //blobs..
+        Map<String, byte[]> objectMap = this.getObjectMap();
+        if(objectMap != null) {
+            for (Map.Entry<String, byte[]> entry : objectMap.entrySet()) {
+                if(counter > 0) {
+                    fieldsString.replace(fieldsString.length()-1, fieldsString.length(), ",");
+                    valueString.replace(valueString.length()-1, valueString.length(), ",");
+                }
+                fieldsString.append("" + entry.getKey());
+                byte[] valueObj = entry.getValue();
+                if (primaryKeyName.equals(entry.getKey())) {
+                    primaryKey = entry.getValue() + "";
+                    primaryKey = primaryKey.replace("'", "''");
+                }
+                DataType colType = tableInfo.getColumn(entry.getKey()).getType();
+                ByteBuffer formattedValue = null;
+                if(colType.toString().toLowerCase().contains("blob")) {
+                    formattedValue = MusicUtil.convertToActualDataType(colType, valueObj);
+                }
+                valueString.append("?");
+                queryObject.addValue(formattedValue);
+                counter = counter + 1;
+                fieldsString.append(",");
+                valueString.append(",");
+            } 
+        }
+        this.setPrimaryKeyVal(primaryKey);
+        if(primaryKey == null || primaryKey.length() <= 0) {
+            logger.error(EELFLoggerDelegate.errorLogger, "Some required partition key parts are missing: "+primaryKeyName );
+            //return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.SYNTAXERROR).setError("Some required partition key parts are missing: "+primaryKeyName).toMap()).build();
+            throw new MusicQueryException("Some required partition key parts are missing: " + primaryKeyName,
+                    Status.BAD_REQUEST.getStatusCode());
+        }
+
+        fieldsString.replace(fieldsString.length()-1, fieldsString.length(), ")");
+        valueString.replace(valueString.length()-1, valueString.length(), ")");
+
+        queryObject.appendQueryString("INSERT INTO " + this.getKeyspaceName() + "." + this.getTableName() + " "
+                        + fieldsString + " VALUES " + valueString);
+
+        String ttl = this.getTtl();
+        String timestamp = this.getTimestamp();
+
+        if ((ttl != null) && (timestamp != null)) {
+            logger.info(EELFLoggerDelegate.applicationLogger, "both there");
+            queryObject.appendQueryString(" USING TTL ? AND TIMESTAMP ?");
+            queryObject.addValue(Integer.parseInt(ttl));
+            queryObject.addValue(Long.parseLong(timestamp));
+        }
+
+        if ((ttl != null) && (timestamp == null)) {
+            logger.info(EELFLoggerDelegate.applicationLogger, "ONLY TTL there");
+            queryObject.appendQueryString(" USING TTL ?");
+            queryObject.addValue(Integer.parseInt(ttl));
+        }
+
+        if ((ttl == null) && (timestamp != null)) {
+            logger.info(EELFLoggerDelegate.applicationLogger, "ONLY timestamp there");
+            queryObject.appendQueryString(" USING TIMESTAMP ?");
+            queryObject.addValue(Long.parseLong(timestamp));
+        }
+
+        queryObject.appendQueryString(";");
+
+        ReturnType result = null;
+        String consistency = this.getConsistencyInfo().get("type");
+        if(consistency.equalsIgnoreCase(MusicUtil.EVENTUAL) && this.getConsistencyInfo().get("consistency") != null) {
+            if(MusicUtil.isValidConsistency(this.getConsistencyInfo().get("consistency"))) {
+                queryObject.setConsistency(this.getConsistencyInfo().get("consistency"));
+            } else {
+               // return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.SYNTAXERROR).setError("Invalid Consistency type").toMap()).build();
+                throw new MusicQueryException("Invalid Consistency type", Status.BAD_REQUEST.getStatusCode());
+            }
+        }
+        queryObject.setOperation("insert");
+
+        logger.info("Data insert Query ::::: " + queryObject.getQuery());
+
+        return queryObject;
+    }
+    
+    /**
+     * 
+     * @param rowParams
+     * @return
+     * @throws MusicQueryException
+     */
+    public PreparedQueryObject genSelectCriticalPreparedQueryObj(MultivaluedMap<String, String> rowParams) throws MusicQueryException {
+        
+        PreparedQueryObject queryObject = new PreparedQueryObject();
+        
+        if((this.getKeyspaceName() == null || this.getKeyspaceName().isEmpty()) 
+                || (this.getTableName() == null || this.getTableName().isEmpty())){
+           /* return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
+                .setError("one or more path parameters are not set, please check and try again")
+                .toMap()).build();*/
+            throw new MusicQueryException("one or more path parameters are not set, please check and try again",
+                     Status.BAD_REQUEST.getStatusCode());
+        }
+        EELFLoggerDelegate.mdcPut("keyspace", "( "+this.getKeyspaceName()+" ) ");
+        RowIdentifier rowId = null;
+        try {
+            rowId = getRowIdentifier(this.getKeyspaceName(), this.getTableName(), rowParams, queryObject);
+            this.setPrimaryKeyVal(rowId.primarKeyValue);
+        } catch (MusicServiceException ex) {
+            logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes
+                .GENERALSERVICEERROR, ex);
+            /*return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();*/
+            throw new MusicQueryException(ex.getMessage(), Status.BAD_REQUEST.getStatusCode());
+        }
+        
+        queryObject.appendQueryString(
+            "SELECT *  FROM " + this.getKeyspaceName() + "." + this.getTableName() + " WHERE " + rowId.rowIdString + ";");
+        
+        return queryObject;
+    }
+    
+    private class RowIdentifier {
+        public String primarKeyValue;
+        public StringBuilder rowIdString;
+        @SuppressWarnings("unused")
+        public PreparedQueryObject queryObject; // the string with all the row
+                                                // identifiers separated by AND
+
+        public RowIdentifier(String primaryKeyValue, StringBuilder rowIdString,
+                        PreparedQueryObject queryObject) {
+            this.primarKeyValue = primaryKeyValue;
+            this.rowIdString = rowIdString;
+            this.queryObject = queryObject;
+        }
+    }
+    
+    /**
+    *
+    * @param keyspace
+    * @param tablename
+    * @param rowParams
+    * @param queryObject
+    * @return
+    * @throws MusicServiceException
+    */
+   private RowIdentifier getRowIdentifier(String keyspace, String tablename,
+       MultivaluedMap<String, String> rowParams, PreparedQueryObject queryObject)
+       throws MusicServiceException {
+       StringBuilder rowSpec = new StringBuilder();
+       int counter = 0;
+       TableMetadata tableInfo = MusicDataStoreHandle.returnColumnMetadata(keyspace, tablename);
+       if (tableInfo == null) {
+           logger.error(EELFLoggerDelegate.errorLogger,
+               "Table information not found. Please check input for table name= "
+               + keyspace + "." + tablename);
+           throw new MusicServiceException(
+               "Table information not found. Please check input for table name= "
+               + keyspace + "." + tablename);
+       }
+       StringBuilder primaryKey = new StringBuilder();
+       for (MultivaluedMap.Entry<String, List<String>> entry : rowParams.entrySet()) {
+           String keyName = entry.getKey();
+           List<String> valueList = entry.getValue();
+           String indValue = valueList.get(0);
+           DataType colType = null;
+           Object formattedValue = null;
+           try {
+               colType = tableInfo.getColumn(entry.getKey()).getType();
+               formattedValue = MusicUtil.convertToActualDataType(colType, indValue);
+           } catch (Exception e) {
+               logger.error(EELFLoggerDelegate.errorLogger,e);
+           }
+           if(tableInfo.getPrimaryKey().get(0).getName().equals(entry.getKey())) {
+               primaryKey.append(indValue);
+           }
+           rowSpec.append(keyName + "= ?");
+           queryObject.addValue(formattedValue);
+           if (counter != rowParams.size() - 1) {
+               rowSpec.append(" AND ");
+           }
+           counter = counter + 1;
+       }
+       return new RowIdentifier(primaryKey.toString(), rowSpec, queryObject);
+    }
+
 
 }
