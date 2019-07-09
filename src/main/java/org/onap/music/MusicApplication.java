@@ -55,9 +55,9 @@ import org.springframework.web.context.request.RequestContextListener;
 @EnableScheduling
 public class MusicApplication extends SpringBootServletInitializer {
 
-    private final String KEYSPACE_PATTERN = "/v2/keyspaces/*";
-    private final String LOCKS_PATTERN = "/v2/locks/*";
-    private final String Q_PATTERN = "/v2/priorityq/*";
+    private static final String KEYSPACE_PATTERN = "/v2/keyspaces/*";
+    private static final String LOCKS_PATTERN = "/v2/locks/*";
+    private static final String Q_PATTERN = "/v2/priorityq/*";
 
     @Autowired
     private PropertiesLoader propertyLoader;
