@@ -3,6 +3,8 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *
+ *  Modifications Copyright (C) 2019 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -36,9 +38,6 @@ import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 
-import com.att.eelf.configuration.EELFLogger;
-import com.att.eelf.configuration.EELFManager;
-
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
@@ -48,7 +47,7 @@ import io.swagger.annotations.ApiOperation;
 public class RestMusicVersionAPI {
 
     private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(RestMusicVersionAPI.class);
-
+    private static final String MUSIC_KEY = "MUSIC:";
     /**
      * Get the version of MUSIC.
      * @return
@@ -60,7 +59,7 @@ public class RestMusicVersionAPI {
         logger.info("Replying to request for MUSIC version with MUSIC:" + MusicUtil.getVersion());
         response.addHeader("X-latestVersion",MusicUtil.getVersion());
         return new JsonResponse(ResultType.SUCCESS).
-            setMusicVersion("MUSIC:" + MusicUtil.getVersion()).toMap();
+            setMusicVersion(MUSIC_KEY + MusicUtil.getVersion()).toMap();
     }
 
     /**
@@ -75,8 +74,8 @@ public class RestMusicVersionAPI {
         logger.info("Replying to request for MUSIC build with MUSIC:" + MusicUtil.getBuild());
         response.addHeader("X-latestVersion",MusicUtil.getVersion());
         return new JsonResponse(ResultType.SUCCESS)
-            .setMusicBuild("MUSIC:" + MusicUtil.getBuild())
-            .setMusicVersion("MUSIC:" + MusicUtil.getVersion()).toMap();
+            .setMusicBuild(MUSIC_KEY + MusicUtil.getBuild())
+            .setMusicVersion(MUSIC_KEY + MusicUtil.getVersion()).toMap();
     }
 
 
