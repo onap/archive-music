@@ -38,13 +38,13 @@ import com.datastax.driver.core.TableMetadata;
 
 public class MusicDataStoreHandle {
 
+    private static MusicDataStore mDstoreHandle = null;
+    private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicDataStoreHandle.class);
+
     private MusicDataStoreHandle(){
         throw new IllegalStateException("Utility class");
     }
 
-    private static MusicDataStore mDstoreHandle = null;
-    private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicDataStoreHandle.class);
-    
     /**
     *
     * @param remoteIp
