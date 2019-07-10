@@ -4,6 +4,8 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
+ *  Modifications Copyright (C) 2019 IBM 
+ * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
@@ -107,44 +109,44 @@ public class MusicLoggingServletFilter implements Filter {
                     .collect(Collectors.toMap(entry -> entry.getKey().toUpperCase(), entry -> entry.getValue()));
             // Enable/disable keys are present in /opt/app/music/etc/music.properties
 
-            if (Boolean.valueOf(MusicUtil.getTransIdRequired())
+            if (MusicUtil.getTransIdRequired()
                     && !upperCaseHeaderMap.containsKey(TRANSACTION_ID.toUpperCase())) {
                 populateError(httpResponse, "Transaction id '" + TRANSACTION_ID 
                     + "' required on http header");
                 return;
             } else {
                 populateMDCAndResponseHeader(upperCaseHeaderMap, TRANSACTION_ID, "transactionId",
-                    Boolean.valueOf(MusicUtil.getTransIdRequired()), httpResponse);
+                    MusicUtil.getTransIdRequired(), httpResponse);
             }
 
-            if (Boolean.valueOf(MusicUtil.getConversationIdRequired())
+            if (MusicUtil.getConversationIdRequired()
                 && !upperCaseHeaderMap.containsKey(CONVERSATION_ID.toUpperCase())) {
                 populateError(httpResponse, "Conversation Id '" + CONVERSATION_ID 
                     + "' required on http header");
                 return;
             } else {
                 populateMDCAndResponseHeader(upperCaseHeaderMap, CONVERSATION_ID, "conversationId",
-                    Boolean.valueOf(MusicUtil.getConversationIdRequired()), httpResponse);
+                    MusicUtil.getConversationIdRequired(), httpResponse);
             }
 
-            if (Boolean.valueOf(MusicUtil.getMessageIdRequired())
+            if (MusicUtil.getMessageIdRequired()
                 && !upperCaseHeaderMap.containsKey(MESSAGE_ID.toUpperCase())) {
                 populateError(httpResponse, "Message Id '" + MESSAGE_ID 
                     + "' required on http header");
                 return;
             } else {
                 populateMDCAndResponseHeader(upperCaseHeaderMap, MESSAGE_ID, "messageId",
-                    Boolean.valueOf(MusicUtil.getMessageIdRequired()), httpResponse);
+                    MusicUtil.getMessageIdRequired(), httpResponse);
             }
 
-            if (Boolean.valueOf(MusicUtil.getClientIdRequired())
+            if (MusicUtil.getClientIdRequired()
                 && !upperCaseHeaderMap.containsKey(CLIENT_ID.toUpperCase())) {
                 populateError(httpResponse, "Client Id '" + CLIENT_ID 
                     + "' required on http header");
                 return;
             } else {
                 populateMDCAndResponseHeader(upperCaseHeaderMap, CLIENT_ID, "clientId",
-                    Boolean.valueOf(MusicUtil.getClientIdRequired()), httpResponse);
+                    MusicUtil.getClientIdRequired(), httpResponse);
             }
 
         }
