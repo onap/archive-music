@@ -1,8 +1,10 @@
 /*
  * ============LICENSE_START==========================================
- * org.onap.music
+ *  org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ * ===================================================================
+ *  Modification Copyright (c) 2019 IBM
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -245,13 +247,12 @@ public class CipherUtil {
 
     
     public static void readAndSetKeyString() {
-        try {
-            Scanner in = new Scanner(new FileReader("/opt/app/music/etc/properties.txt"));
+        try (Scanner in = new Scanner(new FileReader("/opt/app/music/etc/properties.txt"))) {
+            
             StringBuilder sb = new StringBuilder();
             while(in.hasNext()) {
                 sb.append(in.next());
             }
-            in.close();
             keyString = sb.toString();
         } catch (FileNotFoundException e) {
             logger.error(EELFLoggerDelegate.errorLogger, e.getMessage());
