@@ -3,7 +3,7 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
- *  Modifications Copyright (c) 2018 IBM. 
+ *  Modifications Copyright (c) 2019 IBM. 
  * ===================================================================
  *  Modifications Copyright (c) 2019 Samsung
  * ===================================================================
@@ -319,7 +319,7 @@ public class MusicCassaCore implements MusicCoreService {
         String table = splitString[1];
         String primaryKeyValue = splitString[2];
         try {
-        	return getLockingServiceHandle().getCurrentLockHolders(keyspace, table, primaryKeyValue);
+            return getLockingServiceHandle().getCurrentLockHolders(keyspace, table, primaryKeyValue);
         } catch (MusicLockingException | MusicServiceException | MusicQueryException e) {
             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.LOCKINGERROR+fullyQualifiedKey ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         }
@@ -902,13 +902,15 @@ public class MusicCassaCore implements MusicCoreService {
         
         ResultSet results = null;
         String consistency = "";
-        if(null != jsonInsertObj && null != jsonInsertObj.getConsistencyInfo()) {
-            consistency = jsonInsertObj.getConsistencyInfo().get("type");
+        String lockId = "";
+        PreparedQueryObject queryObject = null;
+        if(jsonInsertObj != null) {
+            if(null != jsonInsertObj.getConsistencyInfo()){
+                consistency = jsonInsertObj.getConsistencyInfo().get("type");
+            }
+            lockId = jsonInsertObj.getConsistencyInfo().get("lockId");
+            queryObject = jsonInsertObj.genSelectCriticalPreparedQueryObj(rowParams);
         }
-        
-        String lockId = jsonInsertObj.getConsistencyInfo().get("lockId");
-        
-        PreparedQueryObject queryObject = jsonInsertObj.genSelectCriticalPreparedQueryObj(rowParams);
         
         if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
             results = criticalGet(jsonInsertObj.getKeyspaceName(), jsonInsertObj.getTableName(), 
@@ -928,18 +930,19 @@ public class MusicCassaCore implements MusicCoreService {
             throws MusicLockingException, MusicQueryException, MusicServiceException {
         
         String consistency = "";
-        if(null != jsonInsertObj && null != jsonInsertObj.getConsistencyInfo()) {
-            consistency = jsonInsertObj.getConsistencyInfo().get("type");
+        PreparedQueryObject queryObj = null;
+        if(jsonInsertObj != null) {
+            if(null != jsonInsertObj.getConsistencyInfo()) {
+                consistency = jsonInsertObj.getConsistencyInfo().get("type");
+            }
+            queryObj = jsonInsertObj.genInsertPreparedQueryObj();
         }
         
         ReturnType result = null;
         
         try {
-            PreparedQueryObject queryObj = null;
-            queryObj = jsonInsertObj.genInsertPreparedQueryObj();
-            
             if (consistency.equalsIgnoreCase(MusicUtil.EVENTUAL)) {
-                result = eventualPut(jsonInsertObj.genInsertPreparedQueryObj());
+                result = eventualPut(queryObj);
             } else if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
                 String lockId = jsonInsertObj.getConsistencyInfo().get("lockId");
                 if(lockId == null) {
@@ -949,10 +952,10 @@ public class MusicCassaCore implements MusicCoreService {
                             + "and acquire lock or use ATOMIC instead of CRITICAL");
                 }
                 result = criticalPut(jsonInsertObj.getKeyspaceName(), 
-                        jsonInsertObj.getTableName(), jsonInsertObj.getPrimaryKeyVal(), jsonInsertObj.genInsertPreparedQueryObj(), lockId,null);
+                        jsonInsertObj.getTableName(), jsonInsertObj.getPrimaryKeyVal(), queryObj, lockId,null);
             } else if (consistency.equalsIgnoreCase(MusicUtil.ATOMIC)) {
                 result = atomicPut(jsonInsertObj.getKeyspaceName(), jsonInsertObj.getTableName(), 
-                        jsonInsertObj.getPrimaryKeyVal(), jsonInsertObj.genInsertPreparedQueryObj(), null);
+                        jsonInsertObj.getPrimaryKeyVal(), queryObj, null);
             }
         } catch (Exception ex) {
             logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage(), AppMessages.UNKNOWNERROR  ,ErrorSeverity
@@ -971,10 +974,13 @@ public class MusicCassaCore implements MusicCoreService {
         
         ReturnType result = null;
         String consistency = "";
-        if(null != jsonUpdateObj && null != jsonUpdateObj.getConsistencyInfo()) {
-            consistency = jsonUpdateObj.getConsistencyInfo().get("type");
+        PreparedQueryObject queryObject = null; 
+        if(null != jsonUpdateObj) {
+            if(null != jsonUpdateObj.getConsistencyInfo()) {
+                consistency = jsonUpdateObj.getConsistencyInfo().get("type");
+            }
+            queryObject = jsonUpdateObj.genUpdatePreparedQueryObj(rowParams);
         }
-        PreparedQueryObject queryObject = jsonUpdateObj.genUpdatePreparedQueryObj(rowParams);
         
         Condition conditionInfo;
         if (jsonUpdateObj.getConditions() == null) {
@@ -1042,10 +1048,13 @@ public class MusicCassaCore implements MusicCoreService {
         
         ReturnType result = null;
         String consistency = "";
-        if(null != jsonDeleteObj && null != jsonDeleteObj.getConsistencyInfo()) {
-            consistency = jsonDeleteObj.getConsistencyInfo().get("type");
+        PreparedQueryObject queryObject = null;
+        if(jsonDeleteObj != null) {
+            if(null != jsonDeleteObj.getConsistencyInfo()) {
+                consistency = jsonDeleteObj.getConsistencyInfo().get("type");
+            }
+            queryObject = jsonDeleteObj.genDeletePreparedQueryObj(rowParams);
         }
-        PreparedQueryObject queryObject = jsonDeleteObj.genDeletePreparedQueryObj(rowParams);
         
         // get the conditional, if any
         Condition conditionInfo;
