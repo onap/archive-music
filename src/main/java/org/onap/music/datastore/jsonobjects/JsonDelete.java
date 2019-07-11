@@ -304,8 +304,8 @@ public class JsonDelete {
     }
    
     private class RowIdentifier {
-       public String primarKeyValue;
-       public StringBuilder rowIdString;
+       private String primarKeyValue;
+       private StringBuilder rowIdString;
        @SuppressWarnings("unused")
        public PreparedQueryObject queryObject; // the string with all the row
                                                // identifiers separated by AND
