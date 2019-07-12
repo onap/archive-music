@@ -3,7 +3,7 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
- *  Modifications Copyright (c) 2018 IBM. 
+ *  Modifications Copyright (c) 2019 IBM.
  * ===================================================================
  *  Modifications Copyright (c) 2019 Samsung
  * ===================================================================
@@ -128,7 +128,7 @@ public class MusicCassaCore implements MusicCoreService {
         try {
             lockReference = "" + getLockingServiceHandle().genLockRefandEnQueue(keyspace, table, lockName, locktype);
         } catch (MusicLockingException | MusicServiceException | MusicQueryException e) {
-            e.printStackTrace();
+            logger.error(EELFLoggerDelegate.applicationLogger, e);
             throw new MusicLockingException("Unable to create lock reference. " + e.getMessage());
         } catch (Exception e) {
             logger.error(EELFLoggerDelegate.applicationLogger, e);
