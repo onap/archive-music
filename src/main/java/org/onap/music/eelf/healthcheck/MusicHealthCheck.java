@@ -32,7 +32,6 @@ import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
-import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.MusicUtil;
@@ -68,7 +67,7 @@ public class MusicHealthCheck {
                         result = getAdminKeySpace(consistency, randomUUID);
                     }
                 } catch (MusicServiceException e1) {
-                    logger.error(EELFLoggerDelegate.errorLogger, e1.getMessage(), AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.UNKNOWN);
+                    logger.error(EELFLoggerDelegate.errorLogger, e1.getMessage(), AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.UNKNOWN, e1);
                 } catch (MusicQueryException e1) {
                     logger.error(EELFLoggerDelegate.errorLogger, e1.getMessage(), AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.UNKNOWN,e1);
                 }
@@ -80,7 +79,6 @@ public class MusicHealthCheck {
         try {
 			cleanHealthCheckId(randomUUID);
 		} catch (MusicServiceException | MusicQueryException e) {
-			// TODO Auto-generated catch block
 			logger.error("Error while cleaning healthcheck record id...", e);
 		}
         if (result) {
