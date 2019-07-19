@@ -88,7 +88,7 @@ public class JsonSelect implements Serializable {
             out = new ObjectOutputStream(bos);
             out.writeObject(this);
         } catch (IOException e) {
-            logger.error("IOException occured {}",e.getMessage());
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), e);
         }
         return bos.toByteArray();
     }
