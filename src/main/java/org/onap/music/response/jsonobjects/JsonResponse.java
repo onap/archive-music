@@ -3,6 +3,8 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *
+ *  Modifications Copyright (C) 2019 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -58,6 +60,15 @@ public class JsonResponse {
     private String lockLease;
     private boolean isLockHolders=false;
 
+    /**
+     * Create a JSONLock Response
+     * Use setters to provide more information as in
+     * JsonLockResponse(ResultType.SUCCESS).setMessage("We did it").setLock(mylockname)
+     * @param status
+     */
+    public JsonResponse(ResultType status) {
+        this.status = status;
+    }
 
     public boolean isLockHolders() {
 		return isLockHolders;
@@ -67,16 +78,6 @@ public class JsonResponse {
 		this.isLockHolders = isLockHolders;
 		return this;
 	}
-
-	/**
-     * Create a JSONLock Response
-     * Use setters to provide more information as in
-     * JsonLockResponse(ResultType.SUCCESS).setMessage("We did it").setLock(mylockname)
-     * @param status
-     */
-    public JsonResponse(ResultType status) {
-        this.status = status;
-    }
 
     /**
      * 
