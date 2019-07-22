@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "20c1095b_5257b6ad",
+        "filename": "src/main/java/org/onap/music/datastore/jsonobjects/JsonSelect.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 91,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-07-22T18:03:08Z",
+      "side": 1,
+      "message": "I\u0027m fine with adding the errorLogger-- that\u0027s the way it should be done. But, should we be removing our message? It would make it easier to trace the issue.\n\n@Tom, what do you think?",
+      "revId": "d914d69eaac5290de60bb96826b28732cbc7510a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
