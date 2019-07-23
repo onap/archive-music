@@ -16,6 +16,24 @@
       "revId": "d914d69eaac5290de60bb96826b28732cbc7510a",
       "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4e55d5b7_7915e5ae",
+        "filename": "src/main/java/org/onap/music/datastore/jsonobjects/JsonSelect.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 91,
+      "author": {
+        "id": 1827
+      },
+      "writtenOn": "2019-07-23T16:13:20Z",
+      "side": 1,
+      "message": "I am ok with this. The only reason that we usually add a message is to ensure an error message. There are times when e.getMessage() responds with a null. Du to this we get into the habit of prepending our own message.",
+      "parentUuid": "20c1095b_5257b6ad",
+      "revId": "d914d69eaac5290de60bb96826b28732cbc7510a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
     }
   ]
 }
