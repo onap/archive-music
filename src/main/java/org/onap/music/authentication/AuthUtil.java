@@ -3,6 +3,8 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
+ *
+ *  Modifications Copyright (C) 2019 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -91,7 +93,7 @@ public class AuthUtil {
             List<AAFPermission> allPermissionsList) {
         List<AAFPermission> list = new ArrayList<>();
         for (Iterator<AAFPermission> iterator = allPermissionsList.iterator(); iterator.hasNext();) {
-            AAFPermission aafPermission = (AAFPermission) iterator.next();
+            AAFPermission aafPermission = iterator.next();
             if(aafPermission.getType().indexOf(nameSpace) == 0) {
                 list.add(aafPermission);
             }
@@ -166,7 +168,7 @@ public class AuthUtil {
                 "AuthUtil requestUri :::" + requestUri);
 
         for (Iterator<AAFPermission> iterator = aafPermsFinalList.iterator(); iterator.hasNext();) {
-            AAFPermission aafPermission = (AAFPermission) iterator.next();
+            AAFPermission aafPermission = iterator.next();
             if(!isauthorized) {
                 isauthorized = isMatchPattern(aafPermission, requestUri, httpRequest.getMethod());
             }
