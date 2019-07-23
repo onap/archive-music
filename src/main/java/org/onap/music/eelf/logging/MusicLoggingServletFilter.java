@@ -172,7 +172,7 @@ public class MusicLoggingServletFilter implements Filter {
     }
 
     private void populateMDCAndResponseHeader(Map<String, String> headerMap, String idKey, String mdcKey,
-            boolean isRequired, HttpServletResponse httpResponse) throws ServletException, IOException {
+            boolean isRequired, HttpServletResponse httpResponse) throws  IOException {
 
         idKey = idKey.trim().toUpperCase();
 
