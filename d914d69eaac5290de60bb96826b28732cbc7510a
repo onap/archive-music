@@ -34,6 +34,24 @@
       "revId": "d914d69eaac5290de60bb96826b28732cbc7510a",
       "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "a0fbf690_482e7211",
+        "filename": "src/main/java/org/onap/music/datastore/jsonobjects/JsonSelect.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 91,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-07-23T17:24:36Z",
+      "side": 1,
+      "message": "Ok!",
+      "parentUuid": "4e55d5b7_7915e5ae",
+      "revId": "d914d69eaac5290de60bb96826b28732cbc7510a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
     }
   ]
 }
