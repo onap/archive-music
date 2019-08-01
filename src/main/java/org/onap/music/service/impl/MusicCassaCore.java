@@ -128,7 +128,7 @@ public class MusicCassaCore implements MusicCoreService {
         try {
             lockReference = "" + getLockingServiceHandle().genLockRefandEnQueue(keyspace, table, lockName, locktype);
         } catch (MusicLockingException | MusicServiceException | MusicQueryException e) {
-            e.printStackTrace();
+            logger.error(EELFLoggerDelegate.applicationLogger, e);
             throw new MusicLockingException("Unable to create lock reference. " + e.getMessage());
         } catch (Exception e) {
             logger.error(EELFLoggerDelegate.applicationLogger, e);
@@ -191,7 +191,7 @@ public class MusicCassaCore implements MusicCoreService {
         PreparedQueryObject readQueryObject = new PreparedQueryObject();
         readQueryObject.appendQueryString(query);
         ResultSet results = MusicDataStoreHandle.getDSHandle().executeQuorumConsistencyGet(readQueryObject);
-        if (results.all().size() != 0) {
+        if (!results.all().isEmpty()) {
             logger.info("In acquire lock: Since there was a forcible release, need to sync quorum!");
             try {
                 syncQuorum(keyspace, table, primaryKeyValue);
