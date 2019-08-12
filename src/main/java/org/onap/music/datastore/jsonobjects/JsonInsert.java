@@ -184,13 +184,11 @@ public class JsonInsert implements Serializable {
         try {
             tableInfo = MusicDataStoreHandle.returnColumnMetadata(this.getKeyspaceName(), this.getTableName());
             if(tableInfo == null) {
-                //return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Table name doesn't exists. Please check the table name.").toMap()).build();
                 throw new MusicQueryException("Table name doesn't exists. Please check the table name.",
                         Status.BAD_REQUEST.getStatusCode());
             }
         } catch (MusicServiceException e) {
             logger.error(EELFLoggerDelegate.errorLogger, e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
-            //return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
             throw new MusicQueryException(e.getMessage(),Status.BAD_REQUEST.getStatusCode());
             
         }
@@ -203,8 +201,6 @@ public class JsonInsert implements Serializable {
         
         Map<String, Object> valuesMap = this.getValues();
         if (valuesMap==null) {
-            //return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
-                    //.setError("Nothing to insert. No values provided in request.").toMap()).build();
             throw new MusicQueryException("Nothing to insert. No values provided in request.",
                     Status.BAD_REQUEST.getStatusCode());
         }
@@ -223,7 +219,6 @@ public class JsonInsert implements Serializable {
             } catch(NullPointerException ex) {
                 logger.error(EELFLoggerDelegate.errorLogger,ex.getMessage() +" Invalid column name : "+entry.getKey
                     (), AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.DATAERROR, ex);
-                //return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Invalid column name : "+entry.getKey()).toMap()).build();
                 throw new MusicQueryException("Invalid column name : " + entry.getKey(),
                         Status.BAD_REQUEST.getStatusCode());
             }
@@ -277,7 +272,6 @@ public class JsonInsert implements Serializable {
         this.setPrimaryKeyVal(primaryKey);
         if(primaryKey == null || primaryKey.length() <= 0) {
             logger.error(EELFLoggerDelegate.errorLogger, "Some required partition key parts are missing: "+primaryKeyName );
-            //return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.SYNTAXERROR).setError("Some required partition key parts are missing: "+primaryKeyName).toMap()).build();
             throw new MusicQueryException("Some required partition key parts are missing: " + primaryKeyName,
                     Status.BAD_REQUEST.getStatusCode());
         }
@@ -312,13 +306,11 @@ public class JsonInsert implements Serializable {
 
         queryObject.appendQueryString(";");
 
-        ReturnType result = null;
         String consistency = this.getConsistencyInfo().get("type");
         if(consistency.equalsIgnoreCase(MusicUtil.EVENTUAL) && this.getConsistencyInfo().get("consistency") != null) {
             if(MusicUtil.isValidConsistency(this.getConsistencyInfo().get("consistency"))) {
                 queryObject.setConsistency(this.getConsistencyInfo().get("consistency"));
             } else {
-               // return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.SYNTAXERROR).setError("Invalid Consistency type").toMap()).build();
                 throw new MusicQueryException("Invalid Consistency type", Status.BAD_REQUEST.getStatusCode());
             }
         }
@@ -341,9 +333,6 @@ public class JsonInsert implements Serializable {
         
         if((this.getKeyspaceName() == null || this.getKeyspaceName().isEmpty()) 
                 || (this.getTableName() == null || this.getTableName().isEmpty())){
-           /* return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
-                .setError("one or more path parameters are not set, please check and try again")
-                .toMap()).build();*/
             throw new MusicQueryException("one or more path parameters are not set, please check and try again",
                      Status.BAD_REQUEST.getStatusCode());
         }
@@ -355,7 +344,6 @@ public class JsonInsert implements Serializable {
         } catch (MusicServiceException ex) {
             logger.error(EELFLoggerDelegate.errorLogger,ex, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes
                 .GENERALSERVICEERROR, ex);
-            /*return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(ex.getMessage()).toMap()).build();*/
             throw new MusicQueryException(ex.getMessage(), Status.BAD_REQUEST.getStatusCode());
         }
         
