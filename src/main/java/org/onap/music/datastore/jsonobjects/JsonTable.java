@@ -162,9 +162,7 @@ public class JsonTable {
         // first read the information about the table fields
         Map<String, String> fields = this.getFields();
         if (fields == null) {
-            /*return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
-                .setError("Create Table Error: No fields in request").toMap()).build();*/
-            throw new MusicQueryException(
+           throw new MusicQueryException(
                     "Create Table Error: No fields in request", Status.BAD_REQUEST.getStatusCode());
         }
         StringBuilder fieldsString = new StringBuilder("(vector_ts text,");
@@ -187,9 +185,6 @@ public class JsonTable {
                     int count1 = StringUtils.countMatches(primaryKey, ')');
                     int count2 = StringUtils.countMatches(primaryKey, '(');
                     if (count1 != count2) {
-                        /*return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
-                            .setError("Create Table Error: primary key '(' and ')' do not match, primary key=" + primaryKey)
-                            .toMap()).build();*/
                         throw new MusicQueryException(
                                 "Create Table Error: primary key '(' and ')' do not match, primary key=" + primaryKey,
                                 Status.BAD_REQUEST.getStatusCode());

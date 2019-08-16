@@ -44,7 +44,6 @@ import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.MusicUtil;
-import org.onap.music.main.ReturnType;
 
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.TableMetadata;

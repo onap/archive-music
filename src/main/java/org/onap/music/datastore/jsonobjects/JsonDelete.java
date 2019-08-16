@@ -156,9 +156,7 @@ public class JsonDelete {
         
         if((this.getKeyspaceName() == null || this.getKeyspaceName().isEmpty()) 
                 || (this.getTableName() == null || this.getTableName().isEmpty())){
-            /*return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
-                .setError("one or more path parameters are not set, please check and try again")
-                .toMap()).build();*/
+
             
             throw new MusicQueryException("one or more path parameters are not set, please check and try again",
                      Status.BAD_REQUEST.getStatusCode());
@@ -168,8 +166,7 @@ public class JsonDelete {
         
         if(this == null) {
             logger.error(EELFLoggerDelegate.errorLogger,"Required HTTP Request body is missing.", AppMessages.MISSINGDATA  ,ErrorSeverity.WARN, ErrorTypes.DATAERROR);
-            /*return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Required HTTP Request body is missing.").toMap()).build();*/
-            
+
             throw new MusicQueryException("Required HTTP Request body is missing.",
                      Status.BAD_REQUEST.getStatusCode());
         }
@@ -193,9 +190,7 @@ public class JsonDelete {
             this.setRowIdString(rowId.rowIdString);
             this.setPrimarKeyValue(rowId.primarKeyValue);
             if(rowId == null || rowId.primarKeyValue.isEmpty()) {
-                /*return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
-                        .setError("Mandatory WHERE clause is missing. Please check the input request.").toMap()).build();*/
-                
+
                 throw new MusicQueryException("Mandatory WHERE clause is missing. Please check the input request.", 
                         Status.BAD_REQUEST.getStatusCode());
             }
@@ -242,8 +237,6 @@ public class JsonDelete {
             if(MusicUtil.isValidConsistency(this.getConsistencyInfo().get("consistency"))) {
                 queryObject.setConsistency(this.getConsistencyInfo().get("consistency"));
             } else {
-                /*return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.SYNTAXERROR)
-                    .setError("Invalid Consistency type").toMap()).build();*/
                 throw new MusicQueryException("Invalid Consistency type", Status.BAD_REQUEST.getStatusCode());
             }
         }

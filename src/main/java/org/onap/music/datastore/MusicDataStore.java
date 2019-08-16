@@ -234,19 +234,11 @@ public class MusicDataStore {
                         .addContactPoints(addresses).build();
         } else {
             cluster = Cluster.builder().withPort(MusicUtil.getCassandraPort())
-                        //.withLoadBalancingPolicy(new RoundRobinPolicy())
                         .withoutJMXReporting()
                         .withPoolingOptions(poolingOptions)
                         .addContactPoints(addresses).build();
         }
         
-        // JmxReporter reporter =
-        //         JmxReporter.forRegistry(cluster.getMetrics().getRegistry())
-        //             .inDomain(cluster.getClusterName() + "-metrics")
-        //             .build();
-
-        //     reporter.start();
-            
         Metadata metadata = cluster.getMetadata();
         logger.info(EELFLoggerDelegate.applicationLogger, "Connected to cassa cluster "
                         + metadata.getClusterName() + " at " + address);
