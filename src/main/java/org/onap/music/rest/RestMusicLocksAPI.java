@@ -357,7 +357,7 @@ public class RestMusicLocksAPI {
             @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
             @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
             @ApiParam(value = "Application namespace",
-                            required = false, hidden = true) @HeaderParam("ns") String ns) throws Exception{
+                            required = false, hidden = true) @HeaderParam("ns") String ns) {
         try {
             ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
             Map<String, Object> resultMap = MusicCore.validateLock(lockName);
@@ -417,7 +417,7 @@ public class RestMusicLocksAPI {
             @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
             @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
             @ApiParam(value = "Application namespace",
-                            required = false, hidden = true) @HeaderParam("ns") String ns) throws Exception{
+                            required = false, hidden = true) @HeaderParam("ns") String ns) {
         try {
             ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
             Map<String, Object> resultMap = MusicCore.validateLock(lockName);
