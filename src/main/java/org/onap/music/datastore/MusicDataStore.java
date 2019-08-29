@@ -284,8 +284,7 @@ public class MusicDataStore {
     * @return TableMetadata
     */
    public KeyspaceMetadata returnKeyspaceMetadata(String keyspace) {
-       KeyspaceMetadata ks = cluster.getMetadata().getKeyspace(keyspace);
-       return ks;
+       return cluster.getMetadata().getKeyspace(keyspace);
    }
 
 
