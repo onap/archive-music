@@ -24,7 +24,7 @@ LABEL purpose="Springboot for MUSIC"
 RUN apt-get update && apt-get install -y netcat telnet vim vim-common curl
 RUN groupadd --gid 1000 music && useradd --gid 1000 --uid 1000 music
 RUN mkdir -p /opt/app/music/logs/MUSIC 
-COPY MUSIC.jar /opt/app/music
+COPY MUSIC-SB.jar /opt/app/music
 COPY startup.sh /opt/app/music
 RUN mkdir -p /opt/app/music/logs && \
     chown -R music:music /opt/app/music/ && \

@@ -37,6 +37,6 @@ if [ ${EXTAP} ]; then
         EXTAP_OPTION="--spring.config.location=file:${EXTAP_FILE}"
     fi
 fi
-echo "java -jar MUSIC.jar ${EXTAP_OPTION} --server.ssl.key-store-password=${PASSWORD} --aaf_password=enc:${PASSWORD} 2>&1 | tee ${LOGFILE}"
-java -jar MUSIC.jar ${EXTAP_OPTION} --server.ssl.key-store-password="${PASSWORD}" --aaf_password="enc:${PASSWORD}" 2>&1 | tee ${LOGFILE}
+echo "java -jar MUSIC-SB.jar ${EXTAP_OPTION} --server.ssl.key-store-password=${PASSWORD} --aaf_password=enc:${PASSWORD} 2>&1 | tee ${LOGFILE}"
+java -jar MUSIC-SB.jar ${EXTAP_OPTION} --server.ssl.key-store-password="${PASSWORD}" --aaf_password="enc:${PASSWORD}" 2>&1 | tee ${LOGFILE}
 

@@ -111,7 +111,6 @@
     </repositories>
 
     <build>
-        <!-- <finalName>${project.artifactId}-${project.version}-${timestamp}</finalName>-->
         <finalName>${project.artifactId}</finalName>
         <sourceDirectory>src/main/java</sourceDirectory>
         <outputDirectory>src/main/webapp/WEB-INF/classes</outputDirectory>
@@ -146,6 +145,7 @@
                     <mainClass>org.onap.music.MusicApplication</mainClass>
                     <outputDirectory>./distribution/music/</outputDirectory>
                     <addResources>true</addResources>
+                    <finalName>${project.artifactId}-SB</finalName>
                 </configuration>
                 <executions>
                     <execution>
