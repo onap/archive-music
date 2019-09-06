@@ -1,4 +1,4 @@
-<!-- 
+<!--
  ============LICENSE_START==========================================
  org.onap.music
  ===================================================================
@@ -7,25 +7,25 @@
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
   You may obtain a copy of the License at
- 
+
      http://www.apache.org/licenses/LICENSE-2.0
- 
+
   Unless required by applicable law or agreed to in writing, software
   distributed under the License is distributed on an "AS IS" BASIS,
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
- 
+
  ============LICENSE_END=============================================
  ====================================================================
--->  
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.onap.music</groupId>
     <artifactId>MUSIC</artifactId>
     <packaging>jar</packaging>
-    <version>2.5.10-SNAPSHOT</version>
+    <version>2.5.10</version>
     <description>
             This is the MUSIC REST interface, packaged as a war file.
     </description>
@@ -215,15 +215,15 @@
             <version>1.0.1-oss</version>
         </dependency>
         <!-- End Logging -->
-        
-        <!-- Cassandra -->       
+
+        <!-- Cassandra -->
         <dependency>
             <groupId>com.datastax.cassandra</groupId>
             <artifactId>cassandra-driver-core</artifactId>
             <version>${cassandra.version}</version>
         </dependency>
-        <!-- /Cassandra -->       
-        
+        <!-- /Cassandra -->
+
         <!-- Zookeeper -->
         <dependency>
             <groupId>org.apache.zookeeper</groupId>
@@ -237,7 +237,7 @@
             </exclusions>
         </dependency>
         <!-- /Zookeeper -->
-        
+
         <!-- Jersey -->
         <dependency>
             <groupId>com.sun.jersey</groupId>
@@ -254,10 +254,10 @@
             <artifactId>jersey-json</artifactId>
             <version>${jersey1.version}</version>
         </dependency>
-        <dependency> 
-            <groupId>com.sun.jersey</groupId> 
-            <artifactId>jersey-servlet</artifactId> 
-            <version>${jersey1.version}</version> 
+        <dependency>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-servlet</artifactId>
+            <version>${jersey1.version}</version>
         </dependency>
         <!-- /Jersey -->
 
@@ -447,14 +447,14 @@
                                     </build>
                                 </image>
                                 <!-- Zookeeper -->
-                                <!-- <image> <name>onap/music/zookeeper_music</name> 
-                                    <alias>docker_zookeeper</alias> <build> <cleanup>true</cleanup> <tags> <tag>3.4-${timestamp}</tag> 
-                                    <tag>3.4-latest</tag> </tags> <dockerFileDir>${project.basedir}/distribution/zookeeper</dockerFileDir> 
+                                <!-- <image> <name>onap/music/zookeeper_music</name>
+                                    <alias>docker_zookeeper</alias> <build> <cleanup>true</cleanup> <tags> <tag>3.4-${timestamp}</tag>
+                                    <tag>3.4-latest</tag> </tags> <dockerFileDir>${project.basedir}/distribution/zookeeper</dockerFileDir>
                                     </build> </image> -->
                                 <!-- tomcat 8.5 -->
-                                <!-- <image> <name>onap/music/tomcat_music</name> 
-                                    <alias>docker_tomcat</alias> <build> <cleanup>true</cleanup> <tags> <tag>8.5-${timestamp}</tag> 
-                                    <tag>8.5-latest</tag> </tags> <dockerFileDir>${project.basedir}/distribution/tomcat</dockerFileDir> 
+                                <!-- <image> <name>onap/music/tomcat_music</name>
+                                    <alias>docker_tomcat</alias> <build> <cleanup>true</cleanup> <tags> <tag>8.5-${timestamp}</tag>
+                                    <tag>8.5-latest</tag> </tags> <dockerFileDir>${project.basedir}/distribution/tomcat</dockerFileDir>
                                     </build> </image>\ -->
                             </images>
                         </configuration>
