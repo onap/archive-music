@@ -4,7 +4,7 @@
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
  * ===================================================================
- *  Modifications Copyright (c) 2018 IBM.
+ *  Modifications Copyright (c) 2019 IBM.
  *  Modifications Copyright (c) 2019 Samsung.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
@@ -158,7 +158,10 @@ public class MusicUtil {
     private static Boolean messageIdRequired = false;
     private static String cipherEncKey = "";
 
-
+    public MusicUtil() {
+        throw new IllegalStateException("Utility Class");
+    }
+    
     public static String getLockUsing() {
         return lockUsing;
     }
@@ -167,9 +170,6 @@ public class MusicUtil {
         MusicUtil.lockUsing = lockUsing;
     }
 
-    public MusicUtil() {
-        throw new IllegalStateException("Utility Class");
-    }
     /**
      *
      * @return cassandra port
