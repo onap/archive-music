@@ -441,8 +441,7 @@ public class CassaLockStore {
     }
 
 
-    public void updateLockAcquireTime(String keyspace, String table, String key, String lockReference)
-            throws MusicServiceException, MusicQueryException {
+    public void updateLockAcquireTime(String keyspace, String table, String key, String lockReference) {
         table = table_prepend_name + table;
         PreparedQueryObject queryObject = new PreparedQueryObject();
         Long lockReferenceL = Long.parseLong(lockReference);
