@@ -98,6 +98,14 @@ public interface MusicCoreService {
      */
     public String createLockReference(String fullyQualifiedKey, LockType locktype) throws MusicLockingException;
     
+    /**
+     * Create a lock ref in the music lock store
+     * @param fullyQualifiedKey the key to create a lock on
+     * @param locktype the type of lock create, see {@link LockType}
+     * @param owner the owner of the lock, for deadlock prevention
+     */
+    public String createLockReference(String fullyQualifiedKey, LockType locktype, String owner) throws MusicLockingException;
+
     public ReturnType acquireLockWithLease(String key, String lockReference, long leasePeriod)
         throws MusicLockingException, MusicQueryException, MusicServiceException; // key,lock id,time
 
@@ -143,7 +151,9 @@ public interface MusicCoreService {
     public Map<String, Object> validateLock(String lockName);
 
     public MusicLockState releaseLock(String lockId, boolean voluntaryRelease) throws MusicLockingException;
-    
+
+	public List<String> releaseAllLocksForOwner(String ownerId, String keyspace, String table) throws MusicLockingException, MusicServiceException, MusicQueryException;
+
     
     //Methods added for orm
     

@@ -24,6 +24,7 @@
 package org.onap.music.lockingservice.cassandra;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.onap.music.datastore.MusicDataStore;
@@ -32,6 +33,8 @@ import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
+import org.onap.music.main.DeadlockDetectionUtil;
+import org.onap.music.main.DeadlockDetectionUtil.OwnershipType;
 import org.onap.music.main.MusicUtil;
 
 import com.datastax.driver.core.ResultSet;
@@ -60,12 +63,15 @@ public class CassaLockStore {
         private String createTime;
         private String acquireTime;
         private LockType locktype;
-        public LockObject(boolean isLockOwner, String lockRef, String createTime, String acquireTime, LockType locktype) {
+        // Owner is the self-declared client which "owns" this row. It is used for deadlock detection.  It is not (directly) related to isLockOwner.
+        private String owner;
+        public LockObject(boolean isLockOwner, String lockRef, String createTime, String acquireTime, LockType locktype, String owner) {
             this.setIsLockOwner(isLockOwner);
             this.setLockRef(lockRef);
             this.setAcquireTime(acquireTime);
             this.setCreateTime(createTime);
             this.setLocktype(locktype);
+            this.setOwner(owner);
         }
         public boolean getIsLockOwner() {
             return isLockOwner;
@@ -97,6 +103,12 @@ public class CassaLockStore {
         public void setLocktype(LockType locktype) {
             this.locktype = locktype;
         }
+        public String getOwner() {
+            return owner;
+        }
+        public void setOwner(String owner) {
+            this.owner = owner;
+        }
     }
     
     /**
@@ -114,7 +126,7 @@ public class CassaLockStore {
         table = table_prepend_name+table;
         String tabQuery = "CREATE TABLE IF NOT EXISTS "+keyspace+"."+table
                 + " ( key text, lockReference bigint, createTime text, acquireTime text, guard bigint static, "
-                + "writeLock boolean, PRIMARY KEY ((key), lockReference) ) "
+                + "writeLock boolean, owner text, PRIMARY KEY ((key), lockReference) ) "
                 + "WITH CLUSTERING ORDER BY (lockReference ASC);";
         PreparedQueryObject queryObject = new PreparedQueryObject();
         
@@ -129,22 +141,22 @@ public class CassaLockStore {
      * @param keyspace of the locks.
      * @param table of the locks.
      * @param lockName is the primary key of the lock table
+     * @param lockType is the type of lock (read/write)
+     * @param owner is the owner of the lock (optional, for deadlock detection)
      * @return the UUID lock reference.
      * @throws MusicServiceException
      * @throws MusicQueryException
      */
-    public String genLockRefandEnQueue(String keyspace, String table, String lockName, LockType locktype) throws MusicServiceException, MusicQueryException, MusicLockingException {
-        return genLockRefandEnQueue(keyspace, table, lockName, locktype, 0);
+    public String genLockRefandEnQueue(String keyspace, String table, String lockName, LockType locktype, String owner) throws MusicServiceException, MusicQueryException, MusicLockingException {
+        return genLockRefandEnQueue(keyspace, table, lockName, locktype, owner, 0);
     }
     
-    private String genLockRefandEnQueue(String keyspace, String table, String lockName, LockType locktype, int count) throws MusicServiceException, MusicQueryException, MusicLockingException {
+    private String genLockRefandEnQueue(String keyspace, String table, String lockName, LockType locktype, String owner, int count) throws MusicServiceException, MusicQueryException, MusicLockingException {
         logger.info(EELFLoggerDelegate.applicationLogger,
                 "Create " + locktype + " lock reference for " +  keyspace + "." + table + "." + lockName);
         String lockTable ="";
         lockTable = table_prepend_name+table;
     
-
-
         PreparedQueryObject queryObject = new PreparedQueryObject();
         String selectQuery = "SELECT guard FROM " + keyspace + "." + lockTable + " WHERE key=?;";
 
@@ -170,7 +182,7 @@ public class CassaLockStore {
                 " UPDATE " + keyspace + "." + lockTable +
                 " SET guard=? WHERE key=? IF guard = " + (prevGuard == 0 ? "NULL" : "?") +";" +
                 " INSERT INTO " + keyspace + "." + lockTable +
-                "(key, lockReference, createTime, acquireTime, writeLock) VALUES (?,?,?,?,?) IF NOT EXISTS; APPLY BATCH;";
+                "(key, lockReference, createTime, acquireTime, writeLock, owner) VALUES (?,?,?,?,?,?) IF NOT EXISTS; APPLY BATCH;";
 
         queryObject.addValue(lockRef);
         queryObject.addValue(lockName);
@@ -182,6 +194,7 @@ public class CassaLockStore {
         queryObject.addValue(String.valueOf(lockEpochMillis));
         queryObject.addValue("0");
         queryObject.addValue(locktype==LockType.WRITE ? true : false );
+        queryObject.addValue(owner);
         queryObject.appendQueryString(insQuery);
         boolean pResult = dsHandle.executePut(queryObject, "critical");
         if (!pResult) {// couldn't create lock ref, retry
@@ -190,14 +203,12 @@ public class CassaLockStore {
                 logger.warn(EELFLoggerDelegate.applicationLogger, "Unable to create lock reference");
                 throw new MusicLockingException("Unable to create lock reference");
             }
-            return genLockRefandEnQueue(keyspace, table, lockName, locktype, count);
+            return genLockRefandEnQueue(keyspace, table, lockName, locktype, owner, count);
         }
         return "$" + keyspace + "." + table + "." + lockName + "$" + String.valueOf(lockRef);
     }
-    
-    
 
-    /**
+	/**
      * Returns a result set containing the list of clients waiting for a particular lock
      * 
      * @param keyspace
@@ -269,14 +280,15 @@ public class CassaLockStore {
         ResultSet results = dsHandle.executeOneConsistencyGet(queryObject);
         Row row = results.one();
         if (row == null || row.isNull("lockReference")) {
-            return new LockObject(false, null, null, null, null);
+            return new LockObject(false, null, null, null, null, null);
         }
         String lockReference = "" + row.getLong("lockReference");
         String createTime = row.getString("createTime");
         String acquireTime = row.getString("acquireTime");
         LockType locktype = row.isNull("writeLock") || row.getBool("writeLock") ? LockType.WRITE : LockType.READ;
+        String owner = row.getString("owner");
 
-        return new LockObject(true, lockReference, createTime, acquireTime, locktype);
+        return new LockObject(true, lockReference, createTime, acquireTime, locktype, owner);
     }
 
     public List<String> getCurrentLockHolders(String keyspace, String table, String key)
@@ -394,8 +406,9 @@ public class CassaLockStore {
         String acquireTime = row.getString("acquireTime");
         LockType locktype = row.isNull("writeLock") || row.getBool("writeLock") ? LockType.WRITE : LockType.READ;
         boolean isLockOwner = isLockOwner(keyspace, table, key, lockRef);
+        String owner = row.getString("owner");
 
-        return new LockObject(isLockOwner, lockReference, createTime, acquireTime, locktype);
+        return new LockObject(isLockOwner, lockReference, createTime, acquireTime, locktype, owner);
     }
 
 
@@ -453,5 +466,48 @@ public class CassaLockStore {
         //cannot use executePut because we need to ignore music timestamp adjustments for lock store
         dsHandle.getSession().execute(updateQuery);
     }  
+
+    public boolean checkForDeadlock(String keyspace, String table, String lockName, LockType locktype, String owner, boolean forAcquire) throws MusicServiceException, MusicQueryException {
+        if (locktype.equals(LockType.READ)) return false;
+        if (owner==null || owner.length()==0) return false;
+
+        String lockTable = table_prepend_name + table;
+        PreparedQueryObject queryObject = new PreparedQueryObject();
+        queryObject.appendQueryString("SELECT key, acquiretime, owner FROM " + keyspace + "." + lockTable);
+//        queryObject.appendQueryString(" WHERE lockreference IS NOT NULL");
+        queryObject.appendQueryString(" WHERE writelock = True ALLOW FILTERING");
+
+        DeadlockDetectionUtil ddu = new DeadlockDetectionUtil();
+
+        ResultSet rs = dsHandle.executeQuorumConsistencyGet(queryObject);
+//        System.out.println("In checkForDeadlock, rs has " + rs.getAvailableWithoutFetching() + (rs.isFullyFetched()?"":" (or more!)") );
+        Iterator<Row> it = rs.iterator();
+        while (it.hasNext()) {
+            Row row = it.next();
+//            System.out.println("\t" + row.getString("key") + "\t" + row.getString("acquiretime") + "\t" + row.getString("owner") );
+            ddu.setExisting(row.getString("key"), row.getString("owner"), ("0".equals(row.getString("acquiretime")))?OwnershipType.CREATED:OwnershipType.ACQUIRED);
+        }
+        boolean deadlock = ddu.checkForDeadlock(lockName, owner, forAcquire?OwnershipType.ACQUIRED:OwnershipType.CREATED);
+        if (deadlock) ddu.listAllNodes();
+        return deadlock;
+//        if (deadlock) throw new MusicDeadlockException("Deadlock detected when " + owner + " tried to create lock on " + keyspace + "." + lockTable + "." + lockName);
+    }
+
+    public List<String> getAllLocksForOwner(String ownerId, String keyspace, String table) throws MusicServiceException, MusicQueryException {
+        List<String> toRet = new ArrayList<String>();
+        String lockTable = table_prepend_name + table;
+        PreparedQueryObject queryObject = new PreparedQueryObject();
+        queryObject.appendQueryString("SELECT key, lockreference FROM " + keyspace + "." + lockTable);
+        queryObject.appendQueryString(" WHERE owner = '" + ownerId + "' ALLOW FILTERING");
+
+        ResultSet rs = dsHandle.executeQuorumConsistencyGet(queryObject);
+        Iterator<Row> it = rs.iterator();
+        while (it.hasNext()) {
+            Row row = it.next();
+            toRet.add(row.getString("key") + "$" + row.getLong("lockreference"));
+        }
+        return toRet;
+    }
+
 
 }
