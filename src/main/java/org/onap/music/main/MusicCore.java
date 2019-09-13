@@ -89,6 +89,10 @@ public class MusicCore {
         return musicCore.createLockReference(fullyQualifiedKey, locktype);
     }
 
+    public static String createLockReference(String fullyQualifiedKey, LockType locktype, String owner) throws MusicLockingException {
+        return musicCore.createLockReference(fullyQualifiedKey, locktype, owner);
+    }
+
     public static ResultType createTable(String keyspace, String table, PreparedQueryObject tableQueryObject,
             String consistency) throws MusicServiceException {
         return musicCore.createTable(keyspace, table, tableQueryObject, consistency);
@@ -193,6 +197,10 @@ public class MusicCore {
         return musicCore.releaseLock(lockId, voluntaryRelease);
     }
     
+    public static List<String> releaseAllLocksForOwner(String ownerId, String keyspace, String table) throws MusicLockingException, MusicServiceException, MusicQueryException {
+        return musicCore.releaseAllLocksForOwner(ownerId, keyspace, table);
+	}
+
     //Added changes for orm implementation.
     
     public static ResultType createKeyspace(JsonKeySpace jsonKeySpaceObject, String consistencyInfo) 
@@ -244,7 +252,5 @@ public class MusicCore {
             throws MusicLockingException, MusicQueryException, MusicServiceException{
         return musicCore.deleteFromTable(jsonDeleteObj,rowParams);
     }
-
-
 
 }

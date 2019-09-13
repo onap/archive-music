@@ -115,7 +115,7 @@ public class TstRestMusicLockAPI {
         System.out.println("Testing create lockref");
         createAndInsertIntoTable();
         Response response = lock.createLockReference(lockName, "1", "1", authorization,
-                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", null, appName);
+                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", null, null, appName);
         Map<String, Object> respMap = (Map<String, Object>) response.getEntity();
         System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
 
@@ -129,7 +129,7 @@ public class TstRestMusicLockAPI {
         System.out.println("Testing create bad lockref");
         createAndInsertIntoTable();
         Response response = lock.createLockReference("badlock", "1", "1", authorization,
-                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", null, appName);
+                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", null, null, appName);
         Map<String, Object> respMap = (Map<String, Object>) response.getEntity();
         System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
 
@@ -142,7 +142,7 @@ public class TstRestMusicLockAPI {
         createAndInsertIntoTable();
         JsonLock jsonLock = createJsonLock(LockType.READ);
         Response response = lock.createLockReference(lockName, "1", "1", authorization,
-                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", jsonLock, appName);
+                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", jsonLock, null, appName);
         Map<String, Object> respMap = (Map<String, Object>) response.getEntity();
         System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
 
@@ -157,7 +157,7 @@ public class TstRestMusicLockAPI {
         createAndInsertIntoTable();
         JsonLock jsonLock = createJsonLock(LockType.WRITE);
         Response response = lock.createLockReference(lockName, "1", "1", authorization,
-                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", jsonLock, appName);
+                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", jsonLock, null, appName);
         Map<String, Object> respMap = (Map<String, Object>) response.getEntity();
         System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
 
@@ -463,7 +463,7 @@ public class TstRestMusicLockAPI {
     @SuppressWarnings("unchecked")
     private String createLockReference() throws Exception {
         Response response = lock.createLockReference(lockName, "1", "1", authorization,
-                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", null, appName);
+                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", null, null, appName);
         Map<String, Object> respMap = (Map<String, Object>) response.getEntity();
         return ((Map<String, String>) respMap.get("lock")).get("lock");
     }
@@ -478,7 +478,7 @@ public class TstRestMusicLockAPI {
     private String createLockReference(LockType lockType) throws Exception {
         JsonLock jsonLock = createJsonLock(lockType);
         Response response = lock.createLockReference(lockName, "1", "1", authorization,
-                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", jsonLock, appName);
+                "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", jsonLock, null, appName);
         Map<String, Object> respMap = (Map<String, Object>) response.getEntity();
         return ((Map<String, String>) respMap.get("lock")).get("lock");
     }
