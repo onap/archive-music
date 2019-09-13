@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1849ef50_8db3911e",
+        "filename": "src/main/java/org/onap/music/datastore/PreparedQueryObject.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 91,
+      "author": {
+        "id": 2025
+      },
+      "writtenOn": "2019-09-13T20:24:47Z",
+      "side": 1,
+      "message": "This change isn\u0027t /directly/ related to the deadlock detection, though it did come up in testing.  Many places where PreparedQueryObject is used it\u0027s not calling setOperation which means that getOperation was returning null and causing NullPointerExceptions later.  This provides a reasonable default response.  Operation really should be an enum though.",
+      "range": {
+        "startLine": 91,
+        "startChar": 33,
+        "endLine": 91,
+        "endChar": 34
+      },
+      "revId": "ccec192b1f9d3029ff6e24ba2bbb77e9b8359527",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    }
+  ]
+}
