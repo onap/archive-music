@@ -89,7 +89,28 @@ public class PreparedQueryObject {
     }
 
     public String getOperation() {
-        return operation;
+        if (operation!=null) return operation;
+        if (query.length()==0) return null;
+        String queryStr = query.toString().toLowerCase();
+        String firstOp = null;
+        int firstOpChar = query.length();
+        if (queryStr.indexOf("insert")>-1 && queryStr.indexOf("insert")<firstOpChar) {
+            firstOp = "insert";
+            firstOpChar = queryStr.indexOf("insert");
+        }
+        if (queryStr.indexOf("update")>-1 && queryStr.indexOf("update")<firstOpChar) {
+            firstOp = "update";
+            firstOpChar = queryStr.indexOf("update");
+        }
+        if (queryStr.indexOf("delete")>-1 && queryStr.indexOf("delete")<firstOpChar) {
+            firstOp = "delete";
+            firstOpChar = queryStr.indexOf("delete");
+        }
+        if (queryStr.indexOf("select")>-1 && queryStr.indexOf("select")<firstOpChar) {
+            firstOp = "select";
+            firstOpChar = queryStr.indexOf("select");
+        }
+        return firstOp;
     }
 
     public void setOperation(String operation) {
