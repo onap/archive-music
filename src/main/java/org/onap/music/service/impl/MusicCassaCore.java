@@ -47,6 +47,7 @@ import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.format.AppMessages;
 import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
+import org.onap.music.exceptions.MusicDeadlockException;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
@@ -116,6 +117,10 @@ public class MusicCassaCore implements MusicCoreService {
     }
 
     public String createLockReference(String fullyQualifiedKey, LockType locktype) throws MusicLockingException {
+        return createLockReference(fullyQualifiedKey, locktype, null);
+    }
+
+    public String createLockReference(String fullyQualifiedKey, LockType locktype, String owner) throws MusicLockingException {
         String[] splitString = fullyQualifiedKey.split("\\.");
         String keyspace = splitString[0];
         String table = splitString[1];
@@ -124,15 +129,30 @@ public class MusicCassaCore implements MusicCoreService {
         logger.info(EELFLoggerDelegate.applicationLogger,"Creating lock reference for lock name:" + lockName);
         long start = System.currentTimeMillis();
         String lockReference = null;
+
+        try {
+            boolean deadlock = getLockingServiceHandle().checkForDeadlock(keyspace, table, lockName, locktype, owner, false);
+            if (deadlock) {
+                MusicDeadlockException e = new MusicDeadlockException("Deadlock detected when " + owner + " tried to create lock on " + keyspace + "." + table + "." + lockName);
+                e.setValues(owner, keyspace, table, lockName);
+                throw e;
+            }
+        } catch (MusicDeadlockException e) {
+            //just threw this, no need to wrap it
+            throw e;
+        } catch (MusicServiceException | MusicQueryException e) {
+            logger.error(EELFLoggerDelegate.applicationLogger, e);
+            throw new MusicLockingException("Unable to check for deadlock. " + e.getMessage(), e);
+        }
         
         try {
-            lockReference = "" + getLockingServiceHandle().genLockRefandEnQueue(keyspace, table, lockName, locktype);
+            lockReference = "" + getLockingServiceHandle().genLockRefandEnQueue(keyspace, table, lockName, locktype, owner);
         } catch (MusicLockingException | MusicServiceException | MusicQueryException e) {
             logger.error(EELFLoggerDelegate.applicationLogger, e);
-            throw new MusicLockingException("Unable to create lock reference. " + e.getMessage());
+            throw new MusicLockingException("Unable to create lock reference. " + e.getMessage(), e);
         } catch (Exception e) {
             logger.error(EELFLoggerDelegate.applicationLogger, e);
-            throw new MusicLockingException("Unable to create lock reference. " + e.getMessage());
+            throw new MusicLockingException("Unable to create lock reference. " + e.getMessage(), e);
         }
         long end = System.currentTimeMillis();
         logger.info(EELFLoggerDelegate.applicationLogger,"Time taken to create lock reference:" + (end - start) + " ms");
@@ -185,6 +205,12 @@ public class MusicCassaCore implements MusicCoreService {
             return new ReturnType(ResultType.FAILURE, lockId + " is not a lock holder");//not top of the lock store q
         }
         
+        if (getLockingServiceHandle().checkForDeadlock(keyspace, table, primaryKeyValue, lockInfo.getLocktype(), lockInfo.getOwner(), true)) {
+            MusicDeadlockException e = new MusicDeadlockException("Deadlock detected when " + lockInfo.getOwner()  + " tried to create lock on " + keyspace + "." + table + "." + primaryKeyValue);
+            e.setValues(lockInfo.getOwner(), keyspace, table, primaryKeyValue);
+            throw e;
+        }
+
         //check to see if the value of the key has to be synced in case there was a forceful release
         String syncTable = keyspace+".unsyncedKeys_"+table;
         String query = "select * from "+syncTable+" where key='"+localFullyQualifiedKey+"';";
@@ -319,7 +345,7 @@ public class MusicCassaCore implements MusicCoreService {
         String table = splitString[1];
         String primaryKeyValue = splitString[2];
         try {
-        	return getLockingServiceHandle().getCurrentLockHolders(keyspace, table, primaryKeyValue);
+            return getLockingServiceHandle().getCurrentLockHolders(keyspace, table, primaryKeyValue);
         } catch (MusicLockingException | MusicServiceException | MusicQueryException e) {
             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.LOCKINGERROR+fullyQualifiedKey ,ErrorSeverity.CRITICAL, ErrorTypes.LOCKINGERROR);
         }
@@ -419,6 +445,19 @@ public class MusicCassaCore implements MusicCoreService {
 
         //now release the lock
         return destroyLockRef(fullyQualifiedKey, lockReference);
+    }
+
+    @Override
+    public List<String> releaseAllLocksForOwner(String ownerId, String keyspace, String table) throws MusicLockingException, MusicServiceException, MusicQueryException {
+//        System.out.println("IN RELEASEALLLOCKSFOROWNER, ");
+
+        List<String> lockIds = getLockingServiceHandle().getAllLocksForOwner(ownerId, keyspace, table);
+        for (String lockId : lockIds) {
+//            System.out.println(" LOCKID = " + lockId);
+            //return "$" + keyspace + "." + table + "." + lockName + "$" + String.valueOf(lockRef);
+            releaseLock("$" + keyspace + "." + table + "." + lockId, true);
+        }
+        return lockIds;
     }
 
     /**
