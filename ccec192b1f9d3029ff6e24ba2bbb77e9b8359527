@@ -22,6 +22,40 @@
       "revId": "ccec192b1f9d3029ff6e24ba2bbb77e9b8359527",
       "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "47ddc981_49d12070",
+        "filename": "src/main/java/org/onap/music/lockingservice/cassandra/CassaLockStore.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 470,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-09-16T13:45:35Z",
+      "side": 1,
+      "message": "Can you remove the commented out code?",
+      "revId": "ccec192b1f9d3029ff6e24ba2bbb77e9b8359527",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ac86445f_cf716005",
+        "filename": "src/main/java/org/onap/music/service/impl/MusicCassaCore.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-09-16T13:45:35Z",
+      "side": 1,
+      "message": "This code can be removed as well?",
+      "revId": "ccec192b1f9d3029ff6e24ba2bbb77e9b8359527",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
     }
   ]
 }
