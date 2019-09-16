@@ -27,7 +27,7 @@
     <groupId>org.onap.music</groupId>
     <artifactId>MUSIC</artifactId>
     <packaging>jar</packaging>
-    <version>3.2.35-SNAPSHOT</version>
+    <version>3.2.35</version>
     <description>
             This is the MUSIC REST interface, packaged as a Springboot jar file.
     </description>
