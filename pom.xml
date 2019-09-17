@@ -149,6 +149,7 @@
                 </configuration>
                 <executions>
                     <execution>
+                        <phase>install</phase>
                         <goals>
                             <goal>repackage</goal>
                         </goals>
@@ -200,6 +201,7 @@
                 <version>2.4</version>
                 <executions>
                     <execution>
+                        <id>base</id>
                         <phase>install</phase>
                         <goals>
                             <goal>install-file</goal>
@@ -210,6 +212,20 @@
                             <groupId>${project.groupId}</groupId>
                             <version>${project.version}</version>
                             <file>${project.build.directory}/${project.artifactId}.jar</file>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>spring</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>install-file</goal>
+                        </goals>
+                        <configuration>
+                            <packaging>jar</packaging>
+                            <artifactId>${project.artifactId}-SB</artifactId>
+                            <groupId>${project.groupId}</groupId>
+                            <version>${project.version}</version>
+                            <file>${project.basedir}/distribution/music/${project.artifactId}-SB.jar</file>
                         </configuration>
                     </execution>
                 </executions>

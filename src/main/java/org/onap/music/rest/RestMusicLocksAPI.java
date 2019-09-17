@@ -116,6 +116,7 @@ public class RestMusicLocksAPI {
             @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
             @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
             JsonLock lockObject,
+            @ApiParam(value = "Lock Owner", required = false) @HeaderParam("owner") String owner,
             @ApiParam(value = "Application namespace",
                             required = false, hidden = true) @HeaderParam("ns") String ns) throws Exception{
         try {
@@ -136,7 +137,7 @@ public class RestMusicLocksAPI {
             }
             String lockId;
             try {
-                lockId= MusicCore.createLockReference(lockName, locktype);
+                lockId= MusicCore.createLockReference(lockName, locktype, owner);
             } catch (MusicLockingException e) {
                 return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
             }
