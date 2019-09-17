@@ -85,6 +85,7 @@
         <docker.latest.tag>${project.version}-latest</docker.latest.tag>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <deploy.repo>${settings.localRepository}</deploy.repo>
     </properties>
 
     <repositories>
@@ -207,6 +208,7 @@
                             <goal>install-file</goal>
                         </goals>
                         <configuration>
+                            <localRepositoryPath>${deploy.repo}</localRepositoryPath>
                             <packaging>jar</packaging>
                             <artifactId>${project.artifactId}</artifactId>
                             <groupId>${project.groupId}</groupId>
@@ -221,6 +223,7 @@
                             <goal>install-file</goal>
                         </goals>
                         <configuration>
+                            <localRepositoryPath>${deploy.repo}</localRepositoryPath>
                             <packaging>jar</packaging>
                             <artifactId>${project.artifactId}-SB</artifactId>
                             <groupId>${project.groupId}</groupId>
@@ -653,6 +656,17 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+        <profile>
+            <id>repoOverride</id>
+            <activation>
+                <property>
+                    <name>altDeploymentRepository</name>
+                </property>
+            </activation>
+            <properties>
+                <deploy.repo>${altDeploymentRepository}</deploy.repo>
+            </properties>
         </profile>
         <profile>
             <id>default</id>
