@@ -22,6 +22,8 @@
 
 package org.onap.music.main;
 
+import java.util.Properties;
+
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,10 +38,10 @@ public class PropertiesLoader implements InitializingBean {
 
     @Value("${cassandra.host}")
     public String cassandraHost;
-    
+/*
     @Value("${music.ip}")
     public String musicIp;        
-    
+*/
     @Value("${debug}")
     public String debug;
     
@@ -193,13 +195,101 @@ public class PropertiesLoader implements InitializingBean {
         }
     }
 
+    public static void loadProperties(Properties properties) {
+        if (properties.getProperty("cassandra.host")!=null) {
+            MusicUtil.setMyCassaHost(properties.getProperty("cassandra.host"));
+        }
 
-    
+        if (properties.getProperty("cassandra.port")!=null) {
+            MusicUtil.setCassandraPort(Integer.parseInt(properties.getProperty("cassandra.port")));
+        }
+
+        if (properties.getProperty("cassandra.user")!=null) {
+            MusicUtil.setCassName(properties.getProperty("cassandra.user"));
+        }
+
+        if (properties.getProperty("cassandra.password")!=null) {
+            MusicUtil.setCassPwd(properties.getProperty("cassandra.password"));
+        }
+        
+        if (properties.getProperty("music.properties")!=null) {
+            MusicUtil.setMusicPropertiesFilePath(properties.getProperty("music.properties"));
+        }
+
+        if (properties.getProperty("debug")!=null) {
+            MusicUtil.setDebug(Boolean.parseBoolean(properties.getProperty("debug")));
+        }
+
+        if (properties.getProperty("version")!=null) {
+            MusicUtil.setVersion(properties.getProperty("version"));
+        }
+
+        if (properties.getProperty("build")!=null) {
+            MusicUtil.setBuild(properties.getProperty("build"));
+        }
+
+        if (properties.getProperty("lock.lease.period")!=null) {
+            MusicUtil.setDefaultLockLeasePeriod(Long.parseLong(properties.getProperty("lock.lease.period")));
+        }
+
+        if (properties.getProperty("cadi")!=null) {
+            MusicUtil.setIsCadi(Boolean.parseBoolean(properties.getProperty("cadi")));
+        }
+
+        if (properties.getProperty("keyspace.active")!=null) {
+            MusicUtil.setKeyspaceActive(Boolean.parseBoolean(properties.getProperty("keyspace.active")));
+        }
+
+        if (properties.getProperty("retry.count")!=null) {
+            MusicUtil.setRetryCount(Integer.parseInt(properties.getProperty("retry.count")));
+        }
+
+        if (properties.getProperty("transId.header.prefix")!=null) {
+            MusicUtil.setTransIdPrefix(properties.getProperty("transId.header.prefix"));
+        }
+
+        if (properties.getProperty("conversation.header.prefix")!=null) {
+            MusicUtil.setConversationIdPrefix(properties.getProperty("conversation.header.prefix"));
+        }
+
+        if (properties.getProperty("clientId.header.prefix")!=null) {
+            MusicUtil.setClientIdPrefix(properties.getProperty("clientId.header.prefix"));
+        }
+
+        if (properties.getProperty("messageId.header.prefix")!=null) {
+            MusicUtil.setMessageIdPrefix(properties.getProperty("messageId.header.prefix"));
+        }
+
+        if (properties.getProperty("transId.header.required")!=null) {
+            MusicUtil.setTransIdRequired(Boolean.parseBoolean(properties.getProperty("transId.header.required")));
+        }
+
+        if (properties.getProperty("conversation.header.required")!=null) {
+            MusicUtil.setConversationIdRequired(Boolean.parseBoolean(properties.getProperty("conversation.header.required")));
+        }
+
+        if (properties.getProperty("clientId.header.required")!=null) {
+            MusicUtil.setClientIdRequired(Boolean.parseBoolean(properties.getProperty("clientId.header.required")));
+        }
+
+        if (properties.getProperty("messageId.header.required")!=null) {
+            MusicUtil.setMessageIdRequired(Boolean.parseBoolean(properties.getProperty("messageId.header.required")));
+        }
+
+        if (properties.getProperty("music.aaf.ns")!=null) {
+            MusicUtil.setMusicAafNs(properties.getProperty("music.aaf.ns"));
+        }
+
+        if (properties.getProperty("cipher.enc.key")!=null) {
+            MusicUtil.setCipherEncKey(properties.getProperty("cipher.enc.key"));
+        }
+
+    }
     
     @Override
     public void afterPropertiesSet() throws Exception {
         // TODO Auto-generated method stub
         
     }
-        
+
 }
