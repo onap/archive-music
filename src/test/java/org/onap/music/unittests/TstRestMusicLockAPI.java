@@ -439,6 +439,48 @@ public class TstRestMusicLockAPI {
         assertEquals(400, response.getStatus());
     }
 
+    @SuppressWarnings("unchecked")
+    @Test
+    public void test_deadlock() throws Exception {
+        System.out.println("Testing deadlock");
+        createAndInsertIntoTable();
+        insertAnotherIntoTable();
+
+        // Process 1 creates and acquires a lock on row 1
+        JsonLock jsonLock = createJsonLock(LockType.WRITE);
+        Response responseCreate1 = lock.createLockReference(lockName, "1", "1", authorization,
+                "abcde001-d857-4e90-b1e5-df98a3d40ce6", jsonLock, "process1", appName);
+        Map<String, Object> respMapCreate1 = (Map<String, Object>) responseCreate1.getEntity();
+        String lockRefCreate1 = ((Map<String, String>) respMapCreate1.get("lock")).get("lock");
+
+        Response responseAcquire1 =
+                lock.accquireLock(lockRefCreate1, "1", "1", authorization, "abc66001-d857-4e90-b1e5-df98a3d40ce6", appName);
+
+        // Process 2 creates and acquires a lock on row 2
+        Response responseCreate2 = lock.createLockReference(lockName + "2", "1", "1", authorization,
+                "abcde002-d857-4e90-b1e5-df98a3d40ce6", jsonLock, "process2", appName);
+        Map<String, Object> respMapCreate2 = (Map<String, Object>) responseCreate2.getEntity();
+        String lockRefCreate2 = ((Map<String, String>) respMapCreate2.get("lock")).get("lock");
+
+        Response responseAcquire2 =
+                lock.accquireLock(lockRefCreate2, "1", "1", authorization, "abc66002-d857-4e90-b1e5-df98a3d40ce6", appName);
+
+        // Process 2 creates a lock on row 1
+        Response responseCreate3 = lock.createLockReference(lockName, "1", "1", authorization,
+                "abcde003-d857-4e90-b1e5-df98a3d40ce6", jsonLock, "process2", appName);
+
+        // Process 1 creates a lock on row 2, causing deadlock
+        Response responseCreate4 = lock.createLockReference(lockName + "2", "1", "1", authorization,
+                "abcde004-d857-4e90-b1e5-df98a3d40ce6", jsonLock, "process1", appName);
+        Map<String, Object> respMapCreate4 = (Map<String, Object>) responseCreate4.getEntity();
+
+        System.out.println("Status: " + responseCreate4.getStatus() + ". Entity " + responseCreate4.getEntity());
+        assertEquals(400, responseCreate4.getStatus());
+        assertTrue(respMapCreate4.containsKey("error"));
+        assertTrue( ((String)respMapCreate4.get("error")).toLowerCase().indexOf("deadlock") > -1 );
+    }
+
+
     // Ignoring since this is now a duplicate of delete lock ref.
     @Test
     @Ignore
@@ -566,6 +608,24 @@ public class TstRestMusicLockAPI {
         jsonInsert.setTableName(tableName);
         jsonInsert.setValues(values);
         Response response = data.insertIntoTable("1", "1", "1", "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName,
+                authorization, jsonInsert, keyspaceName, tableName);
+    }
+
+    private void insertAnotherIntoTable() throws Exception {
+        createTable();
+
+        JsonInsert jsonInsert = new JsonInsert();
+        Map<String, String> consistencyInfo = new HashMap<>();
+        Map<String, Object> values = new HashMap<>();
+        values.put("uuid", "cccccccc-d857-4e90-b1e5-df98a3d40cd6");
+        values.put("emp_name", "testname2");
+        values.put("emp_salary", 700);
+        consistencyInfo.put("type", "eventual");
+        jsonInsert.setConsistencyInfo(consistencyInfo);
+        jsonInsert.setKeyspaceName(keyspaceName);
+        jsonInsert.setTableName(tableName);
+        jsonInsert.setValues(values);
+        Response response = data.insertIntoTable("1", "1", "1", "abcdef00-d857-4e90-b1e5-df98a3d40ce6", appName,
                 authorization, jsonInsert, keyspaceName, tableName);
     }
 
