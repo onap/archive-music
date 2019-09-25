@@ -41,6 +41,7 @@ import org.onap.music.eelf.logging.format.ErrorSeverity;
 import org.onap.music.eelf.logging.format.ErrorTypes;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
+import org.onap.music.lockingservice.cassandra.LockType;
 import org.onap.music.main.CipherUtil;
 import org.onap.music.main.MusicUtil;
 import com.datastax.driver.core.Cluster;
@@ -57,9 +58,12 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.TableMetadata;
+import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.extras.codecs.enums.EnumNameCodec;
+import com.datastax.driver.extras.codecs.enums.EnumOrdinalCodec;
 
 /**
  * @author nelson24
@@ -93,15 +97,23 @@ public class MusicDataStore {
     public void setCluster(Cluster cluster) {
         this.cluster = cluster;
     }
+    
+    public Cluster getCluster() {
+        return this.cluster;
+    }
 
 
     private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicDataStore.class);
 
     /**
-     *
+     * Connect to default Cassandra address
      */
     public MusicDataStore() {
-        connectToCassaCluster();
+        try {
+            connectToCassaCluster(MusicUtil.getMyCassaHost());
+        } catch (MusicServiceException e) {
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), e);
+        }
     }
 
 
@@ -129,82 +141,6 @@ public class MusicDataStore {
 
     /**
      *
-     * @return
-     */
-    private ArrayList<String> getAllPossibleLocalIps() {
-        ArrayList<String> allPossibleIps = new ArrayList<>();
-        try {
-            Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces();
-            while (en.hasMoreElements()) {
-                NetworkInterface ni = en.nextElement();
-                Enumeration<InetAddress> ee = ni.getInetAddresses();
-                while (ee.hasMoreElements()) {
-                    InetAddress ia = ee.nextElement();
-                    allPossibleIps.add(ia.getHostAddress());
-                }
-            }
-        } catch (SocketException e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), AppMessages.CONNCECTIVITYERROR,
-                ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR, e);
-        }catch(Exception e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(), ErrorSeverity.ERROR, ErrorTypes
-                .GENERALSERVICEERROR, e);
-        }
-        return allPossibleIps;
-    }
-
-    /**
-     * This method iterates through all available IP addresses and connects to multiple cassandra
-     * clusters.
-     */
-    private void connectToCassaCluster() {
-        Iterator<String> it = getAllPossibleLocalIps().iterator();
-        String address = "localhost";
-        String[] addresses = null;
-        address = MusicUtil.getMyCassaHost();
-        addresses = address.split(",");
-
-        logger.info(EELFLoggerDelegate.applicationLogger,
-                        "Connecting to cassa cluster: Iterating through possible ips:"
-                                        + getAllPossibleLocalIps());
-        PoolingOptions poolingOptions = new PoolingOptions();
-        poolingOptions
-        .setConnectionsPerHost(HostDistance.LOCAL,  4, 10)
-        .setConnectionsPerHost(HostDistance.REMOTE, 2, 4);
-        while (it.hasNext()) {
-            try {
-                if(MusicUtil.getCassName() != null && MusicUtil.getCassPwd() != null) {
-                    String cassPwd = CipherUtil.decryptPKC(MusicUtil.getCassPwd());
-                    logger.info(EELFLoggerDelegate.applicationLogger,
-                            "Building with credentials "+MusicUtil.getCassName()+" & "+MusicUtil.getCassPwd());
-                    cluster = Cluster.builder().withPort(MusicUtil.getCassandraPort())
-                                        .withCredentials(MusicUtil.getCassName(), cassPwd)
-                                        //.withLoadBalancingPolicy(new RoundRobinPolicy())
-                                        .withoutJMXReporting()
-                                        .withPoolingOptions(poolingOptions)
-                                        .addContactPoints(addresses).build();
-                }
-                else
-                    cluster = Cluster.builder().withPort(MusicUtil.getCassandraPort())
-                                        //.withLoadBalancingPolicy(new RoundRobinPolicy())
-                                        .addContactPoints(addresses).build();
-
-                Metadata metadata = cluster.getMetadata();
-                logger.info(EELFLoggerDelegate.applicationLogger, "Connected to cassa cluster "
-                                + metadata.getClusterName() + " at " + address);
-                session = cluster.connect();
-
-                break;
-            } catch (NoHostAvailableException e) {
-                address = it.next();
-                logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),AppMessages.HOSTUNAVAILABLE,
-                    ErrorSeverity.ERROR, ErrorTypes.CONNECTIONERROR, e);
-            }
-        }
-    }
-
-    /**
-     *
      */
     public void close() {
         session.close();
@@ -222,6 +158,7 @@ public class MusicDataStore {
         poolingOptions
         .setConnectionsPerHost(HostDistance.LOCAL,  4, 10)
         .setConnectionsPerHost(HostDistance.REMOTE, 2, 4);
+        
         if(MusicUtil.getCassName() != null && MusicUtil.getCassPwd() != null) {
             String cassPwd = CipherUtil.decryptPKC(MusicUtil.getCassPwd());
             logger.info(EELFLoggerDelegate.applicationLogger,
@@ -236,12 +173,18 @@ public class MusicDataStore {
             cluster = Cluster.builder().withPort(MusicUtil.getCassandraPort())
                         .withoutJMXReporting()
                         .withPoolingOptions(poolingOptions)
-                        .addContactPoints(addresses).build();
+                        .addContactPoints(addresses)
+                        .build();
         }
+        
         
         Metadata metadata = cluster.getMetadata();
         logger.info(EELFLoggerDelegate.applicationLogger, "Connected to cassa cluster "
                         + metadata.getClusterName() + " at " + address);
+        
+        EnumNameCodec<LockType> lockTypeCodec = new EnumNameCodec<LockType>(LockType.class);
+        cluster.getConfiguration().getCodecRegistry().register(lockTypeCodec);
+
         try {
             session = cluster.connect();
         } catch (Exception ex) {

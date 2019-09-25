@@ -133,15 +133,10 @@ public interface MusicCoreService {
 
     public void destroyLockRef(String lockId) throws MusicLockingException;
     
-    //public MusicLockState destroyLockRef(String fullyQualifiedKey, String lockReference); // lock name, lock id
-
-    //public MusicLockState voluntaryReleaseLock(String fullyQualifiedKey, String lockReference)
-    //        throws MusicLockingException;// lock name,lock id
-
     public void deleteLock(String lockName) throws MusicLockingException;
     
-    //public MusicLockState  forciblyReleaseLock(String fullyQualifiedKey, String lockReference) throws MusicLockingException, MusicServiceException, MusicQueryException;
-
+    public ReturnType promoteLock(String lockIdToPromote) throws MusicLockingException;
+    
     public List<String> getLockQueue(String fullyQualifiedKey)
         throws MusicServiceException, MusicQueryException, MusicLockingException;
     
@@ -182,5 +177,7 @@ public interface MusicCoreService {
     
     public ReturnType deleteFromTable(JsonDelete jsonDeleteObj,MultivaluedMap<String, String> rowParams) 
             throws MusicLockingException, MusicQueryException, MusicServiceException;
+
+
 
 }

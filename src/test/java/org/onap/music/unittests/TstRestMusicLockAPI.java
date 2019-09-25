@@ -480,6 +480,138 @@ public class TstRestMusicLockAPI {
         assertTrue( ((String)respMapCreate4.get("error")).toLowerCase().indexOf("deadlock") > -1 );
     }
 
+    
+    @SuppressWarnings("unchecked")
+    @Test
+    public void test_lockPromotion() throws Exception {
+        System.out.println("Testing lock promotion");
+        createAndInsertIntoTable();
+        insertAnotherIntoTable();
+
+        // creates a lock 1
+        JsonLock jsonLock = createJsonLock(LockType.READ);
+        Response responseCreate1 = lock.createLockReference(lockName, "1", "1", authorization,
+                "abcde001-d857-4e90-b1e5-df98a3d40ce6", jsonLock, "process1", appName);
+        Map<String, Object> respMapCreate1 = (Map<String, Object>) responseCreate1.getEntity();
+        String lockRefCreate1 = ((Map<String, String>) respMapCreate1.get("lock")).get("lock");
+
+        Response respMapPromote = lock.promoteLock(lockRefCreate1, "1", "1", authorization, null, appName);        
+        System.out.println("Status: " + respMapPromote.getStatus() + ". Entity " + respMapPromote.getEntity());
+        
+        assertEquals(200, respMapPromote.getStatus());
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Test
+    public void test_lockPromotionReadWrite() throws Exception {
+        System.out.println("Testing lock promotion with read and writes");
+        createAndInsertIntoTable();
+        insertAnotherIntoTable();
+
+        // creates a lock 1
+        JsonLock jsonLockRead = createJsonLock(LockType.READ);
+        Response responseCreate1 = lock.createLockReference(lockName, "1", "1", authorization,
+                "abcde001-d857-4e90-b1e5-df98a3d40ce6", jsonLockRead, "process1", appName);
+        Map<String, Object> respMapCreate1 = (Map<String, Object>) responseCreate1.getEntity();
+        String lockRefCreate1 = ((Map<String, String>) respMapCreate1.get("lock")).get("lock");
+        
+        JsonLock jsonLockWrite = createJsonLock(LockType.WRITE);
+        Response responseCreate2 = lock.createLockReference(lockName, "1", "1", authorization,
+                "abcde001-d857-4e90-b1e5-df98a3d40ce6", jsonLockWrite, "process1", appName);
+        Map<String, Object> respMapCreate2 = (Map<String, Object>) responseCreate2.getEntity();
+        String lockRefCreate2 = ((Map<String, String>) respMapCreate2.get("lock")).get("lock");
+
+        Response respMapPromote = lock.promoteLock(lockRefCreate1, "1", "1", authorization, null, appName);        
+        System.out.println("Status: " + respMapPromote.getStatus() + ". Entity " + respMapPromote.getEntity());
+        
+        assertEquals(200, respMapPromote.getStatus());
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Test
+    public void test_lockPromotionWriteRead() throws Exception {
+        System.out.println("Testing lock promotion with reads not at top of queue");
+        createAndInsertIntoTable();
+        insertAnotherIntoTable();
+
+        // creates a lock 1
+        JsonLock jsonLockWrite = createJsonLock(LockType.WRITE);
+        Response responseCreate2 = lock.createLockReference(lockName, "1", "1", authorization,
+                "abcde001-d857-4e90-b1e5-df98a3d40ce6", jsonLockWrite, "process1", appName);
+        Map<String, Object> respMapCreate2 = (Map<String, Object>) responseCreate2.getEntity();
+        String lockRefCreate2 = ((Map<String, String>) respMapCreate2.get("lock")).get("lock");
+        
+        // creates a lock 2
+        JsonLock jsonLockRead = createJsonLock(LockType.READ);
+        Response responseCreate1 = lock.createLockReference(lockName, "1", "1", authorization,
+                "abcde001-d857-4e90-b1e5-df98a3d40ce6", jsonLockRead, "process1", appName);
+        Map<String, Object> respMapCreate1 = (Map<String, Object>) responseCreate1.getEntity();
+        String lockRefCreate1 = ((Map<String, String>) respMapCreate1.get("lock")).get("lock");
+        
+        
+
+        Response respMapPromote = lock.promoteLock(lockRefCreate1, "1", "1", authorization, null, appName);        
+        System.out.println("Status: " + respMapPromote.getStatus() + ". Entity " + respMapPromote.getEntity());
+        
+        assertEquals(200, respMapPromote.getStatus());
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Test
+    public void test_lockPromotion2Reads() throws Exception {
+        System.out.println("Testing lock promotion w/ 2 ReadLocks");
+        createAndInsertIntoTable();
+        insertAnotherIntoTable();
+
+        // creates a lock 1
+        JsonLock jsonLockRead = createJsonLock(LockType.READ);
+        Response responseCreate1 = lock.createLockReference(lockName, "1", "1", authorization,
+                "abcde001-d857-4e90-b1e5-df98a3d40ce6", jsonLockRead, "process1", appName);
+        Map<String, Object> respMapCreate1 = (Map<String, Object>) responseCreate1.getEntity();
+        String lockRefCreate1 = ((Map<String, String>) respMapCreate1.get("lock")).get("lock");
+        
+        Response responseCreate2 = lock.createLockReference(lockName, "1", "1", authorization,
+                "abcde001-d857-4e90-b1e5-df98a3d40ce6", jsonLockRead, "process1", appName);
+        Map<String, Object> respMapCreate2 = (Map<String, Object>) responseCreate1.getEntity();
+        String lockRefCreate2 = ((Map<String, String>) respMapCreate1.get("lock")).get("lock");
+
+        Response respMapPromote = lock.promoteLock(lockRefCreate1, "1", "1", authorization, null, appName);        
+        System.out.println("Status: " + respMapPromote.getStatus() + ". Entity " + respMapPromote.getEntity());
+        
+        assertEquals(400, respMapPromote.getStatus());
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Test
+    public void test_2lockPromotions() throws Exception {
+        System.out.println("Testing 2 lock promotions");
+        createAndInsertIntoTable();
+        insertAnotherIntoTable();
+
+        // creates a lock 1
+        JsonLock jsonLockRead = createJsonLock(LockType.READ);
+        Response responseCreate1 = lock.createLockReference(lockName, "1", "1", authorization,
+                "abcde001-d857-4e90-b1e5-df98a3d40ce6", jsonLockRead, "process1", appName);
+        Map<String, Object> respMapCreate1 = (Map<String, Object>) responseCreate1.getEntity();
+        String lockRefCreate1 = ((Map<String, String>) respMapCreate1.get("lock")).get("lock");
+        
+        Response responseCreate2 = lock.createLockReference(lockName, "1", "1", authorization,
+                "abcde001-d857-4e90-b1e5-df98a3d40ce6", jsonLockRead, "process1", appName);
+        Map<String, Object> respMapCreate2 = (Map<String, Object>) responseCreate2.getEntity();
+        String lockRefCreate2 = ((Map<String, String>) respMapCreate2.get("lock")).get("lock");
+
+        Response respMapPromote = lock.promoteLock(lockRefCreate1, "1", "1", authorization, null, appName);        
+        System.out.println("Status: " + respMapPromote.getStatus() + ". Entity " + respMapPromote.getEntity());
+        
+        assertEquals(400, respMapPromote.getStatus());
+        
+        Response respMap2Promote = lock.promoteLock(lockRefCreate2, "1", "1", authorization, null, appName);        
+        System.out.println("Status: " + respMap2Promote.getStatus() + ". Entity " + respMap2Promote.getEntity());
+        
+        assertEquals(400, respMapPromote.getStatus());
+    }
+    
+    
 
     // Ignoring since this is now a duplicate of delete lock ref.
     @Test
