@@ -42,9 +42,10 @@ import java.util.UUID;
 import org.cassandraunit.utils.EmbeddedCassandraServerHelper;
 import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.PreparedQueryObject;
-
+import org.onap.music.lockingservice.cassandra.LockType;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.extras.codecs.enums.EnumNameCodec;
 
 public class CassandraCQL {
 	public static final String createAdminKeyspace = "CREATE KEYSPACE admin WITH REPLICATION = "
@@ -235,6 +236,9 @@ public class CassandraCQL {
         EmbeddedCassandraServerHelper.startEmbeddedCassandra();
         Cluster cluster = new Cluster.Builder().withoutJMXReporting().withoutMetrics().addContactPoint(address).withPort(9142).build();
         cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(5000);
+        EnumNameCodec<LockType> lockTypeCodec = new EnumNameCodec<LockType>(LockType.class);
+        cluster.getConfiguration().getCodecRegistry().register(lockTypeCodec);
+        
         Session session = cluster.connect();
         
         return new MusicDataStore(cluster, session);

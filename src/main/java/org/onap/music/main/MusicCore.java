@@ -121,6 +121,10 @@ public class MusicCore {
     public static List<String> getCurrentLockHolders(String fullyQualifiedKey) {
         return musicCore.getCurrentLockHolders(fullyQualifiedKey);
     }
+    
+    public static ReturnType promoteLock(String lockIdToPromote) throws MusicLockingException {
+        return musicCore.promoteLock(lockIdToPromote);
+    }
 
     public static void destroyLockRef(String lockId) throws MusicLockingException {
         musicCore.destroyLockRef(lockId);
