@@ -236,8 +236,6 @@ public class CassandraCQL {
         EmbeddedCassandraServerHelper.startEmbeddedCassandra();
         Cluster cluster = new Cluster.Builder().withoutJMXReporting().withoutMetrics().addContactPoint(address).withPort(9142).build();
         cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(5000);
-        EnumNameCodec<LockType> lockTypeCodec = new EnumNameCodec<LockType>(LockType.class);
-        cluster.getConfiguration().getCodecRegistry().register(lockTypeCodec);
         
         Session session = cluster.connect();
         
