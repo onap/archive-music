@@ -158,6 +158,26 @@ public class MusicCassaCore implements MusicCoreService {
         logger.info(EELFLoggerDelegate.applicationLogger,"Time taken to create lock reference:" + (end - start) + " ms");
         return lockReference;
     }
+    
+    public ReturnType promoteLock(String lockId) throws MusicLockingException {
+        String[] splitString = lockId.split("\\.");
+        String keyspace = splitString[0].substring(1);//remove '$'
+        String table = splitString[1];
+        String primaryKeyValue = splitString[2].substring(0, splitString[2].lastIndexOf("$"));
+        String localFullyQualifiedKey = lockId.substring(1, lockId.lastIndexOf("$"));
+        String lockRef = lockId.substring(lockId.lastIndexOf("$")+1); //lockRef is "$" to end
+        
+        logger.info(EELFLoggerDelegate.applicationLogger,"Attempting to promote lock " + lockId);
+
+        try {
+            return getLockingServiceHandle().promoteLock(keyspace, table, primaryKeyValue, lockRef);
+        } catch (MusicServiceException e) {
+            throw new MusicLockingException("Unable to promote lock. ", e);
+        } catch (MusicQueryException e) {
+            throw new MusicLockingException("Unable to promote lock. ", e);
+        }
+        
+    }
 
 
     public ReturnType acquireLockWithLease(String fullyQualifiedKey, String lockReference, long leasePeriod)

@@ -568,4 +568,65 @@ public class RestMusicLocksAPI {
         }
     }
 
+    
+    /**
+     * Puts the requesting process in the q for this lock. The corresponding
+     * node will be created if it did not already exist
+     * 
+     * @param lockName
+     * @return
+     * @throws Exception 
+     */
+    @POST
+    @Path("/promote/{lockname}")
+    @ApiOperation(value = "Attempt to promote the lock for a single row.",
+        response = Map.class)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiResponses(value={
+        @ApiResponse(code=200, message = "Success",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "\"status\" : \"SUCCESS\"}")
+        })),
+        @ApiResponse(code=400, message = "Failure",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"error\" : \"Unable to promote lock\","
+                + "\"status\" : \"FAILURE\"}") 
+        }))
+    })  
+    public Response promoteLock(
+            @ApiParam(value="Lock Id",required=true) @PathParam("lockId") String lockId,
+            @ApiParam(value = "Minor Version",required = false) @HeaderParam(XMINORVERSION) String minorVersion,
+            @ApiParam(value = "Patch Version",required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
+            @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization)
+                    throws Exception {
+        try { 
+            ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
+            Map<String, Object> resultMap = MusicCore.validateLock(lockId);
+            if (resultMap.containsKey("Error")) {
+                logger.error(EELFLoggerDelegate.errorLogger,"", AppMessages.INCORRECTDATA  ,ErrorSeverity.CRITICAL, ErrorTypes.GENERALSERVICEERROR);
+                response.status(Status.BAD_REQUEST);
+                return response.entity(new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap()).build();
+            }
+            
+            String keyspaceName = (String) resultMap.get("keyspace");
+            EELFLoggerDelegate.mdcPut("keyspace", "( " + keyspaceName + " ) ");
+            
+            try {
+                ReturnType lockStatus = MusicCore.promoteLock(lockId);
+                if ( lockStatus.getResult().equals(ResultType.SUCCESS)) {
+                    response.status(Status.OK);
+                } else {
+                    response.status(Status.BAD_REQUEST);
+                }
+                return response.entity(new JsonResponse(lockStatus.getResult()).setLock(lockId).setMessage(lockStatus.getMessage()).toMap()).build();
+            } catch (Exception e) {
+                logger.error(EELFLoggerDelegate.errorLogger,AppMessages.INVALIDLOCK + lockId, ErrorSeverity.CRITICAL,
+                    ErrorTypes.LOCKINGERROR, e);
+                return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError("Unable to promote lock").toMap()).build();
+            }
+        } finally {
+            EELFLoggerDelegate.mdcRemove("keyspace");
+        }
+    }
 }

@@ -25,6 +25,6 @@ package org.onap.music.lockingservice.cassandra;
 
 
 public enum LockType {
-	READ, WRITE;
+	WRITE, READ, PROMOTING;
 }
 
