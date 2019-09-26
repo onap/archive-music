@@ -78,34 +78,6 @@ public class MusicDataStore {
 
 
     /**
-     * @param session
-     */
-    public void setSession(Session session) {
-        this.session = session;
-    }
-
-    /**
-     * @param session
-     */
-    public Session getSession() {
-        return session;
-    }
-
-    /**
-     * @param cluster
-     */
-    public void setCluster(Cluster cluster) {
-        this.cluster = cluster;
-    }
-    
-    public Cluster getCluster() {
-        return this.cluster;
-    }
-
-
-    private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicDataStore.class);
-
-    /**
      * Connect to default Cassandra address
      */
     public MusicDataStore() {
@@ -123,9 +95,42 @@ public class MusicDataStore {
      */
     public MusicDataStore(Cluster cluster, Session session) {
         this.session = session;
-        this.cluster = cluster;
+        setCluster(cluster);
     }
 
+    
+    /**
+     * @param session
+     */
+    public void setSession(Session session) {
+        this.session = session;
+    }
+
+    /**
+     * @param session
+     */
+    public Session getSession() {
+        return session;
+    }
+
+    /**
+     * @param cluster
+     */
+    public void setCluster(Cluster cluster) {
+        EnumNameCodec<LockType> lockTypeCodec = new EnumNameCodec<LockType>(LockType.class);
+        cluster.getConfiguration().getCodecRegistry().register(lockTypeCodec);
+        
+        this.cluster = cluster;
+    }
+    
+    public Cluster getCluster() {
+        return this.cluster;
+    }
+
+
+    private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicDataStore.class);
+
+    
     /**
      *
      * @param remoteIp
@@ -159,6 +164,7 @@ public class MusicDataStore {
         .setConnectionsPerHost(HostDistance.LOCAL,  4, 10)
         .setConnectionsPerHost(HostDistance.REMOTE, 2, 4);
         
+        Cluster cluster;
         if(MusicUtil.getCassName() != null && MusicUtil.getCassPwd() != null) {
             String cassPwd = CipherUtil.decryptPKC(MusicUtil.getCassPwd());
             logger.info(EELFLoggerDelegate.applicationLogger,
@@ -177,16 +183,13 @@ public class MusicDataStore {
                         .build();
         }
         
-        
-        Metadata metadata = cluster.getMetadata();
+        this.setCluster(cluster);
+        Metadata metadata = this.cluster.getMetadata();
         logger.info(EELFLoggerDelegate.applicationLogger, "Connected to cassa cluster "
                         + metadata.getClusterName() + " at " + address);
-        
-        EnumNameCodec<LockType> lockTypeCodec = new EnumNameCodec<LockType>(LockType.class);
-        cluster.getConfiguration().getCodecRegistry().register(lockTypeCodec);
 
         try {
-            session = cluster.connect();
+            session = this.cluster.connect();
         } catch (Exception ex) {
             logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.CASSANDRACONNECTIVITY,
                 ErrorSeverity.ERROR, ErrorTypes.SERVICEUNAVAILABLE, ex);
