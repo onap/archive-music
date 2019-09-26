@@ -1,0 +1,5 @@
+---
+distribution_type: 'maven'
+version: '3.2.35'
+project: 'music'
+log_dir: 'music-maven-stage-master/140/'
