@@ -16,6 +16,24 @@
       "revId": "c8adfc5ea25d6ffd45edd5213195ce0c4568b57f",
       "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "23ae3b3a_e53c8f69",
+        "filename": "src/main/java/org/onap/music/datastore/MusicDataStore.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-09-26T17:48:46Z",
+      "side": 0,
+      "message": "This doesn\u0027t do what it\u0027s supposed to do. If you go through the code, it repeatedly adds \"localhost\" to the cluster. If it is needed, it needs to be reworked, and this change will encourage the correct solution of reusing the connectToCassandra method instead of a second function.",
+      "parentUuid": "5a78fc3f_f0245049",
+      "revId": "c8adfc5ea25d6ffd45edd5213195ce0c4568b57f",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
     }
   ]
 }
