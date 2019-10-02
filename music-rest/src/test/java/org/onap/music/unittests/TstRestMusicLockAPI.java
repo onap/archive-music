@@ -437,11 +437,11 @@ public class TstRestMusicLockAPI {
                 "abc66ccc-d857-4e90-b1e5-df98a3d40ce6", appName);
         System.out.println("Status: " + response.getStatus() + ". Entity " + response.getEntity());
         assertEquals(400, response.getStatus());
-    }
+        }
 
-    @SuppressWarnings("unchecked")
-    @Test
-    public void test_deadlock() throws Exception {
+        @SuppressWarnings("unchecked")
+        @Test
+        public void test_deadlock() throws Exception {
         System.out.println("Testing deadlock");
         createAndInsertIntoTable();
         insertAnotherIntoTable();

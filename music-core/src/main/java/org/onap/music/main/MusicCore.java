@@ -81,12 +81,12 @@ public class MusicCore {
         return musicCore.acquireLockWithLease(key, lockId, leasePeriod);
     }
 
-    public static String createLockReference(String fullyQualifiedKey) throws MusicLockingException {
-        return musicCore.createLockReference(fullyQualifiedKey);
+    public static String createLockReferenceAtomic(String fullyQualifiedKey) throws MusicLockingException {
+        return musicCore.createLockReferenceAtomic(fullyQualifiedKey);
     }
 
-    public static String createLockReference(String fullyQualifiedKey, LockType locktype) throws MusicLockingException {
-        return musicCore.createLockReference(fullyQualifiedKey, locktype);
+    public static String createLockReferenceAtomic(String fullyQualifiedKey, LockType locktype) throws MusicLockingException {
+        return musicCore.createLockReferenceAtomic(fullyQualifiedKey, locktype);
     }
 
     public static String createLockReference(String fullyQualifiedKey, LockType locktype, String owner) throws MusicLockingException {

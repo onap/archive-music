@@ -89,14 +89,14 @@ public interface MusicCoreService {
      * @param fullyQualifiedKey the key to create a lock on
      * @see {@link #creatLockReference(String, LockType)}
      */
-    public String createLockReference(String fullyQualifiedKey) throws MusicLockingException; // lock name
+    public String createLockReferenceAtomic(String fullyQualifiedKey) throws MusicLockingException; // lock name
 
     /**
      * Create a lock ref in the music lock store
      * @param fullyQualifiedKey the key to create a lock on
      * @param locktype the type of lock create, see {@link LockType}
      */
-    public String createLockReference(String fullyQualifiedKey, LockType locktype) throws MusicLockingException;
+    public String createLockReferenceAtomic(String fullyQualifiedKey, LockType locktype) throws MusicLockingException;
     
     /**
      * Create a lock ref in the music lock store

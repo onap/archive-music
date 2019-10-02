@@ -94,9 +94,9 @@ public class MusicConditional {
         String key = keyspace + "." + tablename + "." + primaryKey;
         String lockId;
         try {
-        	lockId = MusicCore.createLockReference(key);
+            lockId = MusicCore.createLockReferenceAtomic(key);
         } catch (MusicLockingException e) {
-        	return new ReturnType(ResultType.FAILURE, e.getMessage());
+            return new ReturnType(ResultType.FAILURE, e.getMessage());
         }
         long leasePeriod = MusicUtil.getDefaultLockLeasePeriod();
         ReturnType lockAcqResult = MusicCore.acquireLockWithLease(key, lockId, leasePeriod);
@@ -169,7 +169,7 @@ public class MusicConditional {
             throws MusicLockingException, MusicQueryException, MusicServiceException {
 
         String key = dataObj.getKeyspace() + "." + dataObj.getTableName() + "." + dataObj.getPrimaryKeyValue();
-        String lockId = MusicCore.createLockReference(key);
+        String lockId = MusicCore.createLockReferenceAtomic(key);
         long leasePeriod = MusicUtil.getDefaultLockLeasePeriod();
         ReturnType lockAcqResult = MusicCore.acquireLockWithLease(key, lockId, leasePeriod);
 
