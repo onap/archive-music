@@ -480,7 +480,7 @@ public class CassaLockStore {
 
         DeadlockDetectionUtil ddu = new DeadlockDetectionUtil();
 
-        ResultSet rs = dsHandle.executeQuorumConsistencyGet(queryObject);
+        ResultSet rs = dsHandle.executeLocalQuorumConsistencyGet(queryObject);
         logger.debug("rs has " + rs.getAvailableWithoutFetching() + (rs.isFullyFetched()?"":" (or more!)") );
         Iterator<Row> it = rs.iterator();
         while (it.hasNext()) {

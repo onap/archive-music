@@ -25,14 +25,8 @@
 
 package org.onap.music.datastore;
 
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
@@ -58,12 +52,9 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.TableMetadata;
-import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.extras.codecs.enums.EnumNameCodec;
-import com.datastax.driver.extras.codecs.enums.EnumOrdinalCodec;
 
 /**
  * @author nelson24
@@ -73,6 +64,7 @@ public class MusicDataStore {
 
     public static final String CONSISTENCY_LEVEL_ONE = "ONE";
     public static final String CONSISTENCY_LEVEL_QUORUM = "QUORUM";
+    public static final String CONSISTENCY_LEVEL_LOCAL_QUORUM = "LOCAL_QUORUM";
     private Session session;
     private Cluster cluster;
 
@@ -511,7 +503,18 @@ public class MusicDataStore {
                     throws MusicServiceException, MusicQueryException {
         return executeGet(queryObject, CONSISTENCY_LEVEL_ONE);
     }
-
+    
+    /**
+     * 
+     * This method performs DDL operation on Cassandra using consistency level LOCAL_QUORUM.
+     * 
+     * @param queryObject Object containing cassandra prepared query and values.
+     */
+    public ResultSet executeLocalQuorumConsistencyGet(PreparedQueryObject queryObject)
+                    throws MusicServiceException, MusicQueryException {
+        return executeGet(queryObject, CONSISTENCY_LEVEL_LOCAL_QUORUM);
+    }
+    
     /**
      * 
      * This method performs DDL operation on Cassandra using consistency level QUORUM.
@@ -522,5 +525,5 @@ public class MusicDataStore {
                     throws MusicServiceException, MusicQueryException {
         return executeGet(queryObject, CONSISTENCY_LEVEL_QUORUM);
     }
-
+    
 }
