@@ -25,14 +25,11 @@
 
 package org.onap.music.datastore;
 
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
+
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Enumeration;
+
 import java.util.HashMap;
-import java.util.Iterator;
+
 import java.util.Map;
 
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
@@ -58,12 +55,12 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.TableMetadata;
-import com.datastax.driver.core.TypeCodec;
+
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
+
 import com.datastax.driver.extras.codecs.enums.EnumNameCodec;
-import com.datastax.driver.extras.codecs.enums.EnumOrdinalCodec;
+
 
 /**
  * @author nelson24
@@ -74,7 +71,7 @@ public class MusicDataStore {
     public static final String CONSISTENCY_LEVEL_ONE = "ONE";
     public static final String CONSISTENCY_LEVEL_QUORUM = "QUORUM";
     private Session session;
-    private Cluster cluster;
+    private Cluster cluster1;
 
 
     /**
@@ -117,18 +114,18 @@ public class MusicDataStore {
      * @param cluster
      */
     public void setCluster(Cluster cluster) {
-        EnumNameCodec<LockType> lockTypeCodec = new EnumNameCodec<LockType>(LockType.class);
+        EnumNameCodec<LockType> lockTypeCodec = new EnumNameCodec<>(LockType.class);
         cluster.getConfiguration().getCodecRegistry().register(lockTypeCodec);
         
-        this.cluster = cluster;
+        this.cluster1 = cluster;
     }
     
     public Cluster getCluster() {
-        return this.cluster;
+        return this.cluster1;
     }
 
 
-    private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicDataStore.class);
+    private final static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicDataStore.class);
 
     
     /**
@@ -184,12 +181,12 @@ public class MusicDataStore {
         }
         
         this.setCluster(cluster);
-        Metadata metadata = this.cluster.getMetadata();
+        Metadata metadata = this.cluster1.getMetadata();
         logger.info(EELFLoggerDelegate.applicationLogger, "Connected to cassa cluster "
                         + metadata.getClusterName() + " at " + address);
 
         try {
-            session = this.cluster.connect();
+            session = this.cluster1.connect();
         } catch (Exception ex) {
             logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.CASSANDRACONNECTIVITY,
                 ErrorSeverity.ERROR, ErrorTypes.SERVICEUNAVAILABLE, ex);
@@ -206,7 +203,7 @@ public class MusicDataStore {
      * @return DataType
      */
     public DataType returnColumnDataType(String keyspace, String tableName, String columnName) {
-        KeyspaceMetadata ks = cluster.getMetadata().getKeyspace(keyspace);
+        KeyspaceMetadata ks = cluster1.getMetadata().getKeyspace(keyspace);
         TableMetadata table = ks.getTable(tableName);
         return table.getColumn(columnName).getType();
 
@@ -219,7 +216,7 @@ public class MusicDataStore {
      * @return TableMetadata
      */
     public TableMetadata returnColumnMetadata(String keyspace, String tableName) {
-        KeyspaceMetadata ks = cluster.getMetadata().getKeyspace(keyspace);
+        KeyspaceMetadata ks = cluster1.getMetadata().getKeyspace(keyspace);
         return ks.getTable(tableName);
     }
     
@@ -230,7 +227,7 @@ public class MusicDataStore {
     * @return TableMetadata
     */
    public KeyspaceMetadata returnKeyspaceMetadata(String keyspace) {
-       return cluster.getMetadata().getKeyspace(keyspace);
+       return cluster1.getMetadata().getKeyspace(keyspace);
    }
 
 
