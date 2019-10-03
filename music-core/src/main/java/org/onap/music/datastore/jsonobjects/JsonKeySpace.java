@@ -45,9 +45,9 @@ import io.swagger.annotations.ApiModelProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonKeySpace {
     private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(JsonKeySpace.class);
-    private String keyspaceName;
-    private Map<String, Object> replicationInfo;
-    private String durabilityOfWrites;
+    private String keyspaceName1;
+    private Map<String, Object> replicationInfo1;
+    private String durabilityOfWrites1;
     private Map<String, String> consistencyInfo;
 
     @ApiModelProperty(value = "Consistency level", allowableValues = "eventual,critical,atomic")
@@ -61,29 +61,29 @@ public class JsonKeySpace {
 
     @ApiModelProperty(value = "Replication information")
     public Map<String, Object> getReplicationInfo() {
-        return replicationInfo;
+        return replicationInfo1;
     }
 
     public void setReplicationInfo(Map<String, Object> replicationInfo) {
-        this.replicationInfo = replicationInfo;
+        this.replicationInfo1 = replicationInfo;
     }
 
     @ApiModelProperty(value = "Durability", allowableValues = "true,false")
     public String getDurabilityOfWrites() {
-        return durabilityOfWrites;
+        return durabilityOfWrites1;
     }
 
     public void setDurabilityOfWrites(String durabilityOfWrites) {
-        this.durabilityOfWrites = durabilityOfWrites;
+        this.durabilityOfWrites1 = durabilityOfWrites;
     }
 
     @ApiModelProperty(value = "Keyspace name")
     public String getKeyspaceName() {
-        return keyspaceName;
+        return keyspaceName1;
     }
 
     public void setKeyspaceName(String keyspaceName) {
-        this.keyspaceName = keyspaceName;
+        this.keyspaceName1 = keyspaceName;
     }
 
     /**
@@ -156,8 +156,8 @@ public class JsonKeySpace {
 
     @Override
     public String toString() {
-        return "CassaKeyspaceObject [keyspaceName=" + keyspaceName + ", replicationInfo=" + replicationInfo
-                + "durabilityOfWrites=" + durabilityOfWrites + "]";
+        return "CassaKeyspaceObject [keyspaceName=" + keyspaceName1 + ", replicationInfo=" + replicationInfo1
+                + "durabilityOfWrites=" + durabilityOfWrites1 + "]";
     }
 
 }

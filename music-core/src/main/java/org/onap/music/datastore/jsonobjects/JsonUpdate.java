@@ -79,7 +79,7 @@ public class JsonUpdate implements Serializable {
     }
 
     @ApiModelProperty(value = "Information for selecting sepcific rows")
-    public Map<String, Object> getRow_specification() {
+    public Map<String, Object> getRowSpecification() {
         return rowSpecification;
     }
 

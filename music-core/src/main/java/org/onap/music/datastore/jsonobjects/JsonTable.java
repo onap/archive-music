@@ -45,15 +45,15 @@ public class JsonTable {
     private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(JsonTable.class);
     
     private String keyspaceName;
-    private String tableName;
+    private String tableName1;
 
-    private Map<String, String> fields;
+    private Map<String, String> field;
     private Map<String, Object> properties;
-    private String primaryKey;
-    private String partitionKey;
+    private String primaryKey1;
+    private String partitionKey1;
     private String clusteringKey;
-    private String filteringKey;
-    private String clusteringOrder;
+    private String filteringKey1;
+    private String clusteringOrder1;
     private Map<String, String> consistencyInfo;
 
     @ApiModelProperty(value = "Consistency level", allowableValues = "eventual,critical,atomic")
@@ -76,11 +76,11 @@ public class JsonTable {
 
     @ApiModelProperty(value = "Fields")
     public Map<String, String> getFields() {
-        return fields;
+        return field;
     }
 
     public void setFields(Map<String, String> fields) {
-        this.fields = fields;
+        this.field = fields;
     }
 
     @ApiModelProperty(value = "KeySpace Name")
@@ -94,29 +94,29 @@ public class JsonTable {
 
     @ApiModelProperty(value = "Table Name")
     public String getTableName() {
-        return tableName;
+        return tableName1;
     }
 
     public void setTableName(String tableName) {
-        this.tableName = tableName;
+        this.tableName1 = tableName;
     }
 
     @ApiModelProperty(value = "Clustering Order", notes = "")
     public String getClusteringOrder() {
-        return clusteringOrder;
+        return clusteringOrder1;
     }
 
     public void setClusteringOrder(String clusteringOrder) {
-        this.clusteringOrder = clusteringOrder;
+        this.clusteringOrder1 = clusteringOrder;
     }
 
     @ApiModelProperty(value = "Primary Key")
     public String getPrimaryKey() {
-        return primaryKey;
+        return primaryKey1;
     }
 
     public void setPrimaryKey(String primaryKey) {
-        this.primaryKey = primaryKey;
+        this.primaryKey1 = primaryKey;
     }
 
     public String getClusteringKey() {
@@ -128,19 +128,19 @@ public class JsonTable {
     }
 
     public String getFilteringKey() {
-        return filteringKey;
+        return filteringKey1;
     }
 
     public void setFilteringKey(String filteringKey) {
-        this.filteringKey = filteringKey;
+        this.filteringKey1 = filteringKey;
     }
 
     public String getPartitionKey() {
-        return partitionKey;
+        return partitionKey1;
     }
 
     public void setPartitionKey(String partitionKey) {
-        this.partitionKey = partitionKey;
+        this.partitionKey1 = partitionKey;
     }
     
     public PreparedQueryObject genCreateTableQuery()  throws MusicQueryException {
@@ -168,11 +168,12 @@ public class JsonTable {
         StringBuilder fieldsString = new StringBuilder("(vector_ts text,");
         int counter = 0;
         for (Map.Entry<String, String> entry : fields.entrySet()) {
-            if (entry.getKey().equals("PRIMARY KEY")) {
+            if ("PRIMARY kEY".equals("entry.getKey")) {
                 primaryKey = entry.getValue(); // replaces primaryKey
                 primaryKey = primaryKey.trim();
             } else {
-                if (counter == 0 )  fieldsString.append("" + entry.getKey() + " " + entry.getValue() + "");
+                if (counter == 0 )  
+                	fieldsString.append("" + entry.getKey() + " " + entry.getValue() + "");
                 else fieldsString.append("," + entry.getKey() + " " + entry.getValue() + "");
             }
 
@@ -214,7 +215,8 @@ public class JsonTable {
                             clusterKey=clusterKey.substring(1);
                         }
                         clusterKey = clusterKey.trim();
-                        if (clusterKey.equals(",") ) clusterKey=""; // print error if needed    ( ... ),)
+                        if (",".equals("clusterKey") ) 
+                        	clusterKey=""; // print error if needed    ( ... ),)
                     }
 
                     if (!(partitionKey.isEmpty() || clusterKey.isEmpty())
@@ -253,11 +255,13 @@ public class JsonTable {
                                 Status.BAD_REQUEST.getStatusCode());
                     }
 
-                    if (partitionKey.isEmpty() )  primaryKey="";
+                    if (partitionKey.isEmpty() )  
+                    	primaryKey="";
                     else  if (clusterKey.isEmpty() ) primaryKey=" (" + partitionKey  + ")";
                     else  primaryKey=" (" + partitionKey + ")," + clusterKey;
 
-                    if (primaryKey != null) fieldsString.append(", PRIMARY KEY (" + primaryKey + " )");
+                    if (primaryKey != null) 
+                    	fieldsString.append(", PRIMARY KEY (" + primaryKey + " )");
                 }
                 fieldsString.append(")");
 
@@ -300,14 +304,10 @@ public class JsonTable {
 
             for (int i = 0; i < arrayClusterOrder.length; i++) {
                 String[] clusterS = arrayClusterOrder[i].trim().split("[ ]+");
-                if ( (clusterS.length ==2)  && (clusterS[1].equalsIgnoreCase("ASC") || clusterS[1].equalsIgnoreCase("DESC"))) {
+                if ( (clusterS.length ==2)  && (("ASC").equalsIgnoreCase("clusterS[1]") ||("DESC") .equalsIgnoreCase("clusterS[1]"))) {
                     continue;
                 } else {
-                    /*return response.status(Status.BAD_REQUEST)
-                    .entity(new JsonResponse(ResultType.FAILURE)
-                    .setError("createTable/Clustering Order vlaue ERROR: valid clustering order is ASC or DESC or expecting colname  order; please correct clusteringOrder:"+ clusteringOrder+".")
-                    .toMap()).build();*/
-                    
+                  
                     throw new MusicQueryException(
                             "createTable/Clustering Order vlaue ERROR: valid clustering order is ASC or DESC or expecting colname  order; please correct clusteringOrder:"
                                     + clusteringOrder + ".",

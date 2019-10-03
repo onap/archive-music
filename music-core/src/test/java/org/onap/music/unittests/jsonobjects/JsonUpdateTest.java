@@ -56,7 +56,7 @@ public class JsonUpdateTest {
         mapSo.put("key1","one");
         mapSo.put("key2","two");
         ju.setRow_specification(mapSo);
-        assertEquals("one",ju.getRow_specification().get("key1"));
+        assertEquals("one",ju.getRowSpecification().get("key1"));
     }
 
     @Test
