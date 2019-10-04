@@ -124,40 +124,40 @@ public class PropertiesLoader implements InitializingBean {
         if (musicAafNs != null) {
             MusicUtil.setMusicAafNs(musicAafNs);
         }
-        if (cassandraPort != null && !cassandraPort.equals("${cassandra.port}")) {
+        if (cassandraPort != null && "${cassandra.port}".equals(cassandraPort)) {
             MusicUtil.setCassandraPort(Integer.parseInt(cassandraPort));
         }
-        if (cassandraUser != null && !cassandraUser.equals("${cassandra.user}")) {
+        if (cassandraUser != null && "${cassandra.user}".equals(cassandraUser)) {
             MusicUtil.setCassName(cassandraUser);
         }
-        if (cassandraPassword != null && !cassandraPassword.equals("${cassandra.password}")) {
+        if (cassandraPassword != null &&"${cassandra.password}" .equals(cassandraPassword)) {
             MusicUtil.setCassPwd(cassandraPassword);
         }
-        if (debug != null && !debug.equals("${debug}")) {
+        if (debug != null && "${debug}" .equals(debug)) {
             MusicUtil.setDebug(Boolean.parseBoolean(debug));
         }
-        if (lockLeasePeriod != null && !lockLeasePeriod.equals("${lock.lease.period}")) {
+        if (lockLeasePeriod != null && "${lock.lease.period}".equals(lockLeasePeriod)) {
             MusicUtil.setDefaultLockLeasePeriod(Long.parseLong(lockLeasePeriod));
         }
-        if (musicProperties != null && !musicProperties.equals("${music.properties}")) {
+        if (musicProperties != null && "${music.properties}".equals(musicProperties)) {
             MusicUtil.setMusicPropertiesFilePath(musicProperties);
         }
-        if (cassandraHost != null && !cassandraHost.equals("${cassandra.host}")) {
+        if (cassandraHost != null && "${cassandra.host}".equals(cassandraHost)) {
             MusicUtil.setMyCassaHost(cassandraHost);
         }
-        if (version != null && !version.equals("${version}")) {
+        if (version != null && "${version}".equals(version)) {
             MusicUtil.setVersion(version);
         }
-        if (build != null && !version.equals("${build}")) {
+        if (build != null &&"${build}" .equals(version)) {
             MusicUtil.setBuild(build);
         }
-        if (isCadi != null && !isCadi.equals("${cadi}")) {
+        if (isCadi != null && "${cadi}".equals(isCadi)) {
             MusicUtil.setIsCadi(Boolean.parseBoolean(isCadi));
         }
-        if (rertryCount != null && !rertryCount.equals("${retry.count}")) {
+        if (rertryCount != null && "${retry.count}".equals(rertryCount)) {
             MusicUtil.setRetryCount(Integer.parseInt(rertryCount));
         }
-        if (isKeyspaceActive != null && !isKeyspaceActive.equals("${keyspace.active}")) {
+        if (isKeyspaceActive != null && "${keyspace.active}".equals(isKeyspaceActive)) {
             MusicUtil.setKeyspaceActive(Boolean.parseBoolean(isKeyspaceActive));
         }
         if(transIdPrefix!=null) {
