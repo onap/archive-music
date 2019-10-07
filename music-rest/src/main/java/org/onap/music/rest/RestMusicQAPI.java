@@ -174,7 +174,8 @@ public class RestMusicQAPI {
                 clusteringKey=clusteringKey.replaceAll("[\\(]+","");
                 clusteringKey=clusteringKey.replaceAll("[\\)]+","");
                 clusteringKey = clusteringKey.trim();
-                if (clusteringKey.indexOf(',') == 0) clusteringKey=clusteringKey.substring(1);
+                if (clusteringKey.indexOf(',') == 0) 
+                	clusteringKey=clusteringKey.substring(1);
                 clusteringKey = clusteringKey.trim();
                 if (clusteringKey.equals(",") ) clusteringKey=""; // print error if needed    ( ... ),)
             }

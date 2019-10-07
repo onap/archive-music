@@ -114,7 +114,7 @@ public class MusicUtil {
     //     "music.namespace","admin.aaf.role","cassandra.port","lock.using","retry.count",
     //     "transId.header.required","conversation.header.required","clientId.header.required",
     //     "messageId.header.required","transId.header.prefix","conversation.header.prefix",
-    //     "clientId.header.prefix","messageId.header.prefix"};
+   
     // Consistency Constants and variables. 
     private static final String[] cosistencyLevel = new String[] {
         "ALL","EACH_QUORUM","QUORUM","LOCAL_QUORUM","ONE","TWO",
