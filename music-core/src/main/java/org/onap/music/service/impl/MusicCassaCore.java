@@ -171,7 +171,7 @@ public class MusicCassaCore implements MusicCoreService {
 
         try {
             return getLockingServiceHandle().promoteLock(keyspace, table, primaryKeyValue, lockRef);
-        } catch (MusicServiceException e) {
+        } catch (MusicServiceException e ) {
             throw new MusicLockingException("Unable to promote lock. ", e);
         } catch (MusicQueryException e) {
             throw new MusicLockingException("Unable to promote lock. ", e);
@@ -608,9 +608,9 @@ public class MusicCassaCore implements MusicCoreService {
             long ts = MusicUtil.v2sTimeStampInMicroseconds(lockOrdinal, timeOfWrite);
             // TODO: use Statement instead of modifying query
             if (!queryObject.getQuery().contains("USING TIMESTAMP")) {
-                if (queryObject.getOperation().equalsIgnoreCase("delete"))
+                if ("delete" .equalsIgnoreCase(queryObject.getOperation()))
                     query = query.replaceFirst("WHERE", " USING TIMESTAMP " + ts + " WHERE ");
-                else if (queryObject.getOperation().equalsIgnoreCase("insert"))
+                else if ("insert".equalsIgnoreCase(queryObject.getOperation()))
                     query = query.replaceFirst(";", " USING TIMESTAMP " + ts + " ; ");
                 else
                     query = query.replaceFirst("SET", "USING TIMESTAMP " + ts + " SET");
@@ -643,7 +643,6 @@ public class MusicCassaCore implements MusicCoreService {
         // this is mainly for some functions like keyspace creation etc which does not
         // really need the bells and whistles of Music locking.
         boolean result = false;
-//        try {
         result = MusicDataStoreHandle.getDSHandle().executePut(queryObject, consistency);
 //        } catch (MusicQueryException | MusicServiceException ex) {
             // logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(), AppMessages.UNKNOWNERROR,
