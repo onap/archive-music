@@ -84,6 +84,10 @@ public class MusicCore {
     public static String createLockReference(String fullyQualifiedKey) throws MusicLockingException {
         return musicCore.createLockReference(fullyQualifiedKey);
     }
+    
+    public static String createLockReference(String fullyQualifiedKey, String owner) throws MusicLockingException {
+        return musicCore.createLockReference(fullyQualifiedKey, owner);
+    }
 
     public static String createLockReference(String fullyQualifiedKey, LockType locktype) throws MusicLockingException {
         return musicCore.createLockReference(fullyQualifiedKey, locktype);

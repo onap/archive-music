@@ -23,10 +23,10 @@ package org.onap.music.exceptions;
 
 public class MusicDeadlockException extends MusicLockingException {
 
-	public String owner = null;
-	public String keyspace = null;
-	public String table = null;
-	public String key = null;
+	private String owner = null;
+	private String keyspace = null;
+	private String table = null;
+	private String key = null;
 	
 	public MusicDeadlockException() {
 		super();

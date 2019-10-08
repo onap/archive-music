@@ -30,7 +30,9 @@ import java.util.List;
 import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
+import org.onap.music.exceptions.MusicDeadlockException;
 import org.onap.music.exceptions.MusicLockingException;
+import org.onap.music.exceptions.MusicPromotionException;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.DeadlockDetectionUtil;
@@ -535,7 +537,7 @@ public class CassaLockStore {
             
             if (refToPromote==ref) {
                 if (promotionOngoing) {
-                    return new ReturnType(ResultType.FAILURE, "Can't promote, already promoting another lockref.");
+                    throw new MusicPromotionException("Can't promote, already promoting another lockref.");
                 }
                 seenLockToPromote = true;
                 if (!topOfQueue) {
@@ -544,7 +546,7 @@ public class CassaLockStore {
                     break;
                 }
             } else if (!seenLockToPromote && refToPromote<ref) {
-                return new ReturnType(ResultType.FAILURE, "Lockref does not exist.");
+                throw new MusicPromotionException("Lockref does not exist.");
             }
             
             if (lockType==LockType.READ || lockType==LockType.PROMOTING) {
@@ -586,7 +588,7 @@ public class CassaLockStore {
         }
         
         //shouldn't reach here?
-        return new ReturnType(ResultType.FAILURE,"Promotion failed.");
+        throw new MusicPromotionException("Promotion failed.");
     }
 
     private void promoteLockTo(String keyspace, String table, String key, String lockRef, LockType newLockType)
