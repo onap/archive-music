@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f59599da_0e80e2ea",
+        "filename": "music-rest/src/main/java/org/onap/music/main/PropertiesLoader.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-10-09T18:12:08Z",
+      "side": 1,
+      "message": "This changes the if statement. Reference the old version for the correct if statment",
+      "revId": "bf718d97a5e4d49bd90ffa97737f5e51bff428f7",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
