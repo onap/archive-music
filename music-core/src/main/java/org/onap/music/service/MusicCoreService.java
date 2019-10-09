@@ -94,6 +94,13 @@ public interface MusicCoreService {
     /**
      * Create a lock ref in the music lock store
      * @param fullyQualifiedKey the key to create a lock on
+     * @param owner the owner of the lock, for deadlock prevention
+     */
+    public String createLockReference(String fullyQualifiedKey, String owner) throws MusicLockingException;
+    
+    /**
+     * Create a lock ref in the music lock store
+     * @param fullyQualifiedKey the key to create a lock on
      * @param locktype the type of lock create, see {@link LockType}
      */
     public String createLockReference(String fullyQualifiedKey, LockType locktype) throws MusicLockingException;
@@ -177,5 +184,6 @@ public interface MusicCoreService {
     
     public ReturnType deleteFromTable(JsonDelete jsonDeleteObj,MultivaluedMap<String, String> rowParams) 
             throws MusicLockingException, MusicQueryException, MusicServiceException;
+
 
 }

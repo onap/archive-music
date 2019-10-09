@@ -115,6 +115,9 @@ public class MusicCassaCore implements MusicCoreService {
     public String createLockReference(String fullyQualifiedKey) throws MusicLockingException {
         return createLockReference(fullyQualifiedKey, LockType.WRITE);
     }
+    public String createLockReference(String fullyQualifiedKey, String owner) throws MusicLockingException {
+        return createLockReference(fullyQualifiedKey, LockType.WRITE, owner);
+    }
 
     public String createLockReference(String fullyQualifiedKey, LockType locktype) throws MusicLockingException {
         return createLockReference(fullyQualifiedKey, locktype, null);
