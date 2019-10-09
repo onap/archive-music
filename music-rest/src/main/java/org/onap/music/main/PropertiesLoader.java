@@ -38,10 +38,7 @@ public class PropertiesLoader implements InitializingBean {
 
     @Value("${cassandra.host}")
     public String cassandraHost;
-/*
-    @Value("${music.ip}")
-    public String musicIp;        
-*/
+
     @Value("${debug}")
     public String debug;
     
@@ -105,11 +102,12 @@ public class PropertiesLoader implements InitializingBean {
     @Value("${cipher.enc.key}")
     private String cipherEncKey;
     
-    private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(PropertiesLoader.class);
+    @SuppressWarnings("unused")
+	private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(PropertiesLoader.class);
     
     @Bean
     public static PropertySourcesPlaceholderConfigurer propertyConfigInDev() {
-        //return new PropertySourcesPlaceholderConfigurer();
+       
         PropertySourcesPlaceholderConfigurer pspc = new PropertySourcesPlaceholderConfigurer();
         pspc.setIgnoreResourceNotFound(true);
         pspc.setIgnoreUnresolvablePlaceholders(true);
