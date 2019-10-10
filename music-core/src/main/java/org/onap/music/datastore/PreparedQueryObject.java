@@ -89,8 +89,10 @@ public class PreparedQueryObject {
     }
 
     public String getOperation() {
-        if (operation!=null) return operation;
-        if (query.length()==0) return null;
+        if (operation!=null)
+        	return operation;
+        if (query.length()==0)
+        	return null;
         String queryStr = query.toString().toLowerCase();
         String firstOp = null;
         int firstOpChar = query.length();

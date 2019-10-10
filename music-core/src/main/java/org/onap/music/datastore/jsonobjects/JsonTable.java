@@ -49,7 +49,7 @@ public class JsonTable {
 
     private Map<String, String> fields;
     private Map<String, Object> properties;
-    private String primaryKey;
+    private String primaryKey1;
     private String partitionKey;
     private String clusteringKey;
     private String filteringKey;
@@ -112,11 +112,11 @@ public class JsonTable {
 
     @ApiModelProperty(value = "Primary Key")
     public String getPrimaryKey() {
-        return primaryKey;
+        return primaryKey1;
     }
 
     public void setPrimaryKey(String primaryKey) {
-        this.primaryKey = primaryKey;
+        this.primaryKey1 = primaryKey;
     }
 
     public String getClusteringKey() {
@@ -168,11 +168,12 @@ public class JsonTable {
         StringBuilder fieldsString = new StringBuilder("(vector_ts text,");
         int counter = 0;
         for (Map.Entry<String, String> entry : fields.entrySet()) {
-            if (entry.getKey().equals("PRIMARY KEY")) {
+            if  ("PRIMARY KEY".equals(entry.getKey())) {
                 primaryKey = entry.getValue(); // replaces primaryKey
                 primaryKey = primaryKey.trim();
             } else {
-                if (counter == 0 )  fieldsString.append("" + entry.getKey() + " " + entry.getValue() + "");
+                if (counter == 0 )  
+                	fieldsString.append("" + entry.getKey() + " " + entry.getValue() + "");
                 else fieldsString.append("," + entry.getKey() + " " + entry.getValue() + "");
             }
 
@@ -231,12 +232,15 @@ public class JsonTable {
 
                     }
 
-                    if (partitionKey.isEmpty() )  primaryKey="";
-                    else  if (clusterKey.isEmpty() ) primaryKey=" (" + partitionKey  + ")";
+                    if (partitionKey.isEmpty() )  
+                    	primaryKey="";
+                    else  if (clusterKey.isEmpty() ) 
+                    	primaryKey=" (" + partitionKey  + ")";
                     else  primaryKey=" (" + partitionKey + ")," + clusterKey;
 
             
-                    if (primaryKey != null) fieldsString.append(", PRIMARY KEY (" + primaryKey + " )");
+                    if (primaryKey != null)
+                    	fieldsString.append(", PRIMARY KEY (" + primaryKey + " )");
 
                 } else { // end of length > 0
                 
@@ -253,11 +257,14 @@ public class JsonTable {
                                 Status.BAD_REQUEST.getStatusCode());
                     }
 
-                    if (partitionKey.isEmpty() )  primaryKey="";
-                    else  if (clusterKey.isEmpty() ) primaryKey=" (" + partitionKey  + ")";
+                    if (partitionKey.isEmpty() )  
+                    	primaryKey="";
+                    else  if (clusterKey.isEmpty() ) 
+                    	primaryKey=" (" + partitionKey  + ")";
                     else  primaryKey=" (" + partitionKey + ")," + clusterKey;
 
-                    if (primaryKey != null) fieldsString.append(", PRIMARY KEY (" + primaryKey + " )");
+                    if (primaryKey != null)
+                    	fieldsString.append(", PRIMARY KEY (" + primaryKey + " )");
                 }
                 fieldsString.append(")");
 
