@@ -124,7 +124,7 @@ public class PropertiesLoader implements InitializingBean {
         if (musicAafNs != null) {
             MusicUtil.setMusicAafNs(musicAafNs);
         }
-        if (cassandraPort != null && "${cassandra.port}".equals(cassandraPort)) {
+        if (cassandraPort != null && !cassandraPort.equals("${cassandra.port}")) {
             MusicUtil.setCassandraPort(Integer.parseInt(cassandraPort));
         }
         if (cassandraUser != null && "${cassandra.user}".equals(cassandraUser)) {
