@@ -66,7 +66,7 @@ public class MusicDataStore {
     public static final String CONSISTENCY_LEVEL_QUORUM = "QUORUM";
     public static final String CONSISTENCY_LEVEL_LOCAL_QUORUM = "LOCAL_QUORUM";
     private Session session;
-    private Cluster cluster;
+    private Cluster cluster1;
 
 
     /**
@@ -109,14 +109,14 @@ public class MusicDataStore {
      * @param cluster
      */
     public void setCluster(Cluster cluster) {
-        EnumNameCodec<LockType> lockTypeCodec = new EnumNameCodec<LockType>(LockType.class);
+        EnumNameCodec<LockType> lockTypeCodec = new EnumNameCodec<>(LockType.class);
         cluster.getConfiguration().getCodecRegistry().register(lockTypeCodec);
         
-        this.cluster = cluster;
+        this.cluster1 = cluster;
     }
     
     public Cluster getCluster() {
-        return this.cluster;
+        return this.cluster1;
     }
 
 
@@ -176,12 +176,12 @@ public class MusicDataStore {
         }
         
         this.setCluster(cluster);
-        Metadata metadata = this.cluster.getMetadata();
+        Metadata metadata = this.cluster1.getMetadata();
         logger.info(EELFLoggerDelegate.applicationLogger, "Connected to cassa cluster "
                         + metadata.getClusterName() + " at " + address);
 
         try {
-            session = this.cluster.connect();
+            session = this.cluster1.connect();
         } catch (Exception ex) {
             logger.error(EELFLoggerDelegate.errorLogger, ex.getMessage(),AppMessages.CASSANDRACONNECTIVITY,
                 ErrorSeverity.ERROR, ErrorTypes.SERVICEUNAVAILABLE, ex);
@@ -198,7 +198,7 @@ public class MusicDataStore {
      * @return DataType
      */
     public DataType returnColumnDataType(String keyspace, String tableName, String columnName) {
-        KeyspaceMetadata ks = cluster.getMetadata().getKeyspace(keyspace);
+        KeyspaceMetadata ks = cluster1.getMetadata().getKeyspace(keyspace);
         TableMetadata table = ks.getTable(tableName);
         return table.getColumn(columnName).getType();
 
@@ -211,7 +211,7 @@ public class MusicDataStore {
      * @return TableMetadata
      */
     public TableMetadata returnColumnMetadata(String keyspace, String tableName) {
-        KeyspaceMetadata ks = cluster.getMetadata().getKeyspace(keyspace);
+        KeyspaceMetadata ks = cluster1.getMetadata().getKeyspace(keyspace);
         return ks.getTable(tableName);
     }
     
@@ -222,7 +222,7 @@ public class MusicDataStore {
     * @return TableMetadata
     */
    public KeyspaceMetadata returnKeyspaceMetadata(String keyspace) {
-       return cluster.getMetadata().getKeyspace(keyspace);
+       return cluster1.getMetadata().getKeyspace(keyspace);
    }
 
 

@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 public class DeadlockDetectionUtil {
 	private Map<String, Node> nodeList = null;
@@ -46,7 +47,7 @@ public class DeadlockDetectionUtil {
 		public Node(String id) {
 			super();
 			this.id = id;
-			this.links = new ArrayList<Node>();
+			this.links = new ArrayList<>();
 		}
 
 		public List<Node> getLinks() {
@@ -84,12 +85,12 @@ public class DeadlockDetectionUtil {
 	}
 	
 	public DeadlockDetectionUtil() {
-		this.nodeList = new HashMap<String, Node>();
+		this.nodeList = new HashMap<>();
 	}
 
 	public void listAllNodes() {
 		System.out.println("In DeadlockDetectionUtil: ");
-		for (String key : nodeList.keySet()) {
+		for (Entry<String, Node> key : nodeList.entrySet()) {
 			System.out.println("    " + key + " : " + nodeList.get(key));
 		}
 	}
@@ -109,13 +110,17 @@ public class DeadlockDetectionUtil {
 	}
 
 	private boolean findCycle(Node currentNode) {
-		if (currentNode==null) return false;
-		if (currentNode.isOnStack()) return true;
-		if (currentNode.isVisited()) return false;
+		if (currentNode==null) 
+			return false;
+		if (currentNode.isOnStack()) 
+			return true;
+		if (currentNode.isVisited()) 
+			return false;
 		currentNode.setOnStack(true);
 		currentNode.setVisited(true);
 		for (Node childNode : currentNode.getLinks()) {
-			if (findCycle(childNode)) return true;
+			if (findCycle(childNode)) 
+				return true;
 		}
 		currentNode.setOnStack(false);
 		return false;

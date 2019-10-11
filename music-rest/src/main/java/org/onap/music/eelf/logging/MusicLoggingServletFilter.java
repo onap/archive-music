@@ -80,7 +80,8 @@ public class MusicLoggingServletFilter implements Filter {
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
-
+    	
+    	
     }
 
     @Override
@@ -188,11 +189,11 @@ public class MusicLoggingServletFilter implements Filter {
 
     private Map<String, String> getHeadersInfo(HttpServletRequest request) {
 
-        Map<String, String> map = new HashMap<String, String>();
+        Map<String, String> map = new HashMap<>();
 
         Enumeration<String> headerNames = request.getHeaderNames();
         while (headerNames.hasMoreElements()) {
-            String key = (String) headerNames.nextElement();
+            String key =  headerNames.nextElement();
             String value = request.getHeader(key);
             map.put(key, value);
         }

@@ -79,10 +79,10 @@ public class MusicAuthorizationFilter implements Filter {
 
             try {
                 isAuthAllowed = AuthUtil.isAccessAllowed(servletRequest, musicNS);
-            } catch (MusicAuthenticationException e) {
+            } catch (MusicAuthenticationException  e) {
                 logger.error(EELFLoggerDelegate.securityLogger,
                     "Error while checking authorization Music Namespace: " + musicNS + " : " + e.getMessage(),e);
-            } catch ( Exception e) {
+           } catch ( Exception e) {
                 logger.error(EELFLoggerDelegate.securityLogger,
                     "Error while checking authorization Music Namespace: " + musicNS + " : " + e.getMessage(),e);
             }
