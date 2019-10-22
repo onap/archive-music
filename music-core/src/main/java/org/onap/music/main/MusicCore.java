@@ -88,13 +88,17 @@ public class MusicCore {
     public static String createLockReference(String fullyQualifiedKey, String owner) throws MusicLockingException {
         return musicCore.createLockReference(fullyQualifiedKey, owner);
     }
-
+   
+    public String createLockReference(String fullyQualifiedKey, LockType locktype,String owner) throws MusicLockingException {
+		return createLockReference(fullyQualifiedKey,locktype,owner);
+    }
+    
     public static String createLockReferenceAtomic(String fullyQualifiedKey, LockType locktype) throws MusicLockingException {
         return musicCore.createLockReferenceAtomic(fullyQualifiedKey, locktype);
     }
 
-    public static String createLockReference(String fullyQualifiedKey, LockType locktype, String owner) throws MusicLockingException {
-        return musicCore.createLockReference(fullyQualifiedKey, locktype, owner);
+    public static String createLockReference(String fullyQualifiedKey, LockType locktype, String owner, long leasePeriod) throws MusicLockingException {
+        return musicCore.createLockReference(fullyQualifiedKey, locktype, owner,leasePeriod);
     }
 
     public static ResultType createTable(String keyspace, String table, PreparedQueryObject tableQueryObject,
