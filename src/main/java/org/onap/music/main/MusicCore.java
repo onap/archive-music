@@ -81,12 +81,16 @@ public class MusicCore {
         return musicCore.acquireLockWithLease(key, lockId, leasePeriod);
     }
 
+    public static String createLockReference(String fullyQualifiedKey,LockType locktype) throws MusicLockingException {
+        return musicCore.createLockReference(fullyQualifiedKey,locktype);
+    }
+
     public static String createLockReference(String fullyQualifiedKey) throws MusicLockingException {
         return musicCore.createLockReference(fullyQualifiedKey);
     }
-
-    public static String createLockReference(String fullyQualifiedKey, LockType locktype) throws MusicLockingException {
-        return musicCore.createLockReference(fullyQualifiedKey, locktype);
+    
+    public static String createLockReference(String fullyQualifiedKey, LockType locktype, long leasePeriod) throws MusicLockingException {
+        return musicCore.createLockReference(fullyQualifiedKey, locktype,leasePeriod);
     }
 
     public static ResultType createTable(String keyspace, String table, PreparedQueryObject tableQueryObject,

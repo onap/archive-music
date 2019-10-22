@@ -33,7 +33,7 @@ import io.swagger.annotations.ApiModelProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonLock {
     private LockType locktype;
-
+    private long leasePeriod;
     @ApiModelProperty(
         value = "Type of music lock", 
         name = "lockType",
@@ -45,5 +45,14 @@ public class JsonLock {
 
     public void setLockType(LockType locktype) {
         this.locktype = locktype;
+    }
+    
+    @ApiModelProperty(value = "Lease period")
+    public long getLeasePeriod() {
+        return leasePeriod;
+    }
+
+    public void setLeasePeriod(long leasePeriod) {
+        this.leasePeriod = leasePeriod;
     }
 }

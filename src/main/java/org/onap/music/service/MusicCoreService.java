@@ -90,13 +90,14 @@ public interface MusicCoreService {
      * @see {@link #creatLockReference(String, LockType)}
      */
     public String createLockReference(String fullyQualifiedKey) throws MusicLockingException; // lock name
-
+    public String createLockReference(String fullyQualifiedKey, LockType locktype) throws MusicLockingException;
     /**
      * Create a lock ref in the music lock store
      * @param fullyQualifiedKey the key to create a lock on
      * @param locktype the type of lock create, see {@link LockType}
+     * @param leasePeriod 
      */
-    public String createLockReference(String fullyQualifiedKey, LockType locktype) throws MusicLockingException;
+    public String createLockReference(String fullyQualifiedKey, LockType locktype, long leasePeriod) throws MusicLockingException;
     
     public ReturnType acquireLockWithLease(String key, String lockReference, long leasePeriod)
         throws MusicLockingException, MusicQueryException, MusicServiceException; // key,lock id,time
@@ -172,5 +173,7 @@ public interface MusicCoreService {
     
     public ReturnType deleteFromTable(JsonDelete jsonDeleteObj,MultivaluedMap<String, String> rowParams) 
             throws MusicLockingException, MusicQueryException, MusicServiceException;
+
+	
 
 }

@@ -60,12 +60,14 @@ public class CassaLockStore {
         private String createTime;
         private String acquireTime;
         private LockType locktype;
-        public LockObject(boolean isLockOwner, String lockRef, String createTime, String acquireTime, LockType locktype) {
+        private long leasePeriodTime;
+        public LockObject(boolean isLockOwner, String lockRef, String createTime, String acquireTime, LockType locktype,long leasePeriodTime) {
             this.setIsLockOwner(isLockOwner);
             this.setLockRef(lockRef);
             this.setAcquireTime(acquireTime);
             this.setCreateTime(createTime);
             this.setLocktype(locktype);
+            this.setLeasePeriodTime(leasePeriodTime);
         }
         public boolean getIsLockOwner() {
             return isLockOwner;
@@ -79,7 +81,13 @@ public class CassaLockStore {
         public void setAcquireTime(String acquireTime) {
             this.acquireTime = acquireTime;
         }
-        public String getCreateTime() {
+        public long getLeasePeriodTime() {
+			return leasePeriodTime;
+		}
+		public void setLeasePeriodTime(long leasePeriodTime) {
+			this.leasePeriodTime = leasePeriodTime;
+		}
+		public String getCreateTime() {
             return createTime;
         }
         public void setCreateTime(String createTime) {
@@ -113,7 +121,7 @@ public class CassaLockStore {
                 "Create lock queue/table for " +  keyspace+"."+table);
         table = table_prepend_name+table;
         String tabQuery = "CREATE TABLE IF NOT EXISTS "+keyspace+"."+table
-                + " ( key text, lockReference bigint, createTime text, acquireTime text, guard bigint static, "
+                + " ( key text, lockReference bigint, createTime text, acquireTime text,leasePeriodTime long,guard bigint static, "
                 + "writeLock boolean, PRIMARY KEY ((key), lockReference) ) "
                 + "WITH CLUSTERING ORDER BY (lockReference ASC);";
         PreparedQueryObject queryObject = new PreparedQueryObject();
@@ -133,11 +141,11 @@ public class CassaLockStore {
      * @throws MusicServiceException
      * @throws MusicQueryException
      */
-    public String genLockRefandEnQueue(String keyspace, String table, String lockName, LockType locktype) throws MusicServiceException, MusicQueryException, MusicLockingException {
-        return genLockRefandEnQueue(keyspace, table, lockName, locktype, 0);
+    public String genLockRefandEnQueue(String keyspace, String table, String lockName, LockType locktype,long leasePeriod) throws MusicServiceException, MusicQueryException, MusicLockingException {
+        return genLockRefandEnQueue(keyspace, table, lockName, locktype, 0,leasePeriod);
     }
     
-    private String genLockRefandEnQueue(String keyspace, String table, String lockName, LockType locktype, int count) throws MusicServiceException, MusicQueryException, MusicLockingException {
+    private String genLockRefandEnQueue(String keyspace, String table, String lockName, LockType locktype, int count,long leasePeriod) throws MusicServiceException, MusicQueryException, MusicLockingException {
         logger.info(EELFLoggerDelegate.applicationLogger,
                 "Create " + locktype + " lock reference for " +  keyspace + "." + table + "." + lockName);
         String lockTable ="";
@@ -170,7 +178,7 @@ public class CassaLockStore {
                 " UPDATE " + keyspace + "." + lockTable +
                 " SET guard=? WHERE key=? IF guard = " + (prevGuard == 0 ? "NULL" : "?") +";" +
                 " INSERT INTO " + keyspace + "." + lockTable +
-                "(key, lockReference, createTime, acquireTime, writeLock) VALUES (?,?,?,?,?) IF NOT EXISTS; APPLY BATCH;";
+                "(key, lockReference, createTime, acquireTime,leasePeriodTime, writeLock) VALUES (?,?,?,?,?,?) IF NOT EXISTS; APPLY BATCH;";
 
         queryObject.addValue(lockRef);
         queryObject.addValue(lockName);
@@ -182,6 +190,7 @@ public class CassaLockStore {
         queryObject.addValue(String.valueOf(lockEpochMillis));
         queryObject.addValue("0");
         queryObject.addValue(locktype==LockType.WRITE ? true : false );
+        queryObject.addValue(leasePeriod);
         queryObject.appendQueryString(insQuery);
         boolean pResult = dsHandle.executePut(queryObject, "critical");
         if (!pResult) {// couldn't create lock ref, retry
@@ -190,7 +199,7 @@ public class CassaLockStore {
                 logger.warn(EELFLoggerDelegate.applicationLogger, "Unable to create lock reference");
                 throw new MusicLockingException("Unable to create lock reference");
             }
-            return genLockRefandEnQueue(keyspace, table, lockName, locktype, count);
+            return genLockRefandEnQueue(keyspace, table, lockName, locktype, count,leasePeriod);
         }
         return "$" + keyspace + "." + table + "." + lockName + "$" + String.valueOf(lockRef);
     }
@@ -269,14 +278,14 @@ public class CassaLockStore {
         ResultSet results = dsHandle.executeOneConsistencyGet(queryObject);
         Row row = results.one();
         if (row == null || row.isNull("lockReference")) {
-            return new LockObject(false, null, null, null, null);
+            return new LockObject(false, null, null, null, null,(Long) null);
         }
         String lockReference = "" + row.getLong("lockReference");
         String createTime = row.getString("createTime");
         String acquireTime = row.getString("acquireTime");
+        Long leasePeriodTime = row.isNull("leasePeriodTime") ? MusicUtil.getDefaultLockLeasePeriod() : row.getLong ("leasePeriodTime");
         LockType locktype = row.isNull("writeLock") || row.getBool("writeLock") ? LockType.WRITE : LockType.READ;
-
-        return new LockObject(true, lockReference, createTime, acquireTime, locktype);
+     	return new LockObject(true, lockReference, createTime, acquireTime, locktype,leasePeriodTime);
     }
 
     public List<String> getCurrentLockHolders(String keyspace, String table, String key)
@@ -394,8 +403,9 @@ public class CassaLockStore {
         String acquireTime = row.getString("acquireTime");
         LockType locktype = row.isNull("writeLock") || row.getBool("writeLock") ? LockType.WRITE : LockType.READ;
         boolean isLockOwner = isLockOwner(keyspace, table, key, lockRef);
-
-        return new LockObject(isLockOwner, lockReference, createTime, acquireTime, locktype);
+        //ts
+        long leasePeriodTime=row.getLong("leasePeriodTime");
+        return new LockObject(isLockOwner, lockReference, createTime, acquireTime, locktype,leasePeriodTime);
     }
 
 
@@ -446,8 +456,9 @@ public class CassaLockStore {
         table = table_prepend_name + table;
         PreparedQueryObject queryObject = new PreparedQueryObject();
         Long lockReferenceL = Long.parseLong(lockReference);
-        String updateQuery = "update " + keyspace + "." + table + " set acquireTime='" + System.currentTimeMillis()
-                + "' where key='" + key + "' AND lockReference = " + lockReferenceL + " IF EXISTS;";
+        String leaseTime;
+		String updateQuery = "update " + keyspace + "." + table + " set acquireTime='" + System.currentTimeMillis() 
+                  + "' where key='" + key + "' AND lockReference = " + lockReferenceL + " IF EXISTS;";
         queryObject.appendQueryString(updateQuery);
 
         //cannot use executePut because we need to ignore music timestamp adjustments for lock store

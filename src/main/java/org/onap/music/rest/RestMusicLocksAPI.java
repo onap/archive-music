@@ -134,9 +134,13 @@ public class RestMusicLocksAPI {
             if (lockObject!=null && lockObject.getLocktype()!=null) {
                 locktype = lockObject.getLocktype();
             }
+            long leasePeriod=MusicUtil.getDefaultLockLeasePeriod();
+            if (lockObject!=null && lockObject.getLeasePeriod()!=(Long)null) {
+               leasePeriod = lockObject.getLeasePeriod();
+            }
             String lockId;
             try {
-                lockId= MusicCore.createLockReference(lockName, locktype);
+                lockId= MusicCore.createLockReference(lockName, locktype,leasePeriod);
             } catch (MusicLockingException e) {
                 return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();
             }
