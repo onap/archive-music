@@ -124,7 +124,7 @@ public class MusicCassaCore implements MusicCoreService {
      * This will be called for Atomic calls
      * 
      */
-    public String createLockReferenceAtomic(String fullyQualifiedKey, LockType locktype) throws MusicLockingException {
+    public String createLockReferenceAtomic(String fullyQualifiedKey, LockType locktype,long leasePeriod) throws MusicLockingException {
         String[] splitString = fullyQualifiedKey.split("\\.");
         if (splitString.length < 3) {
             throw new MusicLockingException("Missing or incorrect lock details. Check table or key name.");
@@ -171,7 +171,7 @@ public class MusicCassaCore implements MusicCoreService {
         */
         if ( set.add(fullyQualifiedKey)) {
             try {
-                lockReference = "" + getLockingServiceHandle().genLockRefandEnQueue(keyspace, table, lockName, locktype,null);
+                lockReference = "" + getLockingServiceHandle().genLockRefandEnQueue(keyspace, table, lockName, locktype,null,leasePeriod);
                 set.remove(fullyQualifiedKey);
             } catch (MusicLockingException | MusicServiceException | MusicQueryException e) {
                 set.remove(fullyQualifiedKey);
@@ -193,7 +193,13 @@ public class MusicCassaCore implements MusicCoreService {
         //return createLockReference(fullyQualifiedKey, locktype, null);
     }
 
-    public String createLockReference(String fullyQualifiedKey, LockType locktype, String owner) throws MusicLockingException {
+    public String createLockReferenceAtomic(String fullyQualifiedKey, LockType locktype) throws MusicLockingException
+    {
+    	long leasePeriod=MusicUtil.getDefaultLockLeasePeriod();
+		return createLockReferenceAtomic(fullyQualifiedKey,locktype,leasePeriod);
+    }
+    
+    public String createLockReference(String fullyQualifiedKey, LockType locktype, String owner,long leasePeriod) throws MusicLockingException {
         String[] splitString = fullyQualifiedKey.split("\\.");
         if (splitString.length < 3) {
             throw new MusicLockingException("Missing or incorrect lock details. Check table or key name.");
@@ -227,7 +233,7 @@ public class MusicCassaCore implements MusicCoreService {
 
         start = System.currentTimeMillis();
         try {
-            lockReference = "" + getLockingServiceHandle().genLockRefandEnQueue(keyspace, table, lockName, locktype, owner);
+            lockReference = "" + getLockingServiceHandle().genLockRefandEnQueue(keyspace, table, lockName, locktype, owner,leasePeriod);
         } catch (MusicLockingException | MusicServiceException | MusicQueryException e) {
             logger.info(EELFLoggerDelegate.applicationLogger,e.getMessage(),e);
             throw new MusicLockingException("Unable to create lock reference for key [" + lockName + "]. Please try again: " + e.getMessage());
@@ -238,6 +244,11 @@ public class MusicCassaCore implements MusicCoreService {
         end = System.currentTimeMillis();
         logger.info(EELFLoggerDelegate.applicationLogger,"Time taken to create lock reference  for key [" + lockName + "]:" + (end - start) + " ms");
         return lockReference;
+    }
+    
+    public String createLockReference(String fullyQualifiedKey, LockType locktype,String owner) throws MusicLockingException {
+    	long leasePeriod=MusicUtil.getDefaultLockLeasePeriod();
+		return createLockReference(fullyQualifiedKey,locktype,owner,leasePeriod);
     }
     
     public ReturnType promoteLock(String lockId) throws MusicLockingException {
@@ -262,11 +273,11 @@ public class MusicCassaCore implements MusicCoreService {
 
     public ReturnType acquireLockWithLease(String fullyQualifiedKey, String lockReference, long leasePeriod)
             throws MusicLockingException, MusicQueryException, MusicServiceException  {
-        evictExpiredLockHolder(fullyQualifiedKey,leasePeriod);
+        evictExpiredLockHolder(fullyQualifiedKey);
         return acquireLock(fullyQualifiedKey, lockReference);
     }
 
-    private void evictExpiredLockHolder(String fullyQualifiedKey, long leasePeriod)
+    private void evictExpiredLockHolder(String fullyQualifiedKey)
             throws MusicLockingException, MusicQueryException, MusicServiceException {
         String[] splitString = fullyQualifiedKey.split("\\.");
         String keyspace = splitString[0];
@@ -284,7 +295,8 @@ public class MusicCassaCore implements MusicCoreService {
          */
         long referenceTime = Math.max(Long.parseLong(currentLockHolderObject.getAcquireTime()),
                 Long.parseLong(currentLockHolderObject.getCreateTime()));
-        if ((System.currentTimeMillis() - referenceTime) > leasePeriod) {
+        long leaseTime = currentLockHolderObject.getLeasePeriodTime();
+        if(referenceTime+leaseTime<(System.currentTimeMillis())){
             forciblyReleaseLock(fullyQualifiedKey, currentLockHolderObject.getLockRef() + "");
             logger.info(EELFLoggerDelegate.applicationLogger, currentLockHolderObject.getLockRef() + " forcibly released");
         }
