@@ -762,6 +762,7 @@ public class TstRestMusicLockAPI {
     private JsonLock createJsonLock(LockType lockType) {
         JsonLock jsonLock = new JsonLock();
         jsonLock.setLockType(lockType);
+        jsonLock.setLeasePeriod(6000);
         return jsonLock;
     }
 

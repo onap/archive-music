@@ -66,14 +66,16 @@ public class CassaLockStore {
         private String createTime;
         private String acquireTime;
         private LockType locktype;
+        private long leasePeriodTime;
         // Owner is the self-declared client which "owns" this row. It is used for deadlock detection.  It is not (directly) related to isLockOwner.
         private String owner;
-        public LockObject(boolean isLockOwner, String lockRef, String createTime, String acquireTime, LockType locktype, String owner) {
+        public LockObject(boolean isLockOwner, String lockRef, String createTime, String acquireTime, LockType locktype,long leasePeriodTime, String owner) {
             this.setIsLockOwner(isLockOwner);
             this.setLockRef(lockRef);
             this.setAcquireTime(acquireTime);
             this.setCreateTime(createTime);
             this.setLocktype(locktype);
+            this.setLeasePeriodTime(leasePeriodTime);
             this.setOwner(owner);
         }
         public boolean getIsLockOwner() {
@@ -112,6 +114,12 @@ public class CassaLockStore {
         public void setOwner(String owner) {
             this.owner = owner;
         }
+		public long getLeasePeriodTime() {
+			return leasePeriodTime;
+		}
+		public void setLeasePeriodTime(long leasePeriodTime) {
+			this.leasePeriodTime = leasePeriodTime;
+		}
     }
     
     /**
@@ -129,7 +137,7 @@ public class CassaLockStore {
         table = table_prepend_name+table;
         String tabQuery = "CREATE TABLE IF NOT EXISTS "+keyspace+"."+table
                 + " ( key text, lockReference bigint, createTime text, acquireTime text, guard bigint static, "
-                + "lockType text, owner text, PRIMARY KEY ((key), lockReference) ) "
+                + "lockType text,leasePeriodTime bigint, owner text, PRIMARY KEY ((key), lockReference) ) "
                 + "WITH CLUSTERING ORDER BY (lockReference ASC);";
         PreparedQueryObject queryObject = new PreparedQueryObject();
         
@@ -150,11 +158,11 @@ public class CassaLockStore {
      * @throws MusicServiceException
      * @throws MusicQueryException
      */
-    public String genLockRefandEnQueue(String keyspace, String table, String lockName, LockType locktype, String owner) throws MusicServiceException, MusicQueryException, MusicLockingException {
-        return genLockRefandEnQueue(keyspace, table, lockName, locktype, owner, 0);
+    public String genLockRefandEnQueue(String keyspace, String table, String lockName, LockType locktype, String owner,long leasePeriod) throws MusicServiceException, MusicQueryException, MusicLockingException {
+        return genLockRefandEnQueue(keyspace, table, lockName, locktype, owner, 0,leasePeriod);
     }
     
-    private String genLockRefandEnQueue(String keyspace, String table, String lockName, LockType locktype, String owner, int count) throws MusicServiceException, MusicQueryException, MusicLockingException {
+    private String genLockRefandEnQueue(String keyspace, String table, String lockName, LockType locktype, String owner, int count,long leasePeriod) throws MusicServiceException, MusicQueryException, MusicLockingException {
         logger.info(EELFLoggerDelegate.applicationLogger,
                 "Create " + locktype + " lock reference for " +  keyspace + "." + table + "." + lockName);
         String lockTable ="";
@@ -186,7 +194,7 @@ public class CassaLockStore {
                 " UPDATE " + keyspace + "." + lockTable +
                 " SET guard=? WHERE key=? IF guard = " + (prevGuard == 0 ? "NULL" : "?") +";" +
                 " INSERT INTO " + keyspace + "." + lockTable +
-                "(key, lockReference, createTime, acquireTime, lockType, owner) VALUES (?,?,?,?,?,?) IF NOT EXISTS; APPLY BATCH;";
+                "(key, lockReference, createTime, acquireTime, lockType,leasePeriodTime, owner) VALUES (?,?,?,?,?,?,?) IF NOT EXISTS; APPLY BATCH;";
 
         queryObject.addValue(lockRef);
         queryObject.addValue(lockName);
@@ -198,6 +206,7 @@ public class CassaLockStore {
         queryObject.addValue(String.valueOf(lockEpochMillis));
         queryObject.addValue("0");
         queryObject.addValue(locktype);
+        queryObject.addValue(leasePeriod);
         queryObject.addValue(owner);
         queryObject.appendQueryString(insQuery);
         boolean pResult = dsHandle.executePut(queryObject, "critical");
@@ -207,7 +216,7 @@ public class CassaLockStore {
                 logger.warn(EELFLoggerDelegate.applicationLogger, "Unable to create lock reference");
                 throw new MusicLockingException("Unable to create lock reference");
             }
-            return genLockRefandEnQueue(keyspace, table, lockName, locktype, owner, count);
+            return genLockRefandEnQueue(keyspace, table, lockName, locktype, owner, count,leasePeriod);
         }
         return "$" + keyspace + "." + table + "." + lockName + "$" + String.valueOf(lockRef);
     }
@@ -284,15 +293,15 @@ public class CassaLockStore {
         ResultSet results = dsHandle.executeOneConsistencyGet(queryObject);
         Row row = results.one();
         if (row == null || row.isNull("lockReference")) {
-            return new LockObject(false, null, null, null, null, null);
+            return new LockObject(false, null, null, null, null,0,null);
         }
         String lockReference = "" + row.getLong("lockReference");
         String createTime = row.getString("createTime");
         String acquireTime = row.getString("acquireTime");
         LockType locktype = row.get("lockType", LockType.class);
         String owner = row.getString("owner");
-
-        return new LockObject(true, lockReference, createTime, acquireTime, locktype, owner);
+        long leasePeriodTime = row.isNull("leasePeriodTime") ? MusicUtil.getDefaultLockLeasePeriod() : row.getLong ("leasePeriodTime");
+        return new LockObject(true, lockReference, createTime, acquireTime, locktype,leasePeriodTime, owner);
     }
 
     public List<String> getCurrentLockHolders(String keyspace, String table, String key)
@@ -411,8 +420,8 @@ public class CassaLockStore {
         LockType locktype = row.get("lockType", LockType.class);
         boolean isLockOwner = isLockOwner(keyspace, table, key, lockRef);
         String owner = row.getString("owner");
-
-        return new LockObject(isLockOwner, lockReference, createTime, acquireTime, locktype, owner);
+        long leasePeriod=row.getLong("leasePeriodTime");
+        return new LockObject(isLockOwner, lockReference, createTime, acquireTime, locktype,leasePeriod, owner);
     }
 
 
