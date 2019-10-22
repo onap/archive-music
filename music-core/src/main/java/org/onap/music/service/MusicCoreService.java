@@ -90,20 +90,22 @@ public interface MusicCoreService {
      * @see {@link #creatLockReference(String, LockType)}
      */
     public String createLockReferenceAtomic(String fullyQualifiedKey) throws MusicLockingException; // lock name
-
+    
     /**
      * Create a lock ref in the music lock store
      * @param fullyQualifiedKey the key to create a lock on
+     * @param locktype 
      * @param owner the owner of the lock, for deadlock prevention
+     * @param leasePeriod 
      */
-    public String createLockReference(String fullyQualifiedKey, String owner) throws MusicLockingException;
+    public String createLockReference(String fullyQualifiedKey, LockType locktype, String owner, long leasePeriod) throws MusicLockingException;
     
     /**
      * Create a lock ref in the music lock store
      * @param fullyQualifiedKey the key to create a lock on
      * @param locktype the type of lock create, see {@link LockType}
      */
-    public String createLockReferenceAtomic(String fullyQualifiedKey, LockType locktype) throws MusicLockingException;
+    public String createLockReferenceAtomic(String fullyQualifiedKey, LockType locktype,long leasePeriod) throws MusicLockingException;
     
     /**
      * Create a lock ref in the music lock store
@@ -112,7 +114,7 @@ public interface MusicCoreService {
      * @param owner the owner of the lock, for deadlock prevention
      */
     public String createLockReference(String fullyQualifiedKey, LockType locktype, String owner) throws MusicLockingException;
-
+    public String createLockReferenceAtomic(String fullyQualifiedKey, LockType locktype) throws MusicLockingException;
     public ReturnType acquireLockWithLease(String key, String lockReference, long leasePeriod)
         throws MusicLockingException, MusicQueryException, MusicServiceException; // key,lock id,time
 
@@ -135,7 +137,9 @@ public interface MusicCoreService {
      * Gets the current lockholder(s) for lockName
      * @param lockName
      * @return
+     * @throws MusicLockingException 
      */
+    public String createLockReference(String fullyQualifiedKey, String owner) throws MusicLockingException;
     public List<String> getCurrentLockHolders(String fullyQualifiedKey);
 
     public void destroyLockRef(String lockId) throws MusicLockingException;
