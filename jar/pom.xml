@@ -43,7 +43,7 @@
         <jersey2.version>2.25.1</jersey2.version>
         <jaxrs.version>2.0.1</jaxrs.version>
         <cassandra.version>3.4.0</cassandra.version>
-        <zookeeper.version>3.4.11</zookeeper.version>
+        <zookeeper.version>3.5.6</zookeeper.version>
         <onap.nexus.url>https://nexus.onap.org</onap.nexus.url>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
