@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "73f5c555_e5b8fc77",
+        "filename": "music-core/src/main/java/org/onap/music/datastore/PreparedQueryObject.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 93,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-10-30T15:30:57Z",
+      "side": 1,
+      "message": "Can you include braces around this statement block if it is being moved to multiple lines. If we don\u0027t do it now, it will come back to haunt us.\n\nPlease do similar for the rest of the similar fixes.\n\nAlso please note that you have included tabs here, where the rest of the file uses spaces. The red \u003e\u003e indicates a problem with whitespace",
+      "revId": "ee11a800b1f43d45a411d5d7ebbd2dad28b87e86",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
