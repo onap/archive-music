@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6bf72b8d_4011a6b6",
+        "filename": "music-core/src/main/java/org/onap/music/datastore/MusicDataStore.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-10-30T15:26:55Z",
+      "side": 1,
+      "message": "What is the point of doing this? Can you include a link to the relevant sonar complaint?",
+      "revId": "e3bfcd3d2bc6b850fadf24a6b7589993062eb332",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
