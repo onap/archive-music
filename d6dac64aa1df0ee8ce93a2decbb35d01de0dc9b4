@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "01d48257_94b97407",
+        "filename": "music-rest/src/main/java/org/onap/music/rest/RestMusicLocksAPI.java",
+        "patchSetId": 5
+      },
+      "lineNbr": 140,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2019-11-05T15:30:50Z",
+      "side": 1,
+      "message": "Won\u0027t this always set the lease period to default? As long as the lockObject is not null, the value is set to the default. I think you meant to set it if the value is null or 0?",
+      "revId": "d6dac64aa1df0ee8ce93a2decbb35d01de0dc9b4",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
