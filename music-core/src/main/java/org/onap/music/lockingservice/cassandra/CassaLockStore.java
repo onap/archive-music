@@ -40,8 +40,6 @@ import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.extras.codecs.enums.EnumNameCodec;
 
 /*
  * This is the lock store that is built on top of Cassandra that is used by MUSIC to maintain lock state. 
@@ -510,7 +508,7 @@ public class CassaLockStore {
     }
 
     public ReturnType promoteLock(String keyspace, String table, String key, String lockRef)
-            throws MusicLockingException, MusicServiceException, MusicQueryException {
+            throws MusicServiceException, MusicQueryException {
         String lockqtable = table_prepend_name + table;
         String selectQuery = "select * from " + keyspace + "." + lockqtable + " where key=?;";
 
