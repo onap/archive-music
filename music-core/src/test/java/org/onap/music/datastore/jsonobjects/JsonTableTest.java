@@ -22,14 +22,14 @@
  * ====================================================================
  */
 
-package org.onap.music.unittests.jsonobjects;
+package org.onap.music.datastore.jsonobjects;
 
 import static org.junit.Assert.*;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
-import org.onap.music.datastore.jsonobjects.JsonTable;
+import org.onap.music.exceptions.MusicQueryException;
 
 public class JsonTableTest {
 
@@ -53,6 +53,7 @@ public class JsonTableTest {
         Map<String, Object> properties = new HashMap<>();
         properties.put("k1", "one");
         jt.setProperties(properties);
+        assertEquals(properties.size(), jt.getProperties().size());
     }
 
     @Test
@@ -83,6 +84,13 @@ public class JsonTableTest {
         jt.setClusteringOrder(clusteringOrder);
         assertEquals(clusteringOrder,jt.getClusteringOrder());
     }
+    
+    @Test
+    public void testGetClusterKey() {
+        String clusterKey = "clusterKey";
+        jt.setClusteringKey(clusterKey);
+        assertEquals(clusterKey, jt.getClusteringKey());
+    }
 
     @Test
     public void testGetPrimaryKey() {
@@ -96,5 +104,50 @@ public class JsonTableTest {
         jt.setFilteringKey("FilteringKey");
         assertEquals("FilteringKey",jt.getFilteringKey());        
     }
+    
+    @Test
+    public void testPartitionKey() {
+        jt.setPartitionKey("ParitionKey");
+        assertEquals("ParitionKey",jt.getPartitionKey());
+    }
 
+    @Test
+    public void genCreateTableQuery() throws MusicQueryException {
+        JsonTable jt2 = new JsonTable();
+        jt2.setKeyspaceName("keyspace");
+        jt2.setTableName("table");
+        Map<String, String> fields = new HashMap<>();
+        fields.put("k1", "one");
+        jt2.setFields(fields);
+        jt2.setPrimaryKey("k1");
+        Map<String, String> mapSs = new HashMap<>();
+        mapSs.put("k1", "one");
+        jt2.setConsistencyInfo(mapSs);
+        String clusteringOrder = "clusteringOrder";
+        jt.setClusteringOrder(clusteringOrder);
+        String clusterKey = "clusterKey";
+        jt.setClusteringKey(clusterKey);
+        
+        System.out.println(jt2.genCreateTableQuery().getQuery());
+        assertEquals("CREATE TABLE keyspace.table (vector_ts text,k1 one, PRIMARY KEY ( (k1) ));",
+                jt2.genCreateTableQuery().getQuery());
+    }
+    
+    @Test
+    public void genDropTableQuery() throws MusicQueryException {
+        JsonTable jt2 = new JsonTable();
+        jt2.setKeyspaceName("keyspace");
+        jt2.setTableName("table");
+        Map<String, String> fields = new HashMap<>();
+        fields.put("k1", "one");
+        jt2.setFields(fields);
+        jt2.setPrimaryKey("k1");
+        Map<String, String> mapSs = new HashMap<>();
+        mapSs.put("k1", "one");
+        jt.setConsistencyInfo(mapSs);
+        
+        System.out.println(jt2.genDropTableQuery().getQuery());
+        assertEquals("DROP TABLE  keyspace.table;",
+                jt2.genDropTableQuery().getQuery());
+    }
 }

@@ -22,17 +22,31 @@
  * ====================================================================
  */
 
-package org.onap.music.unittests.jsonobjects;
+package org.onap.music.datastore.jsonobjects;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-
+import static org.junit.Assert.assertTrue;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.SerializationUtils;
 import org.junit.Test;
-import org.onap.music.datastore.jsonobjects.JsonInsert;
+import org.mockito.Mockito;
+import org.mockito.internal.util.reflection.FieldSetter;
+import org.onap.music.datastore.MusicDataStore;
+import org.onap.music.datastore.MusicDataStoreHandle;
+import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.exceptions.MusicQueryException;
+import org.onap.music.exceptions.MusicServiceException;
+import com.datastax.driver.core.ColumnMetadata;
+import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.Session;
+//import org.mockito.internal.util.reflection.Whitebox;
+import com.datastax.driver.core.TableMetadata;
+
 
 public class JsonInsertTest {
     
@@ -106,6 +120,57 @@ public class JsonInsertTest {
         Map<String, byte[]> map = new HashMap<>();
         ji.setObjectMap(map);
         assertEquals(map, ji.getObjectMap());
+    }
+    
+    @Test
+    public void testPrimaryKey() {
+        ji.setPrimaryKeyVal("primKey");
+        assertEquals("primKey", ji.getPrimaryKeyVal());
+    }
+    
+    @Test
+    public void testGenInsertPreparedQueryObj() throws Exception {
+        ji.setKeyspaceName("keyspace");
+        ji.setTableName("table");
+        ji.setPrimaryKeyVal("value");
+        Map<String,Object> rowSpec = new HashMap<>();
+        rowSpec.put("val1","one");
+        rowSpec.put("val2","two");
+        ji.setRowSpecification(rowSpec);
+        Map<String,Object> vals = new HashMap<>();
+        vals.put("val1","one");
+        vals.put("val2","two");
+        ji.setValues(vals);
+        
+        Map<String,String> cons = new HashMap<>();
+        cons.put("type","quorum");
+        ji.setConsistencyInfo(cons);
+        
+        MusicDataStore mds = Mockito.mock(MusicDataStore.class);
+        Session session = Mockito.mock(Session.class);
+        Mockito.when(mds.getSession()).thenReturn(session);
+        MusicDataStoreHandle mdsh = Mockito.mock(MusicDataStoreHandle.class);
+        FieldSetter.setField(mdsh, mdsh.getClass().getDeclaredField("mDstoreHandle"), mds);
+        TableMetadata tableMeta = Mockito.mock(TableMetadata.class);
+        Mockito.when(mds.returnColumnMetadata(Mockito.anyString(), Mockito.anyString()))
+            .thenReturn(tableMeta);
+        
+        ColumnMetadata cmd = Mockito.mock(ColumnMetadata.class);
+        List<ColumnMetadata> listcmd = new ArrayList<>();
+        listcmd.add(cmd);
+        Mockito.when(tableMeta.getPrimaryKey()).thenReturn(listcmd);
+        Mockito.when(cmd.getName()).thenReturn("val1");
+        Mockito.when(tableMeta.getColumn("val1")).thenReturn(cmd);
+        Mockito.when(tableMeta.getColumn("val2")).thenReturn(cmd);
+        Mockito.when(cmd.getType()).thenReturn(DataType.text());
+        
+        PreparedQueryObject query = ji.genInsertPreparedQueryObj();
+        System.out.println(query.getQuery());
+        System.out.println(query.getValues());
+
+
+        assertEquals("INSERT INTO keyspace.table (vector_ts,val2,val1) VALUES (?,?,?);", query.getQuery());
+        assertTrue(query.getValues().containsAll(vals.values()));
     }
 
 }

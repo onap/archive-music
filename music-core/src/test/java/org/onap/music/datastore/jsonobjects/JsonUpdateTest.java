@@ -22,14 +22,22 @@
  * ====================================================================
  *******************************************************************************/
 
-package org.onap.music.unittests.jsonobjects;
+package org.onap.music.datastore.jsonobjects;
 
 import static org.junit.Assert.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import javax.ws.rs.core.MultivaluedMap;
 import org.junit.Before;
 import org.junit.Test;
-import org.onap.music.datastore.jsonobjects.JsonUpdate;
+import org.mockito.Mockito;
+import org.onap.music.datastore.jsonobjects.JsonUpdate.RowIdentifier;
+import com.datastax.driver.core.ColumnMetadata;
+import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.TableMetadata;
 
 public class JsonUpdateTest {
     
@@ -108,4 +116,51 @@ public class JsonUpdateTest {
         assertTrue(ju.serialize() instanceof byte[]);
     }
 
+    @Test
+    public void testRowIdString() {
+        ju.setRowIdString("testing");
+        assertEquals("testing", ju.getRowIdString());
+    }
+
+    @Test
+    public void testPrimaryKeyValue() {
+        ju.setPrimarKeyValue("primeKey");
+        assertEquals("primeKey", ju.getPrimarKeyValue());
+    }
+
+    @Test
+    public void testGenUpdatePreparedQueryObj() throws Exception {
+        JsonUpdate ju = Mockito.spy(JsonUpdate.class);
+        MultivaluedMap<String, String> rowParams = Mockito.mock(MultivaluedMap.class);
+ 
+        ju.setKeyspaceName("keyspace");
+        ju.setTableName("table");
+        ju.setPrimarKeyValue("primaryKeyValue");
+        Map<String, String> consistencyInfo = new HashMap<>();
+        consistencyInfo.put("type", "critical");
+        ju.setConsistencyInfo(consistencyInfo);
+        Map<String, Object> values = new HashMap<>();
+        values.put("col1", "val1");
+        ju.setValues(values);
+        
+        TableMetadata tmd = Mockito.mock(TableMetadata.class);
+        Mockito.doReturn(tmd).when(ju).returnColumnMetadata(Mockito.anyString(), Mockito.anyString());
+        ColumnMetadata cmd = Mockito.mock(ColumnMetadata.class);
+        Mockito.when(tmd.getColumn("col1")).thenReturn(cmd);
+        List<ColumnMetadata> colList = new ArrayList<>();
+        colList.add(cmd);
+        Mockito.when(tmd.getPrimaryKey()).thenReturn(colList);
+        Mockito.when(cmd.getType()).thenReturn(DataType.varchar());
+        
+        RowIdentifier rowId = Mockito.mock(RowIdentifier.class);
+        Mockito.doReturn(rowId).when(ju).getRowIdentifier(Mockito.anyString(), Mockito.anyString(), Mockito.any(),
+                Mockito.any());
+        
+        Mockito.when(rowId.getRowIdString()).thenReturn("col1");
+        Mockito.when(rowId.getPrimaryKeyValue()).thenReturn("val1");
+
+        
+        assertEquals("UPDATE keyspace.table  SET vector_ts=?,col1= ? WHERE col1;",
+                ju.genUpdatePreparedQueryObj(rowParams).getQuery());
+    }
 }

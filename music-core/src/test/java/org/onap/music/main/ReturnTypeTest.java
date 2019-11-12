@@ -20,7 +20,7 @@
  * ====================================================================
  */
 
-package org.onap.music.unittests;
+package org.onap.music.main;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -28,8 +28,6 @@ import static org.junit.Assert.assertTrue;
 import java.util.Map;
 
 import org.junit.Test;
-import org.onap.music.main.ResultType;
-import org.onap.music.main.ReturnType;
 
 public class ReturnTypeTest {
 
