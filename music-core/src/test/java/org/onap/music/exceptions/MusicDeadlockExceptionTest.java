@@ -46,6 +46,20 @@ public class MusicDeadlockExceptionTest {
 	        }
 
 	    }
+	 
+	 @Test
+	    public void TestException6() {
+	        String s1 = "Value1";
+	        String s2 = "value2";
+	        try {
+	            if (!s1.equalsIgnoreCase(s2)) {
+	                throw new MusicDeadlockException("org.onap.music.exceptions.MusicDeadlockException");
+	            }
+	        } catch (MusicDeadlockException mde) {
+	            assertEquals(mde.getMessage(),"org.onap.music.exceptions.MusicDeadlockException");
+	        }
+
+	    }
 
 	    @Test
 	    public void TestException2() {
