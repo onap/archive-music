@@ -478,7 +478,7 @@ public class CassaLockStore {
         queryObject.appendQueryString(" WHERE lockType = ? ALLOW FILTERING");
         queryObject.addValue(LockType.WRITE);
 
-        DeadlockDetectionUtil ddu = new DeadlockDetectionUtil();
+        DeadlockDetectionUtil ddu = getDeadlockDetectionUtil();
 
         ResultSet rs = dsHandle.executeLocalQuorumConsistencyGet(queryObject);
         logger.debug("rs has " + rs.getAvailableWithoutFetching() + (rs.isFullyFetched()?"":" (or more!)") );
@@ -493,6 +493,14 @@ public class CassaLockStore {
         return deadlock;
     }
 
+    /**
+     * This is used for testing purpose
+     * @return new DeadlockDetectionUtil object
+     */
+    DeadlockDetectionUtil getDeadlockDetectionUtil() {
+    	return new DeadlockDetectionUtil();
+    }
+    
     public List<String> getAllLocksForOwner(String ownerId, String keyspace, String table) throws MusicServiceException, MusicQueryException {
         List<String> toRet = new ArrayList<String>();
         String lockTable = table_prepend_name + table;
