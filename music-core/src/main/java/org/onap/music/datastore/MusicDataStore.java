@@ -470,16 +470,12 @@ public class MusicDataStore {
         ResultSet results = null;
         try {
             SimpleStatement statement = new SimpleStatement(queryObject.getQuery(), queryObject.getValues().toArray());
-
             if (consistencyLevel.equalsIgnoreCase(CONSISTENCY_LEVEL_ONE)) {
-                if(queryObject.getConsistency() == null) {
-                    statement.setConsistencyLevel(ConsistencyLevel.ONE);
-                } else {
-                    statement.setConsistencyLevel(MusicUtil.getConsistencyLevel(queryObject.getConsistency()));
-                }
-            }
-            else if (consistencyLevel.equalsIgnoreCase(CONSISTENCY_LEVEL_QUORUM)) {
+                statement.setConsistencyLevel(ConsistencyLevel.ONE);
+            } else if (consistencyLevel.equalsIgnoreCase(CONSISTENCY_LEVEL_QUORUM)) {
                 statement.setConsistencyLevel(ConsistencyLevel.QUORUM);
+            } else if (consistencyLevel.equalsIgnoreCase(CONSISTENCY_LEVEL_LOCAL_QUORUM)) {
+                statement.setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
             }
 
             results = session.execute(statement);
