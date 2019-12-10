@@ -61,6 +61,10 @@ import com.datastax.driver.extras.codecs.enums.EnumNameCodec;
  *
  */
 public class MusicDataStore {
+
+    public static final String CONSISTENCY_LEVEL_ONE = "ONE";
+    public static final String CONSISTENCY_LEVEL_QUORUM = "QUORUM";
+    public static final String CONSISTENCY_LEVEL_LOCAL_QUORUM = "LOCAL_QUORUM";
     private Session session;
     private Cluster cluster;
 
@@ -466,16 +470,11 @@ public class MusicDataStore {
         ResultSet results = null;
         try {
             SimpleStatement statement = new SimpleStatement(queryObject.getQuery(), queryObject.getValues().toArray());
-
-            if (consistencyLevel.equalsIgnoreCase(MusicUtil.ONE)) {
-                if(queryObject.getConsistency() == null) {
+            if (consistencyLevel.equalsIgnoreCase(CONSISTENCY_LEVEL_ONE)) {
                     statement.setConsistencyLevel(ConsistencyLevel.ONE);
-                } else {
-                    statement.setConsistencyLevel(MusicUtil.getConsistencyLevel(queryObject.getConsistency()));
-                }
-            } else if (consistencyLevel.equalsIgnoreCase(MusicUtil.QUORUM)) {
+            } else if (consistencyLevel.equalsIgnoreCase(CONSISTENCY_LEVEL_QUORUM)) {
                 statement.setConsistencyLevel(ConsistencyLevel.QUORUM);
-            } else if (consistencyLevel.equalsIgnoreCase(MusicUtil.LOCAL_QUORUM)) {
+            } else if (consistencyLevel.equalsIgnoreCase(CONSISTENCY_LEVEL_LOCAL_QUORUM)) {
                 statement.setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM);
             }
 
@@ -498,7 +497,7 @@ public class MusicDataStore {
      */
     public ResultSet executeOneConsistencyGet(PreparedQueryObject queryObject)
                     throws MusicServiceException, MusicQueryException {
-        return executeGet(queryObject, MusicUtil.ONE);
+        return executeGet(queryObject, CONSISTENCY_LEVEL_ONE);
     }
     
     /**
@@ -509,7 +508,7 @@ public class MusicDataStore {
      */
     public ResultSet executeLocalQuorumConsistencyGet(PreparedQueryObject queryObject)
                     throws MusicServiceException, MusicQueryException {
-        return executeGet(queryObject, MusicUtil.LOCAL_QUORUM);
+        return executeGet(queryObject, CONSISTENCY_LEVEL_LOCAL_QUORUM);
     }
     
     /**
@@ -520,7 +519,7 @@ public class MusicDataStore {
      */
     public ResultSet executeQuorumConsistencyGet(PreparedQueryObject queryObject)
                     throws MusicServiceException, MusicQueryException {
-        return executeGet(queryObject, MusicUtil.QUORUM);
+        return executeGet(queryObject, CONSISTENCY_LEVEL_QUORUM);
     }
     
 }
