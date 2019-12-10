@@ -35,9 +35,11 @@ import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.DeadlockDetectionUtil;
-
+import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
+import com.datastax.driver.core.WriteType;
+import com.datastax.driver.core.exceptions.WriteTimeoutException;
 
 public class CassaLockStoreTest {
 
@@ -282,4 +284,28 @@ public class CassaLockStoreTest {
 		}
 	}
 
+	@Test
+    public void testDequeueLockRef() throws Exception {
+        cassaLockStore.deQueueLockRef("keyspace1", "table1", "key6", "6", 2);
+        
+        // note only expecting 1 call to this instance, expecting it to succeed
+        Mockito.verify(dsHandle, Mockito.times(1)).executePut(Mockito.any(), Mockito.anyString());
+    }
+	
+	@Test
+	public void testDequeueLockRefWriteTimeout() throws Exception {
+	    int retryCount = 22;
+	    try {
+	        Mockito.when(dsHandle.executePut(Mockito.any(), Mockito.anyString()))
+                .thenThrow(new MusicServiceException("Cassandra timeout during..."));
+            cassaLockStore.deQueueLockRef("keyspace1", "table1", "key6", "6", retryCount);
+            
+            // Should never reach here
+            assertEquals(false, true);
+        } catch (MusicServiceException | MusicQueryException | MusicLockingException e) {
+            // should throw an error
+        }
+	    
+	    Mockito.verify(dsHandle, Mockito.times(retryCount)).executePut(Mockito.any(), Mockito.anyString());
+	}
 }
