@@ -41,37 +41,43 @@ public class PropertiesLoader implements InitializingBean {
 
     @Value("${debug}")
     public String debug;
-    
+
     @Value("${version}")
     public String version;
 
     @Value("${build}")
     public String build;
-    
+
     @Value("${music.properties}")
     public String musicProperties;
-    
+
     @Value("${lock.lease.period}")
     public String lockLeasePeriod;
-    
+
     @Value("${cassandra.user}")
     public String cassandraUser;
-    
+
     @Value("${cassandra.password}")
     public String cassandraPassword;
-    
+
     @Value("${cassandra.port}")
     public String cassandraPort;
-    
+
+    @Value("${cassandra.connecttimeoutms}")
+    public String cassandraConnectTimeOutMS;
+
+    @Value("${cassandra.readtimeoutms}")
+    public String cassandraReadTimeOutMS;
+
     @Value("${cadi}")
     public String isCadi;
-    
+
     @Value("${keyspace.active}")
     public String isKeyspaceActive;
 
     @Value("${retry.count}")
     public String rertryCount;
-    
+
     @Value("${transId.header.prefix}")
     private String transIdPrefix;
 
@@ -83,7 +89,7 @@ public class PropertiesLoader implements InitializingBean {
 
     @Value("${messageId.header.prefix}")
     private String messageIdPrefix;    
-    
+
     @Value("${transId.header.required}")
     private Boolean transIdRequired;
 
@@ -101,19 +107,19 @@ public class PropertiesLoader implements InitializingBean {
 
     @Value("${cipher.enc.key}")
     private String cipherEncKey;
-    
+
     @SuppressWarnings("unused")
-	private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(PropertiesLoader.class);
-    
+    private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(PropertiesLoader.class);
+
     @Bean
     public static PropertySourcesPlaceholderConfigurer propertyConfigInDev() {
-       
+
         PropertySourcesPlaceholderConfigurer pspc = new PropertySourcesPlaceholderConfigurer();
         pspc.setIgnoreResourceNotFound(true);
         pspc.setIgnoreUnresolvablePlaceholders(true);
         return pspc;
     }
-    
+
     /**
      * .
      */
@@ -132,6 +138,12 @@ public class PropertiesLoader implements InitializingBean {
         }
         if (cassandraPassword != null && !cassandraPassword.equals("${cassandra.password}")) {
             MusicUtil.setCassPwd(cassandraPassword);
+        }
+        if (cassandraConnectTimeOutMS != null && !cassandraConnectTimeOutMS.equals("${cassandra.connecttimeoutms}")) {
+            MusicUtil.setCassandraConnectTimeOutMS(Integer.parseInt(cassandraConnectTimeOutMS));
+        }
+        if (cassandraReadTimeOutMS != null && !cassandraReadTimeOutMS.equals("${cassandra.readtimeoutms}")) {
+            MusicUtil.setCassandraReadTimeOutMS(Integer.parseInt(cassandraReadTimeOutMS));
         }
         if (debug != null && !debug.equals("${debug}")) {
             MusicUtil.setDebug(Boolean.parseBoolean(debug));
@@ -209,7 +221,15 @@ public class PropertiesLoader implements InitializingBean {
         if (properties.getProperty("cassandra.password")!=null) {
             MusicUtil.setCassPwd(properties.getProperty("cassandra.password"));
         }
-        
+
+        if(properties.getProperty("cassandra.connectTimeOutMS")!=null) {
+            MusicUtil.setCassandraConnectTimeOutMS(Integer.parseInt(properties.getProperty("cassandra.connecttimeoutms")));
+        }
+
+        if(properties.getProperty("cassandra.readTimeOutMS")!=null) {
+            MusicUtil.setCassandraReadTimeOutMS(Integer.parseInt(properties.getProperty("cassandra.readtimeoutms")));
+        }
+
         if (properties.getProperty("music.properties")!=null) {
             MusicUtil.setMusicPropertiesFilePath(properties.getProperty("music.properties"));
         }
@@ -283,11 +303,11 @@ public class PropertiesLoader implements InitializingBean {
         }
 
     }
-    
+
     @Override
     public void afterPropertiesSet() throws Exception {
         // TODO Auto-generated method stub
-        
+
     }
 
 }
