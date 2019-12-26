@@ -138,6 +138,8 @@ public class MusicUtil {
     private static String cassPwd;
     private static String myCassaHost = LOCALHOST;
     private static int cassandraPort = 9042;
+    private static int cassandraConnectTimeOutMS; 
+    private static int cassandraReadTimeOutMS;
 
     // AAF
     private static String musicAafNs = "org.onap.music.cadi";
@@ -198,6 +200,22 @@ public class MusicUtil {
     public static String getCassPwd() {
         return cassPwd;
     }
+    
+    public static int getCassandraConnectTimeOutMS() {
+		return cassandraConnectTimeOutMS;
+	}
+
+	public static void setCassandraConnectTimeOutMS(int cassandraConnectTimeOutMS) {
+		MusicUtil.cassandraConnectTimeOutMS = cassandraConnectTimeOutMS;
+	}
+
+	public static int getCassandraReadTimeOutMS() {
+		return cassandraReadTimeOutMS;
+	}
+
+	public static void setCassandraReadTimeOutMS(int cassandraReadTimeOutMS) {
+		MusicUtil.cassandraReadTimeOutMS = cassandraReadTimeOutMS;
+	}
 
     /**
      * Returns An array of property names that should be in the Properties

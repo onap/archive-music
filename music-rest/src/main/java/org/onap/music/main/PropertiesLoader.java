@@ -63,7 +63,13 @@ public class PropertiesLoader implements InitializingBean {
     @Value("${cassandra.port}")
     public String cassandraPort;
     
-    @Value("${cadi}")
+    @Value("${cassandra.connectTimeOutMS}")
+    public String cassandraConnectTimeOutMS;
+    
+    @Value("${cassandra.readTimeOutMS}")
+    public String cassandraReadTimeOutMS;
+    
+	@Value("${cadi}")
     public String isCadi;
     
     @Value("${keyspace.active}")
@@ -132,6 +138,12 @@ public class PropertiesLoader implements InitializingBean {
         }
         if (cassandraPassword != null && !cassandraPassword.equals("${cassandra.password}")) {
             MusicUtil.setCassPwd(cassandraPassword);
+        }
+        if (cassandraConnectTimeOutMS != null && !cassandraConnectTimeOutMS.equals("${cassandra.connectTimeOutMS}")) {
+            MusicUtil.setCassandraConnectTimeOutMS(Integer.parseInt(cassandraConnectTimeOutMS));
+        }
+        if (cassandraReadTimeOutMS != null && !cassandraReadTimeOutMS.equals("${cassandra.readTimeOutMS}")) {
+            MusicUtil.setCassandraReadTimeOutMS(Integer.parseInt(cassandraReadTimeOutMS));
         }
         if (debug != null && !debug.equals("${debug}")) {
             MusicUtil.setDebug(Boolean.parseBoolean(debug));
@@ -208,6 +220,14 @@ public class PropertiesLoader implements InitializingBean {
 
         if (properties.getProperty("cassandra.password")!=null) {
             MusicUtil.setCassPwd(properties.getProperty("cassandra.password"));
+        }
+        
+        if(properties.getProperty("cassandra.connectTimeOutMS")!=null) {
+        	MusicUtil.setCassandraConnectTimeOutMS(Integer.parseInt(properties.getProperty("cassandra.connectTimeOutMS")));
+        }
+        
+        if(properties.getProperty("cassandra.readTimeOutMS")!=null) {
+        	MusicUtil.setCassandraReadTimeOutMS(Integer.parseInt(properties.getProperty("cassandra.readTimeOutMS")));
         }
         
         if (properties.getProperty("music.properties")!=null) {

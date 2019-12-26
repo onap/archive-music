@@ -322,6 +322,19 @@ public class MusicUtilTest {
         MusicUtil.setTransIdRequired(true);
         assertEquals(true,MusicUtil.getTransIdRequired());
     }
+    
+    @Test
+    public void testGetCassandraConnectTimeOutMS() {
+        MusicUtil.setCassandraConnectTimeOutMS(2000);
+        assertEquals(2000,MusicUtil.getCassandraConnectTimeOutMS());
+    }
+    
+    @Test
+    public void testGetCassandraReadTimeOutMS() {
+        MusicUtil.setCassandraReadTimeOutMS(2000);
+        assertEquals(2000,MusicUtil.getCassandraReadTimeOutMS());
+    }
+    
 /*
     @Test
     public void testLoadProperties() {

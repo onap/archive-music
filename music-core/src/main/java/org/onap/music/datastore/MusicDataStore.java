@@ -51,6 +51,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleStatement;
+import com.datastax.driver.core.SocketOptions;
 import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.exceptions.AlreadyExistsException;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
@@ -166,11 +167,17 @@ public class MusicDataStore {
                         //.withLoadBalancingPolicy(new RoundRobinPolicy())
                         .withoutJMXReporting()
                         .withPoolingOptions(poolingOptions)
+                        .withSocketOptions(new SocketOptions()
+                        		.setConnectTimeoutMillis(MusicUtil.getCassandraConnectTimeOutMS())
+                        				.setReadTimeoutMillis(MusicUtil.getCassandraReadTimeOutMS()))
                         .addContactPoints(addresses).build();
         } else {
             cluster = Cluster.builder().withPort(MusicUtil.getCassandraPort())
                         .withoutJMXReporting()
                         .withPoolingOptions(poolingOptions)
+                        .withSocketOptions(new SocketOptions()
+                        		.setConnectTimeoutMillis(MusicUtil.getCassandraConnectTimeOutMS())
+                        				.setReadTimeoutMillis(MusicUtil.getCassandraReadTimeOutMS()))
                         .addContactPoints(addresses)
                         .build();
         }
