@@ -75,7 +75,7 @@ public class MusicUtilTest {
         mc = null;
         mc = MusicUtil.getMusicCoreService();
         assertTrue(mc != null);        
-        
+
     }
 
     @Test
@@ -123,7 +123,7 @@ public class MusicUtilTest {
         assertEquals(MusicUtil.buildVersion("1","2",null),"1.2");
     }
 
-/*
+    /*
     @Test
     public void testBuileVersionResponse() {
         assertTrue(MusicUtil.buildVersionResponse("1","2","3").getClass().getSimpleName().equals("Builder"));
@@ -131,7 +131,7 @@ public class MusicUtilTest {
         assertTrue(MusicUtil.buildVersionResponse("1","2",null).getClass().getSimpleName().equals("Builder"));
         assertTrue(MusicUtil.buildVersionResponse(null,null,null).getClass().getSimpleName().equals("Builder"));
     }
-*/
+     */
     @Test
     public void testGetConsistency() {
         assertTrue(ConsistencyLevel.ONE.equals(MusicUtil.getConsistencyLevel("one")));
@@ -174,7 +174,7 @@ public class MusicUtilTest {
         System.out.println("#######" + myQueryObject.getQuery().isEmpty());
         assertFalse(MusicUtil.isValidQueryObject(false,myQueryObject));
 
-    
+
     }
 
 
@@ -233,7 +233,7 @@ public class MusicUtilTest {
         assertTrue(result.contains("name"));
         assertTrue(result.contains("value"));
     }
-    
+
     @Test
     public void test_generateUUID() {
         //this function shouldn't be in cachingUtil
@@ -255,62 +255,62 @@ public class MusicUtilTest {
         MusicUtil.setLockUsing("testlock");
         assertEquals("testlock", MusicUtil.getLockUsing());
     }
-    
+
     @Test
     public void testCassaPort() {
         MusicUtil.setCassandraPort(1234);
         assertEquals(1234, MusicUtil.getCassandraPort());
     }
-    
+
     @Test
     public void testBuild() {
         MusicUtil.setBuild("testbuild");
         assertEquals("testbuild", MusicUtil.getBuild());
     }
-    
+
     @Test
     public void testTransId() {
         MusicUtil.setTransIdPrefix("prefix");
         assertEquals("prefix-", MusicUtil.getTransIdPrefix());
     }
-    
-    
+
+
     @Test
     public void testConversationIdPrefix() {
         MusicUtil.setConversationIdPrefix("prefix-");
         assertEquals("prefix-", MusicUtil.getConversationIdPrefix());
     }
-    
+
     @Test
     public void testClientIdPrefix() {
         MusicUtil.setClientIdPrefix("clientIdPrefix");
         assertEquals("clientIdPrefix-", MusicUtil.getClientIdPrefix());
     }
-    
+
     @Test
     public void testMessageIdPrefix() {
         MusicUtil.setMessageIdPrefix("clientIdPrefix");
         assertEquals("clientIdPrefix-", MusicUtil.getMessageIdPrefix());
     }
-    
+
     @Test
     public void testTransIdPrefix() {
         MusicUtil.setTransIdPrefix("transIdPrefix");
         assertEquals("transIdPrefix-", MusicUtil.getTransIdPrefix());
     }
-    
+
     @Test
     public void testConvIdReq() {
         MusicUtil.setConversationIdRequired(true);
         assertEquals(true, MusicUtil.getConversationIdRequired());
     }
-    
+
     @Test
     public void testClientIdRequired() {
         MusicUtil.setClientIdRequired(true);
         assertEquals(true, MusicUtil.getClientIdRequired());
     }
-    
+
     @Test
     public void testMessageIdRequired() {
         MusicUtil.setMessageIdRequired(true);
@@ -322,11 +322,24 @@ public class MusicUtilTest {
         MusicUtil.setTransIdRequired(true);
         assertEquals(true,MusicUtil.getTransIdRequired());
     }
-/*
+
+    @Test
+    public void testGetCassandraConnectTimeOutMS() {
+        MusicUtil.setCassandraConnectTimeOutMS(2000);
+        assertEquals(2000,MusicUtil.getCassandraConnectTimeOutMS());
+    }
+
+    @Test
+    public void testGetCassandraReadTimeOutMS() {
+        MusicUtil.setCassandraReadTimeOutMS(2000);
+        assertEquals(2000,MusicUtil.getCassandraReadTimeOutMS());
+    }
+
+    /*
     @Test
     public void testLoadProperties() {
         PropertiesLoader pl = new PropertiesLoader();
         pl.loadProperties();
     }
-*/
+     */
 }

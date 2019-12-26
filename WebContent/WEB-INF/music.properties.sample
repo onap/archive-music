@@ -14,5 +14,7 @@ all.public.ips=12.13.14.45:12.13.14.46:12.13.14.47
 # Cassandra Username and password
 cassandra.user=cassandra
 cassandra.password=cassandra
+cassandra.connecttimeoutms=5000
+cassandra.readtimeoutms=5000
 # AAF Endpoint
 aaf.endpoint.url=http://aafendpoint/proxy/authz/nss/

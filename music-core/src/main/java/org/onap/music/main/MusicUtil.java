@@ -117,8 +117,8 @@ public class MusicUtil {
     //     "clientId.header.prefix","messageId.header.prefix"};
     // Consistency Constants and variables. 
     private static final String[] cosistencyLevel = new String[] {
-        "ALL","EACH_QUORUM","QUORUM","LOCAL_QUORUM","ONE","TWO",
-        "THREE","LOCAL_ONE","ANY","SERIAL","LOCAL_SERIAL"};
+            "ALL","EACH_QUORUM","QUORUM","LOCAL_QUORUM","ONE","TWO",
+            "THREE","LOCAL_ONE","ANY","SERIAL","LOCAL_SERIAL"};
     private static final Map<String,ConsistencyLevel> consistencyName = new HashMap<>();
     static {
         consistencyName.put("ONE",ConsistencyLevel.ONE);
@@ -138,6 +138,8 @@ public class MusicUtil {
     private static String cassPwd;
     private static String myCassaHost = LOCALHOST;
     private static int cassandraPort = 9042;
+    private static int cassandraConnectTimeOutMS; 
+    private static int cassandraReadTimeOutMS;
 
     // AAF
     private static String musicAafNs = "org.onap.music.cadi";
@@ -149,11 +151,11 @@ public class MusicUtil {
 
     // Response/Request tracking headers
     private static String transIdPrefix = "false";
-	private static String conversationIdPrefix = "false";
+    private static String conversationIdPrefix = "false";
     private static String clientIdPrefix = "false";
     private static String messageIdPrefix = "false";
-	private static Boolean transIdRequired = false;
-	private static Boolean conversationIdRequired = false;
+    private static Boolean transIdRequired = false;
+    private static Boolean conversationIdRequired = false;
     private static Boolean clientIdRequired = false;
     private static Boolean messageIdRequired = false;
     private static String cipherEncKey = "";
@@ -161,7 +163,7 @@ public class MusicUtil {
     public MusicUtil() {
         throw new IllegalStateException("Utility Class");
     }
-    
+
     public static String getLockUsing() {
         return lockUsing;
     }
@@ -199,15 +201,31 @@ public class MusicUtil {
         return cassPwd;
     }
 
+    public static int getCassandraConnectTimeOutMS() {
+        return cassandraConnectTimeOutMS;
+    }
+
+    public static void setCassandraConnectTimeOutMS(int cassandraConnectTimeOutMS) {
+        MusicUtil.cassandraConnectTimeOutMS = cassandraConnectTimeOutMS;
+    }
+
+    public static int getCassandraReadTimeOutMS() {
+        return cassandraReadTimeOutMS;
+    }
+
+    public static void setCassandraReadTimeOutMS(int cassandraReadTimeOutMS) {
+        MusicUtil.cassandraReadTimeOutMS = cassandraReadTimeOutMS;
+    }
+
     /**
      * Returns An array of property names that should be in the Properties
      * files.
      *
 //     * @return
 //     */
-//    public static String[] getPropkeys() {
-//        return propKeys.clone();
-//    }
+    //    public static String[] getPropkeys() {
+    //        return propKeys.clone();
+    //    }
 
     /**
      * Get MusicPropertiesFilePath - Default = /opt/music/music.properties
@@ -318,7 +336,7 @@ public class MusicUtil {
     public static void setMyCassaHost(String myCassaHost) {
         MusicUtil.myCassaHost = myCassaHost;
     }
-    
+
     /**
      * Gey default retry count
      * @return
@@ -424,23 +442,23 @@ public class MusicUtil {
 
         String value = "";
         switch (type.getName()) {
-        case UUID:
-            value = valueObj + "";
-            break;
-        case TEXT:
-        case VARCHAR:
-            String valueString = valueObj + "";
-            valueString = valueString.replace("'", "''");
-            value = "'" + valueString + "'";
-            break;
-        case MAP: {
-            Map<String, Object> otMap = (Map<String, Object>) valueObj;
-            value = "{" + jsonMaptoSqlString(otMap, ",") + "}";
-            break;
-        }
-        default:
-            value = valueObj + "";
-            break;
+            case UUID:
+                value = valueObj + "";
+                break;
+            case TEXT:
+            case VARCHAR:
+                String valueString = valueObj + "";
+                valueString = valueString.replace("'", "''");
+                value = "'" + valueString + "'";
+                break;
+            case MAP: {
+                Map<String, Object> otMap = (Map<String, Object>) valueObj;
+                value = "{" + jsonMaptoSqlString(otMap, ",") + "}";
+                break;
+            }
+            default:
+                value = valueObj + "";
+                break;
         }
         return value;
     }
@@ -584,14 +602,14 @@ public class MusicUtil {
 
         return ts;
     }
-    
+
     public static MusicCoreService  getMusicCoreService() {
         if(getLockUsing().equals(MusicUtil.CASSANDRA))
             return MusicCassaCore.getInstance();
         else
             return MusicCassaCore.getInstance();
     }
-    
+
     /**
      * @param lockName
      * @return
@@ -616,9 +634,9 @@ public class MusicUtil {
     }
 
     public static void writeBackToQuorum(PreparedQueryObject selectQuery, String primaryKeyName,
-        PreparedQueryObject updateQuery, String keyspace, String table,
-        Object cqlFormattedPrimaryKeyValue)
-        throws Exception {
+            PreparedQueryObject updateQuery, String keyspace, String table,
+            Object cqlFormattedPrimaryKeyValue)
+                    throws Exception {
         try {
             ResultSet results = MusicDataStoreHandle.getDSHandle().executeQuorumConsistencyGet(selectQuery);
             // write it back to a quorum
@@ -641,16 +659,16 @@ public class MusicUtil {
                 counter = counter + 1;
             }
             updateQuery.appendQueryString("UPDATE " + keyspace + "." + table + " SET "
-                + fieldValueString + " WHERE " + primaryKeyName + "= ? " + ";");
+                    + fieldValueString + " WHERE " + primaryKeyName + "= ? " + ";");
             updateQuery.addValue(cqlFormattedPrimaryKeyValue);
 
             MusicDataStoreHandle.getDSHandle().executePut(updateQuery, "critical");
         } catch (MusicServiceException | MusicQueryException e) {
             logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(), AppMessages.QUERYERROR +""+updateQuery ,
-                ErrorSeverity.MAJOR, ErrorTypes.QUERYERROR, e);
+                    ErrorSeverity.MAJOR, ErrorTypes.QUERYERROR, e);
         }
     }
-    
+
     public static boolean getIsCadi() {
         return MusicUtil.isCadi;
     }
@@ -729,64 +747,64 @@ public class MusicUtil {
         MusicUtil.messageIdPrefix = checkPrefix(messageIdPrefix);
     }
 
-        /**
-    * @return the transIdRequired
-    */
+    /**
+     * @return the transIdRequired
+     */
     public static Boolean getTransIdRequired() {
         return transIdRequired;
     }
 
 
     /**
-    * @param transIdRequired the transIdRequired to set
-    */
+     * @param transIdRequired the transIdRequired to set
+     */
     public static void setTransIdRequired(Boolean transIdRequired) {
         MusicUtil.transIdRequired = transIdRequired;
     }
 
 
     /**
-    * @return the conversationIdRequired
-    */
+     * @return the conversationIdRequired
+     */
     public static Boolean getConversationIdRequired() {
         return conversationIdRequired;
     }
 
 
     /**
-    * @param conversationIdRequired the conversationIdRequired to set
-    */
+     * @param conversationIdRequired the conversationIdRequired to set
+     */
     public static void setConversationIdRequired(Boolean conversationIdRequired) {
         MusicUtil.conversationIdRequired = conversationIdRequired;
     }
 
 
     /**
-    * @return the clientIdRequired
-    */
+     * @return the clientIdRequired
+     */
     public static Boolean getClientIdRequired() {
         return clientIdRequired;
     }
 
 
     /**
-    * @param clientIdRequired the clientIdRequired to set
-    */
+     * @param clientIdRequired the clientIdRequired to set
+     */
     public static void setClientIdRequired(Boolean clientIdRequired) {
         MusicUtil.clientIdRequired = clientIdRequired;
     }
 
 
     /**
-    * @return the messageIdRequired
-    */
+     * @return the messageIdRequired
+     */
     public static Boolean getMessageIdRequired() {
         return messageIdRequired;
     }
 
     /**
-    * @param messageIdRequired the messageIdRequired to set
-    */
+     * @param messageIdRequired the messageIdRequired to set
+     */
     public static void setMessageIdRequired(Boolean messageIdRequired) {
         MusicUtil.messageIdRequired = messageIdRequired;
     }
@@ -800,7 +818,7 @@ public class MusicUtil {
     public static void setCipherEncKey(String cipherEncKey) {
         MusicUtil.cipherEncKey = cipherEncKey;
         if ( null == cipherEncKey || cipherEncKey.equals("") || 
-            cipherEncKey.equals("nothing to see here")) {
+                cipherEncKey.equals("nothing to see here")) {
             logger.error(EELFLoggerDelegate.errorLogger, "Missing Cipher Encryption Key.");
         }
     }
