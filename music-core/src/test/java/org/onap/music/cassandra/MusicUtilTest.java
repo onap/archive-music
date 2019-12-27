@@ -21,7 +21,7 @@
  * ====================================================================
  */
 
-package org.onap.music.unittests;
+package org.onap.music.cassandra;
 
 import static org.junit.Assert.*;
 import java.math.BigInteger;

@@ -73,6 +73,7 @@ public class MusicUtil {
     public static final String EVENTUAL_NB = "eventual_nb";
     public static final String ALL = "all";
     public static final String QUORUM = "quorum";
+    public static final String LOCAL_QUORUM = "local_quorum";
     public static final String ONE = "one";
     public static final String ATOMICDELETELOCK = "atomic_delete_lock";
 

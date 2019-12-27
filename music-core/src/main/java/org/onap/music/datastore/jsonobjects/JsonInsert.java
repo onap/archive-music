@@ -173,11 +173,6 @@ public class JsonInsert implements Serializable {
      * @throws MusicQueryException
      */
     public PreparedQueryObject genInsertPreparedQueryObj() throws MusicQueryException {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Coming inside genTableInsertQuery method " + this.getKeyspaceName());
-            logger.debug("Coming inside genTableInsertQuery method " + this.getTableName());
-        }
-
         PreparedQueryObject queryObject = new PreparedQueryObject();
         TableMetadata tableInfo = null;
         try {

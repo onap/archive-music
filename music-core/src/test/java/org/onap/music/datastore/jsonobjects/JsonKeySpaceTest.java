@@ -20,14 +20,13 @@
  * ====================================================================
  */
 
-package org.onap.music.unittests.jsonobjects;
+package org.onap.music.datastore.jsonobjects;
 
 import static org.junit.Assert.*;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
-import org.onap.music.datastore.jsonobjects.JsonKeySpace;
 
 public class JsonKeySpaceTest {
 

@@ -65,7 +65,7 @@ public class JsonUpdate implements Serializable {
     private Map<String, String> consistencyInfo;
     private transient Map<String, Object> conditions;
     private transient Map<String, Object> rowSpecification;
-    private StringBuilder rowIdString;
+    private String rowIdString;
     private String primarKeyValue;
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(JsonUpdate.class);
 
@@ -142,11 +142,11 @@ public class JsonUpdate implements Serializable {
         this.values = values;
     }
     
-    public StringBuilder getRowIdString() {
+    public String getRowIdString() {
         return rowIdString;
     }
 
-    public void setRowIdString(StringBuilder rowIdString) {
+    public void setRowIdString(String rowIdString) {
         this.rowIdString = rowIdString;
     }
 
@@ -176,11 +176,6 @@ public class JsonUpdate implements Serializable {
      * @throws MusicQueryException
      */
     public PreparedQueryObject genUpdatePreparedQueryObj(MultivaluedMap<String, String> rowParams) throws MusicQueryException {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Coming inside genUpdatePreparedQueryObj method " + this.getKeyspaceName());
-            logger.debug("Coming inside genUpdatePreparedQueryObj method " + this.getTableName());
-        }
-        
         PreparedQueryObject queryObject = new PreparedQueryObject();
         
          if((this.getKeyspaceName() == null || this.getKeyspaceName().isEmpty()) || 
@@ -205,20 +200,7 @@ public class JsonUpdate implements Serializable {
          
         Map<String, Object> valuesMap = this.getValues();
 
-        TableMetadata tableInfo;
-        
-        try {
-            tableInfo = MusicDataStoreHandle.returnColumnMetadata(this.getKeyspaceName(), this.getTableName());
-        } catch (MusicServiceException e) {
-            logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes
-                .GENERALSERVICEERROR, e);
-            /*return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();*/
-            throw new MusicQueryException(e.getMessage(), Status.BAD_REQUEST.getStatusCode());
-        }catch (Exception e) {
-            logger.error(EELFLoggerDelegate.errorLogger, e, AppMessages.UNKNOWNERROR, ErrorSeverity.CRITICAL,
-                    ErrorTypes.GENERALSERVICEERROR);
-            throw new MusicQueryException(e.getMessage(), Status.BAD_REQUEST.getStatusCode());
-        }
+        TableMetadata tableInfo = getColumnMetadata(this.getKeyspaceName(), this.getTableName());
         
         if (tableInfo == null) {
             logger.error(EELFLoggerDelegate.errorLogger,"Table information not found. Please check input for table name= "+this.getTableName(), AppMessages.MISSINGINFO  ,ErrorSeverity.WARN, ErrorTypes.AUTHENTICATIONERROR);
@@ -289,7 +271,7 @@ public class JsonUpdate implements Serializable {
             rowId = getRowIdentifier(this.getKeyspaceName(), this.getTableName(), rowParams, queryObject);
             this.setRowIdString(rowId.rowIdString);
             this.setPrimarKeyValue(rowId.primarKeyValue);
-            if(rowId == null || rowId.primarKeyValue.isEmpty()) {
+            if(rowId == null || rowId.getPrimaryKeyValue().isEmpty()) {
                 /*return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
                         .setError("Mandatory WHERE clause is missing. Please check the input request.").toMap()).build();*/
                 
@@ -312,7 +294,7 @@ public class JsonUpdate implements Serializable {
         
 
         queryObject.appendQueryString(
-            " SET " + fieldValueString + " WHERE " + rowId.rowIdString + ";");
+            " SET " + fieldValueString + " WHERE " + rowId.getRowIdString() + ";");
             
         
 
@@ -324,7 +306,7 @@ public class JsonUpdate implements Serializable {
             // to avoid parsing repeatedly, just send the select query to obtain row
             PreparedQueryObject selectQuery = new PreparedQueryObject();
             selectQuery.appendQueryString("SELECT *  FROM " + this.getKeyspaceName() + "." + this.getTableName() + " WHERE "
-                + rowId.rowIdString + ";");
+                + rowId.getRowIdString() + ";");
             selectQuery.addValue(rowId.primarKeyValue);
             conditionInfo = new Condition(this.getConditions(), selectQuery);
         }
@@ -348,19 +330,61 @@ public class JsonUpdate implements Serializable {
         
         return queryObject;
     }
+
+    TableMetadata getColumnMetadata(String keyspaceName, String tableName) throws MusicQueryException {
+        TableMetadata tableInfo;
+        try {
+            tableInfo = returnColumnMetadata(keyspaceName, tableName);
+        } catch (MusicServiceException e) {
+            logger.error(EELFLoggerDelegate.errorLogger,e, AppMessages.UNKNOWNERROR  ,ErrorSeverity.WARN, ErrorTypes
+                .GENERALSERVICEERROR, e);
+            /*return response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE).setError(e.getMessage()).toMap()).build();*/
+            throw new MusicQueryException(e.getMessage(), Status.BAD_REQUEST.getStatusCode());
+        }catch (Exception e) {
+            logger.error(EELFLoggerDelegate.errorLogger, e, AppMessages.UNKNOWNERROR, ErrorSeverity.CRITICAL,
+                    ErrorTypes.GENERALSERVICEERROR);
+            throw new MusicQueryException(e.getMessage(), Status.BAD_REQUEST.getStatusCode());
+        }
+        return tableInfo;
+    }
     
-    private class RowIdentifier {
-        public String primarKeyValue;
-        public StringBuilder rowIdString;
+    /** wrapper around static method for testing */
+    TableMetadata returnColumnMetadata(String keyspace, String tableName) throws MusicServiceException {
+        return MusicDataStoreHandle.returnColumnMetadata(keyspace, tableName);
+    }
+    
+    class RowIdentifier {
+        private String primarKeyValue;
+        private String rowIdString;
         @SuppressWarnings("unused")
         public PreparedQueryObject queryObject; // the string with all the row
                                                 // identifiers separated by AND
 
-        public RowIdentifier(String primaryKeyValue, StringBuilder rowIdString,
+        public RowIdentifier(String primaryKeyValue, String rowIdString,
                         PreparedQueryObject queryObject) {
             this.primarKeyValue = primaryKeyValue;
             this.rowIdString = rowIdString;
             this.queryObject = queryObject;
+        }
+
+        public String getPrimaryKeyValue() {
+            return this.primarKeyValue;
+        }
+
+        public void setPrimaryKeyValue(String primaryKeyValue) {
+            this.primarKeyValue = primaryKeyValue;
+        }
+
+        public String getRowIdString() {
+            return this.rowIdString.toString();
+        }
+
+        public void setRowIdString(String rowIdString) {
+            this.rowIdString = rowIdString;
+        }
+
+        public PreparedQueryObject getQueryObject() {
+            return this.queryObject;
         }
     }
     
@@ -373,12 +397,12 @@ public class JsonUpdate implements Serializable {
     * @return
     * @throws MusicServiceException
     */
-   private RowIdentifier getRowIdentifier(String keyspace, String tablename,
+    RowIdentifier getRowIdentifier(String keyspace, String tablename,
        MultivaluedMap<String, String> rowParams, PreparedQueryObject queryObject)
        throws MusicServiceException {
        StringBuilder rowSpec = new StringBuilder();
        int counter = 0;
-       TableMetadata tableInfo = MusicDataStoreHandle.returnColumnMetadata(keyspace, tablename);
+       TableMetadata tableInfo = returnColumnMetadata(keyspace, tablename);
        if (tableInfo == null) {
            logger.error(EELFLoggerDelegate.errorLogger,
                "Table information not found. Please check input for table name= "
@@ -410,7 +434,7 @@ public class JsonUpdate implements Serializable {
            }
            counter = counter + 1;
        }
-       return new RowIdentifier(primaryKey.toString(), rowSpec, queryObject);
+       return new RowIdentifier(primaryKey.toString(), rowSpec.toString(), queryObject);
     }
 
 }

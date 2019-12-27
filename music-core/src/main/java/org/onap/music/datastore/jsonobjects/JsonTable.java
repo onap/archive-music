@@ -144,11 +144,6 @@ public class JsonTable {
     }
     
     public PreparedQueryObject genCreateTableQuery()  throws MusicQueryException {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Coming inside genCreateTableQuery method " + this.getKeyspaceName());
-            logger.debug("Coming inside genCreateTableQuery method " + this.getTableName());
-        }
-
         String primaryKey = null;
         String partitionKey = this.getPartitionKey();
         String clusterKey = this.getClusteringKey();
@@ -341,35 +336,11 @@ public class JsonTable {
     }
 
     /**
-     * 
-     * @return
-     */
-    public PreparedQueryObject genCreateShadowLockingTableQuery() {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Coming inside genCreateShadowLockingTableQuery method " + this.getKeyspaceName());
-            logger.debug("Coming inside genCreateShadowLockingTableQuery method " + this.getTableName());
-        }
-
-        String tableName = "unsyncedKeys_" + this.getTableName();
-        String tabQuery = "CREATE TABLE IF NOT EXISTS " + this.getKeyspaceName() + "." + tableName
-                + " ( key text,PRIMARY KEY (key) );";
-        PreparedQueryObject queryObject = new PreparedQueryObject();
-        queryObject.appendQueryString(tabQuery);
-
-        return queryObject;
-    }
-
-    /**
      * genDropTableQuery
      * 
      * @return PreparedQueryObject
      */
     public PreparedQueryObject genDropTableQuery() {
-        if (logger.isDebugEnabled()) {
-            logger.debug("Coming inside genDropTableQuery method " + this.getKeyspaceName());
-            logger.debug("Coming inside genDropTableQuery method " + this.getTableName());
-        }
-
         PreparedQueryObject query = new PreparedQueryObject();
         query.appendQueryString("DROP TABLE  " + this.getKeyspaceName() + "." + this.getTableName() + ";");
         logger.info("Delete Query ::::: " + query.getQuery());
