@@ -259,13 +259,20 @@ public class CipherUtil {
         }
     }
 
-    /*public static void main(String[] args)  {
+    public static void main(String[] args)  {
 
-        System.out.println("Encrypted password: "+encryptPKC("cassandra"));
+        if (args.length < 2) {
+            System.out.println("Usage: java -jar CipherUtil <key> <password>");
+            return;
+        }
+        
+        keyString = args[0];
+        String password = args[1];
+        
+        String enc = encryptPKC(password);
+        System.out.println("Encrypted password: " + enc);
 
-        System.out.println("Decrypted password: "+decryptPKC("dDhqAp5/RwZbl9yRSZg15fN7Qul9eiE/JFkKemtTib0="));
-        System.out.println("Decrypted password: "+decryptPKC("I/dOtD/YYzBStbtOYhKuUUyPHSW2G9ZzdSyB8bJp4vk="));
-        System.out.println("Decrypted password: "+decryptPKC("g7zJqg74dLsH/fyL7I75b4eySy3pbMS2xVqkrB5lDl8="));
-    }*/
+        System.out.println("Decrypted password (to verify): " + decryptPKC(enc));
+    }
 
 }
