@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "44122a23_cf678512",
+        "filename": "WebContent/WEB-INF/music.properties.sample",
+        "patchSetId": 3
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1827
+      },
+      "writtenOn": "2020-01-03T06:43:05Z",
+      "side": 1,
+      "message": "This file is way out of date. We will need to update it to represent all the new changes we have made. For now I am leaving it as is.",
+      "revId": "c2efe177fb1f418734e7d3d7ece32e7ddd97a640",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
