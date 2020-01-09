@@ -40,8 +40,6 @@ import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.extras.codecs.enums.EnumNameCodec;
 
 /*
  * This is the lock store that is built on top of Cassandra that is used by MUSIC to maintain lock state. 
@@ -204,8 +202,8 @@ public class CassaLockStore {
         if (!pResult) {// couldn't create lock ref, retry
             count++;
             if (count > MusicUtil.getRetryCount()) {
-                logger.warn(EELFLoggerDelegate.applicationLogger, "Unable to create lock reference");
-                throw new MusicLockingException("Unable to create lock reference");
+                logger.warn(EELFLoggerDelegate.applicationLogger, "Exhusted retries. Unable to create lock reference for [" + lockName + "].");
+                throw new MusicLockingException("Unable to create lock reference for [" + lockName + "]. Please try again.");
             }
             return genLockRefandEnQueue(keyspace, table, lockName, locktype, owner, count);
         }

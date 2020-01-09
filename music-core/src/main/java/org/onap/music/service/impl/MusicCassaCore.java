@@ -112,10 +112,71 @@ public class MusicCassaCore implements MusicCoreService {
         logger.info(EELFLoggerDelegate.applicationLogger,"Time taken to acquire lock store handle:" + (end - start) + " ms");
         return mLockHandle;
     }
+    
+    public String createLockReferenceEnforced(String fullyQualifiedKey, LockType locktype)
+            throws MusicLockingException {
+        String[] splitString = fullyQualifiedKey.split("\\.");
+        if ( splitString.length < 3) {
+            throw new MusicLockingException("Missing or incorrect lock details. Check table or key name.");
+        }
+        String keyspace = splitString[0];
+        String table = splitString[1];
+        String lockName = splitString[2];
+        LockObject peek = null;
+        String lockReference = null;
+        try {
+            peek = getLockingServiceHandle().peekLockQueue(keyspace, table, lockName);
+        } catch (MusicServiceException | MusicQueryException e) {
+            //logger.error(EELFLoggerDelegate.errorLogger,e.getMessage(),e);
+            throw new MusicLockingException("Error in getting lockholder info from createLockReferenceEnforced for key [" + lockName +"]");
+        }
+        
+        if(peek!=null && (peek.getLocktype()!=null && peek.getLocktype().equals(LockType.WRITE)) && peek.getAcquireTime()!=null && peek.getLockRef()!=null) {
+            long currentTime = System.currentTimeMillis();
+            if((currentTime-Long.parseLong(peek.getAcquireTime()))<MusicUtil.getDefaultLockLeasePeriod()){
+                //logger.info(EELFLoggerDelegate.applicationLogger,"Lock holder exists and lease not expired. Please try again for key="+lockName);
+                throw new MusicLockingException("Unable to create lock reference for key [" + lockName + "]. Please try again.");
+            }
+        }
+        
+        long start = System.currentTimeMillis();
+        /* What we are doing here is Creating a Thread safe set and adding the key to the set. 
+        * if a key exists then it wil be passed over and not go to the lock creation. 
+        * If a key doesn't exist then it will set the value in the set and continue to create a lock. 
+        *
+        * This will ensure that no 2 threads using the same key will be able to try to create a lock 
+        */
+        if ( set.add(fullyQualifiedKey)) {
+            try {
+                lockReference = "" + getLockingServiceHandle().genLockRefandEnQueue(keyspace, table, lockName, locktype,null);
+                set.remove(fullyQualifiedKey);
+            } catch (MusicLockingException | MusicServiceException | MusicQueryException e) {
+                set.remove(fullyQualifiedKey);
+                throw new MusicLockingException(e.getMessage());
+            } catch (Exception e) {
+                set.remove(fullyQualifiedKey);
+                e.printStackTrace();
+                logger.error(EELFLoggerDelegate.applicationLogger,"Exception in creatLockEnforced:"+ e.getMessage(),e);
+                throw new MusicLockingException("Unable to create lock reference for key [" + lockName + "]. " + e.getMessage());
+            }
+        } else {
+            throw new MusicLockingException("Unable to create lock reference for key [" + lockName + "]. Please try again.");
+        }
+        long end = System.currentTimeMillis();
+        logger.info(EELFLoggerDelegate.debugLogger,"### Set = " + set);
+        logger.info(EELFLoggerDelegate.applicationLogger,"Time taken to create lock reference  for key [" + lockName + "]:" + (end - start) + " ms");
+        return lockReference;
+
+    }
 
     public String createLockReferenceAtomic(String fullyQualifiedKey) throws MusicLockingException {
         return createLockReferenceAtomic(fullyQualifiedKey, LockType.WRITE);
     }
+
+    public String createLockReference(String fullyQualifiedKey) throws MusicLockingException {
+        return createLockReferenceEnforced(fullyQualifiedKey, LockType.WRITE);
+    }
+
     public String createLockReference(String fullyQualifiedKey, String owner) throws MusicLockingException {
         return createLockReference(fullyQualifiedKey, LockType.WRITE, owner);
     }
@@ -230,10 +291,10 @@ public class MusicCassaCore implements MusicCoreService {
             lockReference = "" + getLockingServiceHandle().genLockRefandEnQueue(keyspace, table, lockName, locktype, owner);
         } catch (MusicLockingException | MusicServiceException | MusicQueryException e) {
             logger.info(EELFLoggerDelegate.applicationLogger,e.getMessage(),e);
-            throw new MusicLockingException("Unable to create lock reference for key [" + lockName + "]. Please try again: " + e.getMessage());
+            throw new MusicLockingException(e.getMessage());
         } catch (Exception e) {
             logger.error(EELFLoggerDelegate.applicationLogger,e.getMessage(),e);
-            throw new MusicLockingException("Unable to create lock reference. " + e.getMessage(), e);
+            throw new MusicLockingException("Unable to create lock reference for key [" + lockName + "]. " + e.getMessage(), e);
         }
         end = System.currentTimeMillis();
         logger.info(EELFLoggerDelegate.applicationLogger,"Time taken to create lock reference  for key [" + lockName + "]:" + (end - start) + " ms");
@@ -302,7 +363,8 @@ public class MusicCassaCore implements MusicCoreService {
         LockObject lockInfo = getLockingServiceHandle().getLockInfo(keyspace, table, primaryKeyValue, lockRef);
 
         if (!lockInfo.getIsLockOwner()) {
-            return new ReturnType(ResultType.FAILURE, lockId + " is not a lock holder");//not top of the lock store q
+            logger.info(EELFLoggerDelegate.applicationLogger,lockId + " is not the lock holder.");
+            return new ReturnType(ResultType.FAILURE,"Unable to create lock reference for key [" + primaryKeyValue + "]. Please try again.");//not top of the lock store q
         }
         
         if (getLockingServiceHandle().checkForDeadlock(keyspace, table, primaryKeyValue, lockInfo.getLocktype(), lockInfo.getOwner(), true)) {
@@ -338,8 +400,6 @@ public class MusicCassaCore implements MusicCoreService {
 
         return new ReturnType(ResultType.SUCCESS, lockRef+" is the lock holder for the key");
     }
-
-
 
     /**
      *
