@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9f408d71_273c78c8",
+        "filename": "music-core/src/main/java/org/onap/music/service/impl/MusicCassaCore.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 116,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2020-01-14T22:44:52Z",
+      "side": 1,
+      "message": "I think this is a repeat of createLockAtomic",
+      "revId": "b4ae0f684b5132beb34a3d6fa1ecf86d82147be2",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": false
+    }
+  ]
+}
