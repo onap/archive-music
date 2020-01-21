@@ -50,7 +50,7 @@ import com.datastax.driver.extras.codecs.enums.EnumNameCodec;
 public class CassaLockStore {
     
     private EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(CassaLockStore.class);
-    private static String table_prepend_name = "lockQ_";
+    public static final String table_prepend_name = "lockQ_";
     private MusicDataStore dsHandle;
     
     public CassaLockStore() {

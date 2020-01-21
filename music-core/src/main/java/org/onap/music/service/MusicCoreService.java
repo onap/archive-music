@@ -97,7 +97,7 @@ public interface MusicCoreService {
      * @param owner the owner of the lock, for deadlock prevention
      */
     public String createLockReference(String fullyQualifiedKey, String owner) throws MusicLockingException;
-    
+
     /**
      * Create a lock ref in the music lock store
      * @param fullyQualifiedKey the key to create a lock on

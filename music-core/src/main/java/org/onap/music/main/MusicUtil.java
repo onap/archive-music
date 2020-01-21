@@ -34,9 +34,11 @@ import java.io.FileNotFoundException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.ws.rs.core.Response;
@@ -107,6 +109,8 @@ public class MusicUtil {
     private static boolean debug = true;
     private static String version = "0.0.0";
     private static String build = "";
+    private static long lockDaemonSleepms = 1000;
+    private static Set<String> keyspacesToCleanLocks = new HashSet<>();
 
     private static String musicPropertiesFilePath = PROPERTIES_FILE;
     // private static final String[] propKeys = new String[] { MusicUtil.class.getDeclaredMethod(arg0, )"build","cassandra.host", "debug",
@@ -160,7 +164,26 @@ public class MusicUtil {
     private static Boolean clientIdRequired = false;
     private static Boolean messageIdRequired = false;
     private static String cipherEncKey = "";
+    
+    private static long createLockWaitPeriod = 300;
+    private static int createLockWaitIncrement = 50;
+    
+    public static long getCreateLockWaitPeriod() {
+        return createLockWaitPeriod;
+    }
+    
+    public static void setCreateLockWaitPeriod(long createLockWaitPeriod) {
+        MusicUtil.createLockWaitPeriod = createLockWaitPeriod;
+    }
 
+    public static int getCreateLockWaitIncrement() {
+        return createLockWaitIncrement;
+    }
+    
+    public static void setCreateLockWaitIncrement(int createLockWaitIncrement) {
+        MusicUtil.createLockWaitIncrement = createLockWaitIncrement;
+    }
+    
     public MusicUtil() {
         throw new IllegalStateException("Utility Class");
     }
@@ -810,6 +833,27 @@ public class MusicUtil {
         MusicUtil.messageIdRequired = messageIdRequired;
     }
 
+    /**
+    *  @return the sleep time, in milliseconds, for the lock cleanup daemon
+    */
+    public static long getLockDaemonSleepTimeMs() {
+        return lockDaemonSleepms;
+    }
+    
+    /**
+    * set the sleep time, in milliseconds, for the lock cleanup daemon
+    */
+    public static void setLockDaemonSleepTimeMs(long timeoutms) {
+        MusicUtil.lockDaemonSleepms = timeoutms;
+    }
+
+    public static Set<String> getKeyspacesToCleanLocks() {
+        return keyspacesToCleanLocks;
+    }
+
+    public static void setKeyspacesToCleanLocks(Set<String> keyspaces) {
+        MusicUtil.keyspacesToCleanLocks = keyspaces;
+    }
 
     public static String getCipherEncKey() {
         return MusicUtil.cipherEncKey;

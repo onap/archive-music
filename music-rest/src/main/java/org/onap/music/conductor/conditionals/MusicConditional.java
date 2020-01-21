@@ -142,11 +142,20 @@ public class MusicConditional {
                     return new ReturnType(ResultType.FAILURE, e.getMessage());
                 }
                 if (results.all().isEmpty()) {
-                    MusicDataStoreHandle.getDSHandle().executePut(queryBank.get(MusicUtil.INSERT), "critical");
-                    return new ReturnType(ResultType.SUCCESS, "insert");
+                    PreparedQueryObject qObject = queryBank.get(MusicUtil.INSERT);
+                    qObject.setOperation(MusicUtil.INSERT);
+                    logger.info(EELFLoggerDelegate.debugLogger,"### Conditional Insert");
+                    MusicCore.criticalPut(keyspace, tableName, primaryKey, qObject, lockId, null);
+                    //MusicDataStoreHandle.getDSHandle().executePut(queryBank.get(MusicUtil.INSERT), "critical");
+                    return new ReturnType(ResultType.SUCCESS, MusicUtil.INSERT);
+
                 } else {
-                    MusicDataStoreHandle.getDSHandle().executePut(queryBank.get(MusicUtil.UPDATE), "critical");
-                    return new ReturnType(ResultType.SUCCESS, "update");
+                    PreparedQueryObject qObject = queryBank.get(MusicUtil.UPDATE);
+                    qObject.setOperation(MusicUtil.UPDATE);
+                    logger.info(EELFLoggerDelegate.debugLogger,"### Condition Update");
+                    MusicCore.criticalPut(keyspace, tableName, primaryKey, qObject, lockId, null);
+                    //MusicDataStoreHandle.getDSHandle().executePut(queryBank.get(MusicUtil.UPDATE), "critical");
+                    return new ReturnType(ResultType.SUCCESS, MusicUtil.UPDATE);
                 }
             } else {
                 return new ReturnType(ResultType.FAILURE,
@@ -214,13 +223,15 @@ public class MusicConditional {
                     JSONObject json = new JSONObject(updatedValues);
                     PreparedQueryObject update = new PreparedQueryObject();
                     String vector_ts = String.valueOf(Thread.currentThread().getId() + System.currentTimeMillis());
-                    update.appendQueryString("UPDATE " + dataObj.getKeyspace() + "." + dataObj.getTableName() + " SET " + dataObj.getCascadeColumnName() + "['" + dataObj.getPlanId()
+                    update.appendQueryString("UPDATE " + dataObj.getKeyspace() + "." + dataObj.getTableName() + " SET "
+                            + dataObj.getCascadeColumnName() + "['" + dataObj.getPlanId()
                             + "'] = ?, vector_ts = ? WHERE " + dataObj.getPrimaryKey() + " = ?");
                     update.addValue(MusicUtil.convertToActualDataType(DataType.text(), json.toString()));
                     update.addValue(MusicUtil.convertToActualDataType(DataType.text(), vector_ts));
                     update.addValue(MusicUtil.convertToActualDataType(DataType.text(), dataObj.getPrimaryKeyValue()));
                     try {
-                        MusicDataStoreHandle.getDSHandle().executePut(update, "critical");
+                        update.setOperation(MusicUtil.UPDATE);
+                        MusicCore.criticalPut(dataObj.keyspace, dataObj.tableName, dataObj.primaryKeyValue, update, dataObj.lockId, null);
                     } catch (Exception ex) {
                         logger.error(EELFLoggerDelegate.applicationLogger, ex);
                         return new ReturnType(ResultType.FAILURE, ex.getMessage());
@@ -228,9 +239,10 @@ public class MusicConditional {
                 }else {
                     return new ReturnType(ResultType.FAILURE,"Cannot find data related to key: "+dataObj.getPrimaryKey());
                 }
-                MusicDataStoreHandle.getDSHandle().executePut(dataObj.getQueryBank().get(MusicUtil.UPSERT), "critical");
+                PreparedQueryObject qObject = dataObj.getQueryBank().get(MusicUtil.UPSERT);
+                qObject.setOperation(MusicUtil.INSERT);
+                MusicCore.criticalPut(dataObj.keyspace, dataObj.tableName, dataObj.primaryKeyValue, qObject, dataObj.lockId, null);
                 return new ReturnType(ResultType.SUCCESS, "update success");
-
             } else {
                 return new ReturnType(ResultType.FAILURE,
                         "Cannot perform operation since you are the not the lock holder");
@@ -322,7 +334,7 @@ public class MusicConditional {
             counter = counter + 1;
         }
         queryObject.appendQueryString("INSERT INTO " + keySpaceName + "." + tableName + " "
-                + fieldsString + " VALUES " + valueString);
+                + fieldsString + " VALUES " + valueString + ";");
         return queryObject;
     }
     

@@ -33,6 +33,7 @@ import org.onap.music.authentication.CadiAuthFilter;
 import org.onap.music.authentication.MusicAuthorizationFilter;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
 import org.onap.music.eelf.logging.MusicLoggingServletFilter;
+import org.onap.music.lockingservice.cassandra.LockCleanUpDaemon;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.PropertiesLoader;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,6 +67,10 @@ public class MusicApplication extends SpringBootServletInitializer {
 
     public static void main(String[] args) {
         new MusicApplication().configure(new SpringApplicationBuilder(MusicApplication.class)).run(args);
+        
+        LockCleanUpDaemon daemon = new LockCleanUpDaemon();
+        daemon.setDaemon(true);
+        daemon.start();
     }
 
     @Override
