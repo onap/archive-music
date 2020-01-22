@@ -61,6 +61,8 @@
         <docker.latest.tag>${project.version}-latest</docker.latest.tag>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <!-- Default Sonar configuration -->
+        <sonar.coverage.jacoco.xmlReportPaths>${project.reporting.outputDirectory}/jacoco-ut/jacoco.xml,${project.reporting.outputDirectory}/jacoco-it/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
     <repositories>
@@ -139,9 +141,6 @@
                                             <tag>${docker.latest.tag}</tag>
                                         </tags>
                                         <dockerFileDir>${project.basedir}/distribution/music</dockerFileDir>
-<!--                                    <assembly>
-                                            <descriptorRef>artifact</descriptorRef>
-                                        </assembly>  -->
                                     </build>
                                 </image>
                                 <!-- Cassandra -->
@@ -170,11 +169,6 @@
                                         <dockerFileDir>${project.basedir}/distribution/cassandra_job</dockerFileDir>
                                     </build>
                                 </image>
-                                <!-- tomcat 8.5 -->
-                                <!-- <image> <name>onap/music/tomcat_music</name>
-                                    <alias>docker_tomcat</alias> <build> <cleanup>true</cleanup> <tags> <tag>8.5-${timestamp}</tag>
-                                    <tag>8.5-latest</tag> </tags> <dockerFileDir>${project.basedir}/distribution/tomcat</dockerFileDir>
-                                    </build> </image>\ -->
                             </images>
                         </configuration>
                         <executions>
