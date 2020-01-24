@@ -23,7 +23,7 @@
 package org.onap.music.datastore;
 
 import java.util.Map;
-
+import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.MusicCore;
 
 import com.datastax.driver.core.ResultSet;
@@ -40,7 +40,7 @@ public class Condition {
 
         public boolean testCondition() throws Exception {
             // first generate the row
-            ResultSet results = MusicCore.quorumGet(selectQueryForTheRow);
+            ResultSet results = quorumGet(selectQueryForTheRow);
             Row row = null;
             if(results != null) {
                 row = results.one();
@@ -48,6 +48,16 @@ public class Condition {
             if(row == null) {
                 throw new Exception(" No data found to update");
             }
-            return MusicDataStoreHandle.getDSHandle().doesRowSatisfyCondition(row, conditions);
+            return getDSHandle().doesRowSatisfyCondition(row, conditions);
+        }
+        
+        /* For JUnit testing only */
+        public ResultSet quorumGet(PreparedQueryObject selectQueryForTheRow) {
+            return MusicCore.quorumGet(selectQueryForTheRow);
+        }
+        
+        /* For JUnit testing only */
+        public MusicDataStore getDSHandle() throws MusicServiceException {
+            return MusicDataStoreHandle.getDSHandle();
         }
     }
