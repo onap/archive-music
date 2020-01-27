@@ -23,14 +23,21 @@ package org.onap.music.service.impl;
 
 import static org.junit.Assert.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.onap.music.datastore.MusicDataStore;
+import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
+import org.onap.music.datastore.jsonobjects.JsonKeySpace;
+import org.onap.music.datastore.jsonobjects.JsonTable;
 import org.onap.music.exceptions.MusicLockingException;
 import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
@@ -40,21 +47,32 @@ import org.onap.music.lockingservice.cassandra.LockType;
 import org.onap.music.main.MusicUtil;
 import org.onap.music.main.ResultType;
 import org.onap.music.main.ReturnType;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Session;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MusicCassaCoreTest {
-    
+
     @Mock
     private CassaLockStore mLockHandle;
-    
+
+    @Mock
+    private MusicDataStore dsHandle;
+
+    @Mock
+    private Session session;
+
     MusicCassaCore core;
-    
+
     @Before
     public void before() {
         core = MusicCassaCore.getInstance();
         MusicCassaCore.setmLockHandle(mLockHandle);
+        MusicDataStoreHandle.setMDstoreHandle(dsHandle);
+        Mockito.when(dsHandle.getSession()).thenReturn(session);
     }
-    
+
     @Test
     public void testGetmLockHandle() {
         assertEquals(mLockHandle, MusicCassaCore.getmLockHandle());
@@ -281,4 +299,187 @@ public class MusicCassaCoreTest {
         assertEquals(23, theirSize);
     }
 
+    @Test
+    public void testCreateTable() throws MusicServiceException, MusicQueryException {
+        String keyspaceName = "keyspace";
+        String tableName = "table";
+        JsonTable table = new JsonTable();
+        table.setTableName(tableName);
+        table.setKeyspaceName(keyspaceName);
+        Map<String, String> fields = new HashMap<>();
+        fields.put("employee", "text");
+        fields.put("salary", "int");
+        table.setFields(fields);
+        table.setPrimaryKey("employee");
+
+        Mockito.when(mLockHandle.createLockQueue(Mockito.matches(keyspaceName), Mockito.matches(tableName)))
+                .thenReturn(true);
+        Mockito.when(dsHandle.executePut(Mockito.any(PreparedQueryObject.class), Mockito.matches("eventual"))).thenReturn(true);
+        ResultType rs = core.createTable(table , "eventual");
+
+        assertEquals(ResultType.SUCCESS, rs);
+    }
+
+    @Test
+    public void testDropTable() throws MusicServiceException, MusicQueryException {
+        String keyspaceName = "keyspace";
+        String tableName = "table";
+        JsonTable table = new JsonTable();
+        table.setTableName(tableName);
+        table.setKeyspaceName(keyspaceName);
+
+        ArgumentCaptor<PreparedQueryObject> queryCaptor = ArgumentCaptor.forClass(PreparedQueryObject.class);
+        Mockito.when(dsHandle.executePut(queryCaptor.capture(), Mockito.matches("eventual"))).thenReturn(true);
+
+        ResultType rs = core.dropTable(table, "eventual");
+        assertEquals(ResultType.SUCCESS, rs);
+        assertEquals("DROP TABLE  keyspace.table;", queryCaptor.getValue().getQuery());
+    }
+
+    @Test
+    public void testQuorumGet() throws MusicServiceException, MusicQueryException {
+        PreparedQueryObject query = new PreparedQueryObject("SELECT * FROM EMPLOYEES;");
+        ResultSet rs = Mockito.mock(ResultSet.class);
+        Mockito.when(dsHandle.executeQuorumConsistencyGet(Mockito.same(query))).thenReturn(rs);
+        ResultSet returnedRs = core.quorumGet(query);
+
+        assertEquals(rs, returnedRs);
+    }
+
+    @Test
+    public void testForciblyReleaseLock() throws MusicServiceException, MusicQueryException, MusicLockingException {
+        String fullyQualifiedKey = "keyspace.table.lockName";
+        ArgumentCaptor<PreparedQueryObject> unsyncedQuery = ArgumentCaptor.forClass(PreparedQueryObject.class);
+        Mockito.doReturn(true).when(dsHandle).executePut(unsyncedQuery.capture(), Mockito.matches("critical"));
+        core.forciblyReleaseLock(fullyQualifiedKey, "123");
+
+        assertEquals("insert into keyspace.unsyncedKeys_table (key) values (?);",unsyncedQuery.getValue().getQuery());
+    }
+
+    @Test
+    public void testEventualPut() throws MusicServiceException, MusicQueryException {
+        PreparedQueryObject query = new PreparedQueryObject("INSERT INTO EMPLOYEES VALUES ('John', 1);");
+        Mockito.when(dsHandle.executePut(Mockito.same(query), Mockito.matches("eventual"))).thenReturn(true);
+
+        assertEquals(ResultType.SUCCESS, core.eventualPut(query).getResult());
+    }
+
+    @Test
+    public void testEventualPutNB() throws MusicServiceException, MusicQueryException {
+        String keyspace = "keyspace";
+        String table = "EMPLOYEES";
+        String primaryKey = "NAME";
+        PreparedQueryObject query = new PreparedQueryObject("INSERT INTO EMPLOYEES VALUES ('John', 1);");
+
+        ArgumentCaptor<PreparedQueryObject> queryCapture = ArgumentCaptor.forClass(PreparedQueryObject.class);
+        ResultSet rs = Mockito.mock(ResultSet.class);
+        Row row = Mockito.mock(Row.class);
+        Mockito.when(dsHandle.executeQuorumConsistencyGet(queryCapture.capture())).thenReturn(rs);
+        Mockito.when(rs.one()).thenReturn(row);
+
+        Mockito.when(dsHandle.executePut(queryCapture.capture(), Mockito.matches("eventual"))).thenReturn(true);
+
+        ReturnType rt = core.eventualPut_nb(query, keyspace, table, primaryKey);
+
+        assertEquals("SELECT guard FROM keyspace.lockq_EMPLOYEES WHERE key = ? ;",
+                queryCapture.getAllValues().get(0).getQuery());
+        assertEquals("INSERT INTO EMPLOYEES VALUES ('John', 1);", queryCapture.getAllValues().get(1).getQuery());
+
+        assertEquals(ResultType.SUCCESS, rt.getResult());
+    }
+
+    @Test
+    public void testCriticalPut() throws MusicServiceException, MusicQueryException {
+        String keyspace = "keyspace";
+        String table = "table";
+        String primaryKey = "lockName";
+        PreparedQueryObject query = new PreparedQueryObject("INSERT INTO TABLE VALUES ('John', 1);");
+        String lockId = "$keyspace.table.lockName$1";
+
+        Mockito.when(mLockHandle.getLockInfo("keyspace", "table", "lockName", "1"))
+            .thenReturn(mLockHandle.new LockObject(true, lockId, null, null, LockType.WRITE, null));
+
+        ArgumentCaptor<PreparedQueryObject> queryCapture = ArgumentCaptor.forClass(PreparedQueryObject.class);
+        Mockito.when(dsHandle.executePut(queryCapture.capture(), Mockito.matches("critical"))).thenReturn(true);
+        ReturnType rt = core.criticalPut(keyspace, table, primaryKey, query, lockId, null);
+
+        assertEquals(true, queryCapture.getValue().getQuery()
+                .startsWith("INSERT INTO TABLE VALUES ('John', 1) USING TIMESTAMP"));
+        assertEquals(ResultType.SUCCESS, rt.getResult());
+    }
+
+    @Test
+    public void testNonKeyRelatedPut() throws MusicServiceException, MusicQueryException {
+        PreparedQueryObject query = new PreparedQueryObject("INSERT INTO TABLE VALUES ('John', 1);");
+        String consistency = "eventual";
+        ArgumentCaptor<PreparedQueryObject> queryCapture = ArgumentCaptor.forClass(PreparedQueryObject.class);
+        Mockito.when(dsHandle.executePut(queryCapture.capture(), Mockito.matches(consistency))).thenReturn(true);
+
+        core.nonKeyRelatedPut(query, consistency);
+
+        assertEquals(query.getQuery(), queryCapture.getValue().getQuery());
+    }
+
+    @Test
+    public void testGet() throws MusicServiceException, MusicQueryException {
+        PreparedQueryObject query = new PreparedQueryObject("SELECT * FROM EMPLOYEES;");
+        ResultSet rs = Mockito.mock(ResultSet.class);
+        Mockito.when(dsHandle.executeOneConsistencyGet(Mockito.same(query))).thenReturn(rs);
+        assertEquals(rs, core.get(query));
+    }
+
+    @Test
+    public void testCriticalGet() throws MusicServiceException, MusicQueryException {
+        String keyspace = "keyspace";
+        String table = "table";
+        String primaryKey = "lockName";
+        PreparedQueryObject query = new PreparedQueryObject("SELECT * FROM EMPLOYEES WHERE LOCKNAME='lockName';");
+        String lockId = "$keyspace.table.lockName$1";
+
+        Mockito.when(mLockHandle.getLockInfo("keyspace", "table", "lockName", "1"))
+            .thenReturn(mLockHandle.new LockObject(true, lockId, null, null, LockType.WRITE, null));
+
+        ArgumentCaptor<PreparedQueryObject> queryCapture = ArgumentCaptor.forClass(PreparedQueryObject.class);
+        ResultSet rs = Mockito.mock(ResultSet.class);
+        Mockito.when(dsHandle.executeQuorumConsistencyGet(queryCapture.capture())).thenReturn(rs);
+        assertEquals(rs, core.criticalGet(keyspace, table, primaryKey, query, lockId));
+    }
+
+    @Test
+    public void testCreateKeyspace() throws MusicServiceException, MusicQueryException {
+        String keyspace = "cycling";
+        JsonKeySpace ks = new JsonKeySpace();
+        ks.setKeyspaceName(keyspace);
+        ks.setDurabilityOfWrites("true");
+
+        Map<String, Object> replicationInfo = new HashMap<>();
+        replicationInfo.put("class", "SimpleStrategy");
+        replicationInfo.put("replication_factor", 1);
+        ks.setReplicationInfo(replicationInfo);
+        Map<String, String> consistencyInfo = new HashMap<>();
+        consistencyInfo.put("consistency", "quorum");
+        ks.setConsistencyInfo(consistencyInfo);
+
+        ArgumentCaptor<PreparedQueryObject> queryCapture = ArgumentCaptor.forClass(PreparedQueryObject.class);
+        Mockito.when(dsHandle.executePut(queryCapture.capture(), Mockito.matches("eventual"))).thenReturn(true);
+
+        core.createKeyspace(ks , "eventual");
+
+        assertEquals("CREATE KEYSPACE cycling WITH replication = {'replication_factor':1,'class':'SimpleStrategy'} AND durable_writes = true;",
+                queryCapture.getValue().getQuery());
+    }
+
+    @Test
+    public void testDropKeyspace() throws MusicServiceException, MusicQueryException {
+        String keyspace = "cycling";
+        JsonKeySpace ks = new JsonKeySpace();
+        ks.setKeyspaceName(keyspace);
+
+        ArgumentCaptor<PreparedQueryObject> queryCapture = ArgumentCaptor.forClass(PreparedQueryObject.class);
+        Mockito.when(dsHandle.executePut(queryCapture.capture(), Mockito.matches("eventual"))).thenReturn(true);
+
+        core.dropKeyspace(ks , "eventual");
+
+        assertEquals("DROP KEYSPACE cycling;", queryCapture.getValue().getQuery());
+    }
 }
