@@ -87,7 +87,8 @@ public class MusicCassaCore implements MusicCoreService {
         return mLockHandle;
     }
 
-    public static void setmLockHandle(CassaLockStore mLockHandle) {
+    //for unit testing purposes
+    static void setmLockHandle(CassaLockStore mLockHandle) {
         MusicCassaCore.mLockHandle = mLockHandle;
     }
     
@@ -352,7 +353,6 @@ public class MusicCassaCore implements MusicCoreService {
      * @return Boolean Indicates success or failure
      * @throws MusicServiceException
      *
-     *
      */
     public ResultType createTable(String keyspace, String table, PreparedQueryObject tableQueryObject,
             String consistency) throws MusicServiceException {
@@ -361,9 +361,9 @@ public class MusicCassaCore implements MusicCoreService {
         try {
             // create shadow locking table
             result = getLockingServiceHandle().createLockQueue(keyspace, table);
-            if (result == false)
+            if (result == false) {
                 return ResultType.FAILURE;
-
+            }
             result = false;
 
             // create table to track unsynced_keys
@@ -374,8 +374,11 @@ public class MusicCassaCore implements MusicCoreService {
             PreparedQueryObject queryObject = new PreparedQueryObject();
 
             queryObject.appendQueryString(tabQuery);
-            result = false;
             result = MusicDataStoreHandle.getDSHandle().executePut(queryObject, "eventual");
+            if (result == false) {
+                return ResultType.FAILURE;
+            }
+            result = false;
 
             // create actual table
             result = MusicDataStoreHandle.getDSHandle().executePut(tableQueryObject, consistency);

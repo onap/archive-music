@@ -88,6 +88,9 @@ public class MusicDataStoreHandle {
         return mDstoreHandle;
     }
 
+    public static void setMDstoreHandle(MusicDataStore dsHandle) {
+        mDstoreHandle = dsHandle;
+    }
 
    /**
    *
