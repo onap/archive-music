@@ -27,12 +27,13 @@ package org.onap.music.service.impl;
 
 import java.io.StringWriter;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
-
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.ws.rs.core.MultivaluedMap;
 
 import org.onap.music.datastore.Condition;
@@ -75,7 +76,9 @@ public class MusicCassaCore implements MusicCoreService {
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicCassaCore.class);
     private static MusicCassaCore musicCassaCoreInstance = null;
     private static Set<String> set = Collections.synchronizedSet(new HashSet<String>());
-
+    HashMap<String, Integer> map = new HashMap<>();
+    AtomicInteger wait = new AtomicInteger(0);
+    
     private MusicCassaCore() {
         // not going to happen
     }
@@ -119,10 +122,11 @@ public class MusicCassaCore implements MusicCoreService {
     public String createLockReference(String fullyQualifiedKey, String owner) throws MusicLockingException {
         return createLockReference(fullyQualifiedKey, LockType.WRITE, owner);
     }
-
+    
+    
     /**
      * This will be called for Atomic calls
-     * 
+     * it ensures that only one thread tries to create a lock on each key at a time
      */
     public String createLockReferenceAtomic(String fullyQualifiedKey, LockType locktype) throws MusicLockingException {
         String[] splitString = fullyQualifiedKey.split("\\.");

@@ -374,22 +374,25 @@ public class MusicDataStore {
 
             ResultSet rs = session.execute(preparedInsert);
             result = rs.wasApplied();
-
-        }
-        catch (AlreadyExistsException ae) {
-            // logger.error(EELFLoggerDelegate.errorLogger,"AlreadExistsException: " + ae.getMessage(),AppMessages.QUERYERROR,
-            // ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
-            throw new MusicQueryException("AlreadyExistsException: " + ae.getMessage(),ae);
-        } catch ( InvalidQueryException e ) {
-            // logger.error(EELFLoggerDelegate.errorLogger,"InvalidQueryException: " + e.getMessage(),AppMessages.SESSIONFAILED + " [" 
-            // + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR);
-            throw new MusicQueryException("InvalidQueryException: " + e.getMessage(),e);
+        } catch (AlreadyExistsException ae) {
+            throw new MusicServiceException("Already Exists Exception: " + ae.getMessage());
+        } catch (InvalidQueryException e) {
+            if (e.getMessage().contains("unconfigured table")) {
+                throw new MusicServiceException("Invalid Query Exception: " + e.getMessage());
+            } else {
+                logger.info(EELFLoggerDelegate.applicationLogger, "Query Exception: " + e.getMessage(),
+                        AppMessages.SESSIONFAILED + " [" + queryObject.getQuery() + "]", ErrorSeverity.INFO,
+                        ErrorTypes.QUERYERROR, e);
+                throw new MusicServiceException("Query Exception: " + e.getMessage());
+            }
         } catch (Exception e) {
-            // logger.error(EELFLoggerDelegate.errorLogger,e.getClass().toString() + ":" + e.getMessage(),AppMessages.SESSIONFAILED + " [" 
-            //     + queryObject.getQuery() + "]", ErrorSeverity.ERROR, ErrorTypes.QUERYERROR, e);
-            throw new MusicServiceException("Executing Session Failure for Request = " + "["
-                    + queryObject.getQuery() + "]" + " Reason = " + e.getMessage(),e);
+            logger.error(EELFLoggerDelegate.errorLogger, e.getMessage(),
+                    AppMessages.SESSIONFAILED + " [" + queryObject.getQuery() + "]", ErrorSeverity.ERROR,
+                    ErrorTypes.QUERYERROR, e);
+            throw new MusicServiceException("Executing Session Failure for Request = " + "[" + queryObject.getQuery()
+                    + "]" + " Reason = " + e.getMessage());
         }
+
         return result;
     }
 

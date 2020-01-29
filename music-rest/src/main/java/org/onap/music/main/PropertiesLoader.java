@@ -22,6 +22,7 @@
 
 package org.onap.music.main;
 
+import java.util.HashSet;
 import java.util.Properties;
 
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
@@ -77,7 +78,19 @@ public class PropertiesLoader implements InitializingBean {
 
     @Value("${retry.count}")
     public String rertryCount;
+    
+    @Value("${lock.daemon.sleeptime.ms}")
+    public String lockDaemonSleeptimems;
 
+    @Value("${keyspaces.for.lock.cleanup}")
+    public String keyspacesForLockCleanup;
+
+    @Value("${create.lock.wait.period.ms}")
+    private long createLockWaitPeriod;
+
+    @Value("${create.lock.wait.increment.ms}")
+    private int createLockWaitIncrement;
+    
     @Value("${transId.header.prefix}")
     private String transIdPrefix;
 
@@ -172,6 +185,16 @@ public class PropertiesLoader implements InitializingBean {
         if (isKeyspaceActive != null && !isKeyspaceActive.equals("${keyspace.active}")) {
             MusicUtil.setKeyspaceActive(Boolean.parseBoolean(isKeyspaceActive));
         }
+        if (lockDaemonSleeptimems != null && !lockDaemonSleeptimems.equals("${lock.daemon.sleeptime.ms}")) {
+            MusicUtil.setLockDaemonSleepTimeMs(Long.parseLong(lockDaemonSleeptimems));
+        }
+        if (keyspacesForLockCleanup !=null && !keyspacesForLockCleanup.equals("${keyspaces.for.lock.cleanup}")) {
+            HashSet<String> keyspaces = new HashSet<>();
+            for (String keyspace: keyspacesForLockCleanup.split(",")) {
+                keyspaces.add(keyspace);
+            }
+            MusicUtil.setKeyspacesToCleanLocks(keyspaces);
+        }
         if(transIdPrefix!=null) {
             MusicUtil.setTransIdPrefix(transIdPrefix);
         }
@@ -202,6 +225,14 @@ public class PropertiesLoader implements InitializingBean {
 
         if(messageIdRequired!=null) {
             MusicUtil.setMessageIdRequired(messageIdRequired);
+        }
+        
+        if(createLockWaitPeriod!=0) {
+            MusicUtil.setCreateLockWaitPeriod(createLockWaitPeriod);
+        }
+
+        if(createLockWaitIncrement!=0) {
+            MusicUtil.setCreateLockWaitIncrement(createLockWaitIncrement);
         }
     }
 

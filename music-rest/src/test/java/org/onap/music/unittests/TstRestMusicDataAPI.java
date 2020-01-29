@@ -322,7 +322,7 @@ public class TstRestMusicDataAPI {
         assertEquals(400, response2.getStatus());
         Map<String, String> respMap = (Map<String, String>) response2.getEntity();
         assertEquals(ResultType.FAILURE, respMap.get("status"));
-        assertEquals("AlreadyExistsException: Table " + keyspaceName + "." + tableNameDup + " already exists", respMap.get("error"));
+        assertEquals("Already Exists Exception: Table " + keyspaceName + "." + tableNameDup + " already exists", respMap.get("error"));
     }
 
 
