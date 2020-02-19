@@ -213,13 +213,13 @@
                 <version>2.1.1.RELEASE</version>
                 <configuration>
                     <mainClass>org.onap.music.MusicApplication</mainClass>
-                    <outputDirectory>../distribution/music/</outputDirectory>
+                    <outputDirectory>${project.basedir}/distribution/music/</outputDirectory>
                     <addResources>true</addResources>
                     <finalName>MUSIC-SB</finalName>
                 </configuration>
                 <executions>
                     <execution>
-                        <phase>install</phase>
+                        <phase>package</phase>
                         <goals>
                             <goal>repackage</goal>
                         </goals>
@@ -271,4 +271,97 @@
             </plugins>
         </pluginManagement>
     </build>
+    <profiles>
+        <profile>
+            <id>docker</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <version>0.19.1</version>
+                        <configuration>
+                            <verbose>true</verbose>
+                            <apiVersion>1.23</apiVersion>
+                            <registry>nexus3.onap.org:10003</registry>
+                            <images>
+                                <!-- MUSIC War -->
+                                <image>
+                                    <name>onap/music/music_sb</name>
+                                    <alias>docker_music</alias>
+                                    <build>
+                                        <cleanup>true</cleanup>
+                                        <tags>
+                                            <tag>${docker.tag}</tag>
+                                            <tag>${docker.latest.tag}</tag>
+                                        </tags>
+                                        <dockerFileDir>${project.basedir}/distribution/music</dockerFileDir>
+                                    </build>
+                                </image>
+                                <!-- Cassandra -->
+                                <image>
+                                    <name>onap/music/cassandra_3_11</name>
+                                    <alias>docker_cassandra_sec</alias>
+                                    <build>
+                                        <cleanup>true</cleanup>
+                                        <tags>
+                                            <tag>${docker.tag}</tag>
+                                            <tag>${docker.latest.tag}</tag>
+                                        </tags>
+                                        <dockerFileDir>${project.basedir}/distribution/cassandra</dockerFileDir>
+                                    </build>
+                                </image>
+                                <!-- Cassandra Job -->
+                                <image>
+                                    <name>onap/music/cassandra_job</name>
+                                    <alias>docker_cassandra_job</alias>
+                                    <build>
+                                        <cleanup>true</cleanup>
+                                        <tags>
+                                            <tag>${docker.tag}</tag>
+                                            <tag>${docker.latest.tag}</tag>
+                                        </tags>
+                                        <dockerFileDir>${project.basedir}/distribution/cassandra_job</dockerFileDir>
+                                    </build>
+                                </image>
+                            </images>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>clean-images</id>
+                                <phase>pre-clean</phase>
+                                <goals>
+                                    <goal>remove</goal>
+                                </goals>
+                                <configuration>
+                                    <removeAll>true</removeAll>
+                                    <image>music</image>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>generate-images</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>build</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>push-images</id>
+                                <phase>deploy</phase>
+                                <goals>
+                                    <goal>push</goal>
+                                </goals>
+                                <configuration>
+                                    <image>onap/music/music</image>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>default</id>
+        </profile>
+    </profiles>
 </project>
