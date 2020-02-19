@@ -57,10 +57,10 @@ fi
 if [ -f $PROPS ]; then
   # Run with different Property file
   #echo "java ${DEBUG_PROP} -jar MUSIC.jar --spring.config.location=file:${PROPS} ${LOGGING} 2>&1 | tee ${LOGFILE}"
-  java ${DEBUG_PROP} -jar MUSIC-SB.jar --spring.config.location=file:${PROPS} ${LOGGING} 2>&1 | tee ${LOGFILE}
+  java ${DEBUG_PROP} ${JAVA_OPTS} -jar MUSIC-SB.jar ${SPRING_OPTS} --spring.config.location=file:${PROPS} ${LOGGING} 2>&1 | tee ${LOGFILE}
 else
   #echo "java ${DEBUG_PROP} -jar MUSIC.jar --server.ssl.key-store-password=${PASSWORD} ${LOGGING} 2>&1 | tee ${LOGFILE}"
-  java ${DEBUG_PROP} -jar MUSIC-SB.jar --server.ssl.key-store-password="${PASSWORD}" ${LOGGING} 2>&1 | tee ${LOGFILE}
+  java ${DEBUG_PROP} ${JAVA_OPTS} -jar MUSIC-SB.jar ${SPRING_OPTS} --server.ssl.key-store-password="${PASSWORD}" ${LOGGING} 2>&1 | tee ${LOGFILE}
 fi
 
 
