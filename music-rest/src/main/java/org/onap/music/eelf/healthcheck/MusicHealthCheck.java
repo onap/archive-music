@@ -94,10 +94,15 @@ public class MusicHealthCheck {
         pQuery.appendQueryString("insert into admin.healthcheck (id) values (?)");
         pQuery.addValue(randomUUID);
         ResultType rs = null;
-        rs = MusicCore.nonKeyRelatedPut(pQuery, consistency);
+        rs = nonKeyRelatedPut(pQuery, consistency);
         logger.info(rs.toString());
         return null != rs;
         
+    }
+    
+    /*For unit testing purpose only*/
+    public ResultType nonKeyRelatedPut(PreparedQueryObject pQuery, String consistency) throws MusicServiceException, MusicQueryException {
+        return MusicCore.nonKeyRelatedPut(pQuery, consistency);
     }
 
 	private void cleanHealthCheckId(UUID randomUUID) throws MusicServiceException, MusicQueryException {
@@ -105,11 +110,14 @@ public class MusicHealthCheck {
         PreparedQueryObject deleteQueryObject = new PreparedQueryObject();
         deleteQueryObject.appendQueryString(cleanQuery);
         deleteQueryObject.addValue(randomUUID);
-        MusicDataStoreHandle.getDSHandle().executePut(deleteQueryObject, "eventual");  
+        executeEventualPut(deleteQueryObject);  
         logger.info(EELFLoggerDelegate.applicationLogger, "Cassandra healthcheck responded and cleaned up.");
 	}
     
-    
+	/*For unit testing purpose only*/
+    public void executeEventualPut(PreparedQueryObject deleteQueryObject) throws MusicServiceException, MusicQueryException {
+        MusicDataStoreHandle.getDSHandle().executePut(deleteQueryObject, "eventual");
+    }
     
     private boolean createKeyspace() throws MusicServiceException,MusicQueryException {
         PreparedQueryObject pQuery = new PreparedQueryObject();
