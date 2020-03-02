@@ -46,31 +46,6 @@
         <java.version>1.8</java.version>
         <jaxrs.version>2.0.1</jaxrs.version>
         <cassandra.version>3.6.0</cassandra.version>
-        <!--nexus -->
-<!--
-        <nexusproxy>https://nexus.onap.org</nexusproxy>
-        <onap.nexus.url>https://nexus.onap.org</onap.nexus.url>
-        <snapshotNexusPath>/content/repositories/snapshots/</snapshotNexusPath>
-        <releaseNexusPath>/content/repositories/releases/</releaseNexusPath>
-        <stagingNexusPath>/content/repositories/staging/</stagingNexusPath>
-        <sitePath>/content/sites/site/org/onap/music/${project.version}</sitePath>
--->
-        <!--maven -->
-<!--
-        <timestamp>${maven.build.timestamp}</timestamp>
-        <maven.build.timestamp.format>yyyy.MM.dd.HH.mm</maven.build.timestamp.format>
--->
-        <!--skip checkstyle -->
-<!--
-        <maven.check.skip>false</maven.check.skip>
--->
-        <!--docker -->
-<!--
-        <docker.tag>${project.version}-${timestamp}</docker.tag>
-        <docker.latest.tag>${project.version}-latest</docker.latest.tag>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
--->
     </properties>
 
     <repositories>
@@ -118,21 +93,8 @@
             <testResource>
                 <directory>${project.basedir}/src/test/resources</directory>
             </testResource>
-            <!-- <testResource>
-                <directory>${project.basedir}/src/main/resources</directory>
-            </testResource> -->
         </testResources>
         <plugins>
-<!--
-            <plugin>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>2.4</version>
-                <configuration>
-                    <warSourceDirectory>WebContent</warSourceDirectory>
-                    <failOnMissingWebXml>false</failOnMissingWebXml>
-                </configuration>
-            </plugin>
--->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
@@ -154,8 +116,6 @@
                         </goals>
                         <configuration>
                             <excludes>
-                                <!--<exclude>**/*.xml</exclude>
-                                <exclude>**/*.properties</exclude>-->
                                 <exclude>**/Sample*</exclude>
                             </excludes>
                         </configuration>
@@ -187,20 +147,6 @@
     </build>
 
     <dependencies>
-        <!-- Development -->
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-            <version>2.4</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>3.0.1</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- /Development -->
         <!-- Logging -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
@@ -255,7 +201,8 @@
             <groupId>com.datastax.cassandra</groupId>
             <artifactId>cassandra-driver-extras</artifactId>
             <version>${cassandra.version}</version>
-        </dependency>        <!-- /Cassandra -->
+        </dependency>
+        <!-- /Cassandra -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-jcs-core</artifactId>
