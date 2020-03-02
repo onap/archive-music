@@ -90,7 +90,7 @@ public class PropertiesLoader implements InitializingBean {
 
     @Value("${create.lock.wait.increment.ms}")
     private int createLockWaitIncrement;
-    
+
     @Value("${transId.header.prefix}")
     private String transIdPrefix;
 
@@ -339,6 +339,34 @@ public class PropertiesLoader implements InitializingBean {
     public void afterPropertiesSet() throws Exception {
         // TODO Auto-generated method stub
 
+    }
+    
+    /* For unit testing purpose only*/
+    public void setProperties() {
+        cassandraHost = "127.0.0.1";
+        debug = "true";
+        version = "x.x.x";
+        build = "y.y";
+        musicProperties = "property";
+        lockLeasePeriod = "5000";
+        cassandraUser = "user";
+        cassandraPassword = "password";
+        cassandraPort = "8007";
+        cassandraConnectTimeOutMS = "1000";
+        cassandraReadTimeOutMS = "1000";
+        isCadi = "true";
+        isKeyspaceActive = "true";
+        rertryCount = "20";
+        transIdPrefix = "transId-";
+        conversationIdPrefix = "conversation-";
+        clientIdPrefix = "clientId-";
+        messageIdPrefix = "messageId-";    
+        transIdRequired = true;
+        conversationIdRequired = true;
+        clientIdRequired = true;
+        messageIdRequired = true;
+        musicAafNs = "ns";
+        cipherEncKey = "key";
     }
 
 }
