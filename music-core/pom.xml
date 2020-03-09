@@ -356,11 +356,23 @@
             <groupId>org.onap.aaf.authz</groupId>
             <artifactId>aaf-cadi-client</artifactId>
             <version>2.1.7</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>javax.servlet</groupId>
+                    <artifactId>javax.servlet-api</artifactId>
+                </exclusion>
+            </exclusions>        
         </dependency>
         <dependency>
             <groupId>org.onap.aaf.authz</groupId>
             <artifactId>aaf-cadi-core</artifactId>
             <version>2.1.7</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>log4j</groupId>
+                    <artifactId>log4j</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
