@@ -228,6 +228,12 @@
                     <outputDirectory>${project.basedir}/distribution/music/</outputDirectory>
                     <addResources>true</addResources>
                     <finalName>MUSIC-SB</finalName>
+                    <excludes>
+                      <exclude>
+                        <groupId>javax.ws.rs</groupId>
+                        <artifactId>jsr311-api</artifactId>
+                      </exclude>
+                    </excludes>
                 </configuration>
                 <executions>
                     <execution>
