@@ -467,8 +467,10 @@ public class CassaLockStore {
     }  
 
     public boolean checkForDeadlock(String keyspace, String table, String lockName, LockType locktype, String owner, boolean forAcquire) throws MusicServiceException, MusicQueryException {
-        if (locktype.equals(LockType.READ)) return false;
-        if (owner==null || owner.length()==0) return false;
+        if (locktype.equals(LockType.READ)) 
+			return false;
+        if (owner==null || owner.length()==0)
+			return false;
 
         String lockTable = table_prepend_name + table;
         PreparedQueryObject queryObject = new PreparedQueryObject();
@@ -487,7 +489,8 @@ public class CassaLockStore {
             ddu.setExisting(row.getString("key"), row.getString("owner"), ("0".equals(row.getString("acquiretime")))?OwnershipType.CREATED:OwnershipType.ACQUIRED);
         }
         boolean deadlock = ddu.checkForDeadlock(lockName, owner, forAcquire?OwnershipType.ACQUIRED:OwnershipType.CREATED);
-        if (deadlock) logger.warn("Deadlock detected when " + owner + " tried to create lock on " + keyspace + "." + lockTable + "." + lockName);
+        if (deadlock)
+		   logger.warn("Deadlock detected when " + owner + " tried to create lock on " + keyspace + "." + lockTable + "." + lockName);
         return deadlock;
     }
 
@@ -516,7 +519,7 @@ public class CassaLockStore {
     }
 
     public ReturnType promoteLock(String keyspace, String table, String key, String lockRef)
-            throws MusicLockingException, MusicServiceException, MusicQueryException {
+            throws MusicServiceException, MusicQueryException {
         String lockqtable = table_prepend_name + table;
         String selectQuery = "select * from " + keyspace + "." + lockqtable + " where key=?;";
 
