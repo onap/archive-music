@@ -166,8 +166,10 @@ public class JsonTable {
             if (entry.getKey().equals("PRIMARY KEY")) {
                 primaryKey = entry.getValue(); // replaces primaryKey
                 primaryKey = primaryKey.trim();
-            } else {
-                if (counter == 0 )  fieldsString.append("" + entry.getKey() + " " + entry.getValue() + "");
+            } 
+			else {
+                if (counter == 0 ) 
+					fieldsString.append("" + entry.getKey() + " " + entry.getValue() + "");
                 else fieldsString.append("," + entry.getKey() + " " + entry.getValue() + "");
             }
 
@@ -209,7 +211,8 @@ public class JsonTable {
                             clusterKey=clusterKey.substring(1);
                         }
                         clusterKey = clusterKey.trim();
-                        if (clusterKey.equals(",") ) clusterKey=""; // print error if needed    ( ... ),)
+                        if (clusterKey.equals(",") )
+							clusterKey=""; // print error if needed    ( ... ),)
                     }
 
                     if (!(partitionKey.isEmpty() || clusterKey.isEmpty())
@@ -226,12 +229,16 @@ public class JsonTable {
 
                     }
 
-                    if (partitionKey.isEmpty() )  primaryKey="";
-                    else  if (clusterKey.isEmpty() ) primaryKey=" (" + partitionKey  + ")";
-                    else  primaryKey=" (" + partitionKey + ")," + clusterKey;
+                    if (partitionKey.isEmpty() ) 
+						primaryKey="";
+                    else  if (clusterKey.isEmpty() ) 
+						primaryKey=" (" + partitionKey  + ")";
+                    else 
+						primaryKey=" (" + partitionKey + ")," + clusterKey;
 
             
-                    if (primaryKey != null) fieldsString.append(", PRIMARY KEY (" + primaryKey + " )");
+                    if (primaryKey != null) 
+						fieldsString.append(", PRIMARY KEY (" + primaryKey + " )");
 
                 } else { // end of length > 0
                 
@@ -248,11 +255,15 @@ public class JsonTable {
                                 Status.BAD_REQUEST.getStatusCode());
                     }
 
-                    if (partitionKey.isEmpty() )  primaryKey="";
-                    else  if (clusterKey.isEmpty() ) primaryKey=" (" + partitionKey  + ")";
-                    else  primaryKey=" (" + partitionKey + ")," + clusterKey;
+                    if (partitionKey.isEmpty() ) 
+						primaryKey="";
+                    else  if (clusterKey.isEmpty() )
+						primaryKey=" (" + partitionKey  + ")";
+                    else 
+						primaryKey=" (" + partitionKey + ")," + clusterKey;
 
-                    if (primaryKey != null) fieldsString.append(", PRIMARY KEY (" + primaryKey + " )");
+                    if (primaryKey != null) 
+						fieldsString.append(", PRIMARY KEY (" + primaryKey + " )");
                 }
                 fieldsString.append(")");
 
