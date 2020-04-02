@@ -39,7 +39,8 @@ public class DeadlockDetectionUtil {
 		@Override
 		public String toString() {
 			StringBuffer sb = new StringBuffer();
-			for (Node link : links) sb.append(link.id);
+			for (Node link : links)
+				sb.append(link.id);
 			return "Node [id=" + id + ", links=" + sb.toString() + ", visited=" + visited + ", onStack=" + onStack + "]";
 		}
 
@@ -109,13 +110,17 @@ public class DeadlockDetectionUtil {
 	}
 
 	private boolean findCycle(Node currentNode) {
-		if (currentNode==null) return false;
-		if (currentNode.isOnStack()) return true;
-		if (currentNode.isVisited()) return false;
+		if (currentNode==null)
+			return false;
+		if (currentNode.isOnStack())
+			return true;
+		if (currentNode.isVisited())
+			return false;
 		currentNode.setOnStack(true);
 		currentNode.setVisited(true);
 		for (Node childNode : currentNode.getLinks()) {
-			if (findCycle(childNode)) return true;
+			if (findCycle(childNode))
+				return true;
 		}
 		currentNode.setOnStack(false);
 		return false;
