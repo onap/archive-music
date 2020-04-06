@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.ws.rs.core.MultivaluedMap;
 
 import org.onap.music.datastore.Condition;
+import org.onap.music.datastore.FeedReturnStreamingOutput;
 import org.onap.music.datastore.MusicDataStore;
 import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
@@ -1039,6 +1040,12 @@ public class MusicCassaCore implements MusicCoreService {
         return results;
     }
     
+    @Override
+    public FeedReturnStreamingOutput selectStream(JsonSelect jsonSelect, MultivaluedMap<String, String> rowParams)
+            throws MusicServiceException, MusicQueryException {
+        return new FeedReturnStreamingOutput(jsonSelect, rowParams);
+    }
+    
     /**
      * Select Critical
      */
@@ -1230,6 +1237,5 @@ public class MusicCassaCore implements MusicCoreService {
         
         return result;
     }
-
 
 }

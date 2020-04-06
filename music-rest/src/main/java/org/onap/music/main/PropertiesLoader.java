@@ -70,6 +70,9 @@ public class PropertiesLoader implements InitializingBean {
     @Value("${cassandra.readtimeoutms}")
     public String cassandraReadTimeOutMS;
 
+    @Value("${cassandra.fetchsize}")
+    public String cassandraFetchSize;
+    
     @Value("${cadi}")
     public String isCadi;
 
@@ -157,6 +160,9 @@ public class PropertiesLoader implements InitializingBean {
         }
         if (cassandraReadTimeOutMS != null && !cassandraReadTimeOutMS.equals("${cassandra.readtimeoutms}")) {
             MusicUtil.setCassandraReadTimeOutMS(Integer.parseInt(cassandraReadTimeOutMS));
+        }
+        if (cassandraFetchSize != null && !cassandraFetchSize.equals("${cassandra.fetchsize}")) {
+            MusicUtil.setCassandraFetchSize(Integer.parseInt(cassandraFetchSize));
         }
         if (debug != null && !debug.equals("${debug}")) {
             MusicUtil.setDebug(Boolean.parseBoolean(debug));
@@ -259,6 +265,10 @@ public class PropertiesLoader implements InitializingBean {
 
         if(properties.getProperty("cassandra.readTimeOutMS")!=null) {
             MusicUtil.setCassandraReadTimeOutMS(Integer.parseInt(properties.getProperty("cassandra.readtimeoutms")));
+        }
+        
+        if(properties.getProperty("cassandra.fetchSize")!=null) {
+            MusicUtil.setCassandraFetchSize(Integer.parseInt(properties.getProperty("cassandra.fetchsize")));
         }
 
         if (properties.getProperty("music.properties")!=null) {

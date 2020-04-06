@@ -16,5 +16,6 @@ cassandra.user=cassandra
 cassandra.password=cassandra
 cassandra.connecttimeoutms=5000
 cassandra.readtimeoutms=5000
+cassandra.fetchsize=200
 # AAF Endpoint
 aaf.endpoint.url=http://aafendpoint/proxy/authz/nss/

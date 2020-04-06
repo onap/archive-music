@@ -334,6 +334,12 @@ public class MusicUtilTest {
         MusicUtil.setCassandraReadTimeOutMS(2000);
         assertEquals(2000,MusicUtil.getCassandraReadTimeOutMS());
     }
+    
+    @Test
+    public void testGetCassandraFetchSize() {
+        MusicUtil.setCassandraFetchSize(200);
+        assertEquals(200,MusicUtil.getCassandraFetchSize());
+    }
 
     /*
     @Test

@@ -145,7 +145,8 @@ public class MusicUtil {
     private static int cassandraPort = 9042;
     private static int cassandraConnectTimeOutMS; 
     private static int cassandraReadTimeOutMS;
-
+    private static int cassandraFetchSize;
+    
     // AAF
     private static String musicAafNs = "org.onap.music.cadi";
 
@@ -241,6 +242,14 @@ public class MusicUtil {
         MusicUtil.cassandraReadTimeOutMS = cassandraReadTimeOutMS;
     }
 
+    public static int getCassandraFetchSize() {
+        return cassandraFetchSize;
+    }
+    
+    public static void setCassandraFetchSize(int cassandraFetchSize) {
+        MusicUtil.cassandraFetchSize = cassandraFetchSize;
+    }
+    
     /**
      * Returns An array of property names that should be in the Properties
      * files.

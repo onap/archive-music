@@ -875,7 +875,7 @@ public class RestMusicDataAPI {
             EELFLoggerDelegate.mdcRemove("keyspace");
         }
     }
-
+    
     /**
      * This API will replace the original select and provide a single API fro select and critical. 
      * The idea is to depreciate the older api of criticalGet and use a single API. 
@@ -934,6 +934,73 @@ public class RestMusicDataAPI {
     }
 
     /**
+     * This API will replace the original select and provide a single API fro select and critical. 
+     * The idea is to depreciate the older api of criticalGet and use a single API. 
+     * 
+     * @param selObj
+     * @param keyspace
+     * @param tablename
+     * @param info
+     * @return
+     */
+    @GET
+    @Path("/{keyspace: .*}/tables/{tablename: .*}/stream")
+    @ApiOperation(value = "Select", response = Map.class,
+        notes = "This API returns a stream of records. This should be used while selecting big data.")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces("application/octet-stream")
+    @ApiResponses(value={
+        @ApiResponse(code=200, message = "Success",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"result\":{\"row 0\":{\"address\":"
+                + "{\"city\":\"Someplace\",\"street\":\"1 Some way\"},"
+                + "\"emp_salary\":50,\"emp_name\":\"tom\",\"emp_id\":"
+                + "\"cfd66ccc-d857-4e90-b1e5-df98a3d40cd6\"}},\"status\":\"SUCCESS\"}")
+        })),
+        @ApiResponse(code=400, message = "Failure",examples = @Example( value =  {
+            @ExampleProperty(mediaType="application/json",value = 
+                "{\"error\" : \"<errorMessage>\","
+                + "\"status\" : \"FAILURE\"}") 
+        }))
+    })
+    public Response selectStream(
+        @ApiParam(value = "Major Version",example = "v2", 
+            required = true) @PathParam("version") String version,
+        @ApiParam(value = "Minor Version",example = "1",
+            required = false) @HeaderParam(XMINORVERSION) String minorVersion,
+        @ApiParam(value = "Patch Version",example = "0",
+            required = false) @HeaderParam(XPATCHVERSION) String patchVersion,
+        @ApiParam(value = "AID", required = false, hidden = true) @HeaderParam("aid") String aid,
+        @ApiParam(value = "Application namespace",
+            required = false,hidden = true) @HeaderParam(NS) String ns,
+        @ApiParam(value = "Authorization", required = true) @HeaderParam(MusicUtil.AUTHORIZATION) String authorization,
+        JsonInsert selObj,
+        @ApiParam(value = "Keyspace Name", required = true) @PathParam("keyspace") String keyspace,
+        @ApiParam(value = "Table Name", required = true) @PathParam("tablename") String tablename,
+        @Context UriInfo info) throws Exception {
+        
+        try {
+            if((keyspace == null || keyspace.isEmpty()) || (tablename == null || tablename.isEmpty())) { 
+                return Response.status(Status.BAD_REQUEST).entity(new JsonResponse(ResultType.FAILURE)
+                        .setError("one or more path parameters are not set, please check and try again")
+                        .toMap()).build();
+            }
+            EELFLoggerDelegate.mdcPut("keyspace", "( " + keyspace + " )");
+      
+            Response response;
+            JsonSelect jsonSelect = new JsonSelect();
+            jsonSelect.setKeyspaceName(keyspace);
+            jsonSelect.setTableName(tablename);
+          
+            response = Response.ok(MusicCore.selectStream(jsonSelect, info.getQueryParameters())).build();
+            return response;
+        } finally {
+            EELFLoggerDelegate.mdcRemove("keyspace");
+        }
+    }
+
+    
+    /**
      *
      * @param keyspace
      * @param tablename
@@ -945,6 +1012,7 @@ public class RestMusicDataAPI {
         String version,String minorVersion,String patchVersion,
         String aid,String ns,String authorization,String keyspace,        
         String tablename,UriInfo info) throws Exception {
+        
         try { 
             ResponseBuilder response = MusicUtil.buildVersionResponse(VERSION, minorVersion, patchVersion);
             if((keyspace == null || keyspace.isEmpty()) || (tablename == null || tablename.isEmpty())){
@@ -957,7 +1025,9 @@ public class RestMusicDataAPI {
                 JsonSelect jsonSelect = new JsonSelect();
                 jsonSelect.setKeyspaceName(keyspace);
                 jsonSelect.setTableName(tablename);
+                
                 ResultSet results = MusicCore.select(jsonSelect, info.getQueryParameters());
+                
                 if(results.getAvailableWithoutFetching() >0) {
                     return response.status(Status.OK).entity(new JsonResponse(ResultType.SUCCESS).setDataResult(MusicDataStoreHandle.marshallResults(results)).toMap()).build();
                 }
