@@ -28,6 +28,7 @@ import java.util.Map;
 import javax.ws.rs.core.MultivaluedMap;
 
 import org.onap.music.datastore.Condition;
+import org.onap.music.datastore.FeedReturnStreamingOutput;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 import org.onap.music.datastore.jsonobjects.JsonIndex;
@@ -173,6 +174,8 @@ public interface MusicCoreService {
     public ResultType createIndex(JsonIndex jsonIndexObject, String consistencyInfo) throws MusicServiceException,MusicQueryException;
     
     public ResultSet select(JsonSelect jsonSelect, MultivaluedMap<String, String> rowParams) throws MusicServiceException, MusicQueryException;
+    
+    public FeedReturnStreamingOutput selectStream(JsonSelect jsonSelect, MultivaluedMap<String, String> rowParams) throws MusicServiceException, MusicQueryException;
     
     public ResultSet selectCritical(JsonInsert jsonInsertObj, MultivaluedMap<String, String> rowParams) 
             throws MusicLockingException, MusicQueryException, MusicServiceException;

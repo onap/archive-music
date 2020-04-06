@@ -28,6 +28,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.mockito.internal.util.reflection.FieldSetter;
 import org.onap.music.datastore.Condition;
+import org.onap.music.datastore.FeedReturnStreamingOutput;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.datastore.jsonobjects.JsonDelete;
 import org.onap.music.datastore.jsonobjects.JsonIndex;
@@ -348,6 +349,16 @@ public class MusicCoreTest {
         MultivaluedMap<String, String> map = Mockito.mock(MultivaluedMap.class);
         result = MusicCore.select(new JsonSelect(), map);
         assertEquals(rs, result);
+    }
+    
+    @Test
+    public void testSelectStream() throws MusicServiceException, MusicQueryException {
+        FeedReturnStreamingOutput outputStream = Mockito.mock(FeedReturnStreamingOutput.class);
+        FeedReturnStreamingOutput resultStream = null;
+        Mockito.when(musicCore.selectStream(Mockito.any(), Mockito.any())).thenReturn(outputStream);
+        MultivaluedMap<String, String> map = Mockito.mock(MultivaluedMap.class);
+        resultStream = MusicCore.selectStream(new JsonSelect(), map);
+        assertEquals(outputStream, resultStream);
     }
 
     @Test
