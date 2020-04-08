@@ -24,8 +24,6 @@ package org.onap.music.main;
 
 import java.util.Properties;
 
-import org.onap.music.eelf.logging.EELFLoggerDelegate;
-
 public class CorePropertiesLoader {
 
     public static void loadProperties(Properties properties) {
