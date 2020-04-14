@@ -159,7 +159,12 @@ public class MusicDataStore {
 
         Cluster cluster;
         if(MusicUtil.getCassName() != null && MusicUtil.getCassPwd() != null) {
-            String cassPwd = CipherUtil.decryptPKC(MusicUtil.getCassPwd());
+            String cassPwd;
+            if (MusicUtil.getCipherEncKey() != null && !("").equals(MusicUtil.getCipherEncKey())) {
+                cassPwd = CipherUtil.decryptPKC(MusicUtil.getCassPwd());
+            } else {
+                cassPwd = MusicUtil.getCassPwd();
+            }
             logger.info(EELFLoggerDelegate.applicationLogger,
                     "Building with credentials "+MusicUtil.getCassName()+" & "+ MusicUtil.getCassPwd());
             cluster = Cluster.builder().withPort(MusicUtil.getCassandraPort())
