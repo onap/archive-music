@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
+import static org.junit.Assert.assertThat;
 
 public class JsonDeleteTest {
 
@@ -80,6 +81,34 @@ public class JsonDeleteTest {
         jd.setTimestamp("20:00");
         assertEquals("20:00",jd.getTimestamp());
 
+    }
+
+    @Test
+    public void testGetKeyspaceName() {
+        jd.setKeyspaceName("keyspace");
+        assertEquals("keyspace",jd.getKeyspaceName());
+
+    }
+
+    @Test
+    public void testGetTableName() {
+        jd.setTableName("tablename");
+        assertEquals("tablename",jd.getTableName());
+
+    }
+
+    @Test
+    public void testGetPrimarKeyValue() {
+        jd.setPrimarKeyValue("primarykey");
+        assertEquals("primarykey",jd.getPrimarKeyValue());
+
+    }
+
+    @Test
+    public void testRowIdString() {
+        StringBuilder builder = new StringBuilder("testing");
+        jd.setRowIdString(builder);
+        assertEquals(jd.getRowIdString().toString(),builder.toString());
     }
 
 }
