@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0a0b3358_c0f1c99f",
+        "filename": "releases/3.2.38-container.yaml",
+        "patchSetId": 3
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 481
+      },
+      "writtenOn": "2020-04-16T19:03:08Z",
+      "side": 1,
+      "message": "The name of the image is not music_sb, but rather music/music_sb\nhttps://nexus3.onap.org/#browse/search\u003dkeyword%3Dmusic-sb:22b3686a9064fa3d98e2ff38c1df08eb",
+      "range": {
+        "startLine": 7,
+        "startChar": 6,
+        "endLine": 7,
+        "endChar": 22
+      },
+      "revId": "4f4188f97d8509c4bb70de732ef3c85a90cdaa85",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    }
+  ]
+}
