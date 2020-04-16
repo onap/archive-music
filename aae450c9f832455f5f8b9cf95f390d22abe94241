@@ -16,6 +16,24 @@
       "revId": "aae450c9f832455f5f8b9cf95f390d22abe94241",
       "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5cbd89d7_c20da6d3",
+        "filename": "releases/3.2.38-container.yaml",
+        "patchSetId": 2
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 679
+      },
+      "writtenOn": "2020-04-16T18:41:47Z",
+      "side": 1,
+      "message": "its 3.2.38-latest",
+      "parentUuid": "533a554f_2fce76da",
+      "revId": "aae450c9f832455f5f8b9cf95f390d22abe94241",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
     }
   ]
 }
