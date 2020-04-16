@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "533a554f_2fce76da",
+        "filename": "releases/3.2.38-container.yaml",
+        "patchSetId": 2
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 679
+      },
+      "writtenOn": "2020-04-16T18:32:12Z",
+      "side": 1,
+      "message": "this should be snapshot version that you are trying to release",
+      "revId": "aae450c9f832455f5f8b9cf95f390d22abe94241",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    }
+  ]
+}
