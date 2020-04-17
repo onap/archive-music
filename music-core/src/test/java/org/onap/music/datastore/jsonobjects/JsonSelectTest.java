@@ -33,10 +33,11 @@ import java.util.Map;
 import org.junit.Test;
 
 public class JsonSelectTest {
+    JsonSelect js = new JsonSelect();
 
     @Test
     public void testGetConsistencyInfo() {
-        JsonSelect js = new JsonSelect();
+//        JsonSelect js = new JsonSelect();
         Map<String, String> mapSs = new HashMap<>();
         mapSs.put("k1", "one");
         js.setConsistencyInfo(mapSs);
@@ -45,11 +46,24 @@ public class JsonSelectTest {
 
     @Test
     public void testSerialize() throws IOException {
-        JsonSelect js = new JsonSelect();
         Map<String, String> mapSs = new HashMap<>();
         mapSs.put("Key", "Value");
         js.setConsistencyInfo(mapSs);
         js.serialize();
+    }
+
+    @Test
+    public void testGetKeyspaceName() {
+        js.setKeyspaceName("testkeyspace");
+        assertEquals("testkeyspace",js.getKeyspaceName());
+
+    }
+
+    @Test
+    public void testGetTableName() {
+        js.setTableName("testkeyspace");
+        assertEquals("testkeyspace",js.getTableName());
+
     }
 
 }
