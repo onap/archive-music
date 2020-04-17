@@ -1,0 +1,8 @@
+distribution_type: 'container'
+container_release_tag: '3.2.39'
+project: 'music'
+log_dir: 'music-maven-docker-stage-master/338'
+ref: 99f396136789182931fbded1127856247593d91b
+containers:
+    - name: 'music/music_sb'
+      version: '3.2.39-latest'
