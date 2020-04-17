@@ -33,7 +33,8 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.stereotype.Component;
 
-@PropertySource(value = {"file:/opt/app/music/etc/music.properties", "classpath:/project.properties","file:/opt/app/music/etc/key.properties"})
+@PropertySource(value = {"file:/opt/app/music/etc/music.properties", "classpath:/project.properties"})
+//"file:/opt/app/music/etc/key.properties"
 @Component
 public class PropertiesLoader implements InitializingBean {
 
