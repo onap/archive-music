@@ -119,7 +119,7 @@ public class PropertiesLoader implements InitializingBean {
     @Value("${music.aaf.ns}")
     private String musicAafNs;
 
-    @Value("${cipher.enc.key}")
+    @Value("${cipher.enc.key:}")
     private String cipherEncKey;
 
     @SuppressWarnings("unused")
