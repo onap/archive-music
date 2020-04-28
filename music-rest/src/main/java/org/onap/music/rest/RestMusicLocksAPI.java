@@ -370,7 +370,7 @@ public class RestMusicLocksAPI {
                         new JsonResponse(ResultType.FAILURE).setError(String.valueOf(resultMap.get("Error"))).toMap())
                         .build();
             }
-            String keyspaceName = (String) resultMap.get("keyspace");
+           // String keyspaceName = (String) resultMap.get("keyspace");
             List<String> who = MusicCore.getCurrentLockHolders(lockName);
             ResultType status = ResultType.SUCCESS;
             String error = "";

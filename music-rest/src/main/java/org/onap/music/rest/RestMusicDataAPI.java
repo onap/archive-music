@@ -926,7 +926,7 @@ public class RestMusicDataAPI {
         @Context UriInfo info) throws Exception {
         if ((minorVersion != null && patchVersion != null) &&
             (Integer.parseInt(minorVersion) == 1 && Integer.parseInt(patchVersion) == 0) &&
-            (!(null == selObj) && !selObj.getConsistencyInfo().isEmpty())) {
+            ((null != selObj) && !selObj.getConsistencyInfo().isEmpty())) {
             return selectCritical(version, minorVersion, patchVersion, aid, ns, authorization, selObj, keyspace, tablename, info);
         } else {
             return select(version, minorVersion, patchVersion, aid, ns, authorization, keyspace, tablename, info);
