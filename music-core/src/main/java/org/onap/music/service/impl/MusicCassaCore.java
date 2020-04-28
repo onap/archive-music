@@ -264,7 +264,6 @@ public class MusicCassaCore implements MusicCoreService {
         
     }
 
-
     public ReturnType acquireLockWithLease(String fullyQualifiedKey, String lockReference, long leasePeriod)
             throws MusicLockingException, MusicQueryException, MusicServiceException  {
         evictExpiredLockHolder(fullyQualifiedKey,leasePeriod);
@@ -361,7 +360,7 @@ public class MusicCassaCore implements MusicCoreService {
         try {
             // create shadow locking table
             result = getLockingServiceHandle().createLockQueue(keyspace, table);
-            if (result == false) {
+            if (!result) {
                 return ResultType.FAILURE;
             }
             result = false;
@@ -375,7 +374,7 @@ public class MusicCassaCore implements MusicCoreService {
 
             queryObject.appendQueryString(tabQuery);
             result = MusicDataStoreHandle.getDSHandle().executePut(queryObject, "eventual");
-            if (result == false) {
+            if (!result) {
                 return ResultType.FAILURE;
             }
             result = false;
@@ -1080,8 +1079,8 @@ public class MusicCassaCore implements MusicCoreService {
         ReturnType result = null;
         
         try {
-            PreparedQueryObject queryObj = null;
-            queryObj = jsonInsertObj.genInsertPreparedQueryObj();
+//            PreparedQueryObject queryObj = null;
+//            queryObj = jsonInsertObj.genInsertPreparedQueryObj();
             
             if (consistency.equalsIgnoreCase(MusicUtil.EVENTUAL)) {
                 result = eventualPut(jsonInsertObj.genInsertPreparedQueryObj());
