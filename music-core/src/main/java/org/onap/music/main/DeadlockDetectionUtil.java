@@ -47,7 +47,7 @@ public class DeadlockDetectionUtil {
 		public Node(String id) {
 			super();
 			this.id = id;
-			this.links = new ArrayList<Node>();
+			this.links = new ArrayList<>();
 		}
 
 		public List<Node> getLinks() {
@@ -85,7 +85,7 @@ public class DeadlockDetectionUtil {
 	}
 	
 	public DeadlockDetectionUtil() {
-		this.nodeList = new HashMap<String, Node>();
+		this.nodeList = new HashMap<>();
 	}
 
 	public void listAllNodes() {
@@ -105,8 +105,7 @@ public class DeadlockDetectionUtil {
 			currentNode = nodeList.get("o" + owner);
 		}
 
-		boolean cycle = findCycle(currentNode);
-		return cycle;
+		return findCycle(currentNode);
 	}
 
 	private boolean findCycle(Node currentNode) {
