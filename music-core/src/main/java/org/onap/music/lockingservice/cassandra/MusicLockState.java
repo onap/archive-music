@@ -41,13 +41,15 @@ import org.onap.music.eelf.logging.format.ErrorTypes;
 public class MusicLockState implements Serializable {
     public enum LockStatus {
         UNLOCKED, BEING_LOCKED, LOCKED
-    };// captures the state of the lock
+    }
+    // captures the state of the lock
 
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicLockState.class);
     private LockStatus lockStatus;
     private boolean needToSyncQuorum = false;
     private String lockHolder;
-    private long leasePeriod = Long.MAX_VALUE, leaseStartTime = -1;
+    private long leasePeriod = Long.MAX_VALUE;
+    private long leaseStartTime = -1;
     private String errorMessage = null;
     
     public MusicLockState(String errorMessage) {

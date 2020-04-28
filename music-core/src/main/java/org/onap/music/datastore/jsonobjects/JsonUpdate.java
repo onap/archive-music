@@ -190,7 +190,7 @@ public class JsonUpdate implements Serializable {
          }
          
          EELFLoggerDelegate.mdcPut("keyspace", "( "+this.getKeyspaceName()+" ) ");
-         long startTime = System.currentTimeMillis();
+         //long startTime = System.currentTimeMillis();
          String operationId = UUID.randomUUID().toString();  // just for infoging purposes.
          String consistency = this.getConsistencyInfo().get("type");
 
@@ -311,8 +311,8 @@ public class JsonUpdate implements Serializable {
             conditionInfo = new Condition(this.getConditions(), selectQuery);
         }
 
-        ReturnType operationResult = null;
-        long jsonParseCompletionTime = System.currentTimeMillis();
+        ////ReturnType operationResult = null;
+        ////long jsonParseCompletionTime = System.currentTimeMillis();
 
         if(consistency.equalsIgnoreCase(MusicUtil.EVENTUAL) && this.getConsistencyInfo().get("consistency") != null) {
             if(MusicUtil.isValidConsistency(this.getConsistencyInfo().get("consistency"))) {
@@ -376,7 +376,7 @@ public class JsonUpdate implements Serializable {
         }
 
         public String getRowIdString() {
-            return this.rowIdString.toString();
+            return this.rowIdString;
         }
 
         public void setRowIdString(String rowIdString) {

@@ -168,7 +168,8 @@ public class CipherUtil {
      */
     public static String encryptPKC(String value, String skey)  {
         Cipher cipher = null;
-        byte[] iv = null, finalByte = null;
+        byte[] iv = null;
+        byte[] finalByte = null;
 
         try {
             cipher = Cipher.getInstance(ALGORYTHM_DETAILS, "SunJCE");

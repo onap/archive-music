@@ -23,12 +23,10 @@
 package org.onap.music.lockingservice.cassandra;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
-import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
