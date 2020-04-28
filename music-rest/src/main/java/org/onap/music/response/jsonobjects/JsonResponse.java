@@ -231,7 +231,7 @@ public class JsonResponse {
      * @param lockHolder
      */
     public JsonResponse setLockHolder(String lockHolder) {
-        this.lockHolders = new ArrayList<String>();
+        this.lockHolders = new ArrayList<>();
         this.lockHolders.add(lockHolder);
         return this;
     }
