@@ -503,7 +503,7 @@ public class CassaLockStore {
     }
     
     public List<String> getAllLocksForOwner(String ownerId, String keyspace, String table) throws MusicServiceException, MusicQueryException {
-        List<String> toRet = new ArrayList<String>();
+        List<String> toRet = new ArrayList<>();
         String lockTable = table_prepend_name + table;
         PreparedQueryObject queryObject = new PreparedQueryObject();
         queryObject.appendQueryString("SELECT key, lockreference FROM " + keyspace + "." + lockTable);
