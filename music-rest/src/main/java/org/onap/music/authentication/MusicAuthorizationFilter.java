@@ -77,7 +77,7 @@ public class MusicAuthorizationFilter implements Filter {
                 startTime = System.currentTimeMillis(); // this will set only incase the request attribute not found
             }
 
-            try {
+               try {
                 isAuthAllowed = AuthUtil.isAccessAllowed(servletRequest, musicNS);
             } catch (MusicAuthenticationException e) {
                 logger.error(EELFLoggerDelegate.securityLogger,
