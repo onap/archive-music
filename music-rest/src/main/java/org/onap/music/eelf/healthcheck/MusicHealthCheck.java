@@ -66,7 +66,7 @@ public class MusicHealthCheck {
                     if(ksresult) {
                         result = getAdminKeySpace(consistency, randomUUID);
                     }
-                } catch (MusicServiceException e1) {
+                }  catch (MusicServiceException e1) {
                     logger.error(EELFLoggerDelegate.errorLogger, e1.getMessage(), AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.UNKNOWN, e1);
                 } catch (MusicQueryException e1) {
                     logger.error(EELFLoggerDelegate.errorLogger, e1.getMessage(), AppMessages.UNKNOWNERROR, ErrorSeverity.ERROR, ErrorTypes.UNKNOWN,e1);
