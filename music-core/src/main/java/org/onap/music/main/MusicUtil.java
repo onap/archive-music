@@ -514,9 +514,9 @@ public class MusicUtil {
             case BOOLEAN:
                 return Boolean.parseBoolean(valueObjString);
             case MAP:
-                return (Map<String, Object>) valueObj;
+                return valueObj;
             case LIST:
-                return (List<Object>)valueObj;
+                return valueObj;
             case BLOB:
 
             default:
@@ -525,8 +525,8 @@ public class MusicUtil {
     }
 
     public static ByteBuffer convertToActualDataType(DataType colType, byte[] valueObj) {
-        ByteBuffer buffer = ByteBuffer.wrap(valueObj);
-        return buffer;
+    	
+        return ByteBuffer.wrap(valueObj);
     }
 
     /**
@@ -538,7 +538,7 @@ public class MusicUtil {
      * @return
      */
 
-    public static String jsonMaptoSqlString(Map<String, Object> jMap, String lineDelimiter) throws Exception{
+    public static String jsonMaptoSqlString(Map<String, Object> jMap, String lineDelimiter){
         StringBuilder sqlString = new StringBuilder();
         int counter = 0;
         for (Map.Entry<String, Object> entry : jMap.entrySet()) {
@@ -620,11 +620,9 @@ public class MusicUtil {
      * @throws MusicServiceException
      * @throws MusicQueryException
      */
-    public static long v2sTimeStampInMicroseconds(long ordinal, long timeOfWrite) throws MusicServiceException, MusicQueryException {
+    public static long v2sTimeStampInMicroseconds(long ordinal, long timeOfWrite){
         // TODO: use acquire time instead of music eternity epoch
-        long ts = ordinal * MaxLockReferenceTimePart + (timeOfWrite - MusicEternityEpochMillis);
-
-        return ts;
+        return ordinal * MaxLockReferenceTimePart + (timeOfWrite - MusicEternityEpochMillis);
     }
 
     public static MusicCoreService  getMusicCoreService() {
