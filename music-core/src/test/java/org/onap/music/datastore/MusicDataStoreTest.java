@@ -80,10 +80,6 @@ public class MusicDataStoreTest {
         dataStore = new MusicDataStore(cluster, session);
     }
 
-    @Test
-    public void testMusicDataStore() {
-        //MusicDataStore mds = new MusicDataStore();
-    }
     
     @Test
     public void testMusicDataStoreClusterSession() {
