@@ -3,8 +3,8 @@
  * org.onap.music
  * ===================================================================
  *  Copyright (c) 2017 AT&T Intellectual Property
- *  
- *  Modifications Copyright (C) 2019 IBM.
+ * =================================================================== 
+ *  Modifications Copyright (C) 2020 IBM.
  * ===================================================================
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -119,6 +119,15 @@ public class MusicHealthCheck {
         return rs != null && rs.getResult().toLowerCase().contains("success");
     }
 
+    /*For unit testing purpose only*/
+    public ResultType nonKeyRelatedPut(PreparedQueryObject pQuery, String consistency) throws MusicServiceException, MusicQueryException {
+        return MusicCore.nonKeyRelatedPut(pQuery, consistency);
+    }
+
+    /*For unit testing purpose only*/
+    public void executeEventualPut(PreparedQueryObject deleteQueryObject) throws MusicServiceException, MusicQueryException {
+        MusicDataStoreHandle.getDSHandle().executePut(deleteQueryObject, "eventual");
+    }
     public String getCassandrHost() {
         return cassandrHost;
     }
