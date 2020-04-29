@@ -119,6 +119,15 @@ public class MusicHealthCheck {
         return rs != null && rs.getResult().toLowerCase().contains("success");
     }
 
+    /*For unit testing purpose only*/
+    public ResultType nonKeyRelatedPut(PreparedQueryObject pQuery, String consistency) throws MusicServiceException, MusicQueryException {
+        return MusicCore.nonKeyRelatedPut(pQuery, consistency);
+    }
+
+    /*For unit testing purpose only*/
+    public void executeEventualPut(PreparedQueryObject deleteQueryObject) throws MusicServiceException, MusicQueryException {
+        MusicDataStoreHandle.getDSHandle().executePut(deleteQueryObject, "eventual");
+    }
     public String getCassandrHost() {
         return cassandrHost;
     }
