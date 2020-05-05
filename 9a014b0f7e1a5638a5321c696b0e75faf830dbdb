@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "91f1523a_edff1442",
+        "filename": "music-core/src/test/java/org/onap/music/datastore/jsonobjects/JsonSelectTest.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2020-05-05T18:40:14Z",
+      "side": 1,
+      "message": "Please remove these commented out code",
+      "revId": "9a014b0f7e1a5638a5321c696b0e75faf830dbdb",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    }
+  ]
+}
