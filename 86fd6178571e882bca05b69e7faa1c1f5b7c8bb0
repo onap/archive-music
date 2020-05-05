@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9fe7860d_c13dbe4c",
+        "filename": "music-core/src/main/java/org/onap/music/datastore/jsonobjects/JsonUpdate.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2020-05-05T18:46:06Z",
+      "side": 1,
+      "message": "Please remove these lines instead of commenting them out",
+      "revId": "86fd6178571e882bca05b69e7faa1c1f5b7c8bb0",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    }
+  ]
+}
