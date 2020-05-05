@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f4897586_eceb65b6",
+        "filename": "music-core/src/main/java/org/onap/music/eelf/healthcheck/MusicHealthCheck.java",
+        "patchSetId": 5
+      },
+      "lineNbr": 122,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2020-05-05T18:53:07Z",
+      "side": 1,
+      "message": "Is there any other way we can test without creating new functions only for testing? At the very least, this shouldn\u0027t be a \"public\" function",
+      "revId": "d275b3fd5ed2fa321776924aa93c0115651fed6c",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    }
+  ]
+}
