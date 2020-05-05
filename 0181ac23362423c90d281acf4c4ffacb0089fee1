@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9e2d5c29_2c5246ae",
+        "filename": "music-core/src/test/java/org/onap/music/datastore/jsonobjects/RowIdentifierTest.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2020-05-05T18:43:56Z",
+      "side": 1,
+      "message": "MUSIC",
+      "revId": "0181ac23362423c90d281acf4c4ffacb0089fee1",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c21837a3_b5e64532",
+        "filename": "music-core/src/test/java/org/onap/music/datastore/jsonobjects/RowIdentifierTest.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2020-05-05T18:43:56Z",
+      "side": 1,
+      "message": "Please remove the comments",
+      "revId": "0181ac23362423c90d281acf4c4ffacb0089fee1",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    }
+  ]
+}
