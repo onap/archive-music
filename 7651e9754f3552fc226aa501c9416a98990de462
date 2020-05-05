@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "01c965c6_e818dcde",
+        "filename": "music-core/src/test/java/org/onap/music/datastore/jsonobjects/JSONObjectTest.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2020-05-05T18:41:22Z",
+      "side": 1,
+      "message": "We\u0027re in the music project",
+      "revId": "7651e9754f3552fc226aa501c9416a98990de462",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    }
+  ]
+}
