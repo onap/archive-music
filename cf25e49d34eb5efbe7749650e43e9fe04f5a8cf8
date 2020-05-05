@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "739fd8c4_832d5501",
+        "filename": "music-core/src/test/java/org/onap/music/datastore/jsonobjects/JsonLeasedLockTest.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2020-05-05T18:47:50Z",
+      "side": 1,
+      "message": "MUSIC",
+      "revId": "cf25e49d34eb5efbe7749650e43e9fe04f5a8cf8",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ece8c71d_093c73f1",
+        "filename": "music-core/src/test/java/org/onap/music/datastore/jsonobjects/JsonLeasedLockTest.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2020-05-05T18:47:50Z",
+      "side": 1,
+      "message": "be careful with unneecessary whitespace here. Also the ONAP standard is spaces, not tabs",
+      "revId": "cf25e49d34eb5efbe7749650e43e9fe04f5a8cf8",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    }
+  ]
+}
