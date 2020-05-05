@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ab30fae2_94341676",
+        "filename": "music-core/src/test/java/org/onap/music/datastore/jsonobjects/JsonDeleteTest.java",
+        "patchSetId": 1
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2020-05-05T18:55:13Z",
+      "side": 1,
+      "message": "I don\u0027t think this import is necessary? we\u0027re already importing Assert.*.\nI also don\u0027t see assertThat being used unless I\u0027m missing something",
+      "revId": "a2f4dab9aeab4f75175ce2fdd6b8044e07334ed4",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    }
+  ]
+}
