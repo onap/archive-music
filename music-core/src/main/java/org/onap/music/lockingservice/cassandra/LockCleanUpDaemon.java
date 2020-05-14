@@ -23,12 +23,10 @@
 package org.onap.music.lockingservice.cassandra;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import org.onap.music.datastore.MusicDataStoreHandle;
 import org.onap.music.datastore.PreparedQueryObject;
 import org.onap.music.eelf.logging.EELFLoggerDelegate;
-import org.onap.music.exceptions.MusicQueryException;
 import org.onap.music.exceptions.MusicServiceException;
 import org.onap.music.main.MusicCore;
 import org.onap.music.main.MusicUtil;
@@ -58,7 +56,8 @@ public class LockCleanUpDaemon extends Thread {
             try {
                 Thread.sleep(MusicUtil.getLockDaemonSleepTimeMs());
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                logger.warn(EELFLoggerDelegate.applicationLogger, "Interrupted exception", e);
+
             }
         }
     }
@@ -110,12 +109,14 @@ public class LockCleanUpDaemon extends Thread {
     
     
     private void deleteLockIfStale(String lockTable, Row lock) throws MusicServiceException {
-        if (lock.isNull("createtime") && lock.isNull("acquiretime")) {
+        final String CREATETIME="createtime";
+        final String ACQUIRETIME="acquiretime";
+        if (lock.isNull(CREATETIME) && lock.isNull("acquiretime")) {
             return;
         }
 
-        long createTime = lock.isNull("createtime") ? 0 : Long.parseLong(lock.getString("createtime"));
-        long acquireTime = lock.isNull("acquiretime") ? 0 : Long.parseLong(lock.getString("acquiretime"));
+        long createTime = lock.isNull(CREATETIME) ? 0 : Long.parseLong(lock.getString(CREATETIME));
+        long acquireTime = lock.isNull(ACQUIRETIME) ? 0 : Long.parseLong(lock.getString(ACQUIRETIME));
         long row_access_time = Math.max(createTime, acquireTime);
         if (System.currentTimeMillis() > row_access_time + MusicUtil.getDefaultLockLeasePeriod()) {
             logger.info(EELFLoggerDelegate.applicationLogger, "Stale lock detected and being removed: " + lock);
