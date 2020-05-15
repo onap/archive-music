@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a0831ec7_81047809",
+        "filename": "music-rest/src/main/java/org/onap/music/rest/RestMusicDataAPI.java",
+        "patchSetId": 3
+      },
+      "lineNbr": 1002,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2020-05-15T15:04:08Z",
+      "side": 1,
+      "message": "Is there a better way to do this other than creating a separate API call? This API call isn\u0027t even for this function, it simply goes out to another class.\n\nAfter review, it probably should just be a private function, a wrapper around selectStream",
+      "revId": "65037ba0b6003b34e1396e57e035d258e8fd9ed3",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "675e1bc0_648f4619",
+        "filename": "music-rest/src/main/java/org/onap/music/rest/RestMusicDataAPI.java",
+        "patchSetId": 3
+      },
+      "lineNbr": 1020,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2020-05-15T15:04:08Z",
+      "side": 1,
+      "message": "remove",
+      "revId": "65037ba0b6003b34e1396e57e035d258e8fd9ed3",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "da176b41_9e9063dc",
+        "filename": "music-rest/src/main/java/org/onap/music/rest/RestMusicDataAPI.java",
+        "patchSetId": 3
+      },
+      "lineNbr": 1033,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2020-05-15T15:04:08Z",
+      "side": 1,
+      "message": "remove",
+      "revId": "65037ba0b6003b34e1396e57e035d258e8fd9ed3",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "95cf3eaa_9ca35f4f",
+        "filename": "music-rest/src/main/java/org/onap/music/rest/RestMusicDataAPI.java",
+        "patchSetId": 3
+      },
+      "lineNbr": 1035,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2020-05-15T15:04:08Z",
+      "side": 1,
+      "message": "remove",
+      "revId": "65037ba0b6003b34e1396e57e035d258e8fd9ed3",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    }
+  ]
+}
