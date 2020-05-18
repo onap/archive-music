@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f57a1524_22d2f9b7",
+        "filename": "music-core/src/test/java/org/onap/music/datastore/jsonobjects/JsonLeasedLockTest.java",
+        "patchSetId": 4
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2020-05-18T17:52:42Z",
+      "side": 1,
+      "message": "This close bracket isn\u0027t at the right indentation level, same as line 55. Can you please fix this to conform to ONAP standards?",
+      "revId": "6f68ea2af83b95db578a696e6ee11169a44ee6cb",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "52370e1f_3a41a67f",
+        "filename": "music-core/src/test/java/org/onap/music/datastore/jsonobjects/JsonLeasedLockTest.java",
+        "patchSetId": 4
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2020-05-18T17:52:42Z",
+      "side": 1,
+      "message": "Please remove the trailing space",
+      "revId": "6f68ea2af83b95db578a696e6ee11169a44ee6cb",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    }
+  ]
+}
