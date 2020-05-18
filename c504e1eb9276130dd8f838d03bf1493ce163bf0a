@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2db782c7_bb285490",
+        "filename": "music-core/src/main/java/org/onap/music/lockingservice/cassandra/MusicLockState.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2020-05-18T17:50:37Z",
+      "side": 1,
+      "message": "Can you move this comment on top of the enum?",
+      "revId": "c504e1eb9276130dd8f838d03bf1493ce163bf0a",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    }
+  ]
+}
