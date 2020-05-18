@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0e4da0c7_0eebce2d",
+        "filename": "music-core/src/main/java/org/onap/music/main/MusicUtil.java",
+        "patchSetId": 15
+      },
+      "lineNbr": 517,
+      "author": {
+        "id": 4079
+      },
+      "writtenOn": "2020-05-18T18:15:43Z",
+      "side": 0,
+      "message": "I\u0027m concerned about the removal of these casts. This will push any potential error thrown here due to ClassCastException  further down the line. I don\u0027t know how the rest of the code would potentially handle the error further down the stack, if at all.\n\nCan you please replace the cast for now?",
+      "revId": "d99c6d9edac3ac8b5e9ba7284fbc65f40f02b97d",
+      "serverId": "14b4e41f-c4e3-4fb9-9955-6a9b5656895a",
+      "unresolved": true
+    }
+  ]
+}
