@@ -5,31 +5,33 @@
 
 Release Notes
 =============
-Initial Release for El Alto
+Initial Release for Frankfurt
 
-Version: 3.2.35
+Version: 3.2.40
 ---------------
 
-:Release Date: 2019-09-19
+:Release Date: 2020-05-20
 
 **New Features**
 
-- MUSIC features an 'ORM' layer. Applications directly using music will now have a streamlined API that matches the REST API for easier adoption and use.
+- MUSIC now runs on a springboot server, instead of a standalone tomcat server
 
-- MUSIC includes deadlock detection when creating and acquiring locks
+- HTTPS support for clients through AAF certificates
+
+- A background lock clean up daemon will periodically check the status of current locks, cleaning up 'stale' references.
+Clients should see a performance boost if they were previously dealing with many stale locks.
+
+- Improved error messaging to the user, allowing clients to better debug their applications
 
 - Continued adherence to ONAP S3P requirements
 
 
 **Bug Fixes**
+    - `MUSIC-573 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-573`_ Pods still run as root
 
-    - `MUSIC-434 <https://jira.onap.org/browse/MUSIC-434>`_ Sonar Fix : JsonDelete.java
+    - `MUSIC-557 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-557`_ Test coverage goals met, and migrated to new sonar location
 
-    - `MUSIC-432 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-432`_ Use try-with resources to handle the resources used in the code
-
-    - `MUSIC-410 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-410>`_ Use logger to log exception
-
-    - `MUSIC-408 <https://jira.onap.org/projects/MUSIC/issues/MUSIC-408>`_ fix reduce method parameter
+    - `MUSIC-530 <https://jira.onap.org/browse/MUSIC-530>`_ Security Vulnerability in pom.xml fix
 
 
 
@@ -43,7 +45,7 @@ MUSIC code has been formally scanned during build time using NexusIQ and all Cri
 Quick Links:
 
 - `MUSIC project page <https://wiki.onap.org/display/DW/MUSIC+Project>`_
-- `MUSIC Dublin Release <https://wiki.onap.org/display/DW/MUSIC+El-Alto>`_
+- `MUSIC Frankfurt Release <https://wiki.onap.org/display/DW/MUSIC+Frankfurt>`_
 - `Passing Badge information for MUSIC <https://bestpractices.coreinfrastructure.org/en/projects/1722>`_
 - `MUSIC Architecture Page <TBD>`_
 - `Project Vulnerability Review Table for MUSIC <https://wiki.onap.org/pages/viewpage.action?pageId=64004601>`_
