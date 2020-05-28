@@ -1080,9 +1080,10 @@ public class MusicCassaCore implements MusicCoreService {
         ReturnType result = null;
         
         try {
+            
             PreparedQueryObject queryObj = null;
             queryObj = jsonInsertObj.genInsertPreparedQueryObj();
-            
+
             if (consistency.equalsIgnoreCase(MusicUtil.EVENTUAL)) {
                 result = eventualPut(jsonInsertObj.genInsertPreparedQueryObj());
             } else if (consistency.equalsIgnoreCase(MusicUtil.CRITICAL)) {
