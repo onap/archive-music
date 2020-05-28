@@ -39,15 +39,18 @@ import org.onap.music.eelf.logging.format.ErrorTypes;
 
 // the state variable that will be stored in the locking service, capturing the transitions of
 public class MusicLockState implements Serializable {
+    // captures the state of the lock
     public enum LockStatus {
         UNLOCKED, BEING_LOCKED, LOCKED
-    };// captures the state of the lock
+    }
+  
 
     private static EELFLoggerDelegate logger = EELFLoggerDelegate.getLogger(MusicLockState.class);
     private LockStatus lockStatus;
     private boolean needToSyncQuorum = false;
     private String lockHolder;
-    private long leasePeriod = Long.MAX_VALUE, leaseStartTime = -1;
+    private long leasePeriod = Long.MAX_VALUE;
+    private long leaseStartTime = -1;
     private String errorMessage = null;
     
     public MusicLockState(String errorMessage) {
