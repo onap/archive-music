@@ -23,6 +23,7 @@
 package org.onap.music.main;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -51,6 +52,7 @@ public class DeadlockDetectionUtilTest {
 		ByteArrayOutputStream outContent = new ByteArrayOutputStream();
 		System.setOut(new PrintStream(outContent));
 		ddu.listAllNodes();
+		assertNotNull(ddu);
 
 		/*
 		 * String expectedOutput = "In DeadlockDetectionUtil: \n" +

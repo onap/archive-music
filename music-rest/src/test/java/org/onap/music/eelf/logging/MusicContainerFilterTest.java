@@ -30,6 +30,7 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
 
+import org.junit.Assert;
 import org.springframework.stereotype.Component;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,6 +51,7 @@ public class MusicContainerFilterTest {
         ContainerRequestContext req=Mockito.mock(ContainerRequestContext.class);
         ContainerResponseContext res=Mockito.mock(ContainerResponseContext.class);
         filter.filter(req,res);
+        Assert.assertNotNull(fil);
     }
 
 }

@@ -25,6 +25,7 @@
 package org.onap.music.datastore.jsonobjects;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -49,6 +50,7 @@ public class JsonSelectTest {
         mapSs.put("Key", "Value");
         js.setConsistencyInfo(mapSs);
         js.serialize();
+        assertNotNull(mapSs);
     }
 
     @Test

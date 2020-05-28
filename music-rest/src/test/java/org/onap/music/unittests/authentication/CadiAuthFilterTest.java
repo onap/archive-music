@@ -22,6 +22,7 @@
 package org.onap.music.unittests.authentication;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
@@ -49,6 +50,7 @@ public class CadiAuthFilterTest {
 	{
 		PropAccess props=new PropAccess();
 		CadiAuthFilter c=new CadiAuthFilter(props);
+		assertNotNull(props);
 	}
 	
 	
@@ -56,6 +58,7 @@ public class CadiAuthFilterTest {
 	public void Test2() throws ServletException
 	{
 		CadiAuthFilter c=new CadiAuthFilter();
+		assertNotNull(c);
 	}
 		    
   }

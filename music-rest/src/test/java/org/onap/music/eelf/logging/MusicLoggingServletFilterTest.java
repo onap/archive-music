@@ -30,6 +30,8 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -59,6 +61,7 @@ public class MusicLoggingServletFilterTest {
         MusicUtil.setClientIdRequired(false);
         doNothing().when(chain).doFilter(Mockito.any(), Mockito.any());
         filter.doFilter(httpRequest, httpResponse, chain);
+        Assert.assertNotNull(chain);
     }
     
 }
