@@ -21,7 +21,7 @@
 
 FROM openjdk:8
 LABEL purpose="Springboot for MUSIC"
-RUN apt-get update && apt-get install -y netcat telnet vim vim-common curl
+RUN apt-get update && apt-get install -y -qq --no-install-recommends netcat telnet vim vim-common curl
 RUN groupadd --gid 1000 music && useradd --gid 1000 --uid 1000 music
 RUN mkdir -p /opt/app/music/logs/MUSIC
 COPY MUSIC-SB.jar /opt/app/music
