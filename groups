@@ -2,4 +2,3 @@
 #
 9c7671c6b64248867eafc7f8acfada9183ea0a2f                              	saml/onap-gerrit-music-committers
 daebbf523be390041a1a9c0e340a6d833aae5043                              	GitHub Replication
-ldap:cn=onap-gerrit-music-committers,ou=Groups,dc=freestandards,dc=org	ldap/onap-gerrit-music-committers
